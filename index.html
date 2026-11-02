@@ -229,6 +229,12 @@
     <!-- Bottom Right: Tactile Action Cluster (Adapts to Ground vs Helicopter/Pterosaur Flight) -->
     <div class="fixed bottom-6 right-5 sm:bottom-9 sm:right-9 z-20 flex items-end gap-2 sm:gap-3 pointer-events-auto">
         
+        <!-- Optional Siren Toggle Button (Shown when Heatwave or Chase is active) -->
+        <button id="btn-siren" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-slate-700 to-slate-900 border-2 border-rose-400/70 flex flex-col items-center justify-center text-white select-none">
+            <span class="text-lg sm:text-xl leading-none" id="siren-icon">🚨</span>
+            <span class="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase mt-0.5" id="siren-label">SIREN</span>
+        </button>
+
         <!-- Extra Flight Descend Button (Shown when Blades is in Helicopter or Pterosaur Mode) -->
         <button id="btn-descend" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-slate-600 to-slate-800 border-2 border-cyan-300 flex flex-col items-center justify-center text-white select-none">
             <span class="text-lg sm:text-xl leading-none">⏬</span>
@@ -285,6 +291,7 @@
                 this.ctx = null;
                 this.enabled = true;
                 this.speechUnlocked = false;
+                this.loopsReady = false;
             }
             init() {
                 if (!this.ctx) {
@@ -566,6 +573,222 @@
                     osc.start(now + i * 0.055);
                     osc.stop(now + i * 0.055 + 0.17);
                 });
+            }
+            ensureContinuousLoops() {
+                if (this.loopsReady || !this.ctx || this.ctx.state !== 'running') return;
+                const ctx = this.ctx;
+                this.loopsReady = true;
+
+                // 1. Continuous Ground Engine Synth (Boulder Diesel Rumble, Heatwave Fire V8 Purr, Chase Cruiser Hum)
+                this.engineGain = ctx.createGain();
+                this.engineGain.gain.value = 0.0001;
+                this.engineFilter = ctx.createBiquadFilter();
+                this.engineFilter.type = 'lowpass';
+                this.engineFilter.frequency.value = 180;
+                this.engineFilter.Q.value = 2.4;
+
+                this.engineOsc1 = ctx.createOscillator();
+                this.engineOsc1.type = 'sawtooth';
+                this.engineOsc1.frequency.value = 50;
+
+                this.engineOsc2 = ctx.createOscillator();
+                this.engineOsc2.type = 'triangle';
+                this.engineOsc2.frequency.value = 75;
+                this.engineSubGain = ctx.createGain();
+                this.engineSubGain.gain.value = 0.55;
+
+                // Cylinder chug LFO (modulates filter cutoff & primary pitch for rhythmic diesel/V8 purr)
+                this.engineLfo = ctx.createOscillator();
+                this.engineLfo.type = 'sine';
+                this.engineLfo.frequency.value = 12;
+                this.engineLfoFilterGain = ctx.createGain();
+                this.engineLfoFilterGain.gain.value = 45;
+                this.engineLfoPitchGain = ctx.createGain();
+                this.engineLfoPitchGain.gain.value = 3.2;
+
+                this.engineLfo.connect(this.engineLfoFilterGain);
+                this.engineLfoFilterGain.connect(this.engineFilter.frequency);
+                this.engineLfo.connect(this.engineLfoPitchGain);
+                this.engineLfoPitchGain.connect(this.engineOsc1.frequency);
+
+                this.engineOsc1.connect(this.engineFilter);
+                this.engineOsc2.connect(this.engineSubGain);
+                this.engineSubGain.connect(this.engineFilter);
+                this.engineFilter.connect(this.engineGain);
+                this.engineGain.connect(ctx.destination);
+
+                this.engineOsc1.start();
+                this.engineOsc2.start();
+                this.engineLfo.start();
+
+                // 2. Blades Helicopter Rhythmic "Whup-Whup-Whup" Rotor Chop Loop
+                const noiseLen = ctx.sampleRate * 2.0;
+                const rotorBuf = ctx.createBuffer(1, noiseLen, ctx.sampleRate);
+                const rData = rotorBuf.getChannelData(0);
+                let lastOut = 0.0;
+                for (let i = 0; i < noiseLen; i++) {
+                    const white = Math.random() * 2 - 1;
+                    // Warm pink-tinted noise so rotor blades sound deep & airy rather than hissy
+                    lastOut = (lastOut + (0.08 * white)) / 1.08;
+                    rData[i] = lastOut * 3.2;
+                }
+                this.rotorNoiseSrc = ctx.createBufferSource();
+                this.rotorNoiseSrc.buffer = rotorBuf;
+                this.rotorNoiseSrc.loop = true;
+
+                this.rotorBandpass = ctx.createBiquadFilter();
+                this.rotorBandpass.type = 'bandpass';
+                this.rotorBandpass.frequency.value = 210;
+                this.rotorBandpass.Q.value = 2.2;
+
+                this.rotorThumpOsc = ctx.createOscillator();
+                this.rotorThumpOsc.type = 'triangle';
+                this.rotorThumpOsc.frequency.value = 48;
+                this.rotorThumpGain = ctx.createGain();
+                this.rotorThumpGain.gain.value = 0.45;
+
+                // Blade-pass rhythmic modulator ("whup-whup-whup" at 8Hz–12Hz)
+                this.rotorChopGain = ctx.createGain();
+                this.rotorChopGain.gain.value = 0.55;
+                this.rotorLfo = ctx.createOscillator();
+                this.rotorLfo.type = 'sine';
+                this.rotorLfo.frequency.value = 8.4;
+                this.rotorLfoAmpGain = ctx.createGain();
+                this.rotorLfoAmpGain.gain.value = 0.45;
+                this.rotorLfoFilterGain = ctx.createGain();
+                this.rotorLfoFilterGain.gain.value = 75;
+
+                this.rotorLfo.connect(this.rotorLfoAmpGain);
+                this.rotorLfoAmpGain.connect(this.rotorChopGain.gain);
+                this.rotorLfo.connect(this.rotorLfoFilterGain);
+                this.rotorLfoFilterGain.connect(this.rotorBandpass.frequency);
+
+                this.rotorGain = ctx.createGain();
+                this.rotorGain.gain.value = 0.0001;
+
+                this.rotorNoiseSrc.connect(this.rotorBandpass);
+                this.rotorBandpass.connect(this.rotorChopGain);
+                this.rotorThumpOsc.connect(this.rotorThumpGain);
+                this.rotorThumpGain.connect(this.rotorChopGain);
+                this.rotorChopGain.connect(this.rotorGain);
+                this.rotorGain.connect(ctx.destination);
+
+                this.rotorNoiseSrc.start();
+                this.rotorThumpOsc.start();
+                this.rotorLfo.start();
+
+                // 3. Optional Emergency Siren Loop (Heatwave Fire Wail & Chase Police Cruiser Yelp)
+                this.sirenOsc = ctx.createOscillator();
+                this.sirenOsc.type = 'triangle';
+                this.sirenOsc.frequency.value = 640;
+
+                this.sirenFilter = ctx.createBiquadFilter();
+                this.sirenFilter.type = 'lowpass';
+                this.sirenFilter.frequency.value = 1450;
+
+                this.sirenGain = ctx.createGain();
+                this.sirenGain.gain.value = 0.0001;
+
+                this.sirenOsc.connect(this.sirenFilter);
+                this.sirenFilter.connect(this.sirenGain);
+                this.sirenGain.connect(ctx.destination);
+                this.sirenOsc.start();
+            }
+            stopContinuousLoops() {
+                if (!this.loopsReady || !this.ctx) return;
+                const t = this.ctx.currentTime;
+                this.engineGain.gain.setTargetAtTime(0.0001, t, 0.05);
+                this.rotorGain.gain.setTargetAtTime(0.0001, t, 0.05);
+                this.sirenGain.gain.setTargetAtTime(0.0001, t, 0.05);
+            }
+            updateContinuousLoops(botType, mode, speed, sirenActive, boostTimer, nowMs) {
+                if (!this.enabled || !this.ctx || this.ctx.state !== 'running') {
+                    this.stopContinuousLoops();
+                    return;
+                }
+                this.ensureContinuousLoops();
+                if (!this.loopsReady) return;
+
+                const t = this.ctx.currentTime;
+                const absSpeed = Math.abs(speed);
+                const speedNorm = Math.min(1.0, absSpeed / 65.0);
+
+                // A. Ground Vehicle Engine vs Blades Helicopter Rotor Chop
+                const isBladesAir = botType === 'BLADES' && (mode === 'VEHICLE' || mode === 'DINO');
+                const isGroundVehicle = botType !== 'BLADES' && mode === 'VEHICLE';
+
+                if (isGroundVehicle) {
+                    // Gentle speed-reactive engine volume (soft idle purr when parked in Vehicle mode, richer purr when driving)
+                    const targetEngineVol = 0.015 + speedNorm * 0.032;
+                    this.engineGain.gain.setTargetAtTime(targetEngineVol, t, 0.08);
+                    this.rotorGain.gain.setTargetAtTime(0.0001, t, 0.08);
+
+                    if (botType === 'BOULDER') {
+                        // Heavy Bulldozer Diesel Rumble (Low fundamental + pronounced cylinder chug)
+                        const baseFreq = 42 + speedNorm * 40;
+                        this.engineOsc1.frequency.setTargetAtTime(baseFreq, t, 0.07);
+                        this.engineOsc2.frequency.setTargetAtTime(baseFreq * 0.5, t, 0.07);
+                        this.engineFilter.frequency.setTargetAtTime(135 + speedNorm * 210, t, 0.07);
+                        this.engineLfo.frequency.setTargetAtTime(9.5 + speedNorm * 15.5, t, 0.07);
+                        this.engineLfoFilterGain.gain.setTargetAtTime(55 + speedNorm * 45, t, 0.07);
+                        this.engineLfoPitchGain.gain.setTargetAtTime(3.8 + speedNorm * 2.5, t, 0.07);
+                    } else if (botType === 'HEATWAVE') {
+                        // Fire Engine V8 Purr (Warm mid-bass purr)
+                        const baseFreq = 52 + speedNorm * 56;
+                        this.engineOsc1.frequency.setTargetAtTime(baseFreq, t, 0.07);
+                        this.engineOsc2.frequency.setTargetAtTime(baseFreq * 1.498, t, 0.07);
+                        this.engineFilter.frequency.setTargetAtTime(175 + speedNorm * 280, t, 0.07);
+                        this.engineLfo.frequency.setTargetAtTime(13.5 + speedNorm * 19.0, t, 0.07);
+                        this.engineLfoFilterGain.gain.setTargetAtTime(42 + speedNorm * 38, t, 0.07);
+                        this.engineLfoPitchGain.gain.setTargetAtTime(2.4 + speedNorm * 2.0, t, 0.07);
+                    } else {
+                        // CHASE: Police Cruiser Turbine / Interceptor Hum
+                        const baseFreq = 64 + speedNorm * 82;
+                        this.engineOsc1.frequency.setTargetAtTime(baseFreq, t, 0.07);
+                        this.engineOsc2.frequency.setTargetAtTime(baseFreq * 1.5, t, 0.07);
+                        this.engineFilter.frequency.setTargetAtTime(210 + speedNorm * 360, t, 0.07);
+                        this.engineLfo.frequency.setTargetAtTime(18.0 + speedNorm * 24.0, t, 0.07);
+                        this.engineLfoFilterGain.gain.setTargetAtTime(32 + speedNorm * 30, t, 0.07);
+                        this.engineLfoPitchGain.gain.setTargetAtTime(1.6 + speedNorm * 1.5, t, 0.07);
+                    }
+                } else if (isBladesAir) {
+                    // Blades Helicopter / Pterosaur Rhythmic "Whup-Whup-Whup" Rotor Loop
+                    this.engineGain.gain.setTargetAtTime(0.0001, t, 0.08);
+                    const isCopter = mode === 'VEHICLE';
+                    const targetRotorVol = isCopter ? (0.026 + speedNorm * 0.028) : (0.014 + speedNorm * 0.020);
+                    this.rotorGain.gain.setTargetAtTime(targetRotorVol, t, 0.08);
+
+                    const bladePassHz = isCopter ? (7.8 + speedNorm * 4.4) : (4.5 + speedNorm * 3.5);
+                    this.rotorLfo.frequency.setTargetAtTime(bladePassHz, t, 0.07);
+                    this.rotorBandpass.frequency.setTargetAtTime(190 + speedNorm * 115, t, 0.07);
+                    this.rotorThumpOsc.frequency.setTargetAtTime(45 + speedNorm * 20, t, 0.07);
+                } else {
+                    // Quiet when walking in Bot or ground Dino mode
+                    this.engineGain.gain.setTargetAtTime(0.0001, t, 0.08);
+                    this.rotorGain.gain.setTargetAtTime(0.0001, t, 0.08);
+                }
+
+                // B. Optional Siren Loop for Heatwave & Chase (Active when Siren Toggle is ON or during Emergency Boost in Vehicle Mode)
+                const canSiren = (botType === 'HEATWAVE' || botType === 'CHASE');
+                const shouldPlaySiren = canSiren && (sirenActive || (boostTimer > 0 && mode === 'VEHICLE'));
+
+                if (shouldPlaySiren) {
+                    const nowSec = nowMs * 0.001;
+                    let sirenFreq = 680;
+                    if (botType === 'HEATWAVE') {
+                        // Classic Fire Engine Rising & Falling Wail (520Hz <-> 870Hz)
+                        const wailWave = 0.5 + 0.5 * Math.sin(nowSec * Math.PI * 1.35);
+                        sirenFreq = 520 + wailWave * 350;
+                    } else {
+                        // Chase Police Cruiser Urgent Yelp / Two-Tone Sweep (630Hz <-> 960Hz)
+                        const yelpWave = 0.5 + 0.5 * Math.sin(nowSec * Math.PI * 3.4);
+                        sirenFreq = 630 + yelpWave * 330;
+                    }
+                    this.sirenOsc.frequency.setTargetAtTime(sirenFreq, t, 0.03);
+                    this.sirenGain.gain.setTargetAtTime(0.032, t, 0.06);
+                } else {
+                    this.sirenGain.gain.setTargetAtTime(0.0001, t, 0.06);
+                }
             }
         }
         const sfx = new RescueSoundFX();
@@ -3892,9 +4115,12 @@
                 rig.tailRotor.rotation.x = now * 0.04;
             }
             if (rig.lightbar) {
-                const flash = Math.floor(now / 140) % 2 === 0;
-                rig.lightbar.redPod.scale.setScalar(flash ? 1.18 : 0.92);
-                rig.lightbar.bluePod.scale.setScalar(!flash ? 1.18 : 0.92);
+                const isSirenFlashing = (rig.botType === player.botType && (player.sirenActive || player.boostTimer > 0));
+                const flash = Math.floor(now / (isSirenFlashing ? 95 : 140)) % 2 === 0;
+                const highScale = isSirenFlashing ? 1.38 : 1.18;
+                const lowScale = isSirenFlashing ? 0.84 : 0.92;
+                rig.lightbar.redPod.scale.setScalar(flash ? highScale : lowScale);
+                rig.lightbar.bluePod.scale.setScalar(!flash ? highScale : lowScale);
             }
         }
 
@@ -3904,6 +4130,8 @@
         const BOT_METADATA = {
             BOULDER: {
                 name: 'BOULDER',
+                role: 'Construction Rescue Bot',
+                voicePitch: 0.82,
                 vehName: 'BULLDOZER',
                 dinoName: 'TRICERATOPS',
                 dinoIcon: '🦕',
@@ -3918,6 +4146,8 @@
             },
             HEATWAVE: {
                 name: 'HEATWAVE',
+                role: 'Fire Rescue Leader',
+                voicePitch: 0.88,
                 vehName: 'FIRE ENGINE',
                 dinoName: 'BRACHIOSAUR',
                 dinoIcon: '🦕',
@@ -3932,6 +4162,8 @@
             },
             CHASE: {
                 name: 'CHASE',
+                role: 'Police Rescue Bot',
+                voicePitch: 0.98,
                 vehName: 'POLICE CRUISER',
                 dinoName: 'STEGOSAURUS',
                 dinoIcon: '🦖',
@@ -3946,6 +4178,8 @@
             },
             BLADES: {
                 name: 'BLADES',
+                role: 'Air Rescue Copter',
+                voicePitch: 1.15,
                 vehName: 'HELICOPTER',
                 dinoName: 'PTEROSAUR',
                 dinoIcon: '🦅',
@@ -3959,6 +4193,109 @@
                 dinoActionLabel: 'WING GALE'
             }
         };
+
+        // Iconic English Voice Catchphrases for each Rescue Bot (Spoken on Switch, Transform & Emergency Rescue!)
+        const BOT_CATCHPHRASES = {
+            BOULDER: {
+                DEPLOY: [
+                    "Boulder ready to roll! No rockslide is too big for us!",
+                    "Boulder here! Dozer blade and hydraulics at full power!"
+                ],
+                TO_VEHICLE: [
+                    "Boulder, transform! Bulldozer mode, clearing the way!",
+                    "Rescue Bots, roll to the rescue! Dozer blade down!"
+                ],
+                TO_DINO: [
+                    "Boulder, Dinobot mode! Triceratops charge!",
+                    "Transforming to Triceratops! Watch the horns!"
+                ],
+                TO_BOT: [
+                    "Boulder, transform! Robot mode, ready for heavy lifting!",
+                    "Back to robot mode! What a fascination!"
+                ],
+                RESCUE: [
+                    "Obstacles cleared! Griffin Rock is safe and sound!",
+                    "Another emergency scooped clean! Great work, Rescue Bots!"
+                ]
+            },
+            HEATWAVE: {
+                DEPLOY: [
+                    "Heatwave reporting for duty! Rescue Bots, roll to the rescue!",
+                    "Heatwave here! Point me at the flames!"
+                ],
+                TO_VEHICLE: [
+                    "Heatwave, transform and hose 'em down!",
+                    "Fire engine mode! Rescue Bots, roll to the rescue!"
+                ],
+                TO_DINO: [
+                    "Heatwave, Dinobot mode! Brachiosaurus stomp!",
+                    "Transforming to Brachiosaurus! Let's make a splash!"
+                ],
+                TO_BOT: [
+                    "Heatwave, transform! Back to robot mode!",
+                    "Robot mode engaged! Ready for fire rescue!"
+                ],
+                RESCUE: [
+                    "Fire out, citizens safe! That's how Rescue Bots roll!",
+                    "Emergency cleared! Another job well done, team!"
+                ]
+            },
+            CHASE: {
+                DEPLOY: [
+                    "Chase on patrol! Ready to protect and serve Griffin Rock!",
+                    "Officer Chase reporting! All rescue protocols active!"
+                ],
+                TO_VEHICLE: [
+                    "Chase, transform! Police cruiser in pursuit!",
+                    "Sirens ready! Rescue Bots, roll to the rescue!"
+                ],
+                TO_DINO: [
+                    "Chase, Dinobot mode! Stegosaurus armor engaged!",
+                    "Transforming to Stegosaurus! Stand back, citizens!"
+                ],
+                TO_BOT: [
+                    "Chase, transform! Robot mode, standing by!",
+                    "Back on two feet! Area secure, Chief!"
+                ],
+                RESCUE: [
+                    "Hazard secured! Citizens of Griffin Rock, you are safe now!",
+                    "By the book! Emergency resolved, team!"
+                ]
+            },
+            BLADES: {
+                DEPLOY: [
+                    "Blades ready for takeoff! Let's fly to the rescue!",
+                    "Blades here! Rescue winch and rotors checked!"
+                ],
+                TO_VEHICLE: [
+                    "Blades, transform! Rotors up, taking to the skies!",
+                    "Helicopter mode! Rescue Bots, fly to the rescue!"
+                ],
+                TO_DINO: [
+                    "Blades, Dinobot mode! Soaring like a Pterosaur!",
+                    "Pterosaur wings out! Swooping in for air rescue!"
+                ],
+                TO_BOT: [
+                    "Blades, transform! Touching down in robot mode!",
+                    "Back on solid ground! Robot mode ready!"
+                ],
+                RESCUE: [
+                    "Woohoo! Air rescue complete! Everyone is safe and sound!",
+                    "We did it! High-flying Rescue Bots save the day!"
+                ]
+            }
+        };
+
+        const botPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0 };
+
+        function speakBotCatchphrase(botType, eventKey) {
+            const botLines = BOT_CATCHPHRASES[botType] && BOT_CATCHPHRASES[botType][eventKey];
+            const meta = BOT_METADATA[botType];
+            if (!botLines || !meta) return;
+            const idx = (botPhraseCounters[botType]++) % botLines.length;
+            const line = botLines[idx];
+            triggerNPCSpeech(meta.name, meta.role, line, meta.voicePitch, true);
+        }
 
         const player = {
             botType: 'BOULDER',
@@ -3980,6 +4317,7 @@
             winchTimer: 0,        // Blades Helicopter Rescue Winch deployment
             netTimer: 0,          // Chase Police Energy Net & Tow Winch deployment
             netTarget: new THREE.Vector3(),
+            sirenActive: false,   // Optional continuous Siren Toggle for Heatwave & Chase
             boostTimer: 0,
             waterTimer: 0,
             sonarTimer: 0,
@@ -4120,6 +4458,25 @@
                 ? meta.dinoActionLabel
                 : (isVeh ? meta.vehActionLabel : meta.botActionLabel);
 
+            // Optional Emergency Siren Toggle Button (Shown for Heatwave & Chase)
+            const hasSiren = (player.botType === 'HEATWAVE' || player.botType === 'CHASE');
+            const btnSiren = document.getElementById('btn-siren');
+            const sirenLabel = document.getElementById('siren-label');
+            if (btnSiren) {
+                if (hasSiren) {
+                    btnSiren.classList.remove('hidden');
+                    if (player.sirenActive) {
+                        btnSiren.className = "tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-red-500 via-rose-600 to-blue-700 border-2 border-yellow-300 shadow-[0_0_16px_rgba(239,68,68,0.85)] flex flex-col items-center justify-center text-white select-none";
+                        if (sirenLabel) sirenLabel.textContent = 'SIREN ON';
+                    } else {
+                        btnSiren.className = "tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-slate-700 to-slate-900 border-2 border-rose-400/70 flex flex-col items-center justify-center text-white select-none";
+                        if (sirenLabel) sirenLabel.textContent = 'SIREN';
+                    }
+                } else {
+                    btnSiren.classList.add('hidden');
+                }
+            }
+
             // Helicopter & Pterosaur Flight UI vs Ground Bot UI
             const isFlyingCopter = (player.botType === 'BLADES' && (isVeh || isDino));
             const btnDescend = document.getElementById('btn-descend');
@@ -4151,10 +4508,16 @@
         }
 
         function switchRescueBot(newBotType) {
-            if (newBotType === player.botType) return;
+            if (newBotType === player.botType) {
+                speakBotCatchphrase(newBotType, 'DEPLOY');
+                return;
+            }
             player.botType = newBotType;
             player.hasWaypoint = false;
             waypointGroup.visible = false;
+            if (newBotType !== 'HEATWAVE' && newBotType !== 'CHASE') {
+                player.sirenActive = false;
+            }
             sfx.playBotSwitch();
 
             // If switching to Blades while already in vehicle or dino mode, lift into flight
@@ -4166,6 +4529,7 @@
 
             syncHUDToActiveBot();
             showToast("RESCUE BOTS ROSTER", `${BOT_METADATA[newBotType].name} Deployed!`);
+            speakBotCatchphrase(newBotType, 'DEPLOY');
         }
 
         function updateAllBotTransforms(dt, now) {
@@ -4731,20 +5095,24 @@
                 spawnBurstParticles(beacon.x, beacon.group.position.y + 9, beacon.z, 0xa3e635, 18, 1.3);
                 showToast("CITIZENS RESCUED!", `${beacon.name} Cleared by ${player.botType}!`);
 
-                // Turn Stranded Citizens' overhead gems green & have them cheer and thank the Rescue Bot in English!
+                // Have the active Rescue Bot speak an iconic victory catchphrase & turn Stranded Citizens' gems green!
+                speakBotCatchphrase(player.botType, 'RESCUE');
                 if (beacon.strandedCitizens && beacon.strandedCitizens.length > 0) {
                     beacon.strandedCitizens.forEach(sc => {
                         sc.rig.radioGem.material.color.setHex(0x22c55e);
                     });
                     const speaker = beacon.strandedCitizens[0];
                     const botName = BOT_METADATA[player.botType] ? BOT_METADATA[player.botType].name : player.botType;
-                    triggerNPCSpeech(
-                        speaker.name,
-                        "Rescued Citizen",
-                        `Hooray! Thank you, ${botName}! You saved us at the ${beacon.name}!`,
-                        speaker.voicePitch,
-                        true
-                    );
+                    clearTimeout(window._citizenThankTimeout);
+                    window._citizenThankTimeout = setTimeout(() => {
+                        triggerNPCSpeech(
+                            speaker.name,
+                            "Rescued Citizen",
+                            `Hooray! Thank you, ${botName}! You saved us at the ${beacon.name}!`,
+                            speaker.voicePitch,
+                            true
+                        );
+                    }, 3600);
                 }
                 updateMissionHUD();
             }
@@ -5596,9 +5964,16 @@
         });
         window.addEventListener('blur', () => {
             activePointerDown = false;
+            sfx.stopContinuousLoops();
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                activePointerDown = false;
+                sfx.stopContinuousLoops();
+            }
         });
 
-        // Mode Transition Helper (Supports BOT, VEHICLE, and DINO Modes)
+        // Mode Transition Helper (Supports BOT, VEHICLE, and DINO Modes + Iconic Voice Catchphrases!)
         function setPlayerMode(nextMode) {
             player.mode = nextMode;
             if (nextMode === 'VEHICLE') {
@@ -5609,6 +5984,7 @@
                     player.flightAlt = Math.max(player.flightAlt, 16);
                     player.grounded = false;
                 }
+                speakBotCatchphrase(player.botType, 'TO_VEHICLE');
             } else if (nextMode === 'DINO') {
                 player.targetMorph = 0.0;
                 player.targetDinoMorph = 1.0;
@@ -5622,12 +5998,14 @@
                 }
                 const meta = BOT_METADATA[player.botType];
                 showToast("DINOBOT MODE!", `${meta.name} • ${meta.dinoName}!`);
+                speakBotCatchphrase(player.botType, 'TO_DINO');
             } else {
                 player.mode = 'BOT';
                 player.targetMorph = 0.0;
                 player.targetDinoMorph = 0.0;
                 player.flightAlt = 0;
                 sfx.playTransform(false);
+                speakBotCatchphrase(player.botType, 'TO_BOT');
             }
             syncHUDToActiveBot();
         }
@@ -5770,6 +6148,16 @@
             }
         }
 
+        function toggleSiren() {
+            if (player.botType !== 'HEATWAVE' && player.botType !== 'CHASE') return;
+            sfx.init();
+            player.sirenActive = !player.sirenActive;
+            if (player.sirenActive) {
+                sfx.playSirenPulse();
+            }
+            syncHUDToActiveBot();
+        }
+
         function bindButton(id, fn) {
             const el = document.getElementById(id);
             if (!el) return;
@@ -5790,6 +6178,7 @@
         bindButton('btn-action', triggerPrimaryAction);
         bindButton('btn-jump-scan', triggerSecondaryAction);
         bindButton('btn-descend', triggerDescendAction);
+        bindButton('btn-siren', toggleSiren);
 
         // Bind Bottom-Left 4-Bot Roster Cards
         document.querySelectorAll('.bot-card').forEach(card => {
@@ -5871,6 +6260,10 @@
 
         bindButton('btn-sound', () => {
             sfx.enabled = !sfx.enabled;
+            if (!sfx.enabled) {
+                sfx.stopContinuousLoops();
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
             document.getElementById('sound-icon').textContent = sfx.enabled ? '🔊' : '🔇';
             const soundLabel = document.getElementById('sound-label');
             if (soundLabel) soundLabel.textContent = sfx.enabled ? 'Sounds: ON' : 'Sounds: OFF';
@@ -5915,6 +6308,9 @@
             }
             if (e.code === 'KeyC' && !e.repeat) {
                 triggerDescendAction();
+            }
+            if (e.code === 'KeyH' && !e.repeat) {
+                toggleSiren();
             }
         });
         window.addEventListener('keyup', e => {
@@ -6503,6 +6899,9 @@
             const kmh = Math.round(Math.abs(player.speed) * 2.2);
             document.getElementById('speed-readout').textContent = `${String(kmh).padStart(2, '0')} KM/H`;
             document.getElementById('zone-label').textContent = getZoneName(player.pos.x, player.pos.z);
+
+            // Update Continuous Speed-Reactive Engine, Helicopter Rotor Chop & Emergency Siren Loops
+            sfx.updateContinuousLoops(player.botType, player.mode, player.speed, player.sirenActive, player.boostTimer, now);
         }
 
         function animate(now) {
