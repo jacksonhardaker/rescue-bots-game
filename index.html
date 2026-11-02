@@ -113,6 +113,11 @@
                     <div id="nearest-hazard-hint" class="text-[10px] sm:text-[11px] text-amber-300 truncate mt-0.5">
                         Nearest: Scanning Island...
                     </div>
+                    <!-- Persistent Career Progression Stats (Saved in localStorage) -->
+                    <div id="career-stats-row" class="flex items-center justify-between gap-2 pt-1 mt-0.5 border-t border-white/15 text-[10px] sm:text-[11px] font-bold text-lime-300">
+                        <span>🏅 Total Rescues: <span id="stat-total-emergencies" class="text-white">0</span></span>
+                        <span>👥 Citizens: <span id="stat-total-citizens" class="text-cyan-300">0</span></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -152,10 +157,14 @@
                 </svg>
             </button>
 
-            <div id="utility-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 hud-glass rounded-2xl p-2 flex flex-col gap-1.5 border border-white/20 shadow-2xl">
+            <div id="utility-menu-dropdown" class="hidden absolute right-0 mt-2 w-56 hud-glass rounded-2xl p-2 flex flex-col gap-1.5 border border-white/20 shadow-2xl">
                 <button id="btn-hq-warp" class="hover:bg-cyan-900/70 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-cyan-400/50 text-cyan-200 w-full text-left" title="Return to Firehouse Headquarters">
                     <span>🏢</span>
                     <span>Warp to HQ</span>
+                </button>
+                <button id="btn-endless-toggle" class="hover:bg-slate-800/80 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-lime-400/50 text-lime-200 w-full text-left" title="Auto-spawn new emergencies when sites are cleared">
+                    <span id="endless-icon">♾️</span>
+                    <span id="endless-label">Auto-Spawn: ON</span>
                 </button>
                 <button id="btn-time" class="hover:bg-slate-800/80 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-amber-400/40 w-full text-left">
                     <span id="time-icon">☀️</span>
@@ -271,6 +280,9 @@
             <p class="text-sm text-slate-200 mt-2 leading-relaxed">
                 Boulder, Heatwave, Chase, and Blades resolved all 8 island-wide emergencies across the Volcano Ridge, Sky Array, Harbor Docks, and Highway!
             </p>
+            <div id="victory-career-summary" class="mt-3 px-4 py-2 rounded-2xl bg-slate-900/80 border border-lime-400/40 text-xs sm:text-sm font-bold text-lime-300">
+                🏅 Lifetime Emergencies Resolved: 8 • 👥 Citizens Rescued: 16
+            </div>
             <div class="mt-5 flex gap-3 justify-center">
                 <button id="btn-keep-exploring" class="tactile-btn bg-slate-700 hover:bg-slate-600 text-white font-bold px-5 py-3 rounded-xl text-sm">
                     Free Roam
@@ -4630,6 +4642,89 @@
         const activeParticles = []; // Unified pool for Rock Debris, Water Cannon Stream & Fire Sparks
         let lastGlobalVoiceTime = -99;
 
+        // =====================================================================
+        // PERSISTENT PROGRESSION (Release-Version Scoped localStorage)
+        // & DYNAMIC ENDLESS EMERGENCY SPAWNER STATE
+        // =====================================================================
+        const RELEASE_VERSION = '2026.11.02.1';
+        const PROGRESSION_STORAGE_PREFIX = 'rescue_bots_progression_';
+        const PROGRESSION_STORAGE_KEY = `${PROGRESSION_STORAGE_PREFIX}${RELEASE_VERSION}`;
+        const progression = {
+            releaseVersion: RELEASE_VERSION,
+            totalEmergenciesResolved: 0,
+            totalCitizensRescued: 0,
+            autoSpawnEmergencies: true
+        };
+
+        function loadProgression() {
+            try {
+                // Purge any stale localStorage keys from older release versions so broken schemas never persist
+                const keysToRemove = [];
+                for (let i = 0; i < window.localStorage.length; i++) {
+                    const k = window.localStorage.key(i);
+                    if (k && k.startsWith(PROGRESSION_STORAGE_PREFIX) && k !== PROGRESSION_STORAGE_KEY) {
+                        keysToRemove.push(k);
+                    }
+                }
+                keysToRemove.forEach(k => window.localStorage.removeItem(k));
+
+                const raw = window.localStorage.getItem(PROGRESSION_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && parsed.releaseVersion === RELEASE_VERSION) {
+                        if (Number.isFinite(parsed.totalEmergenciesResolved) && parsed.totalEmergenciesResolved >= 0) {
+                            progression.totalEmergenciesResolved = Math.floor(parsed.totalEmergenciesResolved);
+                        }
+                        if (Number.isFinite(parsed.totalCitizensRescued) && parsed.totalCitizensRescued >= 0) {
+                            progression.totalCitizensRescued = Math.floor(parsed.totalCitizensRescued);
+                        }
+                        if (typeof parsed.autoSpawnEmergencies === 'boolean') {
+                            progression.autoSpawnEmergencies = parsed.autoSpawnEmergencies;
+                        }
+                    } else {
+                        // Schema version mismatch: overwrite with clean release-scoped defaults
+                        window.localStorage.removeItem(PROGRESSION_STORAGE_KEY);
+                    }
+                }
+            } catch (err) {
+                // Fallback gracefully if localStorage is unavailable or malformed
+            }
+            syncProgressionHUD();
+        }
+
+        function saveProgression() {
+            try {
+                progression.releaseVersion = RELEASE_VERSION;
+                window.localStorage.setItem(PROGRESSION_STORAGE_KEY, JSON.stringify(progression));
+            } catch (err) {
+                // Ignore storage quota / private mode restrictions
+            }
+            syncProgressionHUD();
+        }
+
+        function syncProgressionHUD() {
+            const totalEmEl = document.getElementById('stat-total-emergencies');
+            const totalCitEl = document.getElementById('stat-total-citizens');
+            if (totalEmEl) totalEmEl.textContent = String(progression.totalEmergenciesResolved);
+            if (totalCitEl) totalCitEl.textContent = String(progression.totalCitizensRescued);
+
+            const vicSummaryEl = document.getElementById('victory-career-summary');
+            if (vicSummaryEl) {
+                vicSummaryEl.textContent = `🏅 Lifetime Emergencies Resolved: ${progression.totalEmergenciesResolved} • 👥 Citizens Rescued: ${progression.totalCitizensRescued}`;
+            }
+
+            const endlessIcon = document.getElementById('endless-icon');
+            const endlessLabel = document.getElementById('endless-label');
+            const endlessBtn = document.getElementById('btn-endless-toggle');
+            if (endlessIcon) endlessIcon.textContent = progression.autoSpawnEmergencies ? '♾️' : '⏸️';
+            if (endlessLabel) endlessLabel.textContent = progression.autoSpawnEmergencies ? 'Auto-Spawn: ON' : 'Auto-Spawn: OFF';
+            if (endlessBtn) {
+                endlessBtn.className = progression.autoSpawnEmergencies
+                    ? "hover:bg-slate-800/80 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-lime-400/50 text-lime-200 w-full text-left"
+                    : "hover:bg-slate-800/80 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-slate-500/40 text-slate-300 w-full text-left";
+            }
+        }
+
         const matBeaconRed = new THREE.MeshBasicMaterial({ color: 0xff1e42 });
         const matBeaconOrange = new THREE.MeshBasicMaterial({ color: 0xff6414 });
         const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
@@ -4795,7 +4890,81 @@
             };
         }
 
+        function spawnHazardNodesForSite(site, idx) {
+            const siteNodes = [];
+            for (let i = 0; i < 6; i++) {
+                const ang = (i / 6) * Math.PI * 2 + (idx * 0.4);
+                const dist = 4.5 + (i % 2) * 2.0;
+                const nx = site.x + Math.cos(ang) * dist;
+                const nz = site.z + Math.sin(ang) * dist;
+                const ny = getTerrainHeight(nx, nz);
+
+                let nodeMesh;
+                const s = 0.9 + (i % 3) * 0.3;
+
+                if (site.type === 'FIRE') {
+                    nodeMesh = new THREE.Group();
+                    const outerFlame = new THREE.Mesh(fireConeGeo, matFireCore);
+                    outerFlame.position.y = 2.4;
+                    nodeMesh.add(outerFlame);
+                    const innerFlame = new THREE.Mesh(new THREE.ConeGeometry(1.3, 4.0, 6), matFireTip);
+                    innerFlame.position.y = 1.8;
+                    nodeMesh.add(innerFlame);
+                    const flameOutline = new THREE.Mesh(fireConeGeo, matInkOutline);
+                    flameOutline.position.y = 2.4;
+                    flameOutline.scale.setScalar(1.09);
+                    nodeMesh.add(flameOutline);
+                    nodeMesh.position.set(nx, ny, nz);
+                    nodeMesh.scale.setScalar(s);
+                } else {
+                    nodeMesh = new THREE.Mesh(boulderGeo, matBoulder);
+                    nodeMesh.scale.set(s * 1.2, s * 0.95, s);
+                    nodeMesh.position.set(nx, ny + s * 1.1, nz);
+                    nodeMesh.rotation.set(i, i * 1.3, 0);
+                    nodeMesh.castShadow = true;
+                    nodeMesh.receiveShadow = true;
+                    applyCartoonInkOutlines(nodeMesh, 1.075, true);
+                }
+                scene.add(nodeMesh);
+
+                siteNodes.push({
+                    mesh: nodeMesh,
+                    type: site.type,
+                    x: nx,
+                    y: ny,
+                    z: nz,
+                    r: s * 2.1,
+                    cleared: false
+                });
+            }
+            return siteNodes;
+        }
+
+        function respawnSingleBeacon(beacon, announceToast = true) {
+            if (!beacon) return;
+            beacon.nodes.forEach(n => scene.remove(n.mesh));
+            const site = EMERGENCY_SITES[beacon.id] || EMERGENCY_SITES[0];
+            beacon.nodes = spawnHazardNodesForSite(site, beacon.id);
+            beacon.restored = false;
+            beacon.restoredAtTime = -1;
+            beacon.orb.material = beacon.type === 'FIRE' ? matBeaconOrange : matBeaconRed;
+            beacon.skyBeam.material.color.setHex(beacon.type === 'FIRE' ? 0xf97316 : 0xf43f5e);
+            beacon.skyBeam.material.opacity = 0.28;
+            if (beacon.strandedCitizens) {
+                beacon.strandedCitizens.forEach(sc => {
+                    sc.rig.radioGem.material.color.setHex(0xff1e42);
+                });
+            }
+            updateMissionHUD();
+            renderMinimap();
+            if (announceToast) {
+                sfx.playSirenPulse();
+                showToast("NEW EMERGENCY DISPATCH!", `${beacon.name} Active Again!`);
+            }
+        }
+
         function buildHazardSites() {
+            clearTimeout(window._endlessWaveTimeout);
             beacons.forEach(b => {
                 scene.remove(b.group);
                 b.nodes.forEach(n => scene.remove(n.mesh));
@@ -4849,53 +5018,7 @@
                 scene.add(group);
 
                 // Spawn 6 Interactive Hazard Nodes around the Beacon (Boulders or Roaring Flames)
-                const siteNodes = [];
-                for (let i = 0; i < 6; i++) {
-                    const ang = (i / 6) * Math.PI * 2 + (idx * 0.4);
-                    const dist = 4.5 + (i % 2) * 2.0;
-                    const nx = site.x + Math.cos(ang) * dist;
-                    const nz = site.z + Math.sin(ang) * dist;
-                    const ny = getTerrainHeight(nx, nz);
-
-                    let nodeMesh;
-                    const s = 0.9 + (i % 3) * 0.3;
-
-                    if (site.type === 'FIRE') {
-                        nodeMesh = new THREE.Group();
-                        const outerFlame = new THREE.Mesh(fireConeGeo, matFireCore);
-                        outerFlame.position.y = 2.4;
-                        nodeMesh.add(outerFlame);
-                        const innerFlame = new THREE.Mesh(new THREE.ConeGeometry(1.3, 4.0, 6), matFireTip);
-                        innerFlame.position.y = 1.8;
-                        nodeMesh.add(innerFlame);
-                        // Add a cartoon black outline cone behind the flame for comic book pop
-                        const flameOutline = new THREE.Mesh(fireConeGeo, matInkOutline);
-                        flameOutline.position.y = 2.4;
-                        flameOutline.scale.setScalar(1.09);
-                        nodeMesh.add(flameOutline);
-                        nodeMesh.position.set(nx, ny, nz);
-                        nodeMesh.scale.setScalar(s);
-                    } else {
-                        nodeMesh = new THREE.Mesh(boulderGeo, matBoulder);
-                        nodeMesh.scale.set(s * 1.2, s * 0.95, s);
-                        nodeMesh.position.set(nx, ny + s * 1.1, nz);
-                        nodeMesh.rotation.set(i, i * 1.3, 0);
-                        nodeMesh.castShadow = true;
-                        nodeMesh.receiveShadow = true;
-                        applyCartoonInkOutlines(nodeMesh, 1.075, true);
-                    }
-                    scene.add(nodeMesh);
-
-                    siteNodes.push({
-                        mesh: nodeMesh,
-                        type: site.type,
-                        x: nx,
-                        y: ny,
-                        z: nz,
-                        r: s * 2.1,
-                        cleared: false
-                    });
-                }
+                const siteNodes = spawnHazardNodesForSite(site, idx);
 
                 // Spawn 2 Stranded Citizens at the Emergency Site waving & calling out for rescue!
                 const strandedCitizens = [];
@@ -4937,7 +5060,8 @@
                     skyBeam,
                     nodes: siteNodes,
                     strandedCitizens,
-                    restored: false
+                    restored: false,
+                    restoredAtTime: -1
                 });
             });
 
@@ -5073,7 +5197,23 @@
             });
 
             if (restoredCount === beacons.length && beacons.length > 0) {
-                document.getElementById('victory-modal').classList.remove('hidden');
+                if (progression.autoSpawnEmergencies) {
+                    clearTimeout(window._endlessWaveTimeout);
+                    window._endlessWaveTimeout = setTimeout(() => {
+                        buildHazardSites();
+                        sfx.playSirenPulse();
+                        showToast("ENDLESS DISPATCH!", "8 New Island Emergencies Active!");
+                        triggerNPCSpeech(
+                            "Chief Charlie Burns",
+                            "Police Chief",
+                            "Rescue Bots! Chief Burns here! New emergencies just broke out across Griffin Rock! Roll to the rescue!",
+                            0.88,
+                            true
+                        );
+                    }, 5800);
+                } else {
+                    document.getElementById('victory-modal').classList.remove('hidden');
+                }
             }
         }
 
@@ -5088,11 +5228,19 @@
             const remaining = beacon.nodes.filter(n => !n.cleared).length;
             if (remaining === 0 && !beacon.restored) {
                 beacon.restored = true;
+                beacon.restoredAtTime = performance.now() * 0.001;
                 beacon.orb.material = matBeaconGreen;
                 beacon.skyBeam.material.color.setHex(0x22c55e);
                 beacon.skyBeam.material.opacity = 0.15;
                 sfx.playBeaconRestore();
                 spawnBurstParticles(beacon.x, beacon.group.position.y + 9, beacon.z, 0xa3e635, 18, 1.3);
+
+                // Increment & Persist Lifetime Career Progression in localStorage!
+                const rescuedHere = (beacon.strandedCitizens && beacon.strandedCitizens.length > 0) ? beacon.strandedCitizens.length : 2;
+                progression.totalEmergenciesResolved += 1;
+                progression.totalCitizensRescued += rescuedHere;
+                saveProgression();
+
                 showToast("CITIZENS RESCUED!", `${beacon.name} Cleared by ${player.botType}!`);
 
                 // Have the active Rescue Bot speak an iconic victory catchphrase & turn Stranded Citizens' gems green!
@@ -5118,6 +5266,7 @@
             }
         }
 
+        loadProgression();
         buildHazardSites();
 
         /***********************************************************************
@@ -6219,6 +6368,26 @@
             showToast("COMMAND CENTER WARP", "Arrived at Rescue Bots Firehouse HQ!");
         });
 
+        // Dynamic Endless Emergency Spawner Toggle Button
+        bindButton('btn-endless-toggle', () => {
+            progression.autoSpawnEmergencies = !progression.autoSpawnEmergencies;
+            saveProgression();
+            if (progression.autoSpawnEmergencies) {
+                const allRestored = beacons.length > 0 && beacons.every(b => b.restored);
+                if (allRestored) {
+                    document.getElementById('victory-modal').classList.add('hidden');
+                    buildHazardSites();
+                    sfx.playSirenPulse();
+                    showToast("ENDLESS DISPATCH ON!", "8 New Island Emergencies Active!");
+                } else {
+                    showToast("ENDLESS DISPATCH ON", "Cleared sites will dynamically re-spawn!");
+                }
+            } else {
+                clearTimeout(window._endlessWaveTimeout);
+                showToast("ENDLESS DISPATCH OFF", "Manual reset mode enabled.");
+            }
+        });
+
         let timePreset = 0;
         bindButton('btn-time', () => {
             timePreset = (timePreset + 1) % 3;
@@ -6957,6 +7126,9 @@
             waterMesh.position.y = -0.45 + Math.sin(now * 0.0025) * 0.22;
             shorelineFoamRing.scale.setScalar(1.0 + Math.sin(now * 0.003) * 0.008);
 
+            const nowSec = now * 0.001;
+            const restoredCount = beacons.filter(b => b.restored).length;
+
             beacons.forEach(b => {
                 if (!b.restored) {
                     const pulse = 1 + Math.sin(now * 0.008) * 0.18;
@@ -6969,6 +7141,16 @@
                             }
                         });
                     }
+                } else if (
+                    progression.autoSpawnEmergencies &&
+                    restoredCount >= 2 &&
+                    restoredCount < beacons.length &&
+                    b.restoredAtTime > 0 &&
+                    (nowSec - b.restoredAtTime) > 65.0 &&
+                    Math.hypot(player.pos.x - b.x, player.pos.z - b.z) > 220.0
+                ) {
+                    // Dynamically re-dispatch distant resolved sites after 65s so the island stays perpetually alive!
+                    respawnSingleBeacon(b, true);
                 }
             });
 
