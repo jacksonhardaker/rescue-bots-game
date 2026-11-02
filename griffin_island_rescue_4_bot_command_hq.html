@@ -1,0 +1,3201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Griffin Rock Rescue Bots: 3D Open World</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: none;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0f172a;
+            font-family: 'Fredoka', sans-serif;
+            overscroll-behavior: none;
+        }
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 1;
+        }
+        .hud-glass {
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+        }
+        .tactile-btn {
+            transition: transform 0.08s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.12s ease;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.45), 0 10px 20px rgba(0,0,0,0.35), inset 0 2px 2px rgba(255,255,255,0.45);
+        }
+        .tactile-btn:active, .tactile-btn.active-press {
+            transform: translateY(4px) scale(0.95);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.45), 0 4px 10px rgba(0,0,0,0.3), inset 0 2px 2px rgba(255,255,255,0.3);
+            filter: brightness(1.15);
+        }
+        .bot-card {
+            transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .bot-card.active-bot {
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 0 18px rgba(250, 204, 21, 0.55);
+            border-color: #facc15 !important;
+        }
+        .mono-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.92); opacity: 0.9; }
+            100% { transform: scale(1.48); opacity: 0; }
+        }
+        .beacon-pulse::after {
+            content: '';
+            position: absolute;
+            inset: -6px;
+            border-radius: 9999px;
+            border: 3px solid #facc15;
+            animation: pulse-ring 1.6s infinite;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="text-white antialiased">
+
+    <!-- 3D WebGL Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Top Bar HUD: Minimap, Mission Tracker, Rescue Bot Roster & Utility Controls -->
+    <header class="fixed top-2.5 left-2.5 right-2.5 z-20 flex flex-wrap items-start justify-between pointer-events-none gap-2">
+        <!-- Left: Minimap + Mission Progress -->
+        <div class="flex items-start gap-2.5 pointer-events-auto">
+            <div class="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full hud-glass p-1.5 flex items-center justify-center overflow-hidden border-2 border-amber-400/60 shadow-xl shrink-0">
+                <canvas id="minimap-canvas" width="160" height="160" class="w-full h-full rounded-full"></canvas>
+                <div class="absolute top-1 text-[10px] font-bold tracking-wider text-amber-300 drop-shadow">N</div>
+                <div class="absolute bottom-1.5 px-1.5 py-0.2 rounded bg-slate-950/80 text-[8px] sm:text-[9px] mono-font text-lime-300 font-bold truncate max-w-[90%]" id="zone-label">RESCUE HQ</div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <!-- Mission Progress Pill -->
+                <div class="hud-glass rounded-2xl px-3.5 py-2 flex flex-col gap-1 min-w-[205px] sm:min-w-[250px]">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[11px] uppercase tracking-wider text-amber-400 font-bold flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                            Griffin Rock Emergencies
+                        </span>
+                        <span id="fps-counter" class="mono-font text-[10px] bg-slate-800/90 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30">60 FPS</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs sm:text-sm font-bold text-white" id="mission-status-text">Emergencies Resolved: 0 / 8</span>
+                    </div>
+                    <!-- 8 Emergency Pip Indicators -->
+                    <div class="flex items-center gap-1 mt-0.5" id="beacon-pips"></div>
+                    <div id="nearest-hazard-hint" class="text-[10px] sm:text-[11px] text-amber-300 truncate mt-0.5">
+                        Nearest: Scanning Island...
+                    </div>
+                </div>
+
+                <!-- 4-Bot HQ Team Switcher Bar -->
+                <div class="hud-glass rounded-2xl p-1.5 flex items-center gap-1.5 border border-white/20">
+                    <button data-bot="BOULDER" class="bot-card active-bot px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-lime-600/90 to-emerald-800/90 border-2 border-lime-300/50 flex items-center gap-1.5 text-left">
+                        <span class="text-base sm:text-lg">🚜</span>
+                        <div class="leading-tight">
+                            <div class="text-[10px] sm:text-xs font-extrabold text-white">BOULDER</div>
+                            <div class="text-[8px] sm:text-[9px] text-lime-200 font-semibold">Dozer • Smash</div>
+                        </div>
+                    </button>
+                    <button data-bot="HEATWAVE" class="bot-card px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-red-600/90 to-rose-900/90 border-2 border-red-300/40 flex items-center gap-1.5 text-left">
+                        <span class="text-base sm:text-lg">🚒</span>
+                        <div class="leading-tight">
+                            <div class="text-[10px] sm:text-xs font-extrabold text-white">HEATWAVE</div>
+                            <div class="text-[8px] sm:text-[9px] text-rose-200 font-semibold">Fire • Water Jet</div>
+                        </div>
+                    </button>
+                    <button data-bot="CHASE" class="bot-card px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-blue-600/90 to-indigo-900/90 border-2 border-blue-300/40 flex items-center gap-1.5 text-left">
+                        <span class="text-base sm:text-lg">🚓</span>
+                        <div class="leading-tight">
+                            <div class="text-[10px] sm:text-xs font-extrabold text-white">CHASE</div>
+                            <div class="text-[8px] sm:text-[9px] text-sky-200 font-semibold">Police • EMP</div>
+                        </div>
+                    </button>
+                    <button data-bot="BLADES" class="bot-card px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-orange-500/90 to-amber-700/90 border-2 border-orange-200/40 flex items-center gap-1.5 text-left">
+                        <span class="text-base sm:text-lg">🚁</span>
+                        <div class="leading-tight">
+                            <div class="text-[10px] sm:text-xs font-extrabold text-white">BLADES</div>
+                            <div class="text-[8px] sm:text-[9px] text-amber-100 font-semibold">Copter • Flight</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Toast Notification Banner -->
+        <div id="toast-banner" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-30 hud-glass border-2 border-amber-400 px-6 py-3 rounded-2xl text-center shadow-2xl transition-all duration-300 pointer-events-none">
+            <div class="text-xs uppercase tracking-widest text-amber-300 font-bold" id="toast-subtitle">RESCUE BOTS HQ</div>
+            <div class="text-base sm:text-xl font-bold text-white" id="toast-title">Heatwave Deployed!</div>
+        </div>
+
+        <!-- Center HQ Bay Proximity Prompt -->
+        <div id="hq-bay-prompt" class="hidden fixed top-40 left-1/2 -translate-x-1/2 z-30 hud-glass border-2 border-cyan-400 px-5 py-2.5 rounded-2xl text-center shadow-xl pointer-events-auto">
+            <div class="text-[10px] uppercase tracking-widest text-cyan-300 font-bold">INSIDE COMMAND HQ SWAP BAY</div>
+            <div class="text-xs sm:text-sm font-bold text-white mt-0.5">Tap any Rescue Bot on the Roster or press <span class="text-amber-300">[1 - 4]</span> to Switch!</div>
+        </div>
+
+        <!-- Right: Utility Controls -->
+        <div class="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2 pointer-events-auto">
+            <button id="btn-hq-warp" class="hud-glass hover:bg-cyan-900/70 active:scale-95 px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-bold border border-cyan-400/50 text-cyan-200" title="Return to Firehouse Headquarters">
+                <span>🏢</span>
+                <span class="hidden sm:inline">Warp to HQ</span>
+            </button>
+            <button id="btn-time" class="hud-glass hover:bg-slate-800/80 active:scale-95 px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-bold border border-amber-400/40">
+                <span id="time-icon">☀️</span>
+                <span id="time-label" class="hidden md:inline">Daylight</span>
+            </button>
+            <button id="btn-cam" class="hud-glass hover:bg-slate-800/80 active:scale-95 px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-bold border border-sky-400/40">
+                <span>🔭</span>
+                <span id="cam-label" class="hidden md:inline">View: WIDE</span>
+            </button>
+            <button id="btn-sound" class="hud-glass hover:bg-slate-800/80 active:scale-95 px-2.5 py-2 rounded-xl flex items-center text-xs sm:text-sm font-bold border border-emerald-400/40">
+                <span id="sound-icon">🔊</span>
+            </button>
+            <button id="btn-reset" class="hud-glass hover:bg-rose-900/60 active:scale-95 px-2.5 py-2 rounded-xl flex items-center gap-1 text-xs sm:text-sm font-bold border border-rose-400/40">
+                <span>🔄</span>
+                <span class="hidden lg:inline">Reset World</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Bottom Left: Kid-Friendly Tap-Anywhere Instruction Badge -->
+    <div class="fixed bottom-6 left-5 sm:bottom-9 sm:left-8 z-20 pointer-events-none flex items-center gap-3 hud-glass px-4 py-3 rounded-3xl border-2 border-amber-400/70 shadow-2xl">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl shadow-inner animate-bounce">
+            👆
+        </div>
+        <div class="leading-tight">
+            <div class="text-xs sm:text-sm font-extrabold text-amber-300 uppercase tracking-wide">Tap Anywhere To Go!</div>
+            <div class="text-[10px] sm:text-xs text-slate-200 font-semibold">Tap the island or emergencies &amp; your Bot drives there!</div>
+        </div>
+    </div>
+
+    <!-- Bottom Center: Active Bot Telemetry, Speed, Altitude & Controls Hint -->
+    <div class="fixed bottom-3.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center gap-1">
+        <div class="hud-glass px-4 py-1.5 rounded-full flex items-center gap-2.5 border border-white/20">
+            <div class="flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-lime-400" id="mode-dot"></span>
+                <span class="text-xs sm:text-sm font-bold tracking-wide text-lime-300 uppercase" id="mode-readout">BOULDER • BOT MODE</span>
+            </div>
+            <span class="text-white/30">|</span>
+            <span class="mono-font text-xs text-amber-300" id="speed-readout">00 KM/H</span>
+            <span id="altitude-sep" class="hidden text-white/30">|</span>
+            <span id="altitude-readout" class="hidden mono-font text-xs text-cyan-300">ALT: 00m</span>
+        </div>
+        <div class="hidden md:block text-[11px] text-white/70 bg-slate-950/70 px-3 py-0.5 rounded-full border border-white/10">
+            <span class="text-amber-300">TAP SCREEN</span> Drive/Fly There • <span class="text-lime-300">1-4</span> Switch Bot • <span class="text-yellow-300">SPACE</span> Transform • <span class="text-sky-300">WASD</span> Manual
+        </div>
+    </div>
+
+    <!-- Bottom Right: Tactile Action Cluster (Adapts to Ground vs Helicopter Flight) -->
+    <div class="fixed bottom-6 right-5 sm:bottom-9 sm:right-9 z-20 flex items-end gap-2.5 sm:gap-3.5 pointer-events-auto">
+        
+        <!-- Extra Flight Descend Button (Shown when Blades is in Helicopter Mode) -->
+        <button id="btn-descend" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-slate-600 to-slate-800 border-2 border-cyan-300 flex flex-col items-center justify-center text-white select-none">
+            <span class="text-lg sm:text-xl leading-none">⏬</span>
+            <span class="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase mt-0.5">LOWER</span>
+        </button>
+
+        <!-- Secondary Button: JUMP / ASCEND (Copter) -->
+        <button id="btn-jump-scan" class="tactile-btn w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-sky-400 to-blue-600 border-2 border-sky-200 flex flex-col items-center justify-center text-white select-none">
+            <span class="text-xl sm:text-2xl leading-none" id="jump-icon">🚀</span>
+            <span class="text-[10px] sm:text-xs font-bold tracking-wider uppercase mt-1" id="jump-label">JUMP</span>
+        </button>
+
+        <!-- Special Power Button: SMASH / WATER CANNON / EMP SIREN / WINCH SCAN -->
+        <button id="btn-action" class="tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-amber-400 via-orange-500 to-red-600 border-2 border-amber-200 flex flex-col items-center justify-center text-white select-none mb-1.5">
+            <span class="text-2xl sm:text-3xl leading-none" id="action-icon">🔨</span>
+            <span class="text-[10px] sm:text-xs font-bold tracking-wider uppercase mt-1 text-center leading-tight px-1" id="action-label">BLADE SMASH</span>
+        </button>
+
+        <!-- Primary Hero Button: TRANSFORM (Bot <-> Vehicle) -->
+        <button id="btn-transform" class="tactile-btn beacon-pulse relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-b from-lime-400 via-green-500 to-emerald-700 border-4 border-yellow-300 flex flex-col items-center justify-center text-slate-950 select-none">
+            <svg class="w-8 h-8 sm:w-10 sm:h-10 stroke-slate-950 fill-none" viewBox="0 0 24 24" stroke-width="2.4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            <span class="text-xs sm:text-sm font-extrabold tracking-tight uppercase mt-0.5">TRANSFORM</span>
+            <span class="text-[9px] sm:text-[10px] font-bold bg-slate-950/85 text-yellow-300 px-2 py-0.2 rounded-full mt-0.5" id="transform-sub">TO VEHICLE</span>
+        </button>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victory-modal" class="hidden fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="hud-glass border-2 border-amber-400 rounded-3xl max-w-md w-full p-6 text-center shadow-2xl">
+            <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-4xl mb-3">🏆</div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-amber-300">GRIFFIN ROCK SAVED!</h2>
+            <p class="text-sm text-slate-200 mt-2 leading-relaxed">
+                Boulder, Heatwave, Chase, and Blades resolved all 8 island-wide emergencies across the Volcano Ridge, Sky Array, Harbor Docks, and Highway!
+            </p>
+            <div class="mt-5 flex gap-3 justify-center">
+                <button id="btn-keep-exploring" class="tactile-btn bg-slate-700 hover:bg-slate-600 text-white font-bold px-5 py-3 rounded-xl text-sm">
+                    Free Roam
+                </button>
+                <button id="btn-new-hazards" class="tactile-btn bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-extrabold px-5 py-3 rounded-xl text-sm">
+                    New Emergencies
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /***********************************************************************
+         * 1. WEB AUDIO SYNTHESIZER (Transform Servos, Water Jet, Sirens, Rotors)
+         ***********************************************************************/
+        class RescueSoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+            playTransform(toVehicle) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const freqs = toVehicle ? [580, 470, 390, 290, 210] : [200, 290, 390, 510, 680];
+                freqs.forEach((f, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(f, now + idx * 0.065);
+                    osc.frequency.exponentialRampToValueAtTime(f * 1.22, now + idx * 0.065 + 0.055);
+                    gain.gain.setValueAtTime(0.11, now + idx * 0.065);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.065 + 0.065);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.065);
+                    osc.stop(now + idx * 0.065 + 0.07);
+                });
+            }
+            playBotSwitch() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [330, 440, 659.25].forEach((f, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(f, now + i * 0.06);
+                    gain.gain.setValueAtTime(0.14, now + i * 0.06);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.22);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.06);
+                    osc.stop(now + i * 0.06 + 0.24);
+                });
+            }
+            playSmash() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(30, now + 0.35);
+                gain.gain.setValueAtTime(0.26, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+            playWaterSpray() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(340 + Math.random() * 180, now);
+                osc.frequency.exponentialRampToValueAtTime(140, now + 0.14);
+                gain.gain.setValueAtTime(0.06, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.16);
+            }
+            playSirenPulse() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(620, now);
+                osc.frequency.linearRampToValueAtTime(920, now + 0.18);
+                osc.frequency.linearRampToValueAtTime(580, now + 0.36);
+                gain.gain.setValueAtTime(0.09, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            }
+            playRockBreak() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [210, 145, 95].forEach((f, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(f, now + i * 0.04);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + i * 0.04 + 0.18);
+                    gain.gain.setValueAtTime(0.12, now + i * 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.04);
+                    osc.stop(now + i * 0.04 + 0.21);
+                });
+            }
+            playBeaconRestore() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.5].forEach((n, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(n, now + i * 0.085);
+                    gain.gain.setValueAtTime(0.15, now + i * 0.085);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.085 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.085);
+                    osc.stop(now + i * 0.085 + 0.36);
+                });
+            }
+            playWaypointTap() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [587.33, 880].forEach((n, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(n, now + i * 0.055);
+                    gain.gain.setValueAtTime(0.11, now + i * 0.055);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.16);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.055);
+                    osc.stop(now + i * 0.055 + 0.17);
+                });
+            }
+        }
+        const sfx = new RescueSoundFX();
+
+        /***********************************************************************
+         * 2. CEL-SHADING GRADIENT MAPS, INK OUTLINES & CARTOON CANVAS TEXTURES
+         ***********************************************************************/
+        // Crisp 3-band & 4-band Stepped Toon Gradient Textures (NearestFilter for hard cel-shaded steps)
+        function createToonGradientMap(steps = [95, 195, 255]) {
+            const c = document.createElement('canvas');
+            c.width = steps.length;
+            c.height = 1;
+            const ctx = c.getContext('2d');
+            steps.forEach((val, i) => {
+                ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
+                ctx.fillRect(i, 0, 1, 1);
+            });
+            const tex = new THREE.CanvasTexture(c);
+            tex.minFilter = THREE.NearestFilter;
+            tex.magFilter = THREE.NearestFilter;
+            tex.generateMipmaps = false;
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        const toonGrad3 = createToonGradientMap([110, 205, 255]);
+        const toonGrad4 = createToonGradientMap([88, 158, 222, 255]);
+        const toonGradGlossy = createToonGradientMap([105, 185, 225, 255]);
+
+        const matInkOutline = new THREE.MeshBasicMaterial({
+            color: 0x0b0f19,
+            side: THREE.BackSide
+        });
+        const matInkEdgeLine = new THREE.LineBasicMaterial({
+            color: 0x0b0f19,
+            linewidth: 2
+        });
+
+        // Helper to apply Saturday-Morning Cartoon Ink Outlines + Panel Crease Lines to a 3D hierarchy
+        function applyCartoonInkOutlines(rootObj, scaleThickness = 1.055, addCreaseLines = true) {
+            const meshes = [];
+            rootObj.traverse(child => {
+                if (child.isMesh && !child.userData.isOutline && !child.userData.noOutline) {
+                    meshes.push(child);
+                }
+            });
+
+            meshes.forEach(mesh => {
+                // 1. Inverted-Hull Black Ink Silhouette
+                const outlineMesh = new THREE.Mesh(mesh.geometry, matInkOutline);
+                outlineMesh.userData.isOutline = true;
+                outlineMesh.scale.setScalar(scaleThickness);
+                mesh.add(outlineMesh);
+
+                // 2. Crisp Black Comic Edge Creases on Box/Cylinder Panels
+                if (addCreaseLines && mesh.geometry) {
+                    const edgesGeo = new THREE.EdgesGeometry(mesh.geometry, 32);
+                    const line = new THREE.LineSegments(edgesGeo, matInkEdgeLine);
+                    line.userData.isOutline = true;
+                    mesh.add(line);
+                }
+            });
+        }
+
+        function makeHazardStripeTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 64;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillRect(0, 0, 256, 64);
+            ctx.fillStyle = '#0f172a';
+            for (let x = -64; x < 320; x += 32) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x + 18, 0);
+                ctx.lineTo(x - 14, 64);
+                ctx.lineTo(x - 32, 64);
+                ctx.closePath();
+                ctx.fill();
+            }
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(0, 0, 256, 64);
+            const tex = new THREE.CanvasTexture(c);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+
+        function makeGrilleTexture() {
+            const c = document.createElement('canvas');
+            c.width = 128; c.height = 128;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.fillStyle = '#0f172a';
+            for (let y = 16; y < 112; y += 16) {
+                ctx.fillRect(14, y, 100, 8);
+            }
+            // Cartoon highlight slash
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.beginPath();
+            ctx.moveTo(20, 12);
+            ctx.lineTo(44, 12);
+            ctx.lineTo(24, 116);
+            ctx.lineTo(14, 116);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 118, 118);
+            return new THREE.CanvasTexture(c);
+        }
+
+        // TV-Show Accurate Rescue Bots Autobot/Cog Shield Sigil with Bold Ink Outlines
+        function makeRescueEmblemTexture(bgHex = '#e81e25', accentHex = '#ffcc00') {
+            const c = document.createElement('canvas');
+            c.width = 128; c.height = 128;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = bgHex;
+            ctx.fillRect(0, 0, 128, 128);
+
+            // Outer Cartoon Cog / Shield
+            ctx.fillStyle = accentHex;
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.arc(64, 64, 52, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Inner Crisp White Disc
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(64, 64, 38, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Bold Red Rescue Star / Cross with Ink Border
+            ctx.fillStyle = '#e81e25';
+            ctx.fillRect(52, 30, 24, 68);
+            ctx.fillRect(30, 52, 68, 24);
+            ctx.strokeRect(52, 30, 24, 68);
+            ctx.strokeRect(30, 52, 68, 24);
+            ctx.fillRect(55, 33, 18, 62);
+            ctx.fillRect(33, 55, 62, 18);
+
+            // Outer Panel Border
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 120, 120);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeHelipadTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(0, 0, 256, 256);
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 14;
+            ctx.strokeRect(7, 7, 242, 242);
+
+            ctx.strokeStyle = '#ffcc00';
+            ctx.lineWidth = 14;
+            ctx.beginPath();
+            ctx.arc(128, 128, 98, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(128, 128, 105, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(76, 64, 26, 128);
+            ctx.fillRect(154, 64, 26, 128);
+            ctx.fillRect(76, 115, 104, 26);
+            return new THREE.CanvasTexture(c);
+        }
+
+        // Expressive Cartoon Visor & Faceplate Texture for the 4 Rescue Bots
+        function makeCartoonVisorTexture(visorColor = '#38bdf8', mouthPlateColor = '#e2e8f0', hasSmile = true) {
+            const c = document.createElement('canvas');
+            c.width = 128; c.height = 128;
+            const ctx = c.getContext('2d');
+
+            // Lower Faceplate / Chin
+            ctx.fillStyle = mouthPlateColor;
+            ctx.fillRect(0, 0, 128, 128);
+
+            // Upper Glowing Cartoon Optic Visor Band
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(6, 12, 116, 60);
+            ctx.fillStyle = visorColor;
+            ctx.fillRect(12, 18, 104, 48);
+
+            // Friendly Expressive Cartoon Eye Pupils / Glints
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(40, 40, 11, 0, Math.PI * 2);
+            ctx.arc(88, 40, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Heroic Brow Line
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.moveTo(8, 16);
+            ctx.lineTo(64, 26);
+            ctx.lineTo(120, 16);
+            ctx.lineTo(120, 10);
+            ctx.lineTo(8, 10);
+            ctx.closePath();
+            ctx.fill();
+
+            // Mouth / Faceplate Grille Lines
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 6;
+            if (hasSmile) {
+                ctx.beginPath();
+                ctx.moveTo(34, 92);
+                ctx.quadraticCurveTo(64, 108, 94, 92);
+                ctx.stroke();
+            } else {
+                // Heatwave / Chase heroic breather vents
+                ctx.strokeRect(32, 84, 64, 26);
+                ctx.beginPath();
+                ctx.moveTo(52, 84); ctx.lineTo(52, 110);
+                ctx.moveTo(76, 84); ctx.lineTo(76, 110);
+                ctx.stroke();
+            }
+
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 120, 120);
+            return new THREE.CanvasTexture(c);
+        }
+
+        // Cartoon glossy windshield with diagonal white toon reflection band
+        function makeCartoonWindshieldTexture(tintHex = '#38bdf8') {
+            const c = document.createElement('canvas');
+            c.width = 128; c.height = 128;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, 128, 128);
+            ctx.fillStyle = tintHex;
+            ctx.fillRect(8, 8, 112, 112);
+
+            // Diagonal Cartoon Glass Glint
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+            ctx.beginPath();
+            ctx.moveTo(22, 8);
+            ctx.lineTo(54, 8);
+            ctx.lineTo(24, 120);
+            ctx.lineTo(8, 120);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(66, 8);
+            ctx.lineTo(80, 8);
+            ctx.lineTo(50, 120);
+            ctx.lineTo(36, 120);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(4, 4, 120, 120);
+            return new THREE.CanvasTexture(c);
+        }
+
+        const texHazard = makeHazardStripeTexture();
+        const texGrille = makeGrilleTexture();
+        const texEmblem = makeRescueEmblemTexture();
+        const texHelipad = makeHelipadTexture();
+        const texWindshieldCyan = makeCartoonWindshieldTexture('#38bdf8');
+        const texWindshieldDark = makeCartoonWindshieldTexture('#1e3a8a');
+
+        const texFaceBoulder = makeCartoonVisorTexture('#38bdf8', '#fde047', true);
+        const texFaceHeatwave = makeCartoonVisorTexture('#fde047', '#cbd5e1', false);
+        const texFaceChase = makeCartoonVisorTexture('#38bdf8', '#f8fafc', false);
+        const texFaceBlades = makeCartoonVisorTexture('#38bdf8', '#ffffff', true);
+
+        /***********************************************************************
+         * 3. EXPANDED 3X GRIFFIN ROCK ISLAND TERRAIN & BIOME MATHEMATICS
+         ***********************************************************************/
+        // 3X Larger World: 1500x1500 units, Island Coastline ~ 560 radius
+        const WORLD_SIZE = 1560;
+        const ROAD_RADIUS_BASE = 325;
+
+        function getRoadLoopRadius(theta) {
+            return ROAD_RADIUS_BASE + Math.sin(theta * 2) * 38 + Math.cos(theta * 3) * 24;
+        }
+
+        function getTerrainHeight(x, z) {
+            const r = Math.sqrt(x * x + z * z);
+            const theta = Math.atan2(z, x);
+
+            const coastLimit = 540 + Math.sin(theta * 4) * 35 + Math.cos(theta * 3) * 28;
+            if (r > coastLimit + 55) return -9.0;
+
+            // Rolling island topography
+            let h = 4.2 + Math.sin(x * 0.011) * Math.cos(z * 0.011) * 9.5;
+            h += Math.sin(x * 0.025 + z * 0.02) * 2.8;
+
+            // 1. North-West Volcano & Quarry Peak (-240, -250)
+            const distVolcano = Math.hypot(x + 240, z + 250);
+            if (distVolcano < 210) {
+                const vNorm = (210 - distVolcano) / 210;
+                h += Math.pow(vNorm, 1.55) * 74;
+                // Crater dip at very top
+                if (distVolcano < 34) {
+                    h -= (34 - distVolcano) * 0.45;
+                }
+            }
+
+            // 2. North-East Communications Array Mountain (230, -230)
+            const distCommPeak = Math.hypot(x - 230, z + 230);
+            if (distCommPeak < 175) {
+                const cNorm = (175 - distCommPeak) / 175;
+                h += Math.pow(cNorm, 1.45) * 58;
+                // Flat plateau on top for Helicopter landing & array
+                if (distCommPeak < 28) {
+                    h = 56;
+                }
+            }
+
+            // 3. East Lighthouse Peninsula Cliff (370, 50)
+            const distCliff = Math.hypot(x - 370, z - 50);
+            if (distCliff < 120) {
+                h += Math.pow((120 - distCliff) / 120, 1.4) * 26;
+            }
+
+            // 4. Flatten Rescue Bots HQ & Griffin Town Plaza (around 0, 0)
+            const distTown = Math.hypot(x, z);
+            if (distTown < 135) {
+                const flatFactor = Math.max(0, Math.min(1, (distTown - 88) / 47));
+                h = h * flatFactor + 4.5 * (1 - flatFactor);
+            }
+
+            // 5. Flatten South Harbor Cargo Port (around 0, 355)
+            const distHarbor = Math.hypot(x, z - 355);
+            if (distHarbor < 95) {
+                const flatFactor = Math.max(0, Math.min(1, (distHarbor - 55) / 40));
+                h = h * flatFactor + 2.8 * (1 - flatFactor);
+            }
+
+            // Carve Coastal Highway Loop & Central Avenue
+            const roadR = getRoadLoopRadius(theta);
+            const distFromRoad = Math.abs(r - roadR);
+            if (distFromRoad < 18) {
+                const roadBlend = Math.max(0, Math.min(1, (distFromRoad - 9.5) / 8.5));
+                const idealRoadH = Math.max(3.4, h * 0.52 + 2.2);
+                h = h * roadBlend + idealRoadH * (1 - roadBlend);
+            }
+
+            // Smooth sandy beach slope into ocean
+            if (r > coastLimit - 38) {
+                const t = (r - (coastLimit - 38)) / 90;
+                const clampedT = Math.max(0, Math.min(1, t));
+                const smoothT = clampedT * clampedT * (3 - 2 * clampedT);
+                h = h * (1 - smoothT) + (-9.0) * smoothT;
+            }
+
+            return h;
+        }
+
+        function isPointOnRoad(x, z) {
+            const r = Math.sqrt(x * x + z * z);
+            const theta = Math.atan2(z, x);
+            const roadR = getRoadLoopRadius(theta);
+            if (Math.abs(r - roadR) < 9.5) return true;
+            // North-South Central Avenue from HQ (0,-40) to South Harbor (0, 360)
+            if (Math.abs(x) < 9.0 && z > -65 && z < 365) return true;
+            // East-West Crossroad through Griffin Town
+            if (Math.abs(z - 25) < 8.5 && x > -320 && x < 340) return true;
+            return false;
+        }
+
+        function getZoneName(x, z) {
+            if (Math.hypot(x, z + 38) < 62) return "RESCUE BOTS HQ";
+            if (Math.hypot(x, z - 25) < 95) return "GRIFFIN TOWN";
+            if (Math.hypot(x, z - 355) < 95) return "HARBOR CARGO DOCKS";
+            if (Math.hypot(x - 370, z - 50) < 110) return "LIGHTHOUSE CLIFF";
+            if (Math.hypot(x + 240, z + 250) < 175) return "VOLCANO QUARRY";
+            if (Math.hypot(x - 230, z + 230) < 155) return "SKY ARRAY PEAK";
+            return "COASTAL HIGHWAY";
+        }
+
+        /***********************************************************************
+         * 4. THREE.JS SCENE, RENDERER & LIGHTING
+         ***********************************************************************/
+        const canvas = document.getElementById('game-canvas');
+        const renderer = new THREE.WebGLRenderer({
+            canvas,
+            antialias: true,
+            powerPreference: 'high-performance'
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x4cc9f0);
+        scene.fog = new THREE.FogExp2(0x4cc9f0, 0.00075);
+
+        const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.6, 1450);
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x4d7c0f, 0.72);
+        scene.add(hemiLight);
+
+        const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.15);
+        sunLight.position.set(220, 340, 180);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 40;
+        sunLight.shadow.camera.far = 950;
+        const shadowD = 380;
+        sunLight.shadow.camera.left = -shadowD;
+        sunLight.shadow.camera.right = shadowD;
+        sunLight.shadow.camera.top = shadowD;
+        sunLight.shadow.camera.bottom = -shadowD;
+        sunLight.shadow.bias = -0.0005;
+        scene.add(sunLight);
+
+        /***********************************************************************
+         * 5. TERRAIN MESH, RESCUE BOTS HEADQUARTERS & ISLAND LANDMARKS
+         ***********************************************************************/
+        const terrainGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 220, 220);
+        terrainGeo.rotateX(-Math.PI / 2);
+        const posAttr = terrainGeo.attributes.position;
+        const colors = [];
+        const colorTmp = new THREE.Color();
+
+        for (let i = 0; i < posAttr.count; i++) {
+            const vx = posAttr.getX(i);
+            const vz = posAttr.getZ(i);
+            const vy = getTerrainHeight(vx, vz);
+            posAttr.setY(i, vy);
+
+            const distVolcano = Math.hypot(vx + 240, vz + 250);
+            const r = Math.hypot(vx, vz);
+            const theta = Math.atan2(vz, vx);
+            const roadR = getRoadLoopRadius(theta);
+            const distFromLoopCenter = Math.abs(r - roadR);
+
+            // Crisp Saturday-Morning Cartoon Stepped Terrain Palette
+            if (vy < -0.15) {
+                colorTmp.setHex(0xffffff); // Bright Cartoon Shoreline Foam Band
+            } else if (vy < 1.35) {
+                colorTmp.setHex(0xffe066); // Vivid Cartoon Golden Beach Sand
+            } else if (distVolcano < 35 && vy > 48) {
+                colorTmp.setHex(0xff5400); // Cartoon Volcano Lava Orange
+            } else if (
+                distFromLoopCenter < 1.15 ||
+                (Math.abs(vx) < 0.95 && vz > -65 && vz < 365) ||
+                (Math.abs(vz - 25) < 0.95 && vx > -320 && vx < 340)
+            ) {
+                colorTmp.setHex(0xffd60a); // Bold Painted Yellow Highway Centerline
+            } else if (isPointOnRoad(vx, vz)) {
+                colorTmp.setHex(0x3b4252); // Cel-Shaded Cartoon Asphalt Road
+            } else if (Math.hypot(vx, vz + 10) < 75 || Math.hypot(vx, vz - 355) < 58) {
+                colorTmp.setHex(0xcbd5e1); // Bright Cartoon Concrete Plaza
+            } else if (vy > 36) {
+                colorTmp.setHex(0x64748b); // Cool Slate Cartoon Cliff Rock
+            } else if (vy > 18) {
+                colorTmp.setHex(0x38b000); // Vibrant Mid-Highland Cartoon Green
+            } else {
+                // Stepped 2-tone Cartoon Meadow Grass
+                const stepPattern = Math.sin(vx * 0.045) * Math.cos(vz * 0.045) > 0 ? 0x70e000 : 0x55c500;
+                colorTmp.setHex(stepPattern);
+            }
+            colors.push(colorTmp.r, colorTmp.g, colorTmp.b);
+        }
+        terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        terrainGeo.computeVertexNormals();
+
+        const terrainMesh = new THREE.Mesh(
+            terrainGeo,
+            new THREE.MeshToonMaterial({
+                vertexColors: true,
+                gradientMap: toonGrad3
+            })
+        );
+        terrainMesh.receiveShadow = true;
+        scene.add(terrainMesh);
+
+        // Cel-Shaded Cartoon Ocean Water Plane + Animated White Foam Ripples
+        const waterMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(3200, 3200, 32, 32).rotateX(-Math.PI / 2),
+            new THREE.MeshToonMaterial({
+                color: 0x00b4d8,
+                gradientMap: toonGrad3
+            })
+        );
+        waterMesh.position.y = -0.45;
+        scene.add(waterMesh);
+
+        // Cartoon Shoreline Foam Ring around Griffin Rock Island
+        const shorelineFoamRing = new THREE.Mesh(
+            new THREE.RingGeometry(535, 552, 64).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.72, side: THREE.DoubleSide })
+        );
+        shorelineFoamRing.position.y = -0.25;
+        scene.add(shorelineFoamRing);
+
+        const worldColliders = [];
+        const ramps = [];
+
+        // =====================================================================
+        // 5A. ICONIC RESCUE BOTS FIREHOUSE HEADQUARTERS (At X: 0, Z: -45)
+        // =====================================================================
+        const HQ_POS = { x: 0, z: -45 };
+        const HQ_SWAP_PAD = { x: 0, z: -15, r: 12.5 };
+        const hqGroup = new THREE.Group();
+        const hqY = getTerrainHeight(HQ_POS.x, HQ_POS.z);
+        hqGroup.position.set(HQ_POS.x, hqY, HQ_POS.z);
+
+        const matBrickRed = new THREE.MeshToonMaterial({ color: 0xe81e25, gradientMap: toonGrad3 });
+        const matSteel = new THREE.MeshToonMaterial({ color: 0xf1f5f9, gradientMap: toonGrad4 });
+        const matDarkSteel = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
+        const matGlass = new THREE.MeshBasicMaterial({ map: texWindshieldCyan });
+
+        // Main Firehouse 3-Bay Apparatus Hall
+        const hqMainHall = new THREE.Mesh(new THREE.BoxGeometry(38, 15, 24), matBrickRed);
+        hqMainHall.position.set(0, 7.5, 0);
+        hqMainHall.castShadow = true;
+        hqMainHall.receiveShadow = true;
+        hqGroup.add(hqMainHall);
+
+        // White Steel Trim Roof Cornice
+        const hqRoofTrim = new THREE.Mesh(new THREE.BoxGeometry(40, 1.8, 26), matSteel);
+        hqRoofTrim.position.set(0, 15.5, 0);
+        hqGroup.add(hqRoofTrim);
+
+        // 3 Illuminated Vehicle Apparatus Bays on South Front Face (Z = +12.1)
+        [-11, 0, 11].forEach(bayX => {
+            const bayFrame = new THREE.Mesh(new THREE.BoxGeometry(8.6, 10.5, 1.2), matSteel);
+            bayFrame.position.set(bayX, 5.25, 12.0);
+            hqGroup.add(bayFrame);
+
+            const bayInterior = new THREE.Mesh(
+                new THREE.BoxGeometry(7.4, 9.5, 1.4),
+                new THREE.MeshBasicMaterial({ color: 0x0f172a })
+            );
+            bayInterior.position.set(bayX, 4.8, 12.1);
+            hqGroup.add(bayInterior);
+
+            // Overhead bay header light
+            const bayLight = new THREE.Mesh(
+                new THREE.BoxGeometry(6.5, 0.7, 1.5),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+            );
+            bayLight.position.set(bayX, 9.8, 12.15);
+            hqGroup.add(bayLight);
+        });
+
+        // Rescue Bots Emblem Sign above Center Bay
+        const hqSign = new THREE.Mesh(
+            new THREE.BoxGeometry(7.5, 7.5, 0.8),
+            new THREE.MeshBasicMaterial({ map: texEmblem })
+        );
+        hqSign.position.set(0, 16.8, 13.0);
+        hqGroup.add(hqSign);
+
+        // Glass Observation & Command Tower (East Wing)
+        const hqTower = new THREE.Mesh(new THREE.CylinderGeometry(6.5, 7.2, 28, 12), matDarkSteel);
+        hqTower.position.set(15, 14, -4);
+        hqTower.castShadow = true;
+        hqGroup.add(hqTower);
+
+        const hqTowerGlass = new THREE.Mesh(new THREE.CylinderGeometry(6.8, 6.8, 7.5, 12), matGlass);
+        hqTowerGlass.position.set(15, 22, -4);
+        hqGroup.add(hqTowerGlass);
+
+        // Rotating HQ Communications Radar Dish on Tower Roof
+        const hqRadarPivot = new THREE.Group();
+        hqRadarPivot.position.set(15, 29.5, -4);
+        const radarMast = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.9, 3.5, 8), matSteel);
+        hqRadarPivot.add(radarMast);
+        const radarDish = new THREE.Mesh(new THREE.ConeGeometry(4.2, 2.2, 12, 1, true), matSteel);
+        radarDish.rotation.x = Math.PI / 3;
+        radarDish.position.set(0, 2.2, 1.2);
+        hqRadarPivot.add(radarDish);
+        hqGroup.add(hqRadarPivot);
+
+        // Rooftop Helipad for Blades (West Roof Deck, Y = 16.5)
+        const helipadDeck = new THREE.Mesh(
+            new THREE.BoxGeometry(18, 0.6, 18),
+            new THREE.MeshBasicMaterial({ map: texHelipad })
+        );
+        helipadDeck.position.set(-8, 16.5, 0);
+        hqGroup.add(helipadDeck);
+
+        // Glowing Cyan/Gold Character Swap Bay Pad in front of HQ (World Z = -15)
+        const swapPadGroup = new THREE.Group();
+        swapPadGroup.position.set(0, 0.15, 30); // Relative to HQ at Z=-45 -> World Z=-15
+        const swapPadBase = new THREE.Mesh(
+            new THREE.CylinderGeometry(11.5, 12.5, 0.45, 32),
+            new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.7, roughness: 0.3 })
+        );
+        swapPadGroup.add(swapPadBase);
+
+        const swapPadRing = new THREE.Mesh(
+            new THREE.RingGeometry(9.5, 11.4, 32).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide })
+        );
+        swapPadRing.position.y = 0.28;
+        swapPadGroup.add(swapPadRing);
+
+        const swapPadHolo = new THREE.Mesh(
+            new THREE.CylinderGeometry(10.5, 10.5, 5.5, 24, 1, true),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.18, side: THREE.DoubleSide })
+        );
+        swapPadHolo.userData.noOutline = true;
+        swapPadHolo.position.y = 2.8;
+        swapPadGroup.add(swapPadHolo);
+        swapPadRing.userData.noOutline = true;
+        helipadDeck.userData.noOutline = true;
+        hqSign.userData.noOutline = true;
+        hqGroup.add(swapPadGroup);
+
+        // Apply Bold Cartoon Ink Outlines to the Firehouse HQ
+        applyCartoonInkOutlines(hqGroup, 1.03, true);
+
+        scene.add(hqGroup);
+        worldColliders.push({ x: HQ_POS.x, z: HQ_POS.z, r: 19.5 });
+
+        // =====================================================================
+        // 5B. GRIFFIN TOWN BUILDINGS, LIGHTHOUSE, SKY ARRAY & STUNT RAMPS
+        // =====================================================================
+        function createTownBuilding(x, z, w, h, d, roofColor, wallColor, rotY = 0) {
+            const group = new THREE.Group();
+            const gy = getTerrainHeight(x, z);
+            group.position.set(x, gy, z);
+            group.rotation.y = rotY;
+
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(w, h, d),
+                new THREE.MeshToonMaterial({ color: wallColor, gradientMap: toonGrad3 })
+            );
+            body.position.y = h / 2;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+
+            const roof = new THREE.Mesh(
+                new THREE.ConeGeometry(Math.max(w, d) * 0.76, 4.8, 4),
+                new THREE.MeshToonMaterial({ color: roofColor, gradientMap: toonGrad3 })
+            );
+            roof.position.y = h + 2.4;
+            roof.rotation.y = Math.PI / 4;
+            roof.castShadow = true;
+            group.add(roof);
+
+            const winMat = new THREE.MeshBasicMaterial({ map: texWindshieldCyan });
+            const win = new THREE.Mesh(new THREE.BoxGeometry(w * 0.68, h * 0.45, d + 0.25), winMat);
+            win.position.y = h * 0.55;
+            win.userData.noOutline = true;
+            group.add(win);
+
+            applyCartoonInkOutlines(group, 1.04, true);
+
+            scene.add(group);
+            worldColliders.push({ x, z, r: Math.max(w, d) * 0.58 });
+        }
+
+        // Expanded Griffin Town Center (Vibrant TV-Show Cartoon Palette)
+        createTownBuilding(-42, 12, 14, 13, 14, 0x1d4ed8, 0xffffff, 0.1);  // Police Precinct
+        createTownBuilding(42, 12, 15, 14, 14, 0x16a34a, 0xf8fafc, -0.1);  // Doc Greene's Lab
+        createTownBuilding(-45, 52, 12, 10, 12, 0xf97316, 0xfef08a, 0.25); // Town Bakery
+        createTownBuilding(45, 52, 13, 12, 13, 0x9333ea, 0xfaf5ff, -0.2);  // Town Hall & Clock Tower
+        createTownBuilding(-78, 25, 14, 11, 14, 0xe81e25, 0xffffff, 0.05); // Municipal Garage
+        createTownBuilding(78, 25, 14, 15, 14, 0x0284c7, 0xf0f9ff, -0.05); // Griffin Bank
+
+        // Coastal Lighthouse on East Peninsula (370, 50)
+        const lighthouseGroup = new THREE.Group();
+        const lhY = getTerrainHeight(370, 50);
+        lighthouseGroup.position.set(370, lhY, 50);
+        const lhBase = new THREE.Mesh(
+            new THREE.CylinderGeometry(4.5, 6.8, 32, 14),
+            new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad3 })
+        );
+        lhBase.position.y = 16;
+        lhBase.castShadow = true;
+        lighthouseGroup.add(lhBase);
+
+        const lhStripe = new THREE.Mesh(
+            new THREE.CylinderGeometry(5.2, 5.9, 9, 14),
+            new THREE.MeshToonMaterial({ color: 0xe81e25, gradientMap: toonGrad3 })
+        );
+        lhStripe.position.y = 16;
+        lighthouseGroup.add(lhStripe);
+
+        const lhLantern = new THREE.Mesh(
+            new THREE.CylinderGeometry(4.0, 4.0, 5, 12),
+            new THREE.MeshBasicMaterial({ color: 0xffe066 })
+        );
+        lhLantern.position.y = 34.5;
+        lhLantern.userData.noOutline = true;
+        lighthouseGroup.add(lhLantern);
+
+        const lhRoof = new THREE.Mesh(
+            new THREE.ConeGeometry(5.5, 5.5, 14),
+            new THREE.MeshToonMaterial({ color: 0xe81e25, gradientMap: toonGrad3 })
+        );
+        lhRoof.position.y = 39.5;
+        lighthouseGroup.add(lhRoof);
+
+        applyCartoonInkOutlines(lighthouseGroup, 1.045, false);
+
+        const lhBeam = new THREE.Mesh(
+            new THREE.ConeGeometry(12, 75, 14, 1, true),
+            new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.26, side: THREE.DoubleSide })
+        );
+        lhBeam.rotation.z = Math.PI / 2;
+        lhBeam.position.set(37, 34.5, 0);
+        const lhBeamPivot = new THREE.Group();
+        lhBeamPivot.add(lhBeam);
+        lighthouseGroup.add(lhBeamPivot);
+        scene.add(lighthouseGroup);
+        worldColliders.push({ x: 370, z: 50, r: 7.0 });
+
+        // South Harbor Pier & Cargo Crane (0, 395)
+        const pier = new THREE.Mesh(
+            new THREE.BoxGeometry(26, 3.2, 68),
+            new THREE.MeshToonMaterial({ color: 0x9a3412, gradientMap: toonGrad3 })
+        );
+        pier.position.set(0, 1.8, 395);
+        pier.receiveShadow = true;
+        applyCartoonInkOutlines(pier, 1.03, true);
+        scene.add(pier);
+
+        // Sky Array Communications Tower on North-East Peak (230, -230)
+        const arrayGroup = new THREE.Group();
+        const arrY = getTerrainHeight(230, -230);
+        arrayGroup.position.set(230, arrY, -230);
+        const arrTower = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 4.5, 28, 8), matSteel);
+        arrTower.position.y = 14;
+        arrayGroup.add(arrTower);
+        const arrPad = new THREE.Mesh(
+            new THREE.BoxGeometry(16, 0.8, 16),
+            new THREE.MeshBasicMaterial({ map: texHelipad })
+        );
+        arrPad.position.set(-16, 0.4, 0);
+        arrPad.userData.noOutline = true;
+        arrayGroup.add(arrPad);
+        applyCartoonInkOutlines(arrayGroup, 1.04, true);
+        scene.add(arrayGroup);
+        worldColliders.push({ x: 230, z: -230, r: 5.0 });
+
+        // Stunt Ramps
+        function createStuntRamp(x, z, rotY) {
+            const gy = getTerrainHeight(x, z);
+            const ramp = new THREE.Mesh(
+                new THREE.BoxGeometry(11, 1.8, 16),
+                new THREE.MeshToonMaterial({ map: texHazard, gradientMap: toonGrad3 })
+            );
+            ramp.position.set(x, gy + 1.5, z);
+            ramp.rotation.y = rotY;
+            ramp.rotation.x = -0.26;
+            ramp.castShadow = true;
+            applyCartoonInkOutlines(ramp, 1.04, true);
+            scene.add(ramp);
+            ramps.push({ x, z, r: 7.5 });
+        }
+        createStuntRamp(26, 175, 0.15);
+        createStuntRamp(-155, 25, -1.35);
+        createStuntRamp(165, -85, 0.85);
+
+        // Instanced Cel-Shaded Pine Trees + Inverted-Hull Cartoon Outlines (480 Trees)
+        const treeCount = 480;
+        const trunkGeo = new THREE.CylinderGeometry(0.58, 0.88, 4.2, 6);
+        const leavesGeo = new THREE.ConeGeometry(3.5, 9.6, 7);
+
+        const instTrunks = new THREE.InstancedMesh(
+            trunkGeo,
+            new THREE.MeshToonMaterial({ color: 0x7c2d12, gradientMap: toonGrad3 }),
+            treeCount
+        );
+        const instLeaves = new THREE.InstancedMesh(
+            leavesGeo,
+            new THREE.MeshToonMaterial({ color: 0x16a34a, gradientMap: toonGrad3 }),
+            treeCount
+        );
+        // Cartoon black ink silhouette shell for the instanced pine canopies
+        const instLeavesOutline = new THREE.InstancedMesh(
+            leavesGeo,
+            matInkOutline,
+            treeCount
+        );
+        instTrunks.castShadow = true;
+        instLeaves.castShadow = true;
+
+        const dummy = new THREE.Object3D();
+        let placedTrees = 0;
+        for (let attempt = 0; attempt < 2200 && placedTrees < treeCount; attempt++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 95 + Math.random() * 410;
+            const tx = Math.cos(angle) * dist;
+            const tz = Math.sin(angle) * dist;
+            const ty = getTerrainHeight(tx, tz);
+
+            if (ty < 3.0 || ty > 36) continue;
+            if (isPointOnRoad(tx, tz)) continue;
+            if (Math.hypot(tx, tz) < 105) continue;
+            if (Math.hypot(tx, tz - 355) < 65) continue;
+
+            const scale = 0.8 + Math.random() * 0.85;
+            dummy.position.set(tx, ty + 2.0 * scale, tz);
+            dummy.scale.set(scale, scale, scale);
+            dummy.rotation.y = Math.random() * Math.PI;
+            dummy.updateMatrix();
+            instTrunks.setMatrixAt(placedTrees, dummy.matrix);
+
+            dummy.position.set(tx, ty + 6.8 * scale, tz);
+            dummy.updateMatrix();
+            instLeaves.setMatrixAt(placedTrees, dummy.matrix);
+
+            dummy.scale.set(scale * 1.07, scale * 1.05, scale * 1.07);
+            dummy.updateMatrix();
+            instLeavesOutline.setMatrixAt(placedTrees, dummy.matrix);
+
+            worldColliders.push({ x: tx, z: tz, r: 1.4 * scale });
+            placedTrees++;
+        }
+        scene.add(instTrunks);
+        scene.add(instLeaves);
+        scene.add(instLeavesOutline);
+
+        /***********************************************************************
+         * 6. CEL-SHADED TV-ACCURATE ARTICULATED MODELS FOR ALL 4 RESCUE BOTS
+         *    (Boulder, Heatwave, Chase, Blades with Bold Ink Outlines)
+         ***********************************************************************/
+        const matChrome = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGradGlossy });
+        const matGrille = new THREE.MeshBasicMaterial({ map: texGrille });
+        const matTire = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
+        const matCabGlass = new THREE.MeshBasicMaterial({ map: texWindshieldCyan });
+        const matVisorCyan = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        const matVisorGold = new THREE.MeshBasicMaterial({ color: 0xffd60a });
+        const matSirenRed = new THREE.MeshBasicMaterial({ color: 0xff1133 });
+        const matSirenBlue = new THREE.MeshBasicMaterial({ color: 0x1d4ed8 });
+        const matEmblem = new THREE.MeshBasicMaterial({ map: texEmblem });
+        const matHazardMat = new THREE.MeshBasicMaterial({ map: texHazard });
+
+        function createWheelAssembly(radius = 0.72, width = 0.52) {
+            const wg = new THREE.Group();
+            const tire = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius, radius, width, 16).rotateZ(Math.PI / 2),
+                matTire
+            );
+            tire.castShadow = true;
+            wg.add(tire);
+            const rim = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius * 0.54, radius * 0.54, width + 0.05, 12).rotateZ(Math.PI / 2),
+                matChrome
+            );
+            wg.add(rim);
+            return wg;
+        }
+
+        function createLightbar(width = 1.8) {
+            const lb = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(width, 0.16, 0.44), matChrome);
+            lb.add(base);
+            const redPod = new THREE.Mesh(new THREE.BoxGeometry(width * 0.42, 0.26, 0.38), matSirenRed);
+            redPod.position.set(-width * 0.25, 0.13, 0);
+            lb.add(redPod);
+            const bluePod = new THREE.Mesh(new THREE.BoxGeometry(width * 0.42, 0.26, 0.38), matSirenBlue);
+            bluePod.position.set(width * 0.25, 0.13, 0);
+            lb.add(bluePod);
+            return { group: lb, redPod, bluePod };
+        }
+
+        // Master Builder returning an articulated Cel-Shaded + Ink-Outlined rig for any of the 4 Bots
+        function buildRescueBotModel(botType) {
+            const root = new THREE.Group();
+            const chassis = new THREE.Group();
+            root.add(chassis);
+
+            const parts = {
+                botType,
+                root,
+                chassis,
+                torso: new THREE.Group(),
+                head: new THREE.Group(),
+                frontAttachment: new THREE.Group(), // Dozer blade / Bumper / Cockpit nose
+                backAttachment: new THREE.Group(),  // Fire ladder & water cannon / Helicopter rotors / Exhaust
+                leftArm: new THREE.Group(),
+                rightArm: new THREE.Group(),
+                leftLeg: new THREE.Group(),
+                rightLeg: new THREE.Group(),
+                wheels: [],
+                rotors: null,
+                tailRotor: null,
+                lightbar: null,
+                nozzleTip: new THREE.Object3D()
+            };
+
+            chassis.add(parts.torso);
+            chassis.add(parts.head);
+            chassis.add(parts.frontAttachment);
+            chassis.add(parts.backAttachment);
+            chassis.add(parts.leftArm);
+            chassis.add(parts.rightArm);
+            chassis.add(parts.leftLeg);
+            chassis.add(parts.rightLeg);
+
+            if (botType === 'BOULDER') {
+                // TV Show Boulder: Vibrant Chartreuse-Lime Green (#76d31b), Construction Yellow (#ffcc00) & Silver Trim
+                const matGreen = new THREE.MeshToonMaterial({ color: 0x76d31b, gradientMap: toonGrad4 });
+                const matYellow = new THREE.MeshToonMaterial({ color: 0xffcc00, gradientMap: toonGrad4 });
+                const matFace = new THREE.MeshBasicMaterial({ map: texFaceBoulder });
+
+                // Stocky Cartoon Torso & Armored Dozer Cab
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.75, 2.48, 2.1), matGreen);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                // Silver-White TV Show Chest Stripe
+                const chestStripe = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.42, 2.14), matChrome);
+                chestStripe.position.set(0, -0.35, 0);
+                parts.torso.add(chestStripe);
+
+                const cabFrame = new THREE.Mesh(new THREE.BoxGeometry(2.15, 1.2, 2.18), matCabGlass);
+                cabFrame.position.set(0, 0.46, 0.05);
+                cabFrame.userData.noOutline = true;
+                parts.torso.add(cabFrame);
+
+                const emblemPlate = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.88, 2.22), matEmblem);
+                emblemPlate.position.set(0, -0.45, 0);
+                emblemPlate.userData.noOutline = true;
+                parts.torso.add(emblemPlate);
+
+                // Dual Chrome Smoke Stacks
+                [-1.02, 1.02].forEach(sx => {
+                    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 2.3, 10), matChrome);
+                    stack.position.set(sx, 1.28, -0.88);
+                    parts.torso.add(stack);
+                });
+
+                // Articulated Head with Friendly TV-Show Visor & Construction Hardhat Crest
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.24, 1.32), matGreen);
+                helm.castShadow = true;
+                parts.head.add(helm);
+                const brim = new THREE.Mesh(new THREE.BoxGeometry(1.54, 0.26, 1.48), matYellow);
+                brim.position.set(0, 0.52, 0.12);
+                parts.head.add(brim);
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.96, 1.36), matFace);
+                faceMesh.position.set(0, -0.04, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Heavy Curved Front Bulldozer Blade with Bold Hazard Stripes & Hydraulic Pistons
+                const bladeCurved = new THREE.Mesh(new THREE.BoxGeometry(4.3, 1.6, 0.68), matYellow);
+                bladeCurved.castShadow = true;
+                parts.frontAttachment.add(bladeCurved);
+                const bladeHazard = new THREE.Mesh(new THREE.BoxGeometry(4.35, 0.48, 0.74), matHazardMat);
+                bladeHazard.position.set(0, 0.46, 0.04);
+                bladeHazard.userData.noOutline = true;
+                parts.frontAttachment.add(bladeHazard);
+                const bladeEdge = new THREE.Mesh(new THREE.BoxGeometry(4.38, 0.36, 0.86), matChrome);
+                bladeEdge.position.set(0, -0.66, 0.18);
+                parts.frontAttachment.add(bladeEdge);
+                [-1.3, 1.3].forEach(px => {
+                    const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.6, 8).rotateX(Math.PI / 2), matChrome);
+                    piston.position.set(px, -0.1, -0.75);
+                    parts.frontAttachment.add(piston);
+                });
+
+                // Chunky Cartoon Arms with Heavy Caterpillar Treads & Yellow Rollers
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.18, 1.24), matGreen);
+                    shoulder.castShadow = true;
+                    armG.add(shoulder);
+
+                    const trackPod = new THREE.Mesh(new THREE.BoxGeometry(0.76, 2.8, 1.6), matTire);
+                    trackPod.position.set(side * 0.5, -0.55, 0);
+                    trackPod.castShadow = true;
+                    armG.add(trackPod);
+
+                    [-0.8, 0, 0.8].forEach(ry => {
+                        const roller = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.4, 0.4, 0.86, 10).rotateZ(Math.PI / 2),
+                            matYellow
+                        );
+                        roller.position.set(side * 0.5, -0.55 + ry, 0);
+                        armG.add(roller);
+                    });
+
+                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.28, 1.15), matYellow);
+                    forearm.position.set(0, -1.35, 0.12);
+                    armG.add(forearm);
+                });
+
+                // Heavy Legs
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.5, 1.28), matTire);
+                    thigh.position.y = -0.55;
+                    legG.add(thigh);
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.26, 1.52, 1.58), matGreen);
+                    shin.position.set(0, -1.5, 0.12);
+                    shin.castShadow = true;
+                    legG.add(shin);
+                    const foot = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.62, 2.05), matYellow);
+                    foot.position.set(0, -2.15, 0.32);
+                    legG.add(foot);
+                });
+            }
+
+            else if (botType === 'HEATWAVE') {
+                // TV Show Heatwave: Vivid Fire-Engine Red (#e81e25), Gold Accent (#ffcc00) & Silver Faceplate
+                const matRed = new THREE.MeshToonMaterial({ color: 0xe81e25, gradientMap: toonGrad4 });
+                const matCrimson = new THREE.MeshToonMaterial({ color: 0xb91c1c, gradientMap: toonGrad4 });
+                const matGold = new THREE.MeshToonMaterial({ color: 0xffcc00, gradientMap: toonGrad4 });
+                const matFace = new THREE.MeshBasicMaterial({ map: texFaceHeatwave });
+
+                // Broad Fire-Engine Cab Chest
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.52, 2.18), matRed);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                // Yellow Fire-Stripe Waist Trim
+                const goldStripe = new THREE.Mesh(new THREE.BoxGeometry(2.84, 0.36, 2.2), matGold);
+                goldStripe.position.set(0, -0.95, 0);
+                parts.torso.add(goldStripe);
+
+                const windshield = new THREE.Mesh(new THREE.BoxGeometry(2.38, 1.02, 2.24), matCabGlass);
+                windshield.position.set(0, 0.55, 0.04);
+                windshield.userData.noOutline = true;
+                parts.torso.add(windshield);
+
+                const grille = new THREE.Mesh(new THREE.BoxGeometry(1.68, 1.05, 2.26), matGrille);
+                grille.position.set(0, -0.52, 0.04);
+                grille.userData.noOutline = true;
+                parts.torso.add(grille);
+
+                const badge = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.75, 2.3), matEmblem);
+                badge.position.set(0, -0.48, 0.05);
+                badge.userData.noOutline = true;
+                parts.torso.add(badge);
+
+                // Emergency Lightbar on Cab Roof
+                const lb = createLightbar(2.15);
+                lb.group.position.set(0, 1.4, 0.35);
+                parts.torso.add(lb.group);
+                parts.lightbar = lb;
+
+                // Commander Helmet Head with Gold Fire-Shield Crest & Amber Visor
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.28, 1.32), matRed);
+                helm.castShadow = true;
+                parts.head.add(helm);
+                const crest = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.54, 1.5), matGold);
+                crest.position.set(0, 0.66, 0.05);
+                parts.head.add(crest);
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.96, 1.38), matFace);
+                faceMesh.position.set(0, -0.04, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Front Heavy Chrome Fire Bumper
+                const bumper = new THREE.Mesh(new THREE.BoxGeometry(3.25, 0.68, 0.68), matChrome);
+                bumper.castShadow = true;
+                parts.frontAttachment.add(bumper);
+
+                // Back Articulated Fire Ladder Turret & High-Pressure Water Cannon
+                const turretBase = new THREE.Mesh(new THREE.CylinderGeometry(0.88, 0.98, 0.72, 12), matChrome);
+                parts.backAttachment.add(turretBase);
+
+                const ladderBoom = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.68, 4.25), matChrome);
+                ladderBoom.position.set(0, 0.68, -0.6);
+                ladderBoom.castShadow = true;
+                parts.backAttachment.add(ladderBoom);
+
+                const waterMonitor = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 1.45, 10).rotateX(Math.PI / 2), matGold);
+                waterMonitor.position.set(0, 1.18, 1.35);
+                parts.backAttachment.add(waterMonitor);
+
+                parts.nozzleTip.position.set(0, 1.18, 2.25);
+                parts.backAttachment.add(parts.nozzleTip);
+
+                // Broad Shoulders with Front Wheels & Hose Reels
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.32, 1.38), matRed);
+                    shoulder.castShadow = true;
+                    armG.add(shoulder);
+
+                    const wheel = createWheelAssembly(0.76, 0.52);
+                    wheel.position.set(side * 0.58, -0.35, 0.15);
+                    armG.add(wheel);
+                    parts.wheels.push(wheel);
+
+                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.38, 1.18), matCrimson);
+                    forearm.position.set(0, -1.4, 0.1);
+                    armG.add(forearm);
+                });
+
+                // Rear Dual-Axle Fire Engine Legs
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.5, 1.32), matChrome);
+                    thigh.position.y = -0.55;
+                    legG.add(thigh);
+
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.24, 1.56, 1.78), matRed);
+                    shin.position.set(0, -1.5, 0.08);
+                    shin.castShadow = true;
+                    legG.add(shin);
+
+                    [-0.45, 0.45].forEach(wz => {
+                        const w = createWheelAssembly(0.74, 0.5);
+                        w.position.set(side * 0.62, -1.55, wz);
+                        legG.add(w);
+                        parts.wheels.push(w);
+                    });
+
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.58, 1.98), matCrimson);
+                    boot.position.set(0, -2.15, 0.25);
+                    legG.add(boot);
+                });
+            }
+
+            else if (botType === 'CHASE') {
+                // TV Show Chase: Deep Police Cobalt Blue (#1648b8), Crisp White Doors, Gold Police Badge
+                const matBlue = new THREE.MeshToonMaterial({ color: 0x1648b8, gradientMap: toonGrad4 });
+                const matWhite = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad4 });
+                const matBlack = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
+                const matGold = new THREE.MeshToonMaterial({ color: 0xffcc00, gradientMap: toonGrad4 });
+                const matFace = new THREE.MeshBasicMaterial({ map: texFaceChase });
+
+                // Sleek Police Cruiser Hood/Cab Chest
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.24, 1.94), matBlue);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                const whiteDoors = new THREE.Mesh(new THREE.BoxGeometry(2.46, 0.98, 1.3), matWhite);
+                whiteDoors.position.set(0, -0.15, -0.1);
+                parts.torso.add(whiteDoors);
+
+                const windshield = new THREE.Mesh(new THREE.BoxGeometry(1.98, 0.9, 2.02), matCabGlass);
+                windshield.position.set(0, 0.48, 0.05);
+                windshield.userData.noOutline = true;
+                parts.torso.add(windshield);
+
+                const badge = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.72, 2.06), matEmblem);
+                badge.position.set(0, -0.45, 0.02);
+                badge.userData.noOutline = true;
+                parts.torso.add(badge);
+
+                // Police Roof Lightbar
+                const lb = createLightbar(1.88);
+                lb.group.position.set(0, 1.25, 0.1);
+                parts.torso.add(lb.group);
+                parts.lightbar = lb;
+
+                // Police Officer Helmet & Cartoon Cyan Optics
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.22, 1.18, 1.22), matBlue);
+                helm.castShadow = true;
+                parts.head.add(helm);
+                const capVisor = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.22, 1.38), matGold);
+                capVisor.position.set(0, 0.42, 0.12);
+                parts.head.add(capVisor);
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.9, 1.28), matFace);
+                faceMesh.position.set(0, -0.04, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Police Push-Bar Bumper & Grille
+                const pushBar = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.78, 0.58), matBlack);
+                pushBar.castShadow = true;
+                parts.frontAttachment.add(pushBar);
+
+                // Door-Wing Shoulders & Front Interceptor Wheels
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.18, 1.24), matBlue);
+                    shoulder.castShadow = true;
+                    armG.add(shoulder);
+
+                    // Angled Police Door Wing
+                    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.7, 1.18), matWhite);
+                    wing.position.set(side * 0.64, 0.45, -0.25);
+                    wing.rotation.z = side * -0.35;
+                    armG.add(wing);
+
+                    const wheel = createWheelAssembly(0.68, 0.46);
+                    wheel.position.set(side * 0.52, -0.35, 0.15);
+                    armG.add(wheel);
+                    parts.wheels.push(wheel);
+
+                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.86, 1.28, 1.02), matWhite);
+                    forearm.position.set(0, -1.3, 0.1);
+                    armG.add(forearm);
+                });
+
+                // Agile Interceptor Legs & Rear Spoiler/Wheels
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.45, 1.14), matWhite);
+                    thigh.position.y = -0.5;
+                    legG.add(thigh);
+
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.48, 1.48), matBlue);
+                    shin.position.set(0, -1.45, 0.1);
+                    shin.castShadow = true;
+                    legG.add(shin);
+
+                    const wheel = createWheelAssembly(0.68, 0.46);
+                    wheel.position.set(side * 0.55, -1.5, 0);
+                    legG.add(wheel);
+                    parts.wheels.push(wheel);
+
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.54, 1.78), matBlack);
+                    boot.position.set(0, -2.1, 0.25);
+                    legG.add(boot);
+                });
+            }
+
+            else if (botType === 'BLADES') {
+                // TV Show Blades: Crisp White, Vivid Rescue Orange (#ff6414) & Bright Cyan Cockpit
+                const matWhite = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad4 });
+                const matOrange = new THREE.MeshToonMaterial({ color: 0xff6414, gradientMap: toonGrad4 });
+                const matFace = new THREE.MeshBasicMaterial({ map: texFaceBlades });
+
+                // Twin-Turbine Helicopter Fuselage Torso
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.35, 2.28, 2.14), matWhite);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                const orangeStripe = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.78, 2.18), matOrange);
+                orangeStripe.position.set(0, 0.15, 0);
+                parts.torso.add(orangeStripe);
+
+                const badge = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.72, 2.24), matEmblem);
+                badge.position.set(0, -0.45, 0.02);
+                badge.userData.noOutline = true;
+                parts.torso.add(badge);
+
+                // Flight Helmet Head with Aviator Visor
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.26, 1.2, 1.26), matOrange);
+                helm.castShadow = true;
+                parts.head.add(helm);
+                const earPods = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.5, 0.6), matWhite);
+                earPods.position.set(0, 0.05, 0);
+                parts.head.add(earPods);
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.92, 1.32), matFace);
+                faceMesh.position.set(0, -0.02, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Aerodynamic Helicopter Bubble Cockpit Nose (Chest/Front)
+                const cockpitNose = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.38, 1.78), matOrange);
+                cockpitNose.castShadow = true;
+                parts.frontAttachment.add(cockpitNose);
+                const bubbleGlass = new THREE.Mesh(new THREE.BoxGeometry(1.94, 0.98, 1.86), matCabGlass);
+                bubbleGlass.position.set(0, 0.22, 0.08);
+                bubbleGlass.userData.noOutline = true;
+                parts.frontAttachment.add(bubbleGlass);
+
+                // Spinning 4-Blade Main Rotor Assembly & Landing Skids on Back/Top
+                const rotorMast = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 1.2, 10), matChrome);
+                rotorMast.position.set(0, 0.9, 0);
+                parts.backAttachment.add(rotorMast);
+
+                const rotorHub = new THREE.Group();
+                rotorHub.position.set(0, 1.5, 0);
+                const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.32, 12), matTire);
+                rotorHub.add(cap);
+                for (let b = 0; b < 4; b++) {
+                    const blade = new THREE.Mesh(new THREE.BoxGeometry(9.8, 0.1, 0.45), matTire);
+                    blade.rotation.y = (b * Math.PI) / 2;
+                    rotorHub.add(blade);
+                    const tip = new THREE.Mesh(new THREE.BoxGeometry(9.85, 0.11, 0.16), matVisorGold);
+                    tip.rotation.y = (b * Math.PI) / 2;
+                    tip.userData.noOutline = true;
+                    rotorHub.add(tip);
+                }
+                parts.backAttachment.add(rotorHub);
+                parts.rotors = rotorHub;
+
+                // Arms with Rescue Winch Hook & Side Turbines
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.02, 1.18, 1.28), matOrange);
+                    shoulder.castShadow = true;
+                    armG.add(shoulder);
+
+                    const turbine = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 1.65, 10).rotateX(Math.PI / 2), matChrome);
+                    turbine.position.set(side * 0.46, 0.25, -0.1);
+                    armG.add(turbine);
+
+                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.88, 1.32, 1.08), matWhite);
+                    forearm.position.set(0, -1.3, 0.1);
+                    armG.add(forearm);
+                });
+
+                // Legs that form the Helicopter Tail Boom, Vertical Fin & Landing Skids
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.88, 1.48, 1.18), matWhite);
+                    thigh.position.y = -0.5;
+                    legG.add(thigh);
+
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.68, 1.38), matOrange);
+                    shin.position.set(0, -1.5, 0.08);
+                    shin.castShadow = true;
+                    legG.add(shin);
+
+                    const skid = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 3.6, 8).rotateX(Math.PI / 2), matChrome);
+                    skid.position.set(side * 0.55, -2.25, 0.35);
+                    legG.add(skid);
+
+                    if (side === 1) {
+                        const tailR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.85, 0.26), matTire);
+                        tailR.position.set(0.65, -1.9, -0.6);
+                        legG.add(tailR);
+                        parts.tailRotor = tailR;
+                    }
+                });
+            }
+
+            // Apply Saturday-Morning Cartoon Black Ink Outlines & Panel Creases to the entire Bot Rig!
+            applyCartoonInkOutlines(root, 1.06, true);
+
+            return parts;
+        }
+
+        // Build all 4 Rescue Bot Rigs!
+        const botRigs = {
+            BOULDER: buildRescueBotModel('BOULDER'),
+            HEATWAVE: buildRescueBotModel('HEATWAVE'),
+            CHASE: buildRescueBotModel('CHASE'),
+            BLADES: buildRescueBotModel('BLADES')
+        };
+
+        // Add all 4 Rigs to the Scene (1 Active Player, 3 Parked at HQ Command Center)
+        Object.values(botRigs).forEach(r => scene.add(r.root));
+
+        // HQ Parking Spots for the 3 Inactive Rescue Bots
+        const HQ_PARKING_SLOTS = {
+            BOULDER:  { x: -11, y: hqY + 0.1, z: -38, rotY: 0, morph: 1.0 },
+            HEATWAVE: { x: 0,   y: hqY + 0.1, z: -38, rotY: 0, morph: 1.0 },
+            CHASE:    { x: 11,  y: hqY + 0.1, z: -38, rotY: 0, morph: 1.0 },
+            BLADES:   { x: -8,  y: hqY + 16.8, z: -45, rotY: 0.4, morph: 1.0 } // Parked on Rooftop Helipad!
+        };
+
+        // Universal Rig Joint Interpolator (Handles Bot Mode m=0 <-> Vehicle Mode m=1)
+        function applyBotRigMorph(rig, m, walkCycle, speed, smashTimer, now) {
+            const walkSin = Math.sin(walkCycle);
+            const isMoving = Math.abs(speed) > 0.5;
+            const smashOffset = smashTimer > 0 ? Math.sin((smashTimer / 0.45) * Math.PI) : 0;
+
+            // 1. Torso
+            rig.torso.position.set(
+                0,
+                THREE.MathUtils.lerp(3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : 0) - smashOffset * 0.5, 1.65, m),
+                THREE.MathUtils.lerp(0, 0.25, m)
+            );
+            rig.torso.rotation.x = THREE.MathUtils.lerp(smashOffset * 0.4, 0, m);
+
+            // 2. Head retracts into vehicle cab
+            rig.head.position.set(
+                0,
+                THREE.MathUtils.lerp(5.45 - smashOffset * 0.35, 1.95, m),
+                THREE.MathUtils.lerp(0.06, 0.15, m)
+            );
+            rig.head.scale.setScalar(THREE.MathUtils.lerp(1.0, 0.25, m));
+
+            // 3. Front Attachment (Dozer Blade / Fire Bumper / Police Push-bar / Copter Nose)
+            if (rig.botType === 'BOULDER') {
+                rig.frontAttachment.position.set(
+                    0,
+                    THREE.MathUtils.lerp(3.4 - smashOffset * 1.1, 0.92, m),
+                    THREE.MathUtils.lerp(1.25 + smashOffset * 0.9, 2.75, m)
+                );
+                rig.frontAttachment.rotation.x = THREE.MathUtils.lerp(-0.2, 0.05, m);
+            } else if (rig.botType === 'BLADES') {
+                rig.frontAttachment.position.set(
+                    0,
+                    THREE.MathUtils.lerp(3.65, 1.55, m),
+                    THREE.MathUtils.lerp(0.85, 2.05, m)
+                );
+            } else {
+                rig.frontAttachment.position.set(
+                    0,
+                    THREE.MathUtils.lerp(2.75, 0.72, m),
+                    THREE.MathUtils.lerp(1.05, 2.45, m)
+                );
+            }
+
+            // 4. Back Attachment (Fire Ladder & Water Cannon / Helicopter Rotors)
+            if (rig.botType === 'HEATWAVE') {
+                rig.backAttachment.position.set(
+                    0,
+                    THREE.MathUtils.lerp(4.2, 2.55, m),
+                    THREE.MathUtils.lerp(-1.25, -1.15, m)
+                );
+                rig.backAttachment.rotation.x = THREE.MathUtils.lerp(-0.35, 0, m);
+            } else if (rig.botType === 'BLADES') {
+                rig.backAttachment.position.set(
+                    0,
+                    THREE.MathUtils.lerp(4.4, 2.15, m),
+                    THREE.MathUtils.lerp(-1.1, 0.1, m)
+                );
+                rig.backAttachment.rotation.x = THREE.MathUtils.lerp(-1.25, 0, m);
+                if (rig.rotors) {
+                    const spinRate = m > 0.3 ? 0.032 : 0.004;
+                    rig.rotors.rotation.y = now * spinRate;
+                    const bladeScale = THREE.MathUtils.lerp(0.48, 1.0, m);
+                    rig.rotors.scale.set(bladeScale, 1, bladeScale);
+                }
+            }
+
+            // 5. Left & Right Arms
+            const armSwingL = isMoving ? walkSin * 0.65 : 0;
+            const armSwingR = isMoving ? -walkSin * 0.65 : 0;
+            rig.leftArm.position.set(
+                THREE.MathUtils.lerp(-1.75, -1.48, m),
+                THREE.MathUtils.lerp(4.2, 1.25, m),
+                THREE.MathUtils.lerp(0, 0.65, m)
+            );
+            rig.rightArm.position.set(
+                THREE.MathUtils.lerp(1.75, 1.48, m),
+                THREE.MathUtils.lerp(4.2, 1.25, m),
+                THREE.MathUtils.lerp(0, 0.65, m)
+            );
+            rig.leftArm.rotation.x = THREE.MathUtils.lerp(armSwingL - smashOffset * 1.4, Math.PI / 2, m);
+            rig.rightArm.rotation.x = THREE.MathUtils.lerp(armSwingR - smashOffset * 1.4, Math.PI / 2, m);
+
+            // 6. Left & Right Legs
+            rig.leftLeg.position.set(
+                THREE.MathUtils.lerp(-0.78, -1.05, m),
+                THREE.MathUtils.lerp(2.35, 1.15, m),
+                THREE.MathUtils.lerp(0, -1.25, m)
+            );
+            rig.rightLeg.position.set(
+                THREE.MathUtils.lerp(0.78, 1.05, m),
+                THREE.MathUtils.lerp(2.35, 1.15, m),
+                THREE.MathUtils.lerp(0, -1.25, m)
+            );
+            rig.leftLeg.rotation.x = THREE.MathUtils.lerp(-armSwingL * 0.85, -Math.PI / 2, m);
+            rig.rightLeg.rotation.x = THREE.MathUtils.lerp(-armSwingR * 0.85, -Math.PI / 2, m);
+
+            // Spin Wheels & Flash Emergency Lightbars
+            rig.wheels.forEach(w => {
+                w.rotation.x += speed * 0.016;
+            });
+            if (rig.tailRotor) {
+                rig.tailRotor.rotation.x = now * 0.04;
+            }
+            if (rig.lightbar) {
+                const flash = Math.floor(now / 140) % 2 === 0;
+                rig.lightbar.redPod.scale.setScalar(flash ? 1.18 : 0.92);
+                rig.lightbar.bluePod.scale.setScalar(!flash ? 1.18 : 0.92);
+            }
+        }
+
+        /***********************************************************************
+         * 7. ACTIVE PLAYER CONTROLLER & SEAMLESS HQ CHARACTER SWITCHING
+         ***********************************************************************/
+        const BOT_METADATA = {
+            BOULDER: {
+                name: 'BOULDER',
+                vehName: 'BULLDOZER',
+                colorClass: 'text-lime-300',
+                dotClass: 'bg-lime-400',
+                botActionIcon: '🔨',
+                botActionLabel: 'QUAKE SMASH',
+                vehActionIcon: '🚜',
+                vehActionLabel: 'BLADE RAM'
+            },
+            HEATWAVE: {
+                name: 'HEATWAVE',
+                vehName: 'FIRE ENGINE',
+                colorClass: 'text-rose-300',
+                dotClass: 'bg-rose-500',
+                botActionIcon: '🌊',
+                botActionLabel: 'WATER CANNON',
+                vehActionIcon: '🚒',
+                vehActionLabel: 'HYDRO DELUGE'
+            },
+            CHASE: {
+                name: 'CHASE',
+                vehName: 'POLICE CRUISER',
+                colorClass: 'text-sky-300',
+                dotClass: 'bg-sky-400',
+                botActionIcon: '⚡',
+                botActionLabel: 'EMP SHOCKWAVE',
+                vehActionIcon: '🚨',
+                vehActionLabel: 'SIREN NITRO'
+            },
+            BLADES: {
+                name: 'BLADES',
+                vehName: 'HELICOPTER',
+                colorClass: 'text-amber-300',
+                dotClass: 'bg-amber-400',
+                botActionIcon: '🌪️',
+                botActionLabel: 'ROTOR CYCLONE',
+                vehActionIcon: '🛟',
+                vehActionLabel: 'AIRLIFT PULSE'
+            }
+        };
+
+        const player = {
+            botType: 'BOULDER',
+            mode: 'BOT',          // 'BOT' or 'VEHICLE'
+            morph: 0,
+            targetMorph: 0,
+            pos: new THREE.Vector3(0, 5, -15), // Starts on the Rescue HQ Swap Pad
+            heading: 0,
+            speed: 0,
+            vy: 0,
+            flightAlt: 0,         // Vertical flight offset when Blades is in Helicopter Mode
+            ascendInput: 0,       // +1 Ascend, -1 Descend
+            grounded: true,
+            walkCycle: 0,
+            smashTimer: 0,
+            boostTimer: 0,
+            waterTimer: 0,
+            sonarTimer: 0,
+            autoActionCooldown: 0,
+            waypoint: new THREE.Vector3(0, 5, -15),
+            hasWaypoint: false
+        };
+
+        // Cheerful 3D Target Waypoint Marker (Pulsing Ring + Bouncing Arrow + Light Beam)
+        const waypointGroup = new THREE.Group();
+        waypointGroup.visible = false;
+
+        const wpOuterRing = new THREE.Mesh(
+            new THREE.RingGeometry(2.2, 3.3, 32).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
+        );
+        wpOuterRing.position.y = 0.35;
+        waypointGroup.add(wpOuterRing);
+
+        const wpInnerDisk = new THREE.Mesh(
+            new THREE.CircleGeometry(1.5, 24).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.65, side: THREE.DoubleSide })
+        );
+        wpInnerDisk.position.y = 0.32;
+        waypointGroup.add(wpInnerDisk);
+
+        const wpArrowCone = new THREE.Mesh(
+            new THREE.ConeGeometry(1.45, 3.2, 12).rotateX(Math.PI),
+            new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+        );
+        wpArrowCone.position.y = 4.2;
+        waypointGroup.add(wpArrowCone);
+
+        const wpBeam = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.45, 1.3, 18, 12, 1, true),
+            new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+        );
+        wpBeam.position.y = 9.0;
+        waypointGroup.add(wpBeam);
+
+        scene.add(waypointGroup);
+
+        // Headlight Spotlight attached to active player
+        const headlight = new THREE.SpotLight(0xfffbeb, 0, 95, Math.PI / 3.5, 0.45, 1.2);
+        scene.add(headlight);
+        scene.add(headlight.target);
+
+        // Sonar / EMP Shockwave Ring Mesh
+        const sonarGeo = new THREE.RingGeometry(1.4, 2.2, 36).rotateX(-Math.PI / 2);
+        const sonarMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0, side: THREE.DoubleSide });
+        const sonarMesh = new THREE.Mesh(sonarGeo, sonarMat);
+        scene.add(sonarMesh);
+
+        function syncHUDToActiveBot() {
+            const meta = BOT_METADATA[player.botType];
+            const isVeh = player.mode === 'VEHICLE';
+            const modeLabel = isVeh ? `${meta.vehName} MODE` : `BOT MODE`;
+
+            document.getElementById('mode-readout').textContent = `${meta.name} • ${modeLabel}`;
+            document.getElementById('mode-readout').className = `text-xs sm:text-sm font-bold tracking-wide uppercase ${meta.colorClass}`;
+            document.getElementById('mode-dot').className = `w-2.5 h-2.5 rounded-full ${meta.dotClass}`;
+            document.getElementById('transform-sub').textContent = isVeh ? 'TO ROBOT' : `TO ${meta.vehName}`;
+
+            document.getElementById('action-icon').textContent = isVeh ? meta.vehActionIcon : meta.botActionIcon;
+            document.getElementById('action-label').textContent = isVeh ? meta.vehActionLabel : meta.botActionLabel;
+
+            // Helicopter Flight UI vs Ground Bot UI
+            const isFlyingCopter = (player.botType === 'BLADES' && isVeh);
+            const btnDescend = document.getElementById('btn-descend');
+            const altSep = document.getElementById('altitude-sep');
+            const altReadout = document.getElementById('altitude-readout');
+
+            if (isFlyingCopter) {
+                btnDescend.classList.remove('hidden');
+                altSep.classList.remove('hidden');
+                altReadout.classList.remove('hidden');
+                document.getElementById('jump-icon').textContent = '⏫';
+                document.getElementById('jump-label').textContent = 'ASCEND';
+            } else {
+                btnDescend.classList.add('hidden');
+                altSep.classList.add('hidden');
+                altReadout.classList.add('hidden');
+                document.getElementById('jump-icon').textContent = isVeh ? '📡' : '🚀';
+                document.getElementById('jump-label').textContent = isVeh ? 'SONAR' : 'JUMP';
+            }
+
+            // Highlight active bot card in Top Roster
+            document.querySelectorAll('.bot-card').forEach(btn => {
+                if (btn.dataset.bot === player.botType) {
+                    btn.classList.add('active-bot');
+                } else {
+                    btn.classList.remove('active-bot');
+                }
+            });
+        }
+
+        function switchRescueBot(newBotType) {
+            if (newBotType === player.botType) return;
+            player.botType = newBotType;
+            player.hasWaypoint = false;
+            waypointGroup.visible = false;
+            sfx.playBotSwitch();
+
+            // If switching to Blades while already in the air or vehicle mode, keep smooth state
+            if (newBotType === 'BLADES' && player.mode === 'VEHICLE') {
+                player.flightAlt = Math.max(player.flightAlt, 14);
+            } else if (newBotType !== 'BLADES') {
+                player.flightAlt = 0;
+            }
+
+            syncHUDToActiveBot();
+            showToast("RESCUE BOTS ROSTER", `${BOT_METADATA[newBotType].name} Deployed!`);
+        }
+
+        function updateAllBotTransforms(dt, now) {
+            // Smoothly interpolate active player morph
+            const morphSpeed = 3.8;
+            if (player.morph < player.targetMorph) {
+                player.morph = Math.min(player.targetMorph, player.morph + dt * morphSpeed);
+            } else if (player.morph > player.targetMorph) {
+                player.morph = Math.max(player.targetMorph, player.morph - dt * morphSpeed);
+            }
+
+            Object.keys(botRigs).forEach(botKey => {
+                const rig = botRigs[botKey];
+                if (botKey === player.botType) {
+                    // Active Bot follows player physics position & heading
+                    rig.root.position.copy(player.pos);
+                    rig.root.rotation.y = player.heading;
+                    // Subtle helicopter pitch tilt when flying forward
+                    if (botKey === 'BLADES' && player.mode === 'VEHICLE') {
+                        rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (player.speed / 65) * 0.28, dt * 6);
+                    } else {
+                        rig.chassis.rotation.x = 0;
+                    }
+                    applyBotRigMorph(rig, player.morph, player.walkCycle, player.speed, player.smashTimer, now);
+                } else {
+                    // Inactive Bots stay parked in standby at Rescue Bots Headquarters!
+                    const slot = HQ_PARKING_SLOTS[botKey];
+                    rig.root.position.set(slot.x, slot.y, slot.z);
+                    rig.root.rotation.y = slot.rotY;
+                    rig.chassis.rotation.x = 0;
+                    applyBotRigMorph(rig, slot.morph, 0, 0, 0, now);
+                }
+            });
+        }
+
+        /***********************************************************************
+         * 8. 8 ISLAND-WIDE EMERGENCIES (Rockslides, Fires, Sky Array, Pileups)
+         ***********************************************************************/
+        const EMERGENCY_SITES = [
+            { id: 0, name: "Harbor Dock Rockslide", type: "ROCKSLIDE", x: 0, z: 265 },
+            { id: 1, name: "Town East Blaze", type: "FIRE", x: 120, z: 25 },
+            { id: 2, name: "Lighthouse Cliff Slide", type: "ROCKSLIDE", x: 315, z: 45 },
+            { id: 3, name: "Volcano Ridge Inferno", type: "FIRE", x: -185, z: -185 },
+            { id: 4, name: "Quarry Canyon Collapse", type: "ROCKSLIDE", x: -275, z: -120 },
+            { id: 5, name: "Sky Array Dish Outage", type: "SKY_RESCUE", x: 230, z: -230 },
+            { id: 6, name: "Pinewood Forest Fire", type: "FIRE", x: 145, z: -150 },
+            { id: 7, name: "West Highway Pileup", type: "ROCKSLIDE", x: -325, z: 35 }
+        ];
+
+        const beacons = [];
+        const activeParticles = []; // Unified pool for Rock Debris, Water Cannon Stream & Fire Sparks
+
+        const matBeaconRed = new THREE.MeshBasicMaterial({ color: 0xff1e42 });
+        const matBeaconOrange = new THREE.MeshBasicMaterial({ color: 0xff6414 });
+        const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
+        const matBoulder = new THREE.MeshToonMaterial({ color: 0x78716c, gradientMap: toonGrad3 });
+        const matFireCore = new THREE.MeshBasicMaterial({ color: 0xff5400 });
+        const matFireTip = new THREE.MeshBasicMaterial({ color: 0xffd60a });
+        const boulderGeo = new THREE.DodecahedronGeometry(2.3, 0);
+        const fireConeGeo = new THREE.ConeGeometry(2.1, 5.5, 7);
+
+        function buildHazardSites() {
+            beacons.forEach(b => {
+                scene.remove(b.group);
+                b.nodes.forEach(n => scene.remove(n.mesh));
+            });
+            beacons.length = 0;
+
+            // Initialize 8 HUD Pip indicators
+            const pipsContainer = document.getElementById('beacon-pips');
+            pipsContainer.innerHTML = '';
+            for (let i = 0; i < EMERGENCY_SITES.length; i++) {
+                const pip = document.createElement('div');
+                pip.className = "h-2.5 flex-1 rounded-full bg-rose-500/80 border border-white/20 transition-all duration-300";
+                pipsContainer.appendChild(pip);
+            }
+
+            EMERGENCY_SITES.forEach((site, idx) => {
+                const gy = getTerrainHeight(site.x, site.z);
+                const group = new THREE.Group();
+                group.position.set(site.x, gy, site.z);
+
+                const base = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.1, 1.4, 8), matDarkSteel);
+                base.position.y = 0.7;
+                group.add(base);
+
+                const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 9, 8), matChrome);
+                pole.position.y = 5.0;
+                group.add(pole);
+
+                const orb = new THREE.Mesh(
+                    new THREE.SphereGeometry(1.5, 12, 12),
+                    site.type === 'FIRE' ? matBeaconOrange : matBeaconRed
+                );
+                orb.position.y = 10.0;
+                group.add(orb);
+
+                const skyBeam = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.9, 0.9, 95, 8, 1, true),
+                    new THREE.MeshBasicMaterial({
+                        color: site.type === 'FIRE' ? 0xf97316 : 0xf43f5e,
+                        transparent: true,
+                        opacity: 0.28,
+                        side: THREE.DoubleSide
+                    })
+                );
+                skyBeam.position.y = 52;
+                group.add(skyBeam);
+
+                scene.add(group);
+
+                // Spawn 6 Interactive Hazard Nodes around the Beacon (Boulders or Roaring Flames)
+                const siteNodes = [];
+                for (let i = 0; i < 6; i++) {
+                    const ang = (i / 6) * Math.PI * 2 + (idx * 0.4);
+                    const dist = 4.5 + (i % 2) * 2.0;
+                    const nx = site.x + Math.cos(ang) * dist;
+                    const nz = site.z + Math.sin(ang) * dist;
+                    const ny = getTerrainHeight(nx, nz);
+
+                    let nodeMesh;
+                    const s = 0.9 + (i % 3) * 0.3;
+
+                    if (site.type === 'FIRE') {
+                        nodeMesh = new THREE.Group();
+                        const outerFlame = new THREE.Mesh(fireConeGeo, matFireCore);
+                        outerFlame.position.y = 2.4;
+                        nodeMesh.add(outerFlame);
+                        const innerFlame = new THREE.Mesh(new THREE.ConeGeometry(1.3, 4.0, 6), matFireTip);
+                        innerFlame.position.y = 1.8;
+                        nodeMesh.add(innerFlame);
+                        // Add a cartoon black outline cone behind the flame for comic book pop
+                        const flameOutline = new THREE.Mesh(fireConeGeo, matInkOutline);
+                        flameOutline.position.y = 2.4;
+                        flameOutline.scale.setScalar(1.09);
+                        nodeMesh.add(flameOutline);
+                        nodeMesh.position.set(nx, ny, nz);
+                        nodeMesh.scale.setScalar(s);
+                    } else {
+                        nodeMesh = new THREE.Mesh(boulderGeo, matBoulder);
+                        nodeMesh.scale.set(s * 1.2, s * 0.95, s);
+                        nodeMesh.position.set(nx, ny + s * 1.1, nz);
+                        nodeMesh.rotation.set(i, i * 1.3, 0);
+                        nodeMesh.castShadow = true;
+                        nodeMesh.receiveShadow = true;
+                        applyCartoonInkOutlines(nodeMesh, 1.075, true);
+                    }
+                    scene.add(nodeMesh);
+
+                    siteNodes.push({
+                        mesh: nodeMesh,
+                        type: site.type,
+                        x: nx,
+                        y: ny,
+                        z: nz,
+                        r: s * 2.1,
+                        cleared: false
+                    });
+                }
+
+                beacons.push({
+                    id: site.id,
+                    name: site.name,
+                    type: site.type,
+                    x: site.x,
+                    z: site.z,
+                    group,
+                    orb,
+                    skyBeam,
+                    nodes: siteNodes,
+                    restored: false
+                });
+            });
+
+            updateMissionHUD();
+        }
+
+        function spawnBurstParticles(x, y, z, colorHex = 0x78716c, count = 10, speedScale = 1) {
+            for (let i = 0; i < count; i++) {
+                const pGroup = new THREE.Group();
+                const pGeo = new THREE.OctahedronGeometry(0.55 + Math.random() * 0.45, 0);
+                const pMesh = new THREE.Mesh(
+                    pGeo,
+                    new THREE.MeshBasicMaterial({ color: i % 3 === 0 ? 0xffd60a : colorHex })
+                );
+                const pOutline = new THREE.Mesh(pGeo, matInkOutline);
+                pOutline.scale.setScalar(1.18);
+                pGroup.add(pMesh);
+                pGroup.add(pOutline);
+
+                pGroup.position.set(x, y + 1.2, z);
+                scene.add(pGroup);
+                const angle = Math.random() * Math.PI * 2;
+                const spd = (5 + Math.random() * 12) * speedScale;
+                activeParticles.push({
+                    mesh: pGroup,
+                    vx: Math.cos(angle) * spd,
+                    vy: (7 + Math.random() * 11) * speedScale,
+                    vz: Math.sin(angle) * spd,
+                    gravity: 28,
+                    life: 0.95
+                });
+            }
+        }
+
+        // High-Pressure Cel-Shaded Cartoon Water Cannon Stream for Heatwave
+        function spawnWaterCannonStream() {
+            const rig = botRigs.HEATWAVE;
+            const nozzleWorldPos = new THREE.Vector3();
+            rig.nozzleTip.getWorldPosition(nozzleWorldPos);
+
+            const dirX = Math.sin(player.heading);
+            const dirZ = Math.cos(player.heading);
+
+            for (let i = 0; i < 3; i++) {
+                const dropGroup = new THREE.Group();
+                const dropGeo = new THREE.SphereGeometry(0.52 + Math.random() * 0.35, 8, 8);
+                const drop = new THREE.Mesh(
+                    dropGeo,
+                    new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0x00b4d8 : 0xffffff })
+                );
+                const dropOutline = new THREE.Mesh(dropGeo, matInkOutline);
+                dropOutline.scale.setScalar(1.16);
+                dropGroup.add(drop);
+                dropGroup.add(dropOutline);
+
+                dropGroup.position.copy(nozzleWorldPos);
+                scene.add(dropGroup);
+
+                const spreadX = (Math.random() - 0.5) * 4.5;
+                const spreadZ = (Math.random() - 0.5) * 4.5;
+                const jetSpeed = 44 + Math.random() * 12;
+
+                activeParticles.push({
+                    mesh: dropGroup,
+                    vx: dirX * jetSpeed + spreadX,
+                    vy: 5.5 + Math.random() * 3.5,
+                    vz: dirZ * jetSpeed + spreadZ,
+                    gravity: 22,
+                    isWater: true,
+                    life: 0.85
+                });
+            }
+        }
+
+        function showToast(subtitle, title) {
+            const banner = document.getElementById('toast-banner');
+            document.getElementById('toast-subtitle').textContent = subtitle;
+            document.getElementById('toast-title').textContent = title;
+            banner.classList.remove('hidden');
+            clearTimeout(window._toastTimeout);
+            window._toastTimeout = setTimeout(() => {
+                banner.classList.add('hidden');
+            }, 3100);
+        }
+
+        function updateMissionHUD() {
+            const restoredCount = beacons.filter(b => b.restored).length;
+            document.getElementById('mission-status-text').textContent = `Emergencies Resolved: ${restoredCount} / ${beacons.length}`;
+            const pips = document.getElementById('beacon-pips').children;
+            beacons.forEach((b, idx) => {
+                if (!pips[idx]) return;
+                if (b.restored) {
+                    pips[idx].className = "h-2.5 flex-1 rounded-full bg-lime-400 border border-white/40 shadow-[0_0_8px_#a3e635] transition-all duration-300";
+                } else {
+                    const colorCls = b.type === 'FIRE' ? 'bg-orange-500/85' : 'bg-rose-500/85';
+                    pips[idx].className = `h-2.5 flex-1 rounded-full ${colorCls} border border-white/20 transition-all duration-300`;
+                }
+            });
+
+            if (restoredCount === beacons.length && beacons.length > 0) {
+                document.getElementById('victory-modal').classList.remove('hidden');
+            }
+        }
+
+        function clearHazardNode(beacon, node) {
+            if (node.cleared) return;
+            node.cleared = true;
+            sfx.playRockBreak();
+            const burstColor = node.type === 'FIRE' ? 0x38bdf8 : 0x8c827a;
+            spawnBurstParticles(node.x, node.y + 1.5, node.z, burstColor, 10);
+            scene.remove(node.mesh);
+
+            const remaining = beacon.nodes.filter(n => !n.cleared).length;
+            if (remaining === 0 && !beacon.restored) {
+                beacon.restored = true;
+                beacon.orb.material = matBeaconGreen;
+                beacon.skyBeam.material.color.setHex(0x22c55e);
+                beacon.skyBeam.material.opacity = 0.15;
+                sfx.playBeaconRestore();
+                spawnBurstParticles(beacon.x, beacon.group.position.y + 9, beacon.z, 0xa3e635, 18, 1.3);
+                showToast("EMERGENCY RESOLVED!", `${beacon.name} Cleared by ${ player.botType }!`);
+                updateMissionHUD();
+            }
+        }
+
+        buildHazardSites();
+
+        /***********************************************************************
+         * 9. KID-FRIENDLY TAP-ANYWHERE TO MOVE & WIDE CAMERA SYSTEM
+         ***********************************************************************/
+        const input = {
+            keys: {},
+            camYaw: Math.PI,
+            camPitch: 0.48,
+            camZoomMode: 0, // 0 = Wide Kid-Friendly View, 1 = Extra Far Bird's-Eye View, 2 = Hero Close View
+            autoCam: true
+        };
+
+        document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
+        document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
+        document.addEventListener('touchmove', e => {
+            if (e.scale !== undefined && e.scale !== 1) e.preventDefault();
+        }, { passive: false });
+
+        const raycaster = new THREE.Raycaster();
+        const pointerNDC = new THREE.Vector2();
+        const fallbackPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -4.0);
+        let activePointerDown = false;
+
+        function setDestinationFromScreenPoint(clientX, clientY, playChime = false) {
+            pointerNDC.x = (clientX / window.innerWidth) * 2 - 1;
+            pointerNDC.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(pointerNDC, camera);
+
+            let hitPoint = null;
+
+            // Raycast against terrain and ocean meshes first
+            const hits = raycaster.intersectObjects([terrainMesh, waterMesh], false);
+            if (hits.length > 0) {
+                hitPoint = hits[0].point.clone();
+            } else {
+                // Fallback intersection against horizontal ground plane if child taps near the sky/horizon
+                const planeHit = new THREE.Vector3();
+                const hit = raycaster.ray.intersectPlane(fallbackPlane, planeHit);
+                if (hit) {
+                    hitPoint = planeHit;
+                } else {
+                    // Project forward along camera ray if tapping high in the sky
+                    const dir = raycaster.ray.direction.clone();
+                    dir.y = 0;
+                    dir.normalize();
+                    hitPoint = player.pos.clone().addScaledVector(dir, 95);
+                }
+            }
+
+            if (!hitPoint) return;
+
+            // Clamp within playable island boundary
+            const maxRadius = 640;
+            const r = Math.hypot(hitPoint.x, hitPoint.z);
+            if (r > maxRadius) {
+                hitPoint.x = (hitPoint.x / r) * maxRadius;
+                hitPoint.z = (hitPoint.z / r) * maxRadius;
+            }
+
+            // Snap to nearest active emergency beacon if child taps close to one (generous 26m magnet!)
+            beacons.forEach(b => {
+                if (!b.restored && Math.hypot(hitPoint.x - b.x, hitPoint.z - b.z) < 26) {
+                    hitPoint.x = b.x;
+                    hitPoint.z = b.z;
+                }
+            });
+
+            // Keep ground bots on safe land if the child taps deep ocean water
+            const isFlyingCopter = (player.botType === 'BLADES' && player.mode === 'VEHICLE');
+            let ty = getTerrainHeight(hitPoint.x, hitPoint.z);
+            if (!isFlyingCopter && ty < -1.0) {
+                const angle = Math.atan2(hitPoint.z, hitPoint.x);
+                for (let testDist = Math.min(r, 520); testDist > 50; testDist -= 15) {
+                    const tx = Math.cos(angle) * testDist;
+                    const tz = Math.sin(angle) * testDist;
+                    const testY = getTerrainHeight(tx, tz);
+                    if (testY >= -0.5) {
+                        hitPoint.x = tx;
+                        hitPoint.z = tz;
+                        ty = testY;
+                        break;
+                    }
+                }
+            }
+
+            const markerY = Math.max(0.0, ty);
+            player.waypoint.set(hitPoint.x, markerY, hitPoint.z);
+            player.hasWaypoint = true;
+
+            waypointGroup.position.set(hitPoint.x, markerY, hitPoint.z);
+            waypointGroup.visible = true;
+
+            if (playChime) {
+                sfx.playWaypointTap();
+                spawnBurstParticles(hitPoint.x, markerY + 0.5, hitPoint.z, 0xfacc15, 5, 0.55);
+            }
+        }
+
+        function isUIElementTarget(target) {
+            if (!target) return false;
+            return Boolean(
+                target.closest('button') ||
+                target.closest('header') ||
+                target.closest('#victory-modal')
+            );
+        }
+
+        // Touch Anywhere on Screen to Move (Supports Single Tap or Hold-and-Drag Steering)
+        window.addEventListener('touchstart', e => {
+            if (isUIElementTarget(e.target)) return;
+            e.preventDefault();
+            sfx.init();
+            if (e.touches.length > 0) {
+                activePointerDown = true;
+                const t = e.touches[0];
+                setDestinationFromScreenPoint(t.clientX, t.clientY, true);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchmove', e => {
+            if (!activePointerDown || isUIElementTarget(e.target)) return;
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                const t = e.touches[0];
+                setDestinationFromScreenPoint(t.clientX, t.clientY, false);
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', () => {
+            activePointerDown = false;
+        }, { passive: false });
+
+        window.addEventListener('touchcancel', () => {
+            activePointerDown = false;
+        }, { passive: false });
+
+        // Mouse Click or Hold-Drag Anywhere to Move (Desktop & iPad Trackpad)
+        window.addEventListener('mousedown', e => {
+            if (e.button !== 0 || isUIElementTarget(e.target)) return;
+            sfx.init();
+            activePointerDown = true;
+            setDestinationFromScreenPoint(e.clientX, e.clientY, true);
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (!activePointerDown) return;
+            setDestinationFromScreenPoint(e.clientX, e.clientY, false);
+        });
+
+        window.addEventListener('mouseup', () => {
+            activePointerDown = false;
+        });
+
+        // Transform Toggle (Robot <-> Vehicle / Helicopter)
+        function triggerTransform() {
+            if (player.mode === 'BOT') {
+                player.mode = 'VEHICLE';
+                player.targetMorph = 1.0;
+                sfx.playTransform(true);
+                // If Blades transforms into Helicopter Mode, automatically lift off into hover!
+                if (player.botType === 'BLADES') {
+                    player.flightAlt = Math.max(player.flightAlt, 16);
+                    player.grounded = false;
+                }
+            } else {
+                player.mode = 'BOT';
+                player.targetMorph = 0.0;
+                player.flightAlt = 0;
+                sfx.playTransform(false);
+            }
+            syncHUDToActiveBot();
+        }
+
+        // Bot-Specific Special Action (Boulder Smash/Ram, Heatwave Water Cannon, Chase Siren EMP, Blades Cyclone)
+        function triggerPrimaryAction() {
+            if (player.botType === 'HEATWAVE') {
+                // Activate High-Pressure Water Cannon Stream for 1.6 seconds!
+                player.waterTimer = 1.6;
+                sfx.playWaterSpray();
+                return;
+            }
+
+            if (player.botType === 'CHASE') {
+                // Police Siren Turbo Boost + EMP Shockwave Ring!
+                player.boostTimer = 1.45;
+                player.sonarTimer = 1.4;
+                sfx.playSirenPulse();
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 15.5) {
+                            clearHazardNode(beacon, n);
+                        }
+                    });
+                });
+                return;
+            }
+
+            if (player.botType === 'BLADES') {
+                // Rotor Cyclone / Airlift Pulse (clears hazards directly underneath or around Blades!)
+                player.sonarTimer = 1.4;
+                player.boostTimer = 1.1;
+                sfx.playSmash();
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 18.0) {
+                            clearHazardNode(beacon, n);
+                        }
+                    });
+                });
+                return;
+            }
+
+            // Default: BOULDER Quake Smash / Dozer Blade Ram
+            if (player.mode === 'BOT') {
+                player.smashTimer = 0.45;
+                sfx.playSmash();
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 13.5) {
+                            clearHazardNode(beacon, n);
+                        }
+                    });
+                });
+                spawnBurstParticles(
+                    player.pos.x + Math.sin(player.heading) * 4.0,
+                    player.pos.y,
+                    player.pos.z + Math.cos(player.heading) * 4.0,
+                    0xfacc15,
+                    8
+                );
+            } else {
+                player.boostTimer = 1.3;
+                sfx.playSmash();
+            }
+        }
+
+        function triggerSecondaryAction() {
+            if (player.botType === 'BLADES' && player.mode === 'VEHICLE') {
+                player.flightAlt = Math.min(95, player.flightAlt + 12);
+                sfx.playTransform(false);
+                return;
+            }
+            if (player.mode === 'BOT' && player.grounded) {
+                player.vy = 21.0;
+                player.grounded = false;
+                sfx.playSmash();
+            } else {
+                player.sonarTimer = 1.5;
+                sfx.playSirenPulse();
+            }
+        }
+
+        function triggerDescendAction() {
+            if (player.botType === 'BLADES' && player.mode === 'VEHICLE') {
+                player.flightAlt = Math.max(2, player.flightAlt - 12);
+            }
+        }
+
+        function bindButton(id, fn) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('touchstart', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                el.classList.add('active-press');
+                fn();
+            }, { passive: false });
+            el.addEventListener('touchend', () => el.classList.remove('active-press'));
+            el.addEventListener('click', e => {
+                e.preventDefault();
+                fn();
+            });
+        }
+
+        bindButton('btn-transform', triggerTransform);
+        bindButton('btn-action', triggerPrimaryAction);
+        bindButton('btn-jump-scan', triggerSecondaryAction);
+        bindButton('btn-descend', triggerDescendAction);
+
+        // Bind Top-Left 4-Bot Roster Cards
+        document.querySelectorAll('.bot-card').forEach(card => {
+            const botType = card.dataset.bot;
+            card.addEventListener('touchstart', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                switchRescueBot(botType);
+            }, { passive: false });
+            card.addEventListener('click', e => {
+                e.preventDefault();
+                switchRescueBot(botType);
+            });
+        });
+
+        // Warp to Rescue Bots Headquarters Button
+        bindButton('btn-hq-warp', () => {
+            player.pos.set(HQ_SWAP_PAD.x, getTerrainHeight(HQ_SWAP_PAD.x, HQ_SWAP_PAD.z) + 0.5, HQ_SWAP_PAD.z);
+            player.heading = 0;
+            player.speed = 0;
+            player.hasWaypoint = false;
+            waypointGroup.visible = false;
+            player.flightAlt = player.botType === 'BLADES' && player.mode === 'VEHICLE' ? 16 : 0;
+            input.camYaw = Math.PI;
+            showToast("COMMAND CENTER WARP", "Arrived at Rescue Bots Firehouse HQ!");
+        });
+
+        let timePreset = 0;
+        bindButton('btn-time', () => {
+            timePreset = (timePreset + 1) % 3;
+            if (timePreset === 0) {
+                scene.background.setHex(0x68c2ff);
+                scene.fog.color.setHex(0x68c2ff);
+                hemiLight.intensity = 0.76;
+                sunLight.intensity = 1.18;
+                sunLight.color.setHex(0xfff7e6);
+                headlight.intensity = 0;
+                document.getElementById('time-icon').textContent = '☀️';
+                document.getElementById('time-label').textContent = 'Daylight';
+            } else if (timePreset === 1) {
+                scene.background.setHex(0xf97316);
+                scene.fog.color.setHex(0xf97316);
+                hemiLight.intensity = 0.55;
+                sunLight.intensity = 0.95;
+                sunLight.color.setHex(0xfdba74);
+                headlight.intensity = 1.6;
+                document.getElementById('time-icon').textContent = '🌅';
+                document.getElementById('time-label').textContent = 'Sunset';
+            } else {
+                scene.background.setHex(0x0b132b);
+                scene.fog.color.setHex(0x0b132b);
+                hemiLight.intensity = 0.25;
+                sunLight.intensity = 0.28;
+                sunLight.color.setHex(0x93c5fd);
+                headlight.intensity = 3.2;
+                document.getElementById('time-icon').textContent = '🌙';
+                document.getElementById('time-label').textContent = 'Night Ops';
+            }
+        });
+
+        bindButton('btn-cam', () => {
+            input.camZoomMode = (input.camZoomMode + 1) % 3;
+            const labels = ['View: WIDE', 'View: SKY MAP', 'View: CLOSE'];
+            document.getElementById('cam-label').textContent = labels[input.camZoomMode];
+        });
+
+        bindButton('btn-sound', () => {
+            sfx.enabled = !sfx.enabled;
+            document.getElementById('sound-icon').textContent = sfx.enabled ? '🔊' : '🔇';
+        });
+
+        bindButton('btn-reset', () => {
+            player.pos.set(HQ_SWAP_PAD.x, 5, HQ_SWAP_PAD.z);
+            player.heading = 0;
+            player.speed = 0;
+            player.hasWaypoint = false;
+            waypointGroup.visible = false;
+            buildHazardSites();
+            showToast("ISLAND RESET", "All 8 Emergencies Respawned!");
+        });
+
+        bindButton('btn-keep-exploring', () => {
+            document.getElementById('victory-modal').classList.add('hidden');
+        });
+        bindButton('btn-new-hazards', () => {
+            document.getElementById('victory-modal').classList.add('hidden');
+            buildHazardSites();
+            showToast("EMERGENCY DISPATCH!", "8 New Island Emergencies Active!");
+        });
+
+        // Keyboard Shortcuts (1-4 Switch Bot, WASD Move, Space Transform, E/Shift Special, Q/C Ascend/Descend)
+        window.addEventListener('keydown', e => {
+            input.keys[e.code] = true;
+            if (e.code === 'Digit1') switchRescueBot('BOULDER');
+            if (e.code === 'Digit2') switchRescueBot('HEATWAVE');
+            if (e.code === 'Digit3') switchRescueBot('CHASE');
+            if (e.code === 'Digit4') switchRescueBot('BLADES');
+            if (e.code === 'Space' && !e.repeat) {
+                e.preventDefault();
+                triggerTransform();
+            }
+            if ((e.code === 'KeyE' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat) {
+                triggerPrimaryAction();
+            }
+            if ((e.code === 'KeyQ' || e.code === 'KeyF') && !e.repeat) {
+                triggerSecondaryAction();
+            }
+            if (e.code === 'KeyC' && !e.repeat) {
+                triggerDescendAction();
+            }
+        });
+        window.addEventListener('keyup', e => {
+            input.keys[e.code] = false;
+        });
+
+        /***********************************************************************
+         * 10. EXPANDED MINIMAP RADAR RENDERER (HQ Icon + 8 Emergencies)
+         ***********************************************************************/
+        const minimapCanvas = document.getElementById('minimap-canvas');
+        const mCtx = minimapCanvas.getContext('2d');
+
+        function renderMinimap() {
+            const w = minimapCanvas.width;
+            const h = minimapCanvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+
+            mCtx.clearRect(0, 0, w, h);
+
+            // Ocean background
+            mCtx.fillStyle = '#082f49';
+            mCtx.beginPath();
+            mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
+            mCtx.fill();
+
+            // Island landmass
+            mCtx.fillStyle = '#365314';
+            mCtx.beginPath();
+            mCtx.arc(cx, cy, cx * 0.78, 0, Math.PI * 2);
+            mCtx.fill();
+
+            // Coastal Highway Loop
+            mCtx.strokeStyle = '#64748b';
+            mCtx.lineWidth = 3;
+            mCtx.beginPath();
+            mCtx.arc(cx, cy, cx * 0.46, 0, Math.PI * 2);
+            mCtx.stroke();
+
+            const mapScale = (cx * 0.78) / 560;
+
+            // Draw Rescue Bots Headquarters Cyan Square Icon
+            const hqx = cx + HQ_POS.x * mapScale;
+            const hqz = cy + HQ_POS.z * mapScale;
+            mCtx.fillStyle = '#38bdf8';
+            mCtx.fillRect(hqx - 4, hqz - 4, 8, 8);
+            mCtx.strokeStyle = '#ffffff';
+            mCtx.lineWidth = 1;
+            mCtx.strokeRect(hqx - 4, hqz - 4, 8, 8);
+
+            // Draw 8 Emergency Beacons
+            let nearestDist = Infinity;
+            let nearestName = "All Clear!";
+
+            beacons.forEach(b => {
+                const bx = cx + b.x * mapScale;
+                const bz = cy + b.z * mapScale;
+
+                if (!b.restored) {
+                    const d = Math.hypot(player.pos.x - b.x, player.pos.z - b.z);
+                    if (d < nearestDist) {
+                        nearestDist = d;
+                        nearestName = `${b.name} (${Math.round(d)}m)`;
+                    }
+                }
+
+                mCtx.fillStyle = b.restored ? '#4ade80' : (b.type === 'FIRE' ? '#fb923c' : '#f43f5e');
+                mCtx.beginPath();
+                mCtx.arc(bx, bz, b.restored ? 3.5 : 5.0, 0, Math.PI * 2);
+                mCtx.fill();
+                mCtx.strokeStyle = '#ffffff';
+                mCtx.lineWidth = 1.2;
+                mCtx.stroke();
+            });
+
+            document.getElementById('nearest-hazard-hint').textContent =
+                nearestDist < Infinity ? `Nearest: ${nearestName}` : `All 8 Emergencies Resolved!`;
+
+            // Draw Active Player Arrow
+            const px = cx + player.pos.x * mapScale;
+            const pz = cy + player.pos.z * mapScale;
+            mCtx.save();
+            mCtx.translate(px, pz);
+            mCtx.rotate(-player.heading + Math.PI);
+            mCtx.fillStyle = '#facc15';
+            mCtx.beginPath();
+            mCtx.moveTo(0, -7);
+            mCtx.lineTo(5.5, 6);
+            mCtx.lineTo(0, 3);
+            mCtx.lineTo(-5.5, 6);
+            mCtx.closePath();
+            mCtx.fill();
+            mCtx.restore();
+        }
+
+        /***********************************************************************
+         * 11. MAIN PHYSICS, AUTO-PILOT WAYPOINT STEERING & WIDE CAMERA LOOP
+         ***********************************************************************/
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTimer = 0;
+
+        function updatePhysics(dt, now) {
+            let moveY = 0;
+            let moveX = 0;
+
+            if (input.keys['KeyW'] || input.keys['ArrowUp']) moveY += 1;
+            if (input.keys['KeyS'] || input.keys['ArrowDown']) moveY -= 1;
+            if (input.keys['KeyA'] || input.keys['ArrowLeft']) moveX -= 1;
+            if (input.keys['KeyD'] || input.keys['ArrowRight']) moveX += 1;
+
+            // Cancel tap-waypoint if manual keyboard keys are pressed
+            if (moveY !== 0 || moveX !== 0) {
+                player.hasWaypoint = false;
+                waypointGroup.visible = false;
+            }
+
+            if (player.smashTimer > 0) player.smashTimer = Math.max(0, player.smashTimer - dt);
+            if (player.boostTimer > 0) player.boostTimer = Math.max(0, player.boostTimer - dt);
+            if (player.autoActionCooldown > 0) player.autoActionCooldown = Math.max(0, player.autoActionCooldown - dt);
+
+            const isFlyingCopter = (player.botType === 'BLADES' && player.mode === 'VEHICLE');
+            const onRoad = isPointOnRoad(player.pos.x, player.pos.z);
+
+            // Top Speed per Rescue Bot & Mode
+            let maxSpeed = 26; // Bot walking speed
+            if (player.mode === 'VEHICLE') {
+                if (player.botType === 'CHASE') maxSpeed = player.boostTimer > 0 ? 74 : (onRoad ? 58 : 44);
+                else if (player.botType === 'BLADES') maxSpeed = player.boostTimer > 0 ? 78 : 62;
+                else if (player.botType === 'HEATWAVE') maxSpeed = player.boostTimer > 0 ? 58 : (onRoad ? 46 : 36);
+                else maxSpeed = player.boostTimer > 0 ? 54 : (onRoad ? 42 : 34); // Boulder
+            }
+
+            const turnRate = isFlyingCopter ? 3.2 : (player.mode === 'VEHICLE' ? 3.0 : 4.2);
+
+            // Automatic Tap-to-Move Steering & Throttle
+            if (player.hasWaypoint) {
+                const dx = player.waypoint.x - player.pos.x;
+                const dz = player.waypoint.z - player.pos.z;
+                const distToWP = Math.hypot(dx, dz);
+
+                if (distToWP < 3.6) {
+                    // Arrived at tapped destination!
+                    player.hasWaypoint = false;
+                    waypointGroup.visible = false;
+                    moveY = 0;
+                } else {
+                    const desiredHeading = Math.atan2(dx, dz);
+                    let headingDiff = desiredHeading - player.heading;
+                    while (headingDiff < -Math.PI) headingDiff += Math.PI * 2;
+                    while (headingDiff > Math.PI) headingDiff -= Math.PI * 2;
+
+                    // Smoothly turn toward the tapped waypoint
+                    const maxTurnStep = turnRate * 1.45 * dt;
+                    if (Math.abs(headingDiff) <= maxTurnStep) {
+                        player.heading = desiredHeading;
+                    } else {
+                        player.heading += Math.sign(headingDiff) * maxTurnStep;
+                    }
+
+                    // Slow down slightly while turning sharply, then full speed ahead
+                    const alignment = Math.max(0.35, Math.cos(headingDiff));
+                    const arrivalSlowdown = Math.min(1.0, distToWP / 9.0);
+                    moveY = alignment * Math.max(0.45, arrivalSlowdown);
+                }
+            } else {
+                player.heading -= moveX * turnRate * dt;
+            }
+
+            const targetSpeed = moveY * maxSpeed;
+            const accel = player.mode === 'VEHICLE' ? 8.5 : 13.0;
+            player.speed = THREE.MathUtils.lerp(player.speed, targetSpeed, Math.min(1, dt * accel));
+
+            if (player.boostTimer > 0 && player.mode === 'VEHICLE') {
+                player.speed = maxSpeed;
+            }
+
+            if (Math.abs(player.speed) > 0.4) {
+                player.walkCycle += dt * Math.abs(player.speed) * 0.55;
+            }
+
+            const nextX = player.pos.x + Math.sin(player.heading) * player.speed * dt;
+            const nextZ = player.pos.z + Math.cos(player.heading) * player.speed * dt;
+            const nextGroundY = getTerrainHeight(nextX, nextZ);
+
+            // Blades Helicopter can fly freely over water & mountains; Ground bots stay on land
+            if (isFlyingCopter || nextGroundY > -1.5) {
+                player.pos.x = Math.max(-720, Math.min(720, nextX));
+                player.pos.z = Math.max(-720, Math.min(720, nextZ));
+            } else {
+                player.speed *= -0.4;
+                player.hasWaypoint = false;
+                waypointGroup.visible = false;
+            }
+
+            // Ground Collision against Buildings & Trees (Slide smoothly around obstacles during Tap-to-Move)
+            const groundY = Math.max(-0.5, getTerrainHeight(player.pos.x, player.pos.z));
+            const currentClearance = player.pos.y - groundY;
+
+            if (currentClearance < 12) {
+                const playerRadius = 2.4;
+                for (let i = 0; i < worldColliders.length; i++) {
+                    const c = worldColliders[i];
+                    const dx = player.pos.x - c.x;
+                    const dz = player.pos.z - c.z;
+                    const dist = Math.hypot(dx, dz);
+                    const minDist = playerRadius + c.r;
+                    if (dist < minDist && dist > 0.001) {
+                        const overlap = minDist - dist;
+                        const nx = dx / dist;
+                        const nz = dz / dist;
+                        player.pos.x += nx * overlap;
+                        player.pos.z += nz * overlap;
+                        // Nudge tangential slide if auto-piloting around a building or tree
+                        if (player.hasWaypoint) {
+                            player.pos.x += -nz * dt * 8;
+                            player.pos.z += nx * dt * 8;
+                        }
+                    }
+                }
+            }
+
+            // Continuous Hold Ascend/Descend keys for Blades Helicopter
+            if (isFlyingCopter) {
+                if (input.keys['KeyQ']) player.flightAlt = Math.min(95, player.flightAlt + 28 * dt);
+                if (input.keys['KeyC']) player.flightAlt = Math.max(2, player.flightAlt - 28 * dt);
+                const targetHoverY = groundY + player.flightAlt + Math.sin(now * 0.004) * 0.45;
+                player.pos.y = THREE.MathUtils.lerp(player.pos.y, targetHoverY, Math.min(1, dt * 5.5));
+                player.vy = 0;
+                player.grounded = false;
+                document.getElementById('altitude-readout').textContent = `ALT: ${String(Math.round(player.pos.y - groundY)).padStart(2, '0')}m`;
+            } else {
+                // Standard Ground & Jump Gravity
+                ramps.forEach(r => {
+                    if (Math.hypot(player.pos.x - r.x, player.pos.z - r.z) < r.r && Math.abs(player.speed) > 15 && player.grounded) {
+                        player.vy = 18 + Math.abs(player.speed) * 0.35;
+                        player.grounded = false;
+                    }
+                });
+
+                if (!player.grounded || player.pos.y > groundY + 0.05) {
+                    player.vy -= 44 * dt;
+                    player.pos.y += player.vy * dt;
+                    if (player.pos.y <= groundY) {
+                        player.pos.y = groundY;
+                        player.vy = 0;
+                        player.grounded = true;
+                    }
+                } else {
+                    player.pos.y = groundY;
+                    player.vy = 0;
+                    player.grounded = true;
+                }
+            }
+
+            // KID-FRIENDLY SMART AUTO-RESCUE: Automatically trigger rescue powers when arriving near any emergency!
+            let nearActiveHazard = false;
+            beacons.forEach(beacon => {
+                if (beacon.restored) return;
+                beacon.nodes.forEach(n => {
+                    if (n.cleared) return;
+                    const distToHazard = Math.hypot(player.pos.x - n.x, player.pos.z - n.z);
+                    if (distToHazard < 13.5) {
+                        nearActiveHazard = true;
+                    }
+                });
+            });
+
+            if (nearActiveHazard && player.autoActionCooldown <= 0) {
+                player.autoActionCooldown = 0.85;
+                triggerPrimaryAction();
+            }
+
+            // Heatwave High-Pressure Water Cannon Stream & Fire Extinguishing
+            if (player.waterTimer > 0 && player.botType === 'HEATWAVE') {
+                player.waterTimer = Math.max(0, player.waterTimer - dt);
+                spawnWaterCannonStream();
+                if (Math.random() < 0.25) sfx.playWaterSpray();
+
+                // Check if water stream hits any hazard within 28m in front or around Heatwave
+                const aimX = player.pos.x + Math.sin(player.heading) * 12;
+                const aimZ = player.pos.z + Math.cos(player.heading) * 12;
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && (Math.hypot(aimX - n.x, aimZ - n.z) < 16.5 || Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 15.0)) {
+                            clearHazardNode(beacon, n);
+                        }
+                    });
+                });
+            }
+
+            // Direct Contact / Ramming Hazard Nodes (Cleared easily when driving or walking up to them!)
+            beacons.forEach(beacon => {
+                beacon.nodes.forEach(n => {
+                    if (n.cleared) return;
+                    const dx = player.pos.x - n.x;
+                    const dz = player.pos.z - n.z;
+                    const dy = Math.abs(player.pos.y - n.y);
+                    const dist = Math.hypot(dx, dz);
+                    if (dist < 3.4 + n.r && dy < 12.0) {
+                        clearHazardNode(beacon, n);
+                    }
+                });
+            });
+
+            // Check Proximity to Rescue Bots HQ Swap Pad
+            const distToSwapPad = Math.hypot(player.pos.x - HQ_SWAP_PAD.x, player.pos.z - HQ_SWAP_PAD.z);
+            const hqPrompt = document.getElementById('hq-bay-prompt');
+            if (distToSwapPad < HQ_SWAP_PAD.r) {
+                hqPrompt.classList.remove('hidden');
+            } else {
+                hqPrompt.classList.add('hidden');
+            }
+
+            // Update Headlight & Sonar Ring
+            headlight.position.set(player.pos.x, player.pos.y + 3.5, player.pos.z);
+            headlight.target.position.set(
+                player.pos.x + Math.sin(player.heading) * 22,
+                player.pos.y + 0.5,
+                player.pos.z + Math.cos(player.heading) * 22
+            );
+
+            if (player.sonarTimer > 0) {
+                player.sonarTimer = Math.max(0, player.sonarTimer - dt);
+                const progress = 1 - (player.sonarTimer / 1.5);
+                sonarMesh.position.set(player.pos.x, player.pos.y + 1.0, player.pos.z);
+                sonarMesh.scale.setScalar(1 + progress * 34);
+                sonarMat.opacity = (1 - progress) * 0.85;
+            } else {
+                sonarMat.opacity = 0;
+            }
+
+            // Update Active Particles (Debris & Water Stream)
+            for (let i = activeParticles.length - 1; i >= 0; i--) {
+                const p = activeParticles[i];
+                p.life -= dt;
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    activeParticles.splice(i, 1);
+                } else {
+                    p.vy -= p.gravity * dt;
+                    p.mesh.position.x += p.vx * dt;
+                    p.mesh.position.y += p.vy * dt;
+                    p.mesh.position.z += p.vz * dt;
+                    p.mesh.scale.setScalar(Math.max(0.1, p.life));
+                }
+            }
+
+            // Wider, Further-Back Third-Person Camera for 3-Year-Old Visibility & Easy Far-Tapping
+            if (input.autoCam && Math.abs(player.speed) > 1.0) {
+                const targetYaw = player.heading + Math.PI;
+                let diff = targetYaw - input.camYaw;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                input.camYaw += diff * dt * 1.85;
+            }
+
+            // Camera Distance & Pitch per View Mode (Default Mode 0 is significantly pulled back & elevated)
+            let baseDist = isFlyingCopter ? 44.0 : (player.mode === 'VEHICLE' ? 38.0 : 34.0);
+            let activePitch = 0.48;
+            if (input.camZoomMode === 1) {
+                // Extra-Wide Sky Map View
+                baseDist = 64.0;
+                activePitch = 0.64;
+            } else if (input.camZoomMode === 2) {
+                // Closer Action View
+                baseDist = 23.0;
+                activePitch = 0.36;
+            }
+
+            const camHeight = Math.sin(activePitch) * baseDist;
+            const camHoriz = Math.cos(activePitch) * baseDist;
+
+            const idealCamX = player.pos.x + Math.sin(input.camYaw) * camHoriz;
+            const idealCamZ = player.pos.z + Math.cos(input.camYaw) * camHoriz;
+            const minGroundCamY = getTerrainHeight(idealCamX, idealCamZ) + 4.5;
+            const idealCamY = Math.max(minGroundCamY, player.pos.y + camHeight + 4.5);
+
+            camera.position.lerp(new THREE.Vector3(idealCamX, idealCamY, idealCamZ), Math.min(1, dt * 8));
+            // Look slightly ahead of the character so more of the forward world is visible
+            const lookAheadX = player.pos.x + Math.sin(player.heading) * 4.5;
+            const lookAheadZ = player.pos.z + Math.cos(player.heading) * 4.5;
+            camera.lookAt(lookAheadX, player.pos.y + 3.0, lookAheadZ);
+
+            const kmh = Math.round(Math.abs(player.speed) * 2.2);
+            document.getElementById('speed-readout').textContent = `${String(kmh).padStart(2, '0')} KM/H`;
+            document.getElementById('zone-label').textContent = getZoneName(player.pos.x, player.pos.z);
+        }
+
+        function animate(now) {
+            requestAnimationFrame(animate);
+
+            const dt = Math.min(0.05, (now - lastTime) / 1000);
+            lastTime = now;
+
+            frameCount++;
+            fpsTimer += dt;
+            if (fpsTimer >= 0.5) {
+                const fps = Math.round(frameCount / fpsTimer);
+                document.getElementById('fps-counter').textContent = `${fps} FPS`;
+                frameCount = 0;
+                fpsTimer = 0;
+                renderMinimap();
+            }
+
+            // Animate 3D Tap Waypoint Marker (Pulsing Ring & Bouncing Arrow)
+            if (waypointGroup.visible) {
+                const wpPulse = 1.0 + Math.sin(now * 0.01) * 0.18;
+                wpOuterRing.scale.setScalar(wpPulse);
+                wpOuterRing.rotation.z += dt * 1.8;
+                wpArrowCone.position.y = 4.2 + Math.sin(now * 0.012) * 1.1;
+                wpArrowCone.rotation.y += dt * 3.0;
+            }
+
+            // Animate HQ Radar Dish, Lighthouse Beam, Ocean Waves & Flickering Fires
+            hqRadarPivot.rotation.y += dt * 1.4;
+            swapPadRing.rotation.z += dt * 0.8;
+            lhBeamPivot.rotation.y += dt * 1.1;
+            waterMesh.position.y = -0.45 + Math.sin(now * 0.0025) * 0.22;
+            shorelineFoamRing.scale.setScalar(1.0 + Math.sin(now * 0.003) * 0.008);
+
+            beacons.forEach(b => {
+                if (!b.restored) {
+                    const pulse = 1 + Math.sin(now * 0.008) * 0.18;
+                    b.orb.scale.setScalar(pulse);
+                    if (b.type === 'FIRE') {
+                        b.nodes.forEach((n, idx) => {
+                            if (!n.cleared) {
+                                n.mesh.scale.y = 0.85 + Math.sin(now * 0.015 + idx) * 0.28;
+                                n.mesh.rotation.y += dt * 2.5;
+                            }
+                        });
+                    }
+                }
+            });
+
+            updatePhysics(dt, now);
+            updateAllBotTransforms(dt, now);
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.onload = () => {
+            syncHUDToActiveBot();
+            renderMinimap();
+            requestAnimationFrame(animate);
+        };
+    </script>
+</body>
+</html>
