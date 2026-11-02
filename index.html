@@ -62,6 +62,10 @@
             box-shadow: 0 0 18px rgba(250, 204, 21, 0.55);
             border-color: #facc15 !important;
         }
+        .bot-card.buddy-bot {
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
+            border-color: #38bdf8 !important;
+        }
         .mono-font {
             font-family: 'JetBrains Mono', monospace;
         }
@@ -191,35 +195,54 @@
         </div>
     </header>
 
-    <!-- Bottom Left: 4-Bot HQ Team Switcher Column -->
+    <!-- Bottom Left: 4-Bot HQ Team Switcher Column + Follow-Along Buddy Bot Picker -->
     <div id="bot-roster" class="fixed bottom-6 left-5 sm:bottom-9 sm:left-8 z-20 pointer-events-auto hud-glass rounded-2xl p-2 flex flex-col gap-2 border border-white/20">
-        <button data-bot="BOULDER" class="bot-card active-bot px-3 py-2 rounded-xl bg-gradient-to-b from-lime-600/90 to-emerald-800/90 border-2 border-lime-300/50 flex items-center gap-2.5 text-left w-full">
-            <span class="text-lg sm:text-xl">🚜</span>
-            <div class="leading-tight">
-                <div class="text-xs sm:text-sm font-extrabold text-white">BOULDER</div>
-                <div class="text-[9px] sm:text-[10px] text-lime-200 font-semibold">Dozer • Triceratops</div>
-            </div>
+        <button id="btn-buddy-cycle" class="tactile-btn px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600/90 to-sky-800/90 border border-cyan-300/60 flex items-center justify-between gap-2 text-left w-full" title="Cycle AI Wingman Partner Bot (Key: B)">
+            <span class="text-[10px] sm:text-[11px] font-extrabold tracking-wide text-cyan-100 uppercase flex items-center gap-1.5">
+                <span>🤝</span>
+                <span id="buddy-readout">BUDDY: HEATWAVE</span>
+            </span>
+            <span class="text-[9px] bg-slate-950/70 text-cyan-300 px-1.5 py-0.5 rounded font-bold">SWAP</span>
         </button>
-        <button data-bot="HEATWAVE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-red-600/90 to-rose-900/90 border-2 border-red-300/40 flex items-center gap-2.5 text-left w-full">
-            <span class="text-lg sm:text-xl">🚒</span>
-            <div class="leading-tight">
-                <div class="text-xs sm:text-sm font-extrabold text-white">HEATWAVE</div>
-                <div class="text-[9px] sm:text-[10px] text-rose-200 font-semibold">Fire • Brachiosaur</div>
+        <button data-bot="BOULDER" class="bot-card active-bot px-3 py-2 rounded-xl bg-gradient-to-b from-lime-600/90 to-emerald-800/90 border-2 border-lime-300/50 flex items-center justify-between gap-2.5 text-left w-full">
+            <div class="flex items-center gap-2.5">
+                <span class="text-lg sm:text-xl">🚜</span>
+                <div class="leading-tight">
+                    <div class="text-xs sm:text-sm font-extrabold text-white">BOULDER</div>
+                    <div class="text-[9px] sm:text-[10px] text-lime-200 font-semibold">Dozer • Triceratops</div>
+                </div>
             </div>
+            <span data-buddy-badge="BOULDER" class="hidden text-[8px] sm:text-[9px] font-extrabold bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded-full uppercase">🤝 BUDDY</span>
         </button>
-        <button data-bot="CHASE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-blue-600/90 to-indigo-900/90 border-2 border-blue-300/40 flex items-center gap-2.5 text-left w-full">
-            <span class="text-lg sm:text-xl">🚓</span>
-            <div class="leading-tight">
-                <div class="text-xs sm:text-sm font-extrabold text-white">CHASE</div>
-                <div class="text-[9px] sm:text-[10px] text-sky-200 font-semibold">Police • Stegosaur</div>
+        <button data-bot="HEATWAVE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-red-600/90 to-rose-900/90 border-2 border-red-300/40 flex items-center justify-between gap-2.5 text-left w-full">
+            <div class="flex items-center gap-2.5">
+                <span class="text-lg sm:text-xl">🚒</span>
+                <div class="leading-tight">
+                    <div class="text-xs sm:text-sm font-extrabold text-white">HEATWAVE</div>
+                    <div class="text-[9px] sm:text-[10px] text-rose-200 font-semibold">Fire • Brachiosaur</div>
+                </div>
             </div>
+            <span data-buddy-badge="HEATWAVE" class="hidden text-[8px] sm:text-[9px] font-extrabold bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded-full uppercase">🤝 BUDDY</span>
         </button>
-        <button data-bot="BLADES" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-orange-500/90 to-amber-700/90 border-2 border-orange-200/40 flex items-center gap-2.5 text-left w-full">
-            <span class="text-lg sm:text-xl">🚁</span>
-            <div class="leading-tight">
-                <div class="text-xs sm:text-sm font-extrabold text-white">BLADES</div>
-                <div class="text-[9px] sm:text-[10px] text-amber-100 font-semibold">Copter • Pterosaur</div>
+        <button data-bot="CHASE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-blue-600/90 to-indigo-900/90 border-2 border-blue-300/40 flex items-center justify-between gap-2.5 text-left w-full">
+            <div class="flex items-center gap-2.5">
+                <span class="text-lg sm:text-xl">🚓</span>
+                <div class="leading-tight">
+                    <div class="text-xs sm:text-sm font-extrabold text-white">CHASE</div>
+                    <div class="text-[9px] sm:text-[10px] text-sky-200 font-semibold">Police • Stegosaur</div>
+                </div>
             </div>
+            <span data-buddy-badge="CHASE" class="hidden text-[8px] sm:text-[9px] font-extrabold bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded-full uppercase">🤝 BUDDY</span>
+        </button>
+        <button data-bot="BLADES" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-orange-500/90 to-amber-700/90 border-2 border-orange-200/40 flex items-center justify-between gap-2.5 text-left w-full">
+            <div class="flex items-center gap-2.5">
+                <span class="text-lg sm:text-xl">🚁</span>
+                <div class="leading-tight">
+                    <div class="text-xs sm:text-sm font-extrabold text-white">BLADES</div>
+                    <div class="text-[9px] sm:text-[10px] text-amber-100 font-semibold">Copter • Pterosaur</div>
+                </div>
+            </div>
+            <span data-buddy-badge="BLADES" class="hidden text-[8px] sm:text-[9px] font-extrabold bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded-full uppercase">🤝 BUDDY</span>
         </button>
     </div>
 
@@ -4380,6 +4403,25 @@
             hasWaypoint: false
         };
 
+        // Follow-Along AI Rescue Bot Wingman ("Buddy Bot")
+        const buddyBot = {
+            botType: 'HEATWAVE',
+            pos: new THREE.Vector3(-6, 5, -18),
+            heading: 0,
+            speed: 0,
+            vy: 0,
+            flightAlt: 0,
+            morph: 0,
+            targetMorph: 0,
+            dinoMorph: 0,
+            targetDinoMorph: 0,
+            walkCycle: 0,
+            smashTimer: 0,
+            scoopTimer: 0,
+            waterTimer: 0,
+            actionCooldown: 0
+        };
+
         // Cheerful 3D Target Waypoint Marker (Pulsing Ring + Bouncing Arrow + Light Beam)
         const waypointGroup = new THREE.Group();
         waypointGroup.visible = false;
@@ -4553,12 +4595,65 @@
 
             // Highlight active bot card in Bottom-Left Roster
             document.querySelectorAll('.bot-card').forEach(btn => {
-                if (btn.dataset.bot === player.botType) {
+                const bType = btn.dataset.bot;
+                if (bType === player.botType) {
                     btn.classList.add('active-bot');
+                    btn.classList.remove('buddy-bot');
+                } else if (bType === buddyBot.botType) {
+                    btn.classList.remove('active-bot');
+                    btn.classList.add('buddy-bot');
                 } else {
                     btn.classList.remove('active-bot');
+                    btn.classList.remove('buddy-bot');
+                }
+
+                const badge = btn.querySelector('[data-buddy-badge]');
+                if (badge) {
+                    if (bType === buddyBot.botType) {
+                        badge.classList.remove('hidden');
+                    } else {
+                        badge.classList.add('hidden');
+                    }
                 }
             });
+
+            const buddyMeta = BOT_METADATA[buddyBot.botType];
+            const buddyReadout = document.getElementById('buddy-readout');
+            if (buddyReadout && buddyMeta) {
+                buddyReadout.textContent = `BUDDY: ${buddyMeta.name}`;
+            }
+        }
+
+        function cycleBuddyBot() {
+            const allBots = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES'];
+            const candidateBots = allBots.filter(b => b !== player.botType);
+            const currentIdx = candidateBots.indexOf(buddyBot.botType);
+            const nextBot = candidateBots[(currentIdx + 1) % candidateBots.length];
+            setBuddyBot(nextBot);
+        }
+
+        function setBuddyBot(botType) {
+            if (botType === player.botType) return;
+            buddyBot.botType = botType;
+            progression.buddyBotType = botType;
+            saveProgression();
+
+            // Teleport or place buddy smoothly right behind player
+            const backDist = 7.5;
+            const sideDist = 4.2;
+            buddyBot.heading = player.heading;
+            buddyBot.pos.set(
+                player.pos.x - Math.sin(player.heading) * backDist - Math.cos(player.heading) * sideDist,
+                player.pos.y,
+                player.pos.z - Math.cos(player.heading) * backDist + Math.sin(player.heading) * sideDist
+            );
+            buddyBot.speed = player.speed;
+            buddyBot.flightAlt = (botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ? Math.max(14, player.flightAlt) : 0;
+            sfx.playWaypointTap();
+            const bMeta = BOT_METADATA[botType];
+            showToast("RESCUE WINGMAN", `${bMeta.name} is now your Buddy Bot!`);
+            triggerNPCSpeech(bMeta.name, "Wingman Partner", `I'm right behind you, ${BOT_METADATA[player.botType].name}! Ready to rescue!`, bMeta.voicePitch, true);
+            syncHUDToActiveBot();
         }
 
         function switchRescueBot(newBotType) {
@@ -4566,6 +4661,7 @@
                 speakBotCatchphrase(newBotType, 'DEPLOY');
                 return;
             }
+            const oldBotType = player.botType;
             player.botType = newBotType;
             player.hasWaypoint = false;
             waypointGroup.visible = false;
@@ -4573,6 +4669,13 @@
                 player.sirenActive = false;
             }
             sfx.playBotSwitch();
+
+            // If player switched to current buddy bot, swap old player bot to become the buddy bot!
+            if (buddyBot.botType === newBotType) {
+                buddyBot.botType = oldBotType;
+                progression.buddyBotType = oldBotType;
+                saveProgression();
+            }
 
             // If switching to Blades while already in vehicle or dino mode, lift into flight
             if (newBotType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
@@ -4601,6 +4704,20 @@
                 player.dinoMorph = Math.max(player.targetDinoMorph, player.dinoMorph - dt * morphSpeed);
             }
 
+            // Buddy Bot mirrors player mode & morphs
+            buddyBot.targetMorph = player.targetMorph;
+            buddyBot.targetDinoMorph = player.targetDinoMorph;
+            if (buddyBot.morph < buddyBot.targetMorph) {
+                buddyBot.morph = Math.min(buddyBot.targetMorph, buddyBot.morph + dt * morphSpeed);
+            } else if (buddyBot.morph > buddyBot.targetMorph) {
+                buddyBot.morph = Math.max(buddyBot.targetMorph, buddyBot.morph - dt * morphSpeed);
+            }
+            if (buddyBot.dinoMorph < buddyBot.targetDinoMorph) {
+                buddyBot.dinoMorph = Math.min(buddyBot.targetDinoMorph, buddyBot.dinoMorph + dt * morphSpeed);
+            } else if (buddyBot.dinoMorph > buddyBot.targetDinoMorph) {
+                buddyBot.dinoMorph = Math.max(buddyBot.targetDinoMorph, buddyBot.dinoMorph - dt * morphSpeed);
+            }
+
             Object.keys(botRigs).forEach(botKey => {
                 const rig = botRigs[botKey];
                 if (botKey === player.botType) {
@@ -4614,6 +4731,16 @@
                         rig.chassis.rotation.x = 0;
                     }
                     applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer);
+                } else if (botKey === buddyBot.botType) {
+                    // Buddy Bot follows wingman physics position & heading
+                    rig.root.position.copy(buddyBot.pos);
+                    rig.root.rotation.y = buddyBot.heading;
+                    if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
+                        rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (buddyBot.speed / 65) * 0.28, dt * 6);
+                    } else {
+                        rig.chassis.rotation.x = 0;
+                    }
+                    applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer);
                 } else {
                     // Inactive Bots stay parked in standby at Rescue Bots Headquarters!
                     const slot = HQ_PARKING_SLOTS[botKey];
@@ -4688,7 +4815,7 @@
         // PERSISTENT PROGRESSION (Release-Version Scoped localStorage)
         // & DYNAMIC ENDLESS EMERGENCY SPAWNER + RESCUE STAR RANKS
         // =====================================================================
-        const RELEASE_VERSION = '2026.11.02.2';
+        const RELEASE_VERSION = '2026.11.02.3';
         const PROGRESSION_STORAGE_PREFIX = 'rescue_bots_progression_';
         const PROGRESSION_STORAGE_KEY = `${PROGRESSION_STORAGE_PREFIX}${RELEASE_VERSION}`;
         const progression = {
@@ -4696,7 +4823,8 @@
             totalEmergenciesResolved: 0,
             totalCitizensRescued: 0,
             totalEnergonCubes: 0,
-            autoSpawnEmergencies: true
+            autoSpawnEmergencies: true,
+            buddyBotType: 'HEATWAVE'
         };
 
         const RESCUE_STAR_RANKS = [
@@ -4751,6 +4879,9 @@
                         if (typeof parsed.autoSpawnEmergencies === 'boolean') {
                             progression.autoSpawnEmergencies = parsed.autoSpawnEmergencies;
                         }
+                        if (typeof parsed.buddyBotType === 'string' && BOT_METADATA[parsed.buddyBotType]) {
+                            progression.buddyBotType = parsed.buddyBotType;
+                        }
                     } else {
                         // Schema version mismatch: overwrite with clean release-scoped defaults
                         window.localStorage.removeItem(PROGRESSION_STORAGE_KEY);
@@ -4760,7 +4891,13 @@
                 // Fallback gracefully if localStorage is unavailable or malformed
             }
             lastKnownRankLevel = getRescueStarRank(progression).level;
+            if (progression.buddyBotType && BOT_METADATA[progression.buddyBotType] && progression.buddyBotType !== player.botType) {
+                buddyBot.botType = progression.buddyBotType;
+            } else {
+                buddyBot.botType = player.botType === 'HEATWAVE' ? 'BOULDER' : 'HEATWAVE';
+            }
             syncProgressionHUD();
+            syncHUDToActiveBot();
         }
 
         function saveProgression() {
@@ -5199,11 +5336,15 @@
         }
 
         // Aimed High-Pressure Ballistic Water Cannon Arc for Heatwave (Automatically targets nearest active Fire/Hazard!)
-        function spawnWaterCannonStream() {
-            const rig = botRigs.HEATWAVE;
+        function spawnWaterCannonStream(sourceRig = botRigs.HEATWAVE, sourceOrigin = null, sourceHeading = player.heading) {
+            const rig = sourceRig;
             const nozzleWorldPos = new THREE.Vector3();
-            const activeNozzle = player.mode === 'DINO' ? rig.dinoNozzleTip : rig.nozzleTip;
-            activeNozzle.getWorldPosition(nozzleWorldPos);
+            if (sourceOrigin) {
+                nozzleWorldPos.copy(sourceOrigin);
+            } else {
+                const activeNozzle = player.mode === 'DINO' ? rig.dinoNozzleTip : rig.nozzleTip;
+                activeNozzle.getWorldPosition(nozzleWorldPos);
+            }
 
             // Find closest uncleared hazard node within 34m to aim the Water Cannon arc directly onto the flames!
             let targetNode = null;
@@ -5212,7 +5353,7 @@
                 if (beacon.restored) return;
                 beacon.nodes.forEach(n => {
                     if (n.cleared) return;
-                    const d = Math.hypot(n.x - player.pos.x, n.z - player.pos.z);
+                    const d = Math.hypot(n.x - nozzleWorldPos.x, n.z - nozzleWorldPos.z);
                     if (d < bestDist) {
                         bestDist = d;
                         targetNode = n;
@@ -5237,12 +5378,12 @@
 
                 // Rotate Heatwave's roof ladder turret toward the targeted fire!
                 const worldAimYaw = Math.atan2(dx, dz);
-                rig.backAttachment.rotation.y = worldAimYaw - player.heading;
+                rig.backAttachment.rotation.y = worldAimYaw - sourceHeading;
             } else {
                 rig.backAttachment.rotation.y = 0;
                 const jetSpeed = 42;
-                baseVx = Math.sin(player.heading) * jetSpeed;
-                baseVz = Math.cos(player.heading) * jetSpeed;
+                baseVx = Math.sin(sourceHeading) * jetSpeed;
+                baseVz = Math.cos(sourceHeading) * jetSpeed;
                 baseVy = 9.5;
             }
 
@@ -6074,6 +6215,134 @@
             }
         }
 
+        function updateBuddyBotAI(dt, now) {
+            if (!buddyBot.botType || buddyBot.botType === player.botType) return;
+            const bRig = botRigs[buddyBot.botType];
+            if (!bRig) return;
+
+            const isBlades = buddyBot.botType === 'BLADES';
+            const isFlying = isBlades && (player.mode === 'VEHICLE' || player.mode === 'DINO');
+
+            // Dynamic target formation slot (trails slightly to the rear-left or rear-right of player)
+            const followDist = isFlying ? 12.0 : 8.0;
+            const sideOffset = -5.0; // Left flank
+            const targetX = player.pos.x - Math.sin(player.heading) * followDist - Math.cos(player.heading) * sideOffset;
+            const targetZ = player.pos.z - Math.cos(player.heading) * followDist + Math.sin(player.heading) * sideOffset;
+
+            const dx = targetX - buddyBot.pos.x;
+            const dz = targetZ - buddyBot.pos.z;
+            const distToSlot = Math.hypot(dx, dz);
+            const distToPlayer = Math.hypot(player.pos.x - buddyBot.pos.x, player.pos.z - buddyBot.pos.z);
+
+            // Turn smoothly toward formation slot or forward direction
+            if (distToSlot > 1.2) {
+                const desiredHeading = Math.atan2(dx, dz);
+                let diff = desiredHeading - buddyBot.heading;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                buddyBot.heading += Math.sign(diff) * Math.min(Math.abs(diff), 5.5 * dt);
+            } else {
+                let diff = player.heading - buddyBot.heading;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                buddyBot.heading += Math.sign(diff) * Math.min(Math.abs(diff), 4.0 * dt);
+            }
+
+            // Speed matching with rubber-banding so Buddy never gets lost
+            let targetSpeed = 0;
+            if (distToSlot > 1.5) {
+                const catchupMult = distToSlot > 25 ? 1.75 : (distToSlot > 12 ? 1.35 : 1.05);
+                targetSpeed = Math.max(player.speed * catchupMult, Math.min(75, distToSlot * 4.0));
+            } else if (Math.abs(player.speed) > 1.0) {
+                targetSpeed = player.speed;
+            }
+
+            // If player boosted ahead, give Buddy a burst
+            if (player.boostTimer > 0 || player.energonBoostTimer > 0) {
+                targetSpeed = Math.max(targetSpeed, 65);
+            }
+
+            buddyBot.speed = THREE.MathUtils.lerp(buddyBot.speed, targetSpeed, Math.min(1, dt * 7.0));
+
+            // Instant rescue teleport catch-up if separated by >160m (keeps it 100% kid-friendly and frustration-free)
+            if (distToPlayer > 160) {
+                buddyBot.pos.set(targetX, player.pos.y, targetZ);
+                buddyBot.heading = player.heading;
+                buddyBot.speed = player.speed;
+            } else {
+                buddyBot.pos.x += Math.sin(buddyBot.heading) * buddyBot.speed * dt;
+                buddyBot.pos.z += Math.cos(buddyBot.heading) * buddyBot.speed * dt;
+            }
+
+            const groundY = Math.max(0.0, getTerrainHeight(buddyBot.pos.x, buddyBot.pos.z));
+            if (isFlying) {
+                const targetAlt = Math.max(14, player.flightAlt + Math.sin(now * 0.003) * 1.5);
+                buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, groundY + targetAlt, Math.min(1, dt * 4.5));
+            } else {
+                buddyBot.pos.y = groundY;
+            }
+
+            if (Math.abs(buddyBot.speed) > 0.4) {
+                buddyBot.walkCycle += dt * Math.abs(buddyBot.speed) * 0.55;
+            }
+
+            // Autonomous Buddy Rescue Assistance at Emergency Sites!
+            if (buddyBot.actionCooldown > 0) {
+                buddyBot.actionCooldown -= dt;
+            }
+            if (buddyBot.smashTimer > 0) buddyBot.smashTimer = Math.max(0, buddyBot.smashTimer - dt);
+            if (buddyBot.scoopTimer > 0) buddyBot.scoopTimer = Math.max(0, buddyBot.scoopTimer - dt);
+            if (buddyBot.waterTimer > 0) {
+                buddyBot.waterTimer = Math.max(0, buddyBot.waterTimer - dt);
+                if (buddyBot.botType === 'HEATWAVE') {
+                    spawnWaterCannonStream(bRig, new THREE.Vector3(buddyBot.pos.x, buddyBot.pos.y + 3.2, buddyBot.pos.z), buddyBot.heading);
+                }
+            }
+
+            // Find nearest uncleared hazard node to the Buddy Bot
+            let nearestHazard = null;
+            let nearestDist = 20.0;
+            let targetBeacon = null;
+            for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
+                const b = beacons[bIdx];
+                if (b.restored) continue;
+                for (let nIdx = 0; nIdx < b.nodes.length; nIdx++) {
+                    const n = b.nodes[nIdx];
+                    if (n.cleared) continue;
+                    const d = Math.hypot(buddyBot.pos.x - n.x, buddyBot.pos.z - n.z);
+                    if (d < nearestDist) {
+                        nearestDist = d;
+                        nearestHazard = n;
+                        targetBeacon = b;
+                    }
+                }
+            }
+
+            // Buddy uses their signature powers when near an emergency!
+            if (nearestHazard && buddyBot.actionCooldown <= 0) {
+                buddyBot.actionCooldown = 1.6;
+                if (buddyBot.botType === 'HEATWAVE') {
+                    buddyBot.waterTimer = 1.4;
+                    sfx.playWaterSpray();
+                    clearHazardNode(targetBeacon, nearestHazard);
+                } else if (buddyBot.botType === 'BOULDER') {
+                    buddyBot.scoopTimer = 0.8;
+                    buddyBot.smashTimer = 0.4;
+                    sfx.playSmash();
+                    clearHazardNode(targetBeacon, nearestHazard);
+                    spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0xfacc15, 8, 1.1);
+                } else if (buddyBot.botType === 'CHASE') {
+                    buddyBot.smashTimer = 0.4;
+                    sfx.playSirenPulse();
+                    clearHazardNode(targetBeacon, nearestHazard);
+                } else if (buddyBot.botType === 'BLADES') {
+                    buddyBot.smashTimer = 0.4;
+                    sfx.playSmash();
+                    clearHazardNode(targetBeacon, nearestHazard);
+                }
+            }
+        }
+
         buildLivingWorldNPCs();
 
         /***********************************************************************
@@ -6644,6 +6913,11 @@
         bindButton('btn-descend', triggerDescendAction);
         bindButton('btn-siren', toggleSiren);
 
+        // Bind Buddy Bot Cycle Button
+        bindButton('btn-buddy-cycle', () => {
+            cycleBuddyBot();
+        });
+
         // Bind Bottom-Left 4-Bot Roster Cards
         document.querySelectorAll('.bot-card').forEach(card => {
             const botType = card.dataset.bot;
@@ -6797,6 +7071,9 @@
             if (e.code === 'KeyH' && !e.repeat) {
                 toggleSiren();
             }
+            if (e.code === 'KeyB' && !e.repeat) {
+                cycleBuddyBot();
+            }
         });
         window.addEventListener('keyup', e => {
             input.keys[e.code] = false;
@@ -6938,6 +7215,24 @@
             mCtx.closePath();
             mCtx.fill();
             mCtx.restore();
+
+            // Draw Buddy Bot Arrow (Cyan Wingman Indicator)
+            if (buddyBot.botType && buddyBot.botType !== player.botType) {
+                const bx = cx + buddyBot.pos.x * mapScale;
+                const bz = cy + buddyBot.pos.z * mapScale;
+                mCtx.save();
+                mCtx.translate(bx, bz);
+                mCtx.rotate(-buddyBot.heading + Math.PI);
+                mCtx.fillStyle = '#38bdf8';
+                mCtx.beginPath();
+                mCtx.moveTo(0, -5.5);
+                mCtx.lineTo(4.5, 5);
+                mCtx.lineTo(0, 2.5);
+                mCtx.lineTo(-4.5, 5);
+                mCtx.closePath();
+                mCtx.fill();
+                mCtx.restore();
+            }
         }
 
         // =====================================================================
@@ -7491,6 +7786,7 @@
             });
 
             updatePhysics(dt, now);
+            updateBuddyBotAI(dt, now);
             updateEnergonCubes(dt, now);
             updateAllBotTransforms(dt, now);
             updateLivingWorldNPCs(dt, now);
