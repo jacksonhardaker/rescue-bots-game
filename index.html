@@ -93,10 +93,17 @@
     <header class="fixed top-2.5 left-2.5 right-2.5 z-20 flex flex-wrap items-start justify-between pointer-events-none gap-2">
         <!-- Left: Minimap + Mission Progress -->
         <div class="flex items-start gap-2.5 pointer-events-auto">
-            <div id="minimap-container" title="Tap anywhere on the Minimap to Auto-Pilot there!" class="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full hud-glass p-1.5 flex items-center justify-center overflow-hidden border-2 border-amber-400/60 hover:border-cyan-400 shadow-xl shrink-0 cursor-pointer transition-colors">
-                <canvas id="minimap-canvas" width="160" height="160" class="w-full h-full rounded-full cursor-pointer"></canvas>
-                <div class="absolute top-1 text-[10px] font-bold tracking-wider text-amber-300 drop-shadow pointer-events-none">N</div>
-                <div class="absolute bottom-1.5 px-1.5 py-0.2 rounded bg-slate-950/80 text-[8px] sm:text-[9px] mono-font text-lime-300 font-bold truncate max-w-[90%] pointer-events-none" id="zone-label">RESCUE HQ</div>
+            <div class="flex flex-col items-center gap-1 shrink-0">
+                <div id="minimap-container" title="Tap anywhere on the Minimap to Auto-Pilot there!" class="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full hud-glass p-1.5 flex items-center justify-center overflow-hidden border-2 border-amber-400/60 hover:border-cyan-400 shadow-xl cursor-pointer transition-colors">
+                    <canvas id="minimap-canvas" width="160" height="160" class="w-full h-full rounded-full cursor-pointer"></canvas>
+                    <!-- Compass Cardinal Points -->
+                    <div class="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs font-black tracking-wider text-amber-300 drop-shadow pointer-events-none select-none">N</div>
+                    <div class="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs font-black tracking-wider text-amber-300 drop-shadow pointer-events-none select-none">S</div>
+                    <div class="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs font-black tracking-wider text-amber-300 drop-shadow pointer-events-none select-none">W</div>
+                    <div class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs font-black tracking-wider text-amber-300 drop-shadow pointer-events-none select-none">E</div>
+                </div>
+                <!-- Region / Zone Badge directly beneath minimap dial, fully readable without truncation -->
+                <div class="px-2 py-0.5 rounded-full bg-slate-950/90 border border-amber-400/40 text-[8.5px] sm:text-[10px] mono-font text-lime-300 font-bold tracking-tight text-center shadow-lg whitespace-nowrap max-w-[136px] sm:max-w-[175px] truncate pointer-events-none select-none" id="zone-label">RESCUE HQ</div>
             </div>
 
             <div class="flex flex-col gap-2">
@@ -143,15 +150,24 @@
             <div class="text-xs sm:text-sm font-bold text-white mt-0.5">Tap any Rescue Bot on the Roster or press <span class="text-amber-300">[1 - 4]</span> to Switch!</div>
         </div>
 
-        <!-- Living World NPC Radio & Speech Dialogue Banner -->
-        <div id="npc-speech-bubble" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-30 hud-glass border-2 border-lime-400 px-5 py-3 rounded-2xl max-w-md w-[90vw] shadow-2xl pointer-events-auto flex items-center gap-3.5">
-            <div id="npc-speaker-avatar" class="w-11 h-11 rounded-xl bg-lime-400/20 border-2 border-lime-300 flex items-center justify-center text-2xl shrink-0">👮‍♂️</div>
-            <div class="leading-snug text-left">
-                <div class="flex items-center gap-2">
-                    <span id="npc-speaker-name" class="text-xs uppercase tracking-wider font-extrabold text-lime-300">CHIEF CHARLIE BURNS</span>
-                    <span class="text-[10px] bg-lime-500/20 text-lime-200 px-2 py-0.5 rounded-full font-bold border border-lime-400/40">🔊 VOICE COMMS</span>
+        <!-- 3D Comic Speech Bubble Floating Above the Speaking Character -->
+        <div id="npc-world-bubble" class="hidden fixed z-40 pointer-events-none transition-transform duration-100 ease-out origin-bottom select-none" style="transform: translate(-50%, -100%);">
+            <div class="relative bg-white/95 text-slate-900 border-2 border-slate-950 px-3.5 py-2 rounded-2xl shadow-2xl max-w-[280px] sm:max-w-[340px] flex flex-col gap-0.5">
+                <!-- Speaker Header: Avatar + Role Badge + Name -->
+                <div class="flex items-center gap-1.5 leading-none">
+                    <span id="world-speaker-avatar" class="text-base shrink-0">💬</span>
+                    <span id="world-speaker-role" class="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-amber-400 text-slate-950">RESCUE BOT</span>
+                    <span id="world-speaker-name" class="text-[11px] font-black tracking-wide text-slate-900 uppercase truncate">HEATWAVE</span>
                 </div>
-                <div id="npc-speech-text" class="text-xs sm:text-sm font-bold text-white mt-0.5">"Rescue Bots! The closest emergency is Town East Blaze to the East!"</div>
+                <!-- Speech Dialogue Text -->
+                <div id="world-speech-text" class="text-xs sm:text-sm font-extrabold leading-snug text-slate-950 mt-0.5">
+                    "Rescue Bots! Roll to the rescue!"
+                </div>
+                <!-- Comic Pointer Tail pointing down at the character below -->
+                <div id="world-bubble-tail" class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none">
+                    <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[9px] border-t-slate-950"></div>
+                    <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[7px] border-t-white -mt-[9px]"></div>
+                </div>
             </div>
         </div>
 
@@ -330,7 +346,6 @@
             constructor() {
                 this.ctx = null;
                 this.enabled = true;
-                this.speechUnlocked = false;
                 this.loopsReady = false;
             }
             init() {
@@ -341,22 +356,23 @@
                 if (this.ctx && this.ctx.state === 'suspended') {
                     this.ctx.resume();
                 }
-                this.unlockSpeech();
             }
-            unlockSpeech() {
-                if (this.speechUnlocked || !('speechSynthesis' in window)) return;
-                try {
-                    window.speechSynthesis.getVoices();
-                    const warmUp = new SpeechSynthesisUtterance(' ');
-                    warmUp.volume = 0.01;
-                    warmUp.rate = 2.0;
-                    warmUp.lang = 'en-US';
-                    window._warmUpUtterance = warmUp;
-                    window.speechSynthesis.speak(warmUp);
-                    this.speechUnlocked = true;
-                } catch (err) {
-                    // Ignore if restricted
-                }
+            playSpeechPop() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(540, now);
+                osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+                gain.gain.setValueAtTime(0.14, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.13);
             }
             playTransform(toVehicle) {
                 if (!this.enabled) return;
@@ -1363,6 +1379,8 @@
             return h;
         }
 
+        const ramps = [];
+
         function getSurfaceHeight(x, z) {
             // South Harbor Pier Dock Deck
             if (Math.abs(x) <= 16.0 && z >= 1180 && z <= 1278) {
@@ -1371,6 +1389,23 @@
             // Docked Ferry Boat Deck
             if (Math.abs(x - 36) <= 7.5 && z >= 1210 && z <= 1254) {
                 return 6.8;
+            }
+            // Stunt Ramp Surfaces (allows vehicles & bots to smoothly drive and run up the ramp incline)
+            for (let i = 0; i < ramps.length; i++) {
+                const rm = ramps[i];
+                const dx = x - rm.x;
+                const dz = z - rm.z;
+                if (Math.abs(dx) < rm.r && Math.abs(dz) < rm.r) {
+                    const lx = dx * rm.cosY - dz * rm.sinY;
+                    const lz = dx * rm.sinY + dz * rm.cosY;
+                    const hw = rm.w * 0.5;
+                    const hl = rm.l * 0.5;
+                    if (Math.abs(lx) <= hw + 0.1 && lz >= -hl - 0.1 && lz <= hl + 0.1) {
+                        const t = Math.max(0, Math.min(1, (lz + hl) / rm.l));
+                        const baseGround = getTerrainHeight(x, z);
+                        return baseGround + t * rm.height;
+                    }
+                }
             }
             return getTerrainHeight(x, z);
         }
@@ -1738,7 +1773,6 @@
         scene.add(shorelineFoamRing);
 
         const worldColliders = [];
-        const ramps = [];
         const cullableWorldObjects = []; // Viewport & Distance Frustum Culling Registry for 60 FPS across 10X Map!
         const humanNPCs = [];
         const vehicleNPCs = [];
@@ -2572,36 +2606,119 @@
         worldColliders.push({ x: 780, z: -780, r: 6.0 });
 
         // Stunt Ramps across the 10X Island
-        function createStuntRamp(x, z, rotY) {
-            const gy = getTerrainHeight(x, z);
+        // Builds a solid, terrain-adaptive wedge ramp that seamlessly matches ground elevation at its entrance
+        function createStuntRamp(x, z, rotY, w = 12, l = 18, rampHeight = 3.2) {
+            const hw = w * 0.5;
+            const hl = l * 0.5;
+            const cosY = Math.cos(rotY);
+            const sinY = Math.sin(rotY);
+            const gyCenter = getTerrainHeight(x, z);
+
+            // Sample ground elevation at the 4 ramp corners in world space
+            const cornerWorld = (lx, lz) => {
+                const wx = x + lx * cosY + lz * sinY;
+                const wz = z - lx * sinY + lz * cosY;
+                return getTerrainHeight(wx, wz);
+            };
+
+            const gyEL = cornerWorld(-hw, -hl);
+            const gyER = cornerWorld(hw, -hl);
+            const gyLL = cornerWorld(-hw, hl);
+            const gyLR = cornerWorld(hw, hl);
+
+            // Local coordinates relative to (x, gyCenter, z)
+            const lyEL = gyEL - gyCenter;
+            const lyER = gyER - gyCenter;
+            const lyLL = gyLL - gyCenter + rampHeight;
+            const lyLR = gyLR - gyCenter + rampHeight;
+            // Underground foundation skirt: extends deeply into terrain so base never hovers or floats
+            const lyBottom = Math.min(gyEL, gyER, gyLL, gyLR) - gyCenter - 1.8;
+
+            const P0 = [-hw, lyEL, -hl];      // Entrance Left (flush with terrain)
+            const P1 = [ hw, lyER, -hl];      // Entrance Right (flush with terrain)
+            const P2 = [ hw, lyLR,  hl];      // Launch Right (elevated)
+            const P3 = [-hw, lyLL,  hl];      // Launch Left (elevated)
+            const P4 = [-hw, lyBottom, -hl];  // Foundation Entrance Left
+            const P5 = [ hw, lyBottom, -hl];  // Foundation Entrance Right
+            const P6 = [ hw, lyBottom,  hl];  // Foundation Launch Right
+            const P7 = [-hw, lyBottom,  hl];  // Foundation Launch Left
+
+            const faces = [
+                // Top driving ramp surface (slopes up smoothly from ground level to launch height)
+                { pts: [P0, P2, P1], uvs: [[0, 0], [1, 3], [1, 0]] },
+                { pts: [P0, P3, P2], uvs: [[0, 0], [0, 3], [1, 3]] },
+                // Back vertical launch wall
+                { pts: [P3, P6, P2], uvs: [[0, 1], [1, 0], [1, 1]] },
+                { pts: [P3, P7, P6], uvs: [[0, 1], [0, 0], [1, 0]] },
+                // Left side wall
+                { pts: [P0, P7, P3], uvs: [[0, 0], [3, 0], [3, 1]] },
+                { pts: [P0, P4, P7], uvs: [[0, 0], [0, 0], [3, 0]] },
+                // Right side wall
+                { pts: [P1, P2, P6], uvs: [[0, 0], [3, 1], [3, 0]] },
+                { pts: [P1, P6, P5], uvs: [[0, 0], [3, 0], [0, 0]] },
+                // Front entrance ground skirt (buried into terrain)
+                { pts: [P1, P4, P0], uvs: [[1, 0.2], [0, 0], [0, 0.2]] },
+                { pts: [P1, P5, P4], uvs: [[1, 0.2], [1, 0], [0, 0]] },
+                // Bottom ground base
+                { pts: [P4, P6, P7], uvs: [[0, 0], [1, 1], [0, 1]] },
+                { pts: [P4, P5, P6], uvs: [[0, 0], [1, 0], [1, 1]] }
+            ];
+
+            const positions = new Float32Array(36 * 3);
+            const uvs = new Float32Array(36 * 2);
+            let pIdx = 0, uIdx = 0;
+            for (let f = 0; f < faces.length; f++) {
+                const face = faces[f];
+                for (let i = 0; i < 3; i++) {
+                    positions[pIdx++] = face.pts[i][0];
+                    positions[pIdx++] = face.pts[i][1];
+                    positions[pIdx++] = face.pts[i][2];
+                    uvs[uIdx++] = face.uvs[i][0];
+                    uvs[uIdx++] = face.uvs[i][1];
+                }
+            }
+
+            const rampGeo = new THREE.BufferGeometry();
+            rampGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            rampGeo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+            rampGeo.computeVertexNormals();
+
             const ramp = new THREE.Mesh(
-                new THREE.BoxGeometry(12, 2.0, 18),
+                rampGeo,
                 new THREE.MeshToonMaterial({ map: texHazard, gradientMap: toonGrad3 })
             );
-            ramp.position.set(x, gy + 1.6, z);
+            ramp.position.set(x, gyCenter, z);
             ramp.rotation.y = rotY;
-            ramp.rotation.x = -0.26;
             ramp.castShadow = true;
-            applyCartoonInkOutlines(ramp, 1.04, true);
+            ramp.receiveShadow = true;
+            applyCartoonInkOutlines(ramp, 1.03, true);
             scene.add(ramp);
-            registerCullableObject(ramp, x, gy + 2, z, 18);
-            ramps.push({ x, z, r: 8.5 });
+            registerCullableObject(ramp, x, gyCenter + 2, z, 20);
+
+            ramps.push({
+                x, z, rotY,
+                w, l, height: rampHeight,
+                cosY, sinY,
+                r: Math.hypot(w, l) * 0.65
+            });
         }
-        createStuntRamp(26, 220, 0.15);
-        createStuntRamp(-220, 25, -1.35);
-        createStuntRamp(240, -140, 0.85);
-        createStuntRamp(32, 740, 0.0);
-        createStuntRamp(-680, 25, -Math.PI / 2);
-        createStuntRamp(680, 25, Math.PI / 2);
+
+        // Accurately aligned on roads, plazas, and terrain features across Griffin Rock
+        createStuntRamp(0, 218, 0.0);                   // 1. South Highway HQ Stunt Ramp (aligned on road facing South)
+        createStuntRamp(-220, 25, -Math.PI / 2);        // 2. West Tech Leap (aligned on East-West Highway facing West)
+        createStuntRamp(240, -140, 0.876);              // 3. Cliffside Overlook (aligned with Sky Hoop launch vector)
+        createStuntRamp(0, 740, 0.0);                   // 4. South Highway Outer Ramp (aligned on road facing South)
+        createStuntRamp(-680, 25, -Math.PI / 2);        // 5. Outer West Highway Ramp (aligned on East-West Highway)
+        createStuntRamp(680, 25, Math.PI / 2);          // 6. Outer East Highway Ramp (aligned on East-West Highway)
 
         // =====================================================================
         // 5B-3. SKY STUNT HOOPS (Interactive Aerial Rings across Griffin Rock)
         // =====================================================================
         const STUNT_HOOPS = [
-            { id: 1, name: "HQ Ramp Stunt Launch", x: 26, y: 15.5, z: 236, rotY: 0.15, radius: 6.2, color: 0x38bdf8 },
+            { id: 1, name: "HQ Ramp Stunt Launch", x: 0, y: 15.5, z: 238, rotY: 0.0, radius: 6.2, color: 0x38bdf8 },
             { id: 2, name: "Town Plaza Sky Ring", x: 0, y: 25.0, z: -15, rotY: 0, radius: 7.2, color: 0xfacc15 },
-            { id: 3, name: "West Tech Leap", x: -235, y: 16.5, z: 25, rotY: -1.35, radius: 6.2, color: 0xa855f7 },
-            { id: 4, name: "Cliffside Overlook", x: 252, y: 24.0, z: -130, rotY: 0.85, radius: 6.5, color: 0xf43f5e },
+            { id: 3, name: "West Tech Leap", x: -240, y: 16.5, z: 25, rotY: -Math.PI / 2, radius: 6.2, color: 0xa855f7 },
+            { id: 4, name: "Cliffside Overlook", x: 252, y: 24.0, z: -130, rotY: 0.876, radius: 6.5, color: 0xf43f5e },
             { id: 5, name: "Volcano Caldera Flight Ring", x: -735, y: 68.0, z: -755, rotY: 0.4, radius: 8.0, color: 0xf97316 },
             { id: 6, name: "South Harbor Ocean Bay Ring", x: 0, y: 16.0, z: 1250, rotY: 0, radius: 7.2, color: 0x06b6d4 }
         ];
@@ -5094,7 +5211,7 @@
             if (!botLines || !meta) return;
             const idx = (botPhraseCounters[botType]++) % botLines.length;
             const line = botLines[idx];
-            triggerNPCSpeech(meta.name, meta.role, line, meta.voicePitch, true);
+            triggerNPCSpeech(meta.name, meta.role, line, player, true);
         }
 
         const player = {
@@ -5384,7 +5501,7 @@
             sfx.playWaypointTap();
             const bMeta = BOT_METADATA[botType];
             showToast("RESCUE WINGMAN", `${bMeta.name} is now your Buddy Bot!`);
-            triggerNPCSpeech(bMeta.name, "Wingman Partner", `I'm right behind you, ${BOT_METADATA[player.botType].name}! Ready to rescue!`, bMeta.voicePitch, true);
+            triggerNPCSpeech(bMeta.name, "Wingman Partner", `I'm right behind you, ${BOT_METADATA[player.botType].name}! Ready to rescue!`, buddyBot, true);
             syncHUDToActiveBot();
         }
 
@@ -5713,64 +5830,119 @@
         const boulderGeo = new THREE.DodecahedronGeometry(2.3, 0);
         const fireConeGeo = new THREE.ConeGeometry(2.1, 5.5, 7);
 
-        // Shared English Speech + HUD Banner announcer for both Patrol NPCs & Stranded Emergency Citizens
-        function triggerNPCSpeech(speakerName, speakerRole, speechText, voicePitch = 1.05, forceSpeak = false) {
-            const nowSec = performance.now() * 0.001;
-            if (!forceSpeak && nowSec - lastGlobalVoiceTime < 8.5) return false;
-            lastGlobalVoiceTime = nowSec;
+        // 3D Active Speech Bubble Tracking State
+        const activeSpeech = {
+            visible: false,
+            source: null,
+            speakerName: "",
+            speakerRole: "",
+            speechText: "",
+            timer: 0,
+            yOffset: 3.3
+        };
 
-            const bubble = document.getElementById('npc-speech-bubble');
-            const nameEl = document.getElementById('npc-speaker-name');
-            const roleEl = document.getElementById('npc-speaker-role');
-            const textEl = document.getElementById('npc-speech-text');
-            if (bubble && nameEl && roleEl && textEl) {
-                nameEl.textContent = speakerName.toUpperCase();
-                roleEl.textContent = speakerRole.toUpperCase();
-                textEl.textContent = `"${speechText}"`;
-                bubble.classList.remove('hidden');
-                clearTimeout(window._npcBubbleTimeout);
-                window._npcBubbleTimeout = setTimeout(() => {
-                    bubble.classList.add('hidden');
-                }, 6800);
+        const SPEAKER_AVATARS = {
+            'HEATWAVE': '🚒',
+            'CHASE': '🚓',
+            'BLADES': '🚁',
+            'BOULDER': '🚜',
+            'CHIEF CHARLIE BURNS': '👮‍♂️',
+            'CODY BURNS': '👦',
+            'DANI BURNS': '👩‍✈️',
+            'KADE BURNS': '👨‍🚒',
+            'GRAHAM BURNS': '👷‍♂️',
+            'DOC EZRA GREENE': '👨‍🔬',
+            'FRANKIE GREENE': '👧',
+            'MAYOR LUSKEY': '🎩',
+            'HUXLEY PRESCOTT': '🎙️',
+            'CAPTAIN SHAW': '⚓',
+            'RANGER TAYLOR': '🌲'
+        };
+
+        function getSpeakerAvatar(name, role) {
+            const upper = (name || '').toUpperCase();
+            for (const key in SPEAKER_AVATARS) {
+                if (upper.includes(key)) return SPEAKER_AVATARS[key];
             }
+            if (/CHIEF|POLICE/i.test(role)) return '👮‍♂️';
+            if (/PILOT|FLIGHT/i.test(role)) return '👩‍✈️';
+            if (/FIRE/i.test(role)) return '👨‍🚒';
+            if (/ENGINEER|CREW/i.test(role)) return '👷‍♂️';
+            if (/SCIENTIST|TECH/i.test(role)) return '👨‍🔬';
+            if (/CITIZEN|RESCUED/i.test(role)) return '🙋';
+            return '💬';
+        }
 
-            if (sfx.enabled && 'speechSynthesis' in window) {
-                try {
-                    const speakNow = () => {
-                        if (window.speechSynthesis.paused) {
-                            window.speechSynthesis.resume();
-                        }
-                        const utter = new SpeechSynthesisUtterance(speechText);
-                        utter.lang = 'en-US';
-                        utter.rate = 1.05;
-                        utter.pitch = voicePitch;
-                        utter.volume = 1.0;
-
-                        const voices = window.speechSynthesis.getVoices();
-                        if (voices && voices.length > 0) {
-                            const enVoice = voices.find(v => v.lang && v.lang.startsWith('en-US') && /Samantha|Alex|Daniel| Nicky|Aaron|Google|Natural|Enhanced/i.test(v.name))
-                                || voices.find(v => v.lang && v.lang.startsWith('en'));
-                            if (enVoice) utter.voice = enVoice;
-                        }
-                        // Keep a global reference on window so iOS Safari WebKit GC doesn't collect the utterance mid-speech!
-                        window._activeUtterance = utter;
-                        utter.onend = () => { if (window._activeUtterance === utter) window._activeUtterance = null; };
-                        utter.onerror = () => { if (window._activeUtterance === utter) window._activeUtterance = null; };
-                        window.speechSynthesis.speak(utter);
-                    };
-
-                    // Avoid iOS Safari WebKit bug where calling cancel() immediately before speak() aborts the new utterance
-                    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-                        window.speechSynthesis.cancel();
-                        clearTimeout(window._iosSpeechCancelTimer);
-                        window._iosSpeechCancelTimer = setTimeout(speakNow, 65);
-                    } else {
-                        speakNow();
-                    }
-                } catch (err) {
-                    // Fallback gracefully if speechSynthesis is restricted
+        function findSpeakerSource(speakerName) {
+            if (!speakerName) return player;
+            const upper = speakerName.toUpperCase();
+            if (BOT_METADATA[player.botType] && BOT_METADATA[player.botType].name.toUpperCase() === upper) {
+                return player;
+            }
+            if (buddyBot && buddyBot.botType && BOT_METADATA[buddyBot.botType] && BOT_METADATA[buddyBot.botType].name.toUpperCase() === upper) {
+                return buddyBot;
+            }
+            for (let i = 0; i < humanNPCs.length; i++) {
+                if (humanNPCs[i].name && humanNPCs[i].name.toUpperCase() === upper) {
+                    return humanNPCs[i];
                 }
             }
+            for (let b = 0; b < beacons.length; b++) {
+                if (beacons[b].strandedCitizens) {
+                    for (let c = 0; c < beacons[b].strandedCitizens.length; c++) {
+                        const sc = beacons[b].strandedCitizens[c];
+                        if (sc.name && sc.name.toUpperCase() === upper) {
+                            return sc;
+                        }
+                    }
+                }
+            }
+            return player;
+        }
+
+        // Display spoken events as cartoon comic text bubbles floating directly above the speaking NPC/Bot!
+        function triggerNPCSpeech(speakerName, speakerRole, speechText, targetOrPitch = null, forceSpeak = false) {
+            const nowSec = performance.now() * 0.001;
+            if (!forceSpeak && nowSec - lastGlobalVoiceTime < 5.5) return false;
+            lastGlobalVoiceTime = nowSec;
+
+            let source = null;
+            if (targetOrPitch && typeof targetOrPitch === 'object') {
+                source = targetOrPitch;
+            } else {
+                source = findSpeakerSource(speakerName);
+            }
+
+            let yOffset = 3.3;
+            if (source === player || source === buddyBot) {
+                yOffset = 4.6;
+            }
+
+            activeSpeech.visible = true;
+            activeSpeech.source = source;
+            activeSpeech.speakerName = speakerName;
+            activeSpeech.speakerRole = speakerRole;
+            activeSpeech.speechText = speechText;
+            activeSpeech.yOffset = yOffset;
+            activeSpeech.timer = 6.0;
+
+            sfx.playSpeechPop();
+
+            const bubbleEl = document.getElementById('npc-world-bubble');
+            const avatarEl = document.getElementById('world-speaker-avatar');
+            const roleEl = document.getElementById('world-speaker-role');
+            const nameEl = document.getElementById('world-speaker-name');
+            const textEl = document.getElementById('world-speech-text');
+
+            if (avatarEl) avatarEl.textContent = getSpeakerAvatar(speakerName, speakerRole);
+            if (roleEl) roleEl.textContent = speakerRole.toUpperCase();
+            if (nameEl) nameEl.textContent = speakerName.toUpperCase();
+            if (textEl) textEl.textContent = `"${speechText}"`;
+
+            if (bubbleEl) {
+                bubbleEl.classList.remove('hidden');
+            }
+
             return true;
         }
 
@@ -6304,7 +6476,7 @@
                             speaker.name,
                             "Rescued Citizen",
                             `Hooray! Thank you, ${botName}! You saved us at the ${beacon.name}!`,
-                            speaker.voicePitch,
+                            speaker,
                             true
                         );
                     }, 3600);
@@ -6365,10 +6537,10 @@
             { x: -64, z: 25, alt: 0 },
             { x: 64, z: 25, alt: 0 },
             // Stunt Ramp Apex Cubes (Jump the ramp or drive past to magnet-scoop!)
-            { x: 45, z: -38, alt: 2.8 },
+            { x: 246, z: -135, alt: 3.8 },
             { x: -55, z: 48, alt: 2.8 },
-            { x: 0, z: 195, alt: 3.2 },
-            { x: -210, z: 25, alt: 3.2 },
+            { x: 0, z: 227, alt: 3.8 },
+            { x: -229, z: 25, alt: 3.8 },
             { x: 225, z: 25, alt: 3.2 },
             { x: 0, z: -240, alt: 3.2 },
             // Highway & Coastal Ring Cubes
@@ -6376,10 +6548,10 @@
             { x: 375, z: 0, alt: 0 },
             { x: 0, z: -375, alt: 0 },
             { x: -375, z: 0, alt: 0 },
-            { x: 0, z: 740, alt: 0 },
-            { x: 740, z: 25, alt: 0 },
+            { x: 0, z: 749, alt: 3.8 },
+            { x: 689, z: 25, alt: 3.8 },
             { x: 0, z: -740, alt: 0 },
-            { x: -740, z: 25, alt: 0 },
+            { x: -689, z: 25, alt: 3.8 },
             // Outer District Landmark Treasures
             { x: 36, z: 1230, alt: 8.5 },    // Aboard the South Harbor Rescue Ferry deck!
             { x: 35, z: 1155, alt: 0 },      // Under the South Harbor Gantry Crane
@@ -6622,7 +6794,7 @@
             if (!forceSpeak && nowSec - (npc.lastSpokeTime || -99) < 24.0) return;
 
             const report = getClosestDisasterReport(npc.x, npc.z);
-            const spoke = triggerNPCSpeech(npc.name, npc.role, report.speechText, npc.voicePitch || 1.05, forceSpeak);
+            const spoke = triggerNPCSpeech(npc.name, npc.role, report.speechText, npc, forceSpeak);
             if (spoke) {
                 npc.lastSpokeTime = nowSec;
                 npc.waveTimer = 4.5;
@@ -7016,7 +7188,7 @@
 
                         // Call out for help in English when the Rescue Bot approaches within 36m!
                         if (distToSite < 36.0 && cIdx === 0 && (nowSec - sc.lastCallTime > 20.0)) {
-                            if (triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc.voicePitch, false)) {
+                            if (triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc, false)) {
                                 sc.lastCallTime = nowSec;
                             }
                         }
@@ -7444,10 +7616,10 @@
                         if (b.strandedCitizens && Math.hypot(hitPoint.x - b.x, hitPoint.z - b.z) < 24.0) {
                             const sc = b.strandedCitizens[0];
                             if (!b.restored) {
-                                triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc.voicePitch, true);
+                                triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc, true);
                             } else {
                                 const botName = BOT_METADATA[player.botType] ? BOT_METADATA[player.botType].name : player.botType;
-                                triggerNPCSpeech(sc.name, "Rescued Citizen", `Thank you, ${botName}! You saved us at the ${b.name}!`, sc.voicePitch, true);
+                                triggerNPCSpeech(sc.name, "Rescued Citizen", `Thank you, ${botName}! You saved us at the ${b.name}!`, sc, true);
                             }
                             break;
                         }
@@ -7873,7 +8045,6 @@
             sfx.enabled = !sfx.enabled;
             if (!sfx.enabled) {
                 sfx.stopContinuousLoops();
-                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             }
             document.getElementById('sound-icon').textContent = sfx.enabled ? '🔊' : '🔇';
             const soundLabel = document.getElementById('sound-label');
@@ -8378,9 +8549,15 @@
             } else {
                 // Standard Ground & Jump Gravity
                 ramps.forEach(r => {
-                    if (Math.hypot(player.pos.x - r.x, player.pos.z - r.z) < r.r && Math.abs(player.speed) > 15 && player.grounded) {
-                        player.vy = 18 + Math.abs(player.speed) * 0.35;
-                        player.grounded = false;
+                    const dx = player.pos.x - r.x;
+                    const dz = player.pos.z - r.z;
+                    if (Math.abs(dx) < r.r && Math.abs(dz) < r.r) {
+                        const lx = dx * r.cosY - dz * r.sinY;
+                        const lz = dx * r.sinY + dz * r.cosY;
+                        if (Math.abs(lx) <= r.w * 0.6 && lz >= -1.0 && lz <= r.l * 0.65 && Math.abs(player.speed) > 13 && player.grounded) {
+                            player.vy = 18 + Math.abs(player.speed) * 0.36;
+                            player.grounded = false;
+                        }
                     }
                 });
 
@@ -8846,6 +9023,70 @@
             updateAllBotTransforms(dt, now);
             updateLivingWorldNPCs(dt, now);
             updateViewportCulling();
+
+            // Update 3D Comic Speech Bubble Screen Projection
+            if (activeSpeech.visible) {
+                activeSpeech.timer -= dt;
+                if (activeSpeech.timer <= 0) {
+                    activeSpeech.visible = false;
+                    const bubbleEl = document.getElementById('npc-world-bubble');
+                    if (bubbleEl) bubbleEl.classList.add('hidden');
+                } else {
+                    const bubbleEl = document.getElementById('npc-world-bubble');
+                    const bubbleTail = document.getElementById('world-bubble-tail');
+                    if (bubbleEl) {
+                        let wx = 0, wy = 0, wz = 0;
+                        const s = activeSpeech.source;
+                        if (s) {
+                            if (s.pos) {
+                                wx = s.pos.x; wy = s.pos.y; wz = s.pos.z;
+                            } else if (s.rig && s.rig.root) {
+                                wx = s.rig.root.position.x;
+                                wy = s.rig.root.position.y;
+                                wz = s.rig.root.position.z;
+                            } else if (s.x !== undefined) {
+                                wx = s.x;
+                                wy = s.y !== undefined ? s.y : getTerrainHeight(s.x, s.z);
+                                wz = s.z;
+                            }
+                        }
+
+                        const bubbleWorldPos = new THREE.Vector3(wx, wy + activeSpeech.yOffset, wz);
+                        const distToCam = camera.position.distanceTo(bubbleWorldPos);
+
+                        bubbleWorldPos.project(camera);
+                        const inFront = bubbleWorldPos.z < 1.0;
+
+                        if (inFront && distToCam < 95.0) {
+                            const screenX = (bubbleWorldPos.x * 0.5 + 0.5) * window.innerWidth;
+                            const screenY = (-bubbleWorldPos.y * 0.5 + 0.5) * window.innerHeight;
+
+                            const clampX = Math.max(150, Math.min(window.innerWidth - 150, screenX));
+                            const clampY = Math.max(75, Math.min(window.innerHeight - 85, screenY));
+
+                            const scale = THREE.MathUtils.clamp(1.0 - (distToCam - 14) * 0.004, 0.82, 1.12);
+
+                            bubbleEl.style.left = `${clampX}px`;
+                            bubbleEl.style.top = `${clampY}px`;
+                            bubbleEl.style.transform = `translate(-50%, -100%) scale(${scale})`;
+                            bubbleEl.style.opacity = '1';
+
+                            if (bubbleTail) {
+                                bubbleTail.style.display = 'flex';
+                                const tailOffset = Math.max(-95, Math.min(95, screenX - clampX));
+                                bubbleTail.style.transform = `translateX(${tailOffset}px)`;
+                            }
+                        } else {
+                            // Distant caller or behind camera: Dock at top-center as an incoming radio call
+                            bubbleEl.style.left = '50%';
+                            bubbleEl.style.top = '95px';
+                            bubbleEl.style.transform = 'translate(-50%, 0) scale(1.0)';
+                            bubbleEl.style.opacity = '1';
+                            if (bubbleTail) bubbleTail.style.display = 'none';
+                        }
+                    }
+                }
+            }
 
             renderer.render(scene, camera);
         }
