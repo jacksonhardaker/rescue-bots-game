@@ -751,6 +751,125 @@
                 osc.start(now);
                 osc.stop(now + 1.3);
             }
+            playDinerDing() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Bright high service bell ding (fundamental 1568Hz + overtone 3136Hz)
+                [1567.98, 3135.96].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now);
+                    gain.gain.setValueAtTime(idx === 0 ? 0.22 : 0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.9);
+                });
+            }
+            playEnergyCharge() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Dual ascending sci-fi harmonic charge
+                [140, 210, 280].forEach((baseFreq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    const filter = this.ctx.createBiquadFilter();
+                    osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
+                    osc.frequency.setValueAtTime(baseFreq, now);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * 4.5, now + 0.65);
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(450, now);
+                    filter.frequency.exponentialRampToValueAtTime(3200, now + 0.65);
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.16, now + 0.15);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+                    osc.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.72);
+                });
+            }
+            playWarpWhoosh() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Deep resonant space-warp phasing swoosh
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(520, now);
+                osc.frequency.exponentialRampToValueAtTime(62, now + 0.85);
+                filter.type = 'bandpass';
+                filter.Q.setValueAtTime(3.8, now);
+                filter.frequency.setValueAtTime(1400, now);
+                filter.frequency.exponentialRampToValueAtTime(180, now + 0.85);
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.linearRampToValueAtTime(0.32, now + 0.12);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.92);
+            }
+            playCatapultCountdown() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [587.33, 659.25, 880.00].forEach((freq, idx) => {
+                    const t = now + idx * 0.16;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.12, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.13);
+                });
+            }
+            playCatapultBlast() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Heavy sub-bass launch boom + rocket whoosh
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(120, now);
+                osc.frequency.exponentialRampToValueAtTime(32, now + 0.9);
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.95);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 1.0);
+
+                const oscHi = this.ctx.createOscillator();
+                const gainHi = this.ctx.createGain();
+                oscHi.type = 'sawtooth';
+                oscHi.frequency.setValueAtTime(180, now);
+                oscHi.frequency.exponentialRampToValueAtTime(720, now + 0.4);
+                gainHi.gain.setValueAtTime(0.2, now);
+                gainHi.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                oscHi.connect(gainHi);
+                gainHi.connect(this.ctx.destination);
+                oscHi.start(now);
+                oscHi.stop(now + 0.6);
+            }
             ensureContinuousLoops() {
                 if (this.loopsReady || !this.ctx || this.ctx.state !== 'running') return;
                 const ctx = this.ctx;
@@ -1423,6 +1542,11 @@
         }
 
         function getZoneName(x, z) {
+            if (Math.hypot(x - 36, z + 45) < 18) return "HQ LAUNCH CATAPULT";
+            if (Math.hypot(x - 82, z - 58) < 26) return "GRIFFIN ROCK DINER";
+            if (Math.hypot(x + 1060, z - 42) < 32) return "ENERGON TURBO-CHARGER";
+            if (Math.hypot(x + 1090, z - 25) < 28) return "WEST GROUNDBRIDGE";
+            if (Math.hypot(x, z - 1040) < 28) return "SOUTH GROUNDBRIDGE";
             if (Math.hypot(x, z + 38) < 80) return "RESCUE BOTS HQ";
             if (Math.hypot(x, z - 25) < 165) return "GRIFFIN TOWN CENTER";
             if (Math.hypot(x, z - 1140) < 210) return "SOUTH HARBOR PORT";
@@ -2049,6 +2173,542 @@
         worldColliders.push({ x: ROBO_WASH_POS.x + 6.2, z: ROBO_WASH_POS.z, r: 2.2 });
 
         // =====================================================================
+        // 5A-3. FIREHOUSE HQ SUPER CATAPULT LAUNCH PAD
+        //       Located at X: 36, Z: -45 mirroring Robo-Wash on Firehouse Apron
+        // =====================================================================
+        const CATAPULT_POS = { x: 36, z: -45 };
+        const catapultGroup = new THREE.Group();
+        const catY = getTerrainHeight(CATAPULT_POS.x, CATAPULT_POS.z);
+        catapultGroup.position.set(CATAPULT_POS.x, catY, CATAPULT_POS.z);
+
+        // Foundation slab with launch marks
+        const catSlab = new THREE.Mesh(
+            new THREE.BoxGeometry(13, 0.45, 22),
+            new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.25, metalness: 0.6 })
+        );
+        catSlab.position.set(0, 0.22, 0);
+        catSlab.receiveShadow = true;
+        catapultGroup.add(catSlab);
+
+        // Heavy Hazard Yellow & Black Guide Rails
+        [-5.8, 5.8].forEach(rx => {
+            const rail = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.2, 21.5), matHazardYellow);
+            rail.position.set(rx, 0.8, 0);
+            rail.castShadow = true;
+            catapultGroup.add(rail);
+        });
+
+        // Rear Blast Shield Deflector at z = -10.2
+        const blastShield = new THREE.Mesh(
+            new THREE.BoxGeometry(12.5, 5.5, 1.4),
+            new THREE.MeshToonMaterial({ color: 0x475569, gradientMap: toonGrad3 })
+        );
+        blastShield.position.set(0, 2.75, -10.2);
+        blastShield.rotation.x = -0.2; // tilted deflector
+        blastShield.castShadow = true;
+        catapultGroup.add(blastShield);
+
+        // Archway over rear with HQ CATAPULT Signboard
+        const catArch = new THREE.Mesh(new THREE.BoxGeometry(13.6, 1.4, 1.4), matHazardYellow);
+        catArch.position.set(0, 8.8, -9.8);
+        catapultGroup.add(catArch);
+
+        [-5.8, 5.8].forEach(px => {
+            const post = new THREE.Mesh(new THREE.BoxGeometry(1.2, 8.8, 1.2), matHazardYellow);
+            post.position.set(px, 4.4, -9.8);
+            post.castShadow = true;
+            catapultGroup.add(post);
+        });
+
+        // Signboard
+        const cSignCat = document.createElement('canvas');
+        cSignCat.width = 512;
+        cSignCat.height = 128;
+        const cCtxCat = cSignCat.getContext('2d');
+        cCtxCat.fillStyle = '#dc2626';
+        cCtxCat.fillRect(0, 0, 512, 128);
+        cCtxCat.fillStyle = '#facc15';
+        cCtxCat.font = 'bold 44px Arial, sans-serif';
+        cCtxCat.textAlign = 'center';
+        cCtxCat.textBaseline = 'middle';
+        cCtxCat.fillText('HQ CATAPULT', 256, 64);
+        const texSignCat = new THREE.CanvasTexture(cSignCat);
+        const catSignFace = new THREE.Mesh(
+            new THREE.PlaneGeometry(9.6, 2.2),
+            new THREE.MeshBasicMaterial({ map: texSignCat })
+        );
+        catSignFace.position.set(0, 8.8, -9.05);
+        catapultGroup.add(catSignFace);
+
+        // Hydraulic Catapult Launch Shuttle Plate in Center
+        const catapultCarriage = new THREE.Mesh(
+            new THREE.BoxGeometry(7.2, 0.5, 8.5),
+            new THREE.MeshToonMaterial({ color: 0xf97316, gradientMap: toonGrad3 })
+        );
+        catapultCarriage.position.set(0, 0.45, -3.5);
+        catapultCarriage.castShadow = true;
+        catapultGroup.add(catapultCarriage);
+
+        // 4 Hydraulic Steel Pistons under carriage
+        [-2.8, 2.8].forEach(px => {
+            [-6.5, -0.5].forEach(pz => {
+                const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 1.6, 8), matChrome);
+                piston.position.set(px, 0.8, pz);
+                catapultGroup.add(piston);
+            });
+        });
+
+        // Runway Strobe Light Fixtures (Flashing White & Yellow along rails)
+        const catapultStrobes = [];
+        [-5.2, 5.2].forEach(lx => {
+            for (let lz = -8; lz <= 8; lz += 4) {
+                const sBase = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 0.5, 8), matDarkSteel);
+                sBase.position.set(lx, 0.7, lz);
+                catapultGroup.add(sBase);
+
+                const bulb = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.32, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+                );
+                bulb.position.set(lx, 1.05, lz);
+                bulb.userData.noOutline = true;
+                catapultGroup.add(bulb);
+                catapultStrobes.push(bulb);
+            }
+        });
+
+        applyCartoonInkOutlines(catapultGroup, 1.03, true);
+        scene.add(catapultGroup);
+        registerCullableObject(catapultGroup, CATAPULT_POS.x, catY + 5, CATAPULT_POS.z, 28);
+        worldColliders.push({ x: CATAPULT_POS.x - 6.2, z: CATAPULT_POS.z, r: 2.2 });
+        worldColliders.push({ x: CATAPULT_POS.x + 6.2, z: CATAPULT_POS.z, r: 2.2 });
+        worldColliders.push({ x: CATAPULT_POS.x, z: CATAPULT_POS.z - 10.5, r: 3.5 });
+
+        // =====================================================================
+        // 5A-4. GRIFFIN ROCK DRIVE-THRU DINER
+        //       Located at X: 82, Z: 58 in Griffin Town Center
+        // =====================================================================
+        const DINER_POS = { x: 82, z: 58 };
+        const dinerGroup = new THREE.Group();
+        const dinerY = getTerrainHeight(DINER_POS.x, DINER_POS.z);
+        dinerGroup.position.set(DINER_POS.x, dinerY, DINER_POS.z);
+
+        // Ground Plinth & Drive-Thru Asphalt Bay
+        const dinerPlinth = new THREE.Mesh(
+            new THREE.BoxGeometry(26, 0.45, 26),
+            new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35 })
+        );
+        dinerPlinth.position.y = 0.22;
+        dinerPlinth.receiveShadow = true;
+        dinerGroup.add(dinerPlinth);
+
+        // Drive-Thru Lane Guide Curbs (Drive-thru on West side at x ~ -8.5)
+        [-12.2, -4.8].forEach(cx => {
+            const curb = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.6, 25), matHazardYellow);
+            curb.position.set(cx, 0.5, 0);
+            dinerGroup.add(curb);
+        });
+
+        // Main Diner Restaurant Building (offset slightly to East side at x = +4.2)
+        const matDinerTeal = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+        const matDinerPink = new THREE.MeshToonMaterial({ color: 0xf43f5e, gradientMap: toonGrad3 });
+        const dinerBody = new THREE.Mesh(
+            new THREE.BoxGeometry(15, 8.5, 18),
+            matDinerTeal
+        );
+        dinerBody.position.set(4.2, 4.5, 0);
+        dinerBody.castShadow = true;
+        dinerBody.receiveShadow = true;
+        dinerGroup.add(dinerBody);
+
+        // Chrome Art-Deco Trim Band around diner
+        const dinerTrim = new THREE.Mesh(
+            new THREE.BoxGeometry(15.4, 0.8, 18.4),
+            matChrome
+        );
+        dinerTrim.position.set(4.2, 5.5, 0);
+        dinerGroup.add(dinerTrim);
+
+        // Large Panoramic Glass Windows on front and sides
+        const dinerWinFront = new THREE.Mesh(
+            new THREE.BoxGeometry(13.5, 3.2, 0.3),
+            matGlass
+        );
+        dinerWinFront.position.set(4.2, 4.2, 9.1);
+        dinerWinFront.userData.noOutline = true;
+        dinerGroup.add(dinerWinFront);
+
+        // Drive-Thru Service Pickup Window on West wall (facing lane at x = -3.3)
+        const dinerWinDrive = new THREE.Mesh(
+            new THREE.BoxGeometry(0.3, 3.2, 4.5),
+            matGlass
+        );
+        dinerWinDrive.position.set(-3.35, 4.2, -2.5);
+        dinerWinDrive.userData.noOutline = true;
+        dinerGroup.add(dinerWinDrive);
+
+        // Drive-Thru Pickup Counter Shelf & Canopy
+        const pickupCounter = new THREE.Mesh(
+            new THREE.BoxGeometry(1.4, 0.3, 5.2),
+            matSteel
+        );
+        pickupCounter.position.set(-3.8, 2.7, -2.5);
+        dinerGroup.add(pickupCounter);
+
+        const pickupAwning = new THREE.Mesh(
+            new THREE.BoxGeometry(3.6, 0.5, 6.2),
+            matDinerPink
+        );
+        pickupAwning.position.set(-4.8, 6.8, -2.5);
+        pickupAwning.rotation.z = -0.2;
+        dinerGroup.add(pickupAwning);
+
+        // Drive-Thru Order Intercom Post (at local x: -10.5, z: 6.5)
+        const intercomGroup = new THREE.Group();
+        intercomGroup.position.set(-10.5, 0, 6.5);
+        const intercomPillar = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 3.2, 8), matDarkSteel);
+        intercomPillar.position.y = 1.6;
+        intercomGroup.add(intercomPillar);
+        const intercomBox = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.0, 1.2), matHazardYellow);
+        intercomBox.position.y = 3.6;
+        intercomGroup.add(intercomBox);
+        const intercomScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.4), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
+        intercomScreen.position.set(0.81, 3.6, 0);
+        intercomScreen.rotation.y = Math.PI / 2;
+        intercomGroup.add(intercomScreen);
+        dinerGroup.add(intercomGroup);
+
+        // Diner Roof Sign: "GRIFFIN DINER"
+        const cSignDin = document.createElement('canvas');
+        cSignDin.width = 512;
+        cSignDin.height = 128;
+        const cCtxDin = cSignDin.getContext('2d');
+        cCtxDin.fillStyle = '#f43f5e';
+        cCtxDin.fillRect(0, 0, 512, 128);
+        cCtxDin.fillStyle = '#fef08a';
+        cCtxDin.font = 'bold 46px Arial, sans-serif';
+        cCtxDin.textAlign = 'center';
+        cCtxDin.textBaseline = 'middle';
+        cCtxDin.fillText('GRIFFIN DINER', 256, 64);
+        const texSignDin = new THREE.CanvasTexture(cSignDin);
+        const dinSignFace = new THREE.Mesh(
+            new THREE.PlaneGeometry(11.5, 2.4),
+            new THREE.MeshBasicMaterial({ map: texSignDin })
+        );
+        dinSignFace.position.set(4.2, 9.8, 9.1);
+        dinerGroup.add(dinSignFace);
+
+        // Giant 3D Animated Cheeseburger on Roof
+        const dinerBurgerGroup = new THREE.Group();
+        dinerBurgerGroup.position.set(4.2, 11.2, 0);
+
+        const burgerSpindle = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.85, 2.4, 8), matDarkSteel);
+        burgerSpindle.position.y = -1.2;
+        dinerBurgerGroup.add(burgerSpindle);
+
+        const matBun = new THREE.MeshToonMaterial({ color: 0xd97706, gradientMap: toonGrad3 });
+        const bottomBun = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.3, 0.85, 16), matBun);
+        bottomBun.position.y = 0.42;
+        bottomBun.castShadow = true;
+        dinerBurgerGroup.add(bottomBun);
+
+        const matPatty = new THREE.MeshToonMaterial({ color: 0x581c10, gradientMap: toonGrad3 });
+        const beefPatty = new THREE.Mesh(new THREE.CylinderGeometry(3.9, 3.9, 0.75, 16), matPatty);
+        beefPatty.position.y = 1.2;
+        beefPatty.castShadow = true;
+        dinerBurgerGroup.add(beefPatty);
+
+        const matCheese = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
+        const cheeseSlice = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.22, 5.8), matCheese);
+        cheeseSlice.position.y = 1.68;
+        cheeseSlice.rotation.y = Math.PI / 4;
+        cheeseSlice.castShadow = true;
+        dinerBurgerGroup.add(cheeseSlice);
+
+        const matLettuce = new THREE.MeshToonMaterial({ color: 0x22c55e, gradientMap: toonGrad3 });
+        const lettuceDisc = new THREE.Mesh(new THREE.CylinderGeometry(4.2, 4.0, 0.35, 16), matLettuce);
+        lettuceDisc.position.y = 1.95;
+        lettuceDisc.castShadow = true;
+        dinerBurgerGroup.add(lettuceDisc);
+
+        const matTomato = new THREE.MeshToonMaterial({ color: 0xef4444, gradientMap: toonGrad3 });
+        [-1.3, 1.3].forEach(tx => {
+            const tomato = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.3, 12), matTomato);
+            tomato.position.set(tx, 2.25, 0);
+            dinerBurgerGroup.add(tomato);
+        });
+
+        const topBun = new THREE.Mesh(
+            new THREE.SphereGeometry(3.7, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5),
+            matBun
+        );
+        topBun.position.y = 2.3;
+        topBun.scale.set(1.0, 0.65, 1.0);
+        topBun.castShadow = true;
+        dinerBurgerGroup.add(topBun);
+
+        const matSesame = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        for (let s = 0; s < 18; s++) {
+            const seed = new THREE.Mesh(new THREE.SphereGeometry(0.12, 4, 4), matSesame);
+            const ang = (s / 18) * Math.PI * 2 + Math.random() * 0.3;
+            const dist = 0.8 + Math.random() * 2.2;
+            seed.position.set(Math.cos(ang) * dist, 2.85 + Math.random() * 0.45, Math.sin(ang) * dist);
+            seed.userData.noOutline = true;
+            dinerBurgerGroup.add(seed);
+        }
+
+        dinerGroup.add(dinerBurgerGroup);
+
+        applyCartoonInkOutlines(dinerGroup, 1.03, true);
+        scene.add(dinerGroup);
+        registerCullableObject(dinerGroup, DINER_POS.x, dinerY + 6, DINER_POS.z, 32);
+        worldColliders.push({ x: DINER_POS.x + 4.2, z: DINER_POS.z, r: 8.5 });
+        worldColliders.push({ x: DINER_POS.x - 12.5, z: DINER_POS.z, r: 1.5 });
+
+        // =====================================================================
+        // 5A-5. DOC GREENE'S ENERGON TURBO-CHARGER STATION
+        //       Located at X: -1060, Z: 42 in West Tech Village
+        // =====================================================================
+        const CHARGER_POS = { x: -1060, z: 42 };
+        const chargerGroup = new THREE.Group();
+        const chargerY = getTerrainHeight(CHARGER_POS.x, CHARGER_POS.z);
+        chargerGroup.position.set(CHARGER_POS.x, chargerY, CHARGER_POS.z);
+
+        const matTechBase = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.25, metalness: 0.7 });
+        const matTechCyan = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+        const matTechPurple = new THREE.MeshToonMaterial({ color: 0xa855f7, gradientMap: toonGrad3 });
+        const chargerSlab = new THREE.Mesh(new THREE.BoxGeometry(16, 0.5, 20), matTechBase);
+        chargerSlab.position.y = 0.25;
+        chargerSlab.receiveShadow = true;
+        chargerGroup.add(chargerSlab);
+
+        const padGlow = new THREE.Mesh(
+            new THREE.BoxGeometry(9.5, 0.55, 14.5),
+            new THREE.MeshBasicMaterial({ color: 0x22d3ee })
+        );
+        padGlow.position.y = 0.26;
+        padGlow.userData.noOutline = true;
+        chargerGroup.add(padGlow);
+
+        const energonCoilRings = [];
+        const energonOrbs = [];
+        [-6.5, 6.5].forEach(cx => {
+            const coilGroup = new THREE.Group();
+            coilGroup.position.set(cx, 0.5, 0);
+
+            const pBase = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.8, 1.2, 8), matDarkSteel);
+            pBase.position.y = 0.6;
+            pBase.castShadow = true;
+            coilGroup.add(pBase);
+
+            const spindle = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 9.5, 12), matChrome);
+            spindle.position.y = 5.35;
+            spindle.castShadow = true;
+            coilGroup.add(spindle);
+
+            for (let r = 0; r < 5; r++) {
+                const ringMat = r % 2 === 0 ? matTechCyan : matTechPurple;
+                const ring = new THREE.Mesh(
+                    new THREE.TorusGeometry(1.65 - r * 0.12, 0.32, 8, 16),
+                    ringMat
+                );
+                ring.position.y = 2.0 + r * 1.5;
+                ring.rotation.x = Math.PI / 2;
+                ring.castShadow = true;
+                coilGroup.add(ring);
+                energonCoilRings.push(ring);
+            }
+
+            const orbCore = new THREE.Mesh(
+                new THREE.SphereGeometry(1.5, 16, 12),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+            );
+            orbCore.position.y = 10.6;
+            orbCore.userData.noOutline = true;
+            coilGroup.add(orbCore);
+            energonOrbs.push(orbCore);
+
+            const orbAura = new THREE.Mesh(
+                new THREE.SphereGeometry(1.9, 16, 12),
+                new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.45 })
+            );
+            orbAura.position.y = 10.6;
+            orbAura.userData.noOutline = true;
+            coilGroup.add(orbAura);
+            energonOrbs.push(orbAura);
+
+            const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.22, 2.5, 8), matChrome);
+            antenna.position.y = 12.8;
+            coilGroup.add(antenna);
+
+            chargerGroup.add(coilGroup);
+        });
+
+        const gantryArch = new THREE.Mesh(new THREE.BoxGeometry(15.2, 1.4, 2.0), matDarkSteel);
+        gantryArch.position.set(0, 11.2, 0);
+        gantryArch.castShadow = true;
+        chargerGroup.add(gantryArch);
+
+        const emitter = new THREE.Mesh(new THREE.ConeGeometry(1.4, 2.2, 8), matChrome);
+        emitter.position.set(0, 9.6, 0);
+        emitter.rotation.x = Math.PI;
+        chargerGroup.add(emitter);
+
+        const emitterBulb = new THREE.Mesh(
+            new THREE.SphereGeometry(0.85, 12, 12),
+            new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+        );
+        emitterBulb.position.set(0, 8.4, 0);
+        emitterBulb.userData.noOutline = true;
+        chargerGroup.add(emitterBulb);
+
+        const cSignChg = document.createElement('canvas');
+        cSignChg.width = 512;
+        cSignChg.height = 128;
+        const cCtxChg = cSignChg.getContext('2d');
+        cCtxChg.fillStyle = '#1e3a8a';
+        cCtxChg.fillRect(0, 0, 512, 128);
+        cCtxChg.fillStyle = '#38bdf8';
+        cCtxChg.font = 'bold 36px Arial, sans-serif';
+        cCtxChg.textAlign = 'center';
+        cCtxChg.textBaseline = 'middle';
+        cCtxChg.fillText('ENERGON CHARGER', 256, 64);
+        const texSignChg = new THREE.CanvasTexture(cSignChg);
+        const chgSignFace = new THREE.Mesh(
+            new THREE.PlaneGeometry(10.5, 2.2),
+            new THREE.MeshBasicMaterial({ map: texSignChg })
+        );
+        chgSignFace.position.set(0, 12.4, 1.05);
+        chargerGroup.add(chgSignFace);
+
+        applyCartoonInkOutlines(chargerGroup, 1.03, true);
+        scene.add(chargerGroup);
+        registerCullableObject(chargerGroup, CHARGER_POS.x, chargerY + 6, CHARGER_POS.z, 30);
+        worldColliders.push({ x: CHARGER_POS.x - 6.5, z: CHARGER_POS.z, r: 2.8 });
+        worldColliders.push({ x: CHARGER_POS.x + 6.5, z: CHARGER_POS.z, r: 2.8 });
+
+        // =====================================================================
+        // 5A-6. DOC GREENE'S GROUNDBRIDGE TELEPORTER TUNNEL PAIR
+        //       Portal A: West Tech Highway (-1090, 25) facing East-West (rotY = PI/2)
+        //       Portal B: South Harbor Highway (0, 1040) facing North-South (rotY = 0)
+        // =====================================================================
+        const GROUNDBRIDGE_CONFIGS = [
+            { id: 'A', name: 'West Tech GroundBridge', x: -1090, z: 25, rotY: Math.PI / 2, dest: { x: 0, z: 1048, heading: 0 } },
+            { id: 'B', name: 'South Harbor GroundBridge', x: 0, z: 1040, rotY: 0, dest: { x: -1098, z: 25, heading: -Math.PI / 2 } }
+        ];
+
+        const groundBridgePortals = [];
+
+        GROUNDBRIDGE_CONFIGS.forEach(cfg => {
+            const gbGroup = new THREE.Group();
+            const gbY = getTerrainHeight(cfg.x, cfg.z);
+            gbGroup.position.set(cfg.x, gbY, cfg.z);
+            gbGroup.rotation.y = cfg.rotY;
+
+            [-8.5, 8.5].forEach(px => {
+                const pylon = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.2, 4.2), matDarkSteel);
+                pylon.position.set(px, 1.6, 0);
+                pylon.castShadow = true;
+                gbGroup.add(pylon);
+
+                const conduit = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2.8, 8), matTechCyan);
+                conduit.position.set(px, 1.4, 1.8);
+                gbGroup.add(conduit);
+            });
+
+            const ringRadius = 7.8;
+            const archFrame = new THREE.Mesh(
+                new THREE.TorusGeometry(ringRadius, 1.25, 8, 16),
+                matDarkSteel
+            );
+            archFrame.position.set(0, 8.2, 0);
+            archFrame.castShadow = true;
+            gbGroup.add(archFrame);
+
+            const matGlowCyan = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+            const matGlowPurple = new THREE.MeshBasicMaterial({ color: 0xc084fc });
+            const matGlowBlue = new THREE.MeshBasicMaterial({ color: 0x3b82f6 });
+
+            const irisRing1 = new THREE.Mesh(
+                new THREE.TorusGeometry(7.0, 0.42, 6, 24),
+                matGlowCyan
+            );
+            irisRing1.position.set(0, 8.2, 0);
+            irisRing1.userData.noOutline = true;
+            gbGroup.add(irisRing1);
+
+            const irisRing2 = new THREE.Mesh(
+                new THREE.TorusGeometry(5.6, 0.38, 6, 20),
+                matGlowPurple
+            );
+            irisRing2.position.set(0, 8.2, 0.15);
+            irisRing2.userData.noOutline = true;
+            gbGroup.add(irisRing2);
+
+            const irisRing3 = new THREE.Mesh(
+                new THREE.TorusGeometry(4.2, 0.35, 6, 16),
+                matGlowBlue
+            );
+            irisRing3.position.set(0, 8.2, -0.15);
+            irisRing3.userData.noOutline = true;
+            gbGroup.add(irisRing3);
+
+            const vortexDisc = new THREE.Mesh(
+                new THREE.CircleGeometry(6.6, 24),
+                new THREE.MeshBasicMaterial({
+                    color: 0x38bdf8,
+                    transparent: true,
+                    opacity: 0.65,
+                    side: THREE.DoubleSide
+                })
+            );
+            vortexDisc.position.set(0, 8.2, 0);
+            vortexDisc.userData.noOutline = true;
+            gbGroup.add(vortexDisc);
+
+            const cSignGb = document.createElement('canvas');
+            cSignGb.width = 512;
+            cSignGb.height = 128;
+            const cCtxGb = cSignGb.getContext('2d');
+            cCtxGb.fillStyle = '#0f172a';
+            cCtxGb.fillRect(0, 0, 512, 128);
+            cCtxGb.fillStyle = '#38bdf8';
+            cCtxGb.font = 'bold 42px Arial, sans-serif';
+            cCtxGb.textAlign = 'center';
+            cCtxGb.textBaseline = 'middle';
+            cCtxGb.fillText('GROUNDBRIDGE ' + cfg.id, 256, 64);
+            const texSignGb = new THREE.CanvasTexture(cSignGb);
+            const gbSignFace = new THREE.Mesh(
+                new THREE.PlaneGeometry(8.2, 1.8),
+                new THREE.MeshBasicMaterial({ map: texSignGb })
+            );
+            gbSignFace.position.set(0, 16.4, 0.7);
+            gbGroup.add(gbSignFace);
+
+            applyCartoonInkOutlines(gbGroup, 1.03, true);
+            scene.add(gbGroup);
+            registerCullableObject(gbGroup, cfg.x, gbY + 8, cfg.z, 28);
+
+            if (cfg.rotY !== 0) {
+                worldColliders.push({ x: cfg.x, z: cfg.z - 8.5, r: 2.2 });
+                worldColliders.push({ x: cfg.x, z: cfg.z + 8.5, r: 2.2 });
+            } else {
+                worldColliders.push({ x: cfg.x - 8.5, z: cfg.z, r: 2.2 });
+                worldColliders.push({ x: cfg.x + 8.5, z: cfg.z, r: 2.2 });
+            }
+
+            groundBridgePortals.push({
+                cfg,
+                group: gbGroup,
+                irisRing1,
+                irisRing2,
+                irisRing3,
+                vortexDisc,
+                baseY: gbY
+            });
+        });
+
+        // =====================================================================
         // 5B. GRIFFIN TOWN BUILDINGS, REGIONAL VILLAGES, LIGHTHOUSE & SKY ARRAY
         // =====================================================================
         function createTownBuilding(x, z, w, h, d, roofColor, wallColor, rotY = 0) {
@@ -2098,30 +2758,34 @@
         }
 
         // 1. Central Griffin Town Plaza (Vibrant TV-Show Cartoon Palette)
-        createTownBuilding(-42, 12, 14, 13, 14, 0x1d4ed8, 0xffffff, 0.1);   // Police Precinct
-        createTownBuilding(42, 12, 15, 14, 14, 0x16a34a, 0xf8fafc, -0.1);   // Doc Greene's Lab
-        createTownBuilding(-45, 52, 12, 10, 12, 0xf97316, 0xfef08a, 0.25);  // Town Bakery
-        createTownBuilding(45, 52, 13, 12, 13, 0x9333ea, 0xfaf5ff, -0.2);   // Town Hall & Clock Tower
-        createTownBuilding(-78, 25, 14, 11, 14, 0xe81e25, 0xffffff, 0.05);  // Municipal Garage
-        createTownBuilding(78, 25, 14, 15, 14, 0x0284c7, 0xf0f9ff, -0.05);  // Griffin Bank
+        // Flanking East-West Highway (z=25) and North-South Highway (x=0) with wide, clear avenues
+        createTownBuilding(-45, -12, 14, 13, 14, 0x1d4ed8, 0xffffff, 0.1);   // Police Precinct (South-West Plaza)
+        createTownBuilding(45, -12, 15, 14, 14, 0x16a34a, 0xf8fafc, -0.1);   // Doc Greene's Lab (South-East Plaza)
+        createTownBuilding(-45, 54, 12, 10, 12, 0xf97316, 0xfef08a, 0.25);  // Town Bakery (North-West Plaza)
+        createTownBuilding(45, 54, 13, 12, 13, 0x9333ea, 0xfaf5ff, -0.2);   // Town Hall & Clock Tower (North-East Plaza)
+        createTownBuilding(-82, 54, 14, 11, 14, 0xe81e25, 0xffffff, 0.05);  // Municipal Garage (North-West Avenue)
+        createTownBuilding(82, -12, 14, 15, 14, 0x0284c7, 0xf0f9ff, -0.05); // Griffin Bank (South-East Avenue)
 
         // 2. South Harbor Port District (around 0, 1140)
-        createTownBuilding(-55, 1105, 18, 12, 14, 0x0284c7, 0xf8fafc, 0.08);
-        createTownBuilding(55, 1105, 18, 13, 14, 0xe81e25, 0xfef08a, -0.08);
-        createTownBuilding(-62, 1155, 16, 11, 15, 0xf97316, 0xffffff, 0.15);
-        createTownBuilding(62, 1155, 16, 14, 15, 0x16a34a, 0xf0fdf4, -0.15);
+        // Positioned along the deep quayside apron, completely clear of the Outer Ring Highway curve
+        createTownBuilding(-45, 1155, 16, 12, 14, 0x0284c7, 0xf8fafc, 0.08);
+        createTownBuilding(45, 1155, 16, 13, 14, 0xe81e25, 0xfef08a, -0.08);
+        createTownBuilding(-75, 1155, 16, 11, 14, 0xf97316, 0xffffff, 0.15);
+        createTownBuilding(75, 1155, 16, 14, 14, 0x16a34a, 0xf0fdf4, -0.15);
 
         // 3. West Tech & Industrial Village (around -1120, 25)
-        createTownBuilding(-1155, -22, 16, 15, 16, 0x0284c7, 0xffffff, 0.12);
-        createTownBuilding(-1085, -22, 15, 13, 15, 0x9333ea, 0xfaf5ff, -0.1);
-        createTownBuilding(-1155, 72, 16, 12, 15, 0x16a34a, 0xf8fafc, -0.08);
-        createTownBuilding(-1085, 72, 15, 14, 15, 0xf97316, 0xfef08a, 0.14);
+        // Set back along north and south tech village plazas, clear of East-West Highway & Outer Ring
+        createTownBuilding(-1145, -24, 16, 15, 15, 0x0284c7, 0xffffff, 0.12);
+        createTownBuilding(-1105, -24, 15, 13, 15, 0x9333ea, 0xfaf5ff, -0.1);
+        createTownBuilding(-1145, 72, 16, 12, 15, 0x16a34a, 0xf8fafc, -0.08);
+        createTownBuilding(-1105, 72, 15, 14, 15, 0xf97316, 0xfef08a, 0.14);
 
         // 4. North Observatory Research Outpost (around 0, -1120)
-        createTownBuilding(-52, -1155, 16, 14, 16, 0x1d4ed8, 0xf8fafc, 0.1);
-        createTownBuilding(52, -1155, 16, 15, 16, 0x0284c7, 0xffffff, -0.1);
-        createTownBuilding(-52, -1080, 14, 12, 14, 0x16a34a, 0xf0fdf4, -0.12);
-        createTownBuilding(52, -1080, 14, 12, 14, 0xe81e25, 0xfef2f2, 0.12);
+        // Clustered safely on observatory campus, away from the diagonal Outer Ring curve
+        createTownBuilding(-45, -1170, 16, 14, 15, 0x1d4ed8, 0xf8fafc, 0.1);
+        createTownBuilding(45, -1170, 16, 15, 15, 0x0284c7, 0xffffff, -0.1);
+        createTownBuilding(-45, -1050, 14, 12, 14, 0x16a34a, 0xf0fdf4, -0.12);
+        createTownBuilding(45, -1050, 14, 12, 14, 0xe81e25, 0xfef2f2, 0.12);
 
         // Coastal Lighthouse on East Peninsula (1180, 60)
         const lighthouseGroup = new THREE.Group();
@@ -3270,12 +3934,24 @@
             registerCullableObject(lampG, lx, ly + 4, lz, 14);
         }
         [
-            [-14, -2], [14, -2], [-14, 14], [14, 14],
-            [-14, 36], [14, 36], [-14, 56], [14, 56],
-            [-36, 14], [36, 14], [-36, 36], [36, 36],
+            // North-South Central Avenue (x = ±14, safely clear of EW Highway at z=25)
+            [-14, -30], [14, -30],
+            [-14, -10], [14, -10],
+            [-14, 42],  [14, 42],
+            [-14, 64],  [14, 64],
+
+            // East-West Central Avenue (z = 10 and z = 40, safely flanking the 24m road corridor)
+            [-38, 10],  [38, 10],
+            [-65, 10],  [65, 10],
+            [-38, 40],  [38, 40],
+            [-65, 40],  [65, 40],
+
+            // South Harbor
             [-14, 1110], [14, 1110], [-14, 1150], [14, 1150],
-            [-1135, 12], [-1105, 12], [-1135, 38], [-1105, 38],
-            [-14, -1135], [14, -1135], [-14, -1095], [14, -1095]
+            // West Tech
+            [-1135, 10], [-1105, 10], [-1135, 40], [-1105, 40],
+            // North Observatory
+            [-14, -1145], [14, -1145], [-14, -1095], [14, -1095]
         ].forEach(([lx, lz]) => createTownStreetlamp(lx, lz));
 
         /***********************************************************************
@@ -5061,6 +5737,22 @@
                 WEATHER_NIGHT: [
                     "Night Ops! Starry skies make for a peaceful patrol.",
                     "Headlights on! Boulder rolling through the night!"
+                ],
+                CATAPULT: [
+                    "Rock and roll! Boulder launching to the rescue!",
+                    "Bulldozer in flight! Here we go!"
+                ],
+                DINER: [
+                    "Veggie burger with extra crunch! Delicious!",
+                    "Fuel stop complete! Back on patrol!"
+                ],
+                CHARGER: [
+                    "Energon overdrive! Boulder is charged and rock solid!",
+                    "Maximum power! Feel that ground shake!"
+                ],
+                GROUNDBRIDGE: [
+                    "Whoa! Instant transit across Griffin Rock! Incredible!",
+                    "Doc Greene's inventions never cease to amaze me!"
                 ]
             },
             HEATWAVE: {
@@ -5107,6 +5799,22 @@
                 WEATHER_NIGHT: [
                     "Night Ops engaged! Headlights bright, let's keep Griffin Rock safe!",
                     "Emergency beacons active! Patrolling the night!"
+                ],
+                CATAPULT: [
+                    "Blast off! Heatwave rolling to the fire!",
+                    "Full throttle launch! Stand clear!"
+                ],
+                DINER: [
+                    "High-octane fuel shake! Ready to roll!",
+                    "Energon burger to go! Rescue Bots, roll to the rescue!"
+                ],
+                CHARGER: [
+                    "Engine blazing at top capacity! Rescue Bots, roll to the rescue!",
+                    "Full turbo power! Nothing can stop us now!"
+                ],
+                GROUNDBRIDGE: [
+                    "GroundBridge traversal complete! Responding anywhere in seconds!",
+                    "Rapid response teleporter! That saves travel time!"
                 ]
             },
             CHASE: {
@@ -5153,6 +5861,22 @@
                 WEATHER_NIGHT: [
                     "Night patrol protocol initiated. All beacons illuminated.",
                     "Cruiser headlights engaged. Griffin Rock is secure under our watch."
+                ],
+                CATAPULT: [
+                    "Emergency launch authorized! High-speed deployment!",
+                    "Pursuit speed achieved from takeoff!"
+                ],
+                DINER: [
+                    "Drive-thru order complete. Energy replenishment at 100 percent!",
+                    "Nutritional fuel acquired. Back on the beat!"
+                ],
+                CHARGER: [
+                    "Maximum overdrive engaged! Speed regulations suspended for emergency!",
+                    "All electrical systems operating at peak voltage!"
+                ],
+                GROUNDBRIDGE: [
+                    "Sub-space transit logged and approved! Area reached instantly!",
+                    "Instant deployment across sector boundaries!"
                 ]
             },
             BLADES: {
@@ -5199,6 +5923,22 @@
                 WEATHER_NIGHT: [
                     "Look at the northern lights! The sky looks magical tonight!",
                     "Night flight! Look at all the town lights down there!"
+                ],
+                CATAPULT: [
+                    "Hold on to your rotors! BEST LAUNCH EVER!",
+                    "Woohoo! Up, up, and away!"
+                ],
+                DINER: [
+                    "Woohoo! Curly fries and an Energon smoothie! My favorite!",
+                    "Can I get extra napkins? Rotor blades get messy!"
+                ],
+                CHARGER: [
+                    "Wooooohoooo! Look at that turbo speed! Super-copter mode!",
+                    "Turbos spinning at maximum velocity!"
+                ],
+                GROUNDBRIDGE: [
+                    "Whoa! Did everything just turn inside out? THAT WAS AWESOME!",
+                    "GroundBridge travel is almost as fast as flying!"
                 ]
             }
         };
@@ -5244,7 +5984,14 @@
             hasWaypoint: false,
             inCarWash: false,
             lastWashSoundTime: 0,
-            turboGlazeTimer: 0    // Squeaky Clean Robo-Wash speed shine buff
+            turboGlazeTimer: 0,   // Squeaky Clean Robo-Wash speed shine buff
+            catapultTimer: 0,     // Catapult launch countdown
+            catapultCooldown: 0,  // Prevents re-triggering catapult immediately
+            inDinerLane: false,
+            lastDinerOrderTime: 0,
+            lastDinerPickupTime: 0,
+            portalCooldown: 0,    // GroundBridge teleport cooldown
+            chargerCooldown: 0    // Energon Turbo-Charger cooldown
         };
 
         // Follow-Along AI Rescue Bot Wingman ("Buddy Bot")
@@ -5851,12 +6598,20 @@
             'DANI BURNS': '👩‍✈️',
             'KADE BURNS': '👨‍🚒',
             'GRAHAM BURNS': '👷‍♂️',
+            'DOC GREENE': '👨‍🔬',
             'DOC EZRA GREENE': '👨‍🔬',
             'FRANKIE GREENE': '👧',
             'MAYOR LUSKEY': '🎩',
             'HUXLEY PRESCOTT': '🎙️',
             'CAPTAIN SHAW': '⚓',
-            'RANGER TAYLOR': '🌲'
+            'RANGER TAYLOR': '🌲',
+            'DINER': '🍔',
+            'GRIFFIN DINER': '🍔',
+            'DRIVE-THRU': '🍔',
+            'INTERCOM': '📻',
+            'CATAPULT': '🚀',
+            'GROUNDBRIDGE': '🌀',
+            'ENERGON': '⚡'
         };
 
         function getSpeakerAvatar(name, role) {
@@ -6308,6 +7063,100 @@
             }
         }
 
+        function spawnRocketExhaustParticles(x, y, z, count = 28) {
+            const fireColors = [0xff4500, 0xf97316, 0xfacc15, 0xffffff, 0x94a3b8];
+            for (let i = 0; i < count; i++) {
+                const pGeo = new THREE.OctahedronGeometry(0.5 + Math.random() * 0.7, 0);
+                const pMesh = new THREE.Mesh(
+                    pGeo,
+                    new THREE.MeshBasicMaterial({ color: fireColors[i % fireColors.length] })
+                );
+                pMesh.position.set(x + (Math.random() - 0.5) * 3.5, y + 0.5, z + (Math.random() - 0.5) * 3.5);
+                scene.add(pMesh);
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 6.0 + Math.random() * 12.0;
+                activeParticles.push({
+                    mesh: pMesh,
+                    vx: Math.cos(ang) * spd,
+                    vy: 4.0 + Math.random() * 10.0,
+                    vz: Math.sin(ang) * spd - 8.0,
+                    gravity: 14.0,
+                    life: 1.1 + Math.random() * 0.4
+                });
+            }
+        }
+
+        function spawnDinerFoodParticles(x, y, z, count = 16) {
+            const foodColors = [0xd97706, 0x22c55e, 0xef4444, 0xfacc15, 0x78350f, 0x38bdf8];
+            for (let i = 0; i < count; i++) {
+                const geo = i % 2 === 0 ? new THREE.BoxGeometry(0.7, 0.35, 0.7) : new THREE.SphereGeometry(0.45, 6, 6);
+                const mesh = new THREE.Mesh(
+                    geo,
+                    new THREE.MeshBasicMaterial({ color: foodColors[i % foodColors.length] })
+                );
+                mesh.position.set(x + (Math.random() - 0.5) * 3.2, y + 0.6 + Math.random() * 1.5, z + (Math.random() - 0.5) * 3.2);
+                scene.add(mesh);
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 2.0 + Math.random() * 4.0;
+                activeParticles.push({
+                    mesh,
+                    vx: Math.cos(ang) * spd,
+                    vy: 3.5 + Math.random() * 4.5,
+                    vz: Math.sin(ang) * spd,
+                    gravity: 3.0,
+                    life: 1.2 + Math.random() * 0.4
+                });
+            }
+        }
+
+        function spawnEnergonLightningParticles(x, y, z, count = 22) {
+            const colors = [0x22d3ee, 0x06b6d4, 0xfacc15, 0xa855f7, 0xffffff];
+            for (let i = 0; i < count; i++) {
+                const geo = new THREE.OctahedronGeometry(0.5 + Math.random() * 0.5, 0);
+                const mesh = new THREE.Mesh(
+                    geo,
+                    new THREE.MeshBasicMaterial({ color: colors[i % colors.length] })
+                );
+                mesh.scale.set(0.4, 2.2, 0.4);
+                mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+                mesh.position.set(x + (Math.random() - 0.5) * 5.0, y + 1.2 + Math.random() * 3.0, z + (Math.random() - 0.5) * 5.0);
+                scene.add(mesh);
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 4.0 + Math.random() * 9.0;
+                activeParticles.push({
+                    mesh,
+                    vx: Math.cos(ang) * spd,
+                    vy: (Math.random() - 0.2) * 8.0,
+                    vz: Math.sin(ang) * spd,
+                    gravity: 4.0,
+                    life: 0.75 + Math.random() * 0.35
+                });
+            }
+        }
+
+        function spawnWarpVortexParticles(x, y, z, count = 26) {
+            const portalColors = [0x06b6d4, 0x3b82f6, 0xa855f7, 0xec4899, 0xffffff];
+            for (let i = 0; i < count; i++) {
+                const geo = new THREE.SphereGeometry(0.45 + Math.random() * 0.4, 6, 6);
+                const mesh = new THREE.Mesh(
+                    geo,
+                    new THREE.MeshBasicMaterial({ color: portalColors[i % portalColors.length], transparent: true, opacity: 0.9 })
+                );
+                mesh.position.set(x + (Math.random() - 0.5) * 4.0, y + 1.5 + Math.random() * 3.5, z + (Math.random() - 0.5) * 4.0);
+                scene.add(mesh);
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 3.0 + Math.random() * 7.0;
+                activeParticles.push({
+                    mesh,
+                    vx: Math.cos(ang) * spd,
+                    vy: (Math.random() - 0.5) * 6.0,
+                    vz: Math.sin(ang) * spd,
+                    gravity: -0.5,
+                    life: 1.0 + Math.random() * 0.4
+                });
+            }
+        }
+
         // Aimed High-Pressure Ballistic Water Cannon Arc for Heatwave (Automatically targets nearest active Fire/Hazard!)
         function spawnWaterCannonStream(sourceRig = botRigs.HEATWAVE, sourceOrigin = null, sourceHeading = player.heading) {
             const rig = sourceRig;
@@ -6531,8 +7380,8 @@
         const ENERGON_SPAWN_SITES = [
             // Immediate HQ & Town Square Ring (Easy instant pickups right from the start for the 3-year-old!)
             { x: 0, z: 8, alt: 0 },
-            { x: -24, z: 14, alt: 0 },
-            { x: 24, z: 14, alt: 0 },
+            { x: -28, z: 25, alt: 0 },
+            { x: 28, z: 25, alt: 0 },
             { x: 0, z: 54, alt: 0 },
             { x: -64, z: 25, alt: 0 },
             { x: 64, z: 25, alt: 0 },
@@ -8197,6 +9046,54 @@
             mCtx.lineWidth = 1;
             mCtx.strokeRect(rwx - 3.5, rwz - 3.5, 7, 7);
 
+            // Draw Firehouse HQ Launch Catapult
+            const catx = cx + CATAPULT_POS.x * mapScale;
+            const catz = cy + CATAPULT_POS.z * mapScale;
+            mCtx.fillStyle = '#f97316';
+            mCtx.fillRect(catx - 3.5, catz - 3.5, 7, 7);
+            mCtx.strokeStyle = '#ffffff';
+            mCtx.lineWidth = 1;
+            mCtx.strokeRect(catx - 3.5, catz - 3.5, 7, 7);
+
+            // Draw Griffin Rock Drive-Thru Diner
+            const dinx = cx + DINER_POS.x * mapScale;
+            const dinz = cy + DINER_POS.z * mapScale;
+            mCtx.fillStyle = '#f59e0b';
+            mCtx.fillRect(dinx - 4.0, dinz - 4.0, 8, 8);
+            mCtx.strokeStyle = '#f43f5e';
+            mCtx.lineWidth = 1.2;
+            mCtx.strokeRect(dinx - 4.0, dinz - 4.0, 8, 8);
+
+            // Draw Doc Greene's Energon Turbo-Charger
+            const chgx = cx + CHARGER_POS.x * mapScale;
+            const chgz = cy + CHARGER_POS.z * mapScale;
+            mCtx.fillStyle = '#38bdf8';
+            mCtx.beginPath();
+            mCtx.moveTo(chgx, chgz - 5);
+            mCtx.lineTo(chgx + 5, chgz);
+            mCtx.lineTo(chgx, chgz + 5);
+            mCtx.lineTo(chgx - 5, chgz);
+            mCtx.closePath();
+            mCtx.fill();
+            mCtx.strokeStyle = '#facc15';
+            mCtx.lineWidth = 1.2;
+            mCtx.stroke();
+
+            // Draw GroundBridge Portals
+            GROUNDBRIDGE_CONFIGS.forEach(gb => {
+                const gbx = cx + gb.x * mapScale;
+                const gbz = cy + gb.z * mapScale;
+                mCtx.strokeStyle = '#c084fc';
+                mCtx.lineWidth = 1.8;
+                mCtx.beginPath();
+                mCtx.arc(gbx, gbz, 4.5, 0, Math.PI * 2);
+                mCtx.stroke();
+                mCtx.fillStyle = '#06b6d4';
+                mCtx.beginPath();
+                mCtx.arc(gbx, gbz, 2.0, 0, Math.PI * 2);
+                mCtx.fill();
+            });
+
             // Draw Sky Stunt Hoops (Purple/Emerald Rings)
             stuntHoopRigs.forEach(rig => {
                 const hx = cx + rig.def.x * mapScale;
@@ -8938,6 +9835,149 @@
                     spawnSparkleGlints(buddyBot.pos.x, buddyBot.pos.y + 1.8, buddyBot.pos.z, 14);
                 }
             }
+
+            // =================================================================
+            // ANIMATE & CHECK FIREHOUSE HQ SUPER CATAPULT
+            // =================================================================
+            if (player.catapultCooldown > 0) player.catapultCooldown -= dt;
+
+            const strobeInterval = player.catapultTimer > 0 ? 80 : 380;
+            const strobeLit = Math.floor(now / strobeInterval) % 2 === 0;
+            catapultStrobes.forEach((strobe, idx) => {
+                const isLit = player.catapultTimer > 0 ? ((idx + Math.floor(now / 80)) % 2 === 0) : strobeLit;
+                strobe.material.color.setHex(isLit ? 0xffffff : 0xfacc15);
+            });
+
+            if (player.catapultTimer > 0) {
+                player.catapultTimer -= dt;
+                player.speed = 0;
+                player.pos.x = CATAPULT_POS.x;
+                player.pos.z = CATAPULT_POS.z - 3.5;
+                player.heading = 0; // Point South towards town avenue
+                catapultCarriage.position.z = -3.5 + Math.sin(now * 0.05) * 0.15;
+
+                if (player.catapultTimer <= 0) {
+                    sfx.playCatapultBlast();
+                    spawnRocketExhaustParticles(CATAPULT_POS.x, catY + 0.8, CATAPULT_POS.z - 3.5, 36);
+                    player.heading = 0;
+                    player.speed = 48.0;
+                    player.vy = 42.0;
+                    player.grounded = false;
+                    player.boostTimer = Math.max(player.boostTimer, 4.5);
+                    showToast("🚀 CATAPULT LAUNCH!", "Full Throttle Blastoff!");
+                    speakBotCatchphrase(player.botType, 'CATAPULT');
+                    player.catapultCooldown = 3.5;
+                    catapultCarriage.position.z = 4.5;
+                }
+            } else {
+                catapultCarriage.position.z = THREE.MathUtils.lerp(catapultCarriage.position.z, -3.5, dt * 2.5);
+
+                const dCatX = Math.abs(player.pos.x - CATAPULT_POS.x);
+                const dCatZ = Math.abs(player.pos.z - (CATAPULT_POS.z - 3.5));
+                const onCatPad = dCatX < 4.2 && dCatZ < 4.5 && player.pos.y < catY + 5.5;
+
+                if (onCatPad && player.catapultCooldown <= 0 && player.grounded && player.catapultTimer <= 0) {
+                    player.catapultTimer = 0.65;
+                    sfx.playCatapultCountdown();
+                    triggerNPCSpeech("Cody Burns", "Communications Officer", "Catapult lock engaged! 3... 2... 1... LAUNCH!", { x: CATAPULT_POS.x, z: CATAPULT_POS.z }, true);
+                }
+            }
+
+            // =================================================================
+            // ANIMATE & CHECK GRIFFIN ROCK DRIVE-THRU DINER
+            // =================================================================
+            dinerBurgerGroup.rotation.y += dt * 0.85;
+
+            const dDinLaneX = Math.abs(player.pos.x - (DINER_POS.x - 8.5));
+            const inDinZRange = player.pos.z >= (DINER_POS.z - 12) && player.pos.z <= (DINER_POS.z + 12);
+            const inDriveThru = dDinLaneX < 4.2 && inDinZRange && player.pos.y < dinerY + 6.0;
+
+            if (inDriveThru) {
+                const distToIntercom = Math.hypot(player.pos.x - (DINER_POS.x - 10.5), player.pos.z - (DINER_POS.z + 6.5));
+                if (distToIntercom < 5.5 && (now - player.lastDinerOrderTime > 14000)) {
+                    player.lastDinerOrderTime = now;
+                    sfx.playDinerDing();
+                    triggerNPCSpeech("Griffin Diner", "Drive-Thru Intercom", "Welcome to Griffin Diner! What can we get for you, Rescue Bot?", { x: DINER_POS.x - 10.5, y: dinerY + 3.6, z: DINER_POS.z + 6.5 }, true);
+                }
+
+                const distToPickup = Math.hypot(player.pos.x - (DINER_POS.x - 6.0), player.pos.z - (DINER_POS.z - 2.5));
+                if (distToPickup < 5.5 && (now - player.lastDinerPickupTime > 14000)) {
+                    player.lastDinerPickupTime = now;
+                    sfx.playStuntChime();
+                    spawnDinerFoodParticles(player.pos.x, player.pos.y + 1.6, player.pos.z, 18);
+                    spawnSparkleGlints(player.pos.x, player.pos.y + 1.6, player.pos.z, 14);
+                    player.boostTimer = Math.max(player.boostTimer, 4.0);
+                    showToast("🍔 GRIFFIN DINER!", "Energon Burger & High-Octane Shake Served!");
+                    speakBotCatchphrase(player.botType, 'DINER');
+                }
+            }
+
+            // =================================================================
+            // ANIMATE & CHECK DOC GREENE'S ENERGON TURBO-CHARGER
+            // =================================================================
+            if (player.chargerCooldown > 0) player.chargerCooldown -= dt;
+
+            const dChgX = Math.abs(player.pos.x - CHARGER_POS.x);
+            const dChgZ = Math.abs(player.pos.z - CHARGER_POS.z);
+            const inChargingBay = dChgX < 6.8 && dChgZ < 8.2 && player.pos.y < chargerY + 7.0;
+
+            const coilSpinSpeed = inChargingBay ? 14.0 : 2.5;
+            energonCoilRings.forEach((r, rIdx) => {
+                r.rotation.z += (rIdx % 2 === 0 ? 1 : -1) * dt * coilSpinSpeed;
+            });
+            const orbPulse = 1.0 + Math.sin(now * (inChargingBay ? 0.015 : 0.004)) * (inChargingBay ? 0.22 : 0.08);
+            energonOrbs.forEach(orb => orb.scale.setScalar(orbPulse));
+
+            if (inChargingBay && player.chargerCooldown <= 0) {
+                player.chargerCooldown = 7.0;
+                sfx.playEnergyCharge();
+                spawnEnergonLightningParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 28);
+                player.energonBoostTimer = 10.0;
+                player.boostTimer = 10.0;
+                player.speed = Math.max(player.speed + 16, 56);
+                showToast("⚡ ENERGON TURBO-CHARGED!", "Doc Greene's Overdrive: 10s Super Turbo!");
+                triggerNPCSpeech("Doc Greene", "Lead Scientist", "Fascinating! The Energon Turbo-Charger is operating at one hundred and twenty percent efficiency!", { x: CHARGER_POS.x, y: chargerY + 5.0, z: CHARGER_POS.z }, true);
+                speakBotCatchphrase(player.botType, 'CHARGER');
+            }
+
+            // =================================================================
+            // ANIMATE & CHECK DOC GREENE'S GROUNDBRIDGE TELEPORTERS
+            // =================================================================
+            if (player.portalCooldown > 0) player.portalCooldown -= dt;
+
+            groundBridgePortals.forEach(portal => {
+                portal.irisRing1.rotation.z += dt * 2.2;
+                portal.irisRing2.rotation.z -= dt * 2.8;
+                portal.irisRing3.rotation.z += dt * 3.4;
+                portal.vortexDisc.material.opacity = 0.55 + Math.sin(now * 0.005) * 0.18;
+
+                if (player.portalCooldown <= 0) {
+                    const distToPortal = Math.hypot(player.pos.x - portal.cfg.x, player.pos.z - portal.cfg.z);
+                    if (distToPortal < 6.8 && player.pos.y < portal.baseY + 12.0) {
+                        player.portalCooldown = 4.0;
+                        sfx.playWarpWhoosh();
+                        spawnWarpVortexParticles(player.pos.x, player.pos.y + 2.0, player.pos.z, 28);
+
+                        const dest = portal.cfg.dest;
+                        const destY = getTerrainHeight(dest.x, dest.z);
+                        player.pos.set(dest.x, destY + 0.6, dest.z);
+                        player.heading = dest.heading;
+                        player.speed = Math.max(player.speed, 42.0);
+
+                        spawnWarpVortexParticles(dest.x, destY + 2.0, dest.z, 28);
+                        showToast("🌀 GROUNDBRIDGE TELEPORT!", `Warped via ${portal.cfg.name}!`);
+                        triggerNPCSpeech("Doc Greene", "Lead Scientist", "GroundBridge connection stable! Instant transit across Griffin Rock!", { x: dest.x, y: destY + 4, z: dest.z }, true);
+                        speakBotCatchphrase(player.botType, 'GROUNDBRIDGE');
+
+                        if (buddyBot.botType) {
+                            buddyBot.pos.set(dest.x - 3.5, destY + 0.6, dest.z - 4.5);
+                            buddyBot.heading = dest.heading;
+                            buddyBot.speed = player.speed;
+                            spawnWarpVortexParticles(buddyBot.pos.x, destY + 2.0, buddyBot.pos.z, 16);
+                        }
+                    }
+                }
+            });
 
             // Animate & Check Sky Stunt Hoops
             stuntHoopRigs.forEach((rig, idx) => {
