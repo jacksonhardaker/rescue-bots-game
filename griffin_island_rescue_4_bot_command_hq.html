@@ -169,28 +169,28 @@
             <span class="text-lg sm:text-xl">🚜</span>
             <div class="leading-tight">
                 <div class="text-xs sm:text-sm font-extrabold text-white">BOULDER</div>
-                <div class="text-[9px] sm:text-[10px] text-lime-200 font-semibold">Dozer • Smash</div>
+                <div class="text-[9px] sm:text-[10px] text-lime-200 font-semibold">Dozer • Triceratops</div>
             </div>
         </button>
         <button data-bot="HEATWAVE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-red-600/90 to-rose-900/90 border-2 border-red-300/40 flex items-center gap-2.5 text-left w-full">
             <span class="text-lg sm:text-xl">🚒</span>
             <div class="leading-tight">
                 <div class="text-xs sm:text-sm font-extrabold text-white">HEATWAVE</div>
-                <div class="text-[9px] sm:text-[10px] text-rose-200 font-semibold">Fire • Water Jet</div>
+                <div class="text-[9px] sm:text-[10px] text-rose-200 font-semibold">Fire • Brachiosaur</div>
             </div>
         </button>
         <button data-bot="CHASE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-blue-600/90 to-indigo-900/90 border-2 border-blue-300/40 flex items-center gap-2.5 text-left w-full">
             <span class="text-lg sm:text-xl">🚓</span>
             <div class="leading-tight">
                 <div class="text-xs sm:text-sm font-extrabold text-white">CHASE</div>
-                <div class="text-[9px] sm:text-[10px] text-sky-200 font-semibold">Police • EMP</div>
+                <div class="text-[9px] sm:text-[10px] text-sky-200 font-semibold">Police • Stegosaur</div>
             </div>
         </button>
         <button data-bot="BLADES" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-orange-500/90 to-amber-700/90 border-2 border-orange-200/40 flex items-center gap-2.5 text-left w-full">
             <span class="text-lg sm:text-xl">🚁</span>
             <div class="leading-tight">
                 <div class="text-xs sm:text-sm font-extrabold text-white">BLADES</div>
-                <div class="text-[9px] sm:text-[10px] text-amber-100 font-semibold">Copter • Flight</div>
+                <div class="text-[9px] sm:text-[10px] text-amber-100 font-semibold">Copter • Pterosaur</div>
             </div>
         </button>
     </div>
@@ -208,20 +208,20 @@
             <span id="altitude-readout" class="hidden mono-font text-xs text-cyan-300">ALT: 00m</span>
         </div>
         <div class="hidden md:block text-[11px] text-white/70 bg-slate-950/70 px-3 py-0.5 rounded-full border border-white/10">
-            <span class="text-amber-300">TAP SCREEN</span> Drive/Fly There • <span class="text-lime-300">1-4</span> Switch Bot • <span class="text-yellow-300">SPACE</span> Transform • <span class="text-sky-300">WASD</span> Manual
+            <span class="text-amber-300">TAP SCREEN</span> Drive/Fly • <span class="text-lime-300">1-4</span> Bot • <span class="text-yellow-300">SPACE</span> Cycle Mode • <span class="text-emerald-300">V</span> Dino • <span class="text-sky-300">WASD</span> Move
         </div>
     </div>
 
-    <!-- Bottom Right: Tactile Action Cluster (Adapts to Ground vs Helicopter Flight) -->
-    <div class="fixed bottom-6 right-5 sm:bottom-9 sm:right-9 z-20 flex items-end gap-2.5 sm:gap-3.5 pointer-events-auto">
+    <!-- Bottom Right: Tactile Action Cluster (Adapts to Ground vs Helicopter/Pterosaur Flight) -->
+    <div class="fixed bottom-6 right-5 sm:bottom-9 sm:right-9 z-20 flex items-end gap-2 sm:gap-3 pointer-events-auto">
         
-        <!-- Extra Flight Descend Button (Shown when Blades is in Helicopter Mode) -->
+        <!-- Extra Flight Descend Button (Shown when Blades is in Helicopter or Pterosaur Mode) -->
         <button id="btn-descend" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-slate-600 to-slate-800 border-2 border-cyan-300 flex flex-col items-center justify-center text-white select-none">
             <span class="text-lg sm:text-xl leading-none">⏬</span>
             <span class="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase mt-0.5">LOWER</span>
         </button>
 
-        <!-- Secondary Button: JUMP / ASCEND (Copter) -->
+        <!-- Secondary Button: JUMP / ASCEND (Copter/Pterosaur) -->
         <button id="btn-jump-scan" class="tactile-btn w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-b from-sky-400 to-blue-600 border-2 border-sky-200 flex flex-col items-center justify-center text-white select-none">
             <span class="text-xl sm:text-2xl leading-none" id="jump-icon">🚀</span>
             <span class="text-[10px] sm:text-xs font-bold tracking-wider uppercase mt-1" id="jump-label">JUMP</span>
@@ -233,7 +233,14 @@
             <span class="text-[10px] sm:text-xs font-bold tracking-wider uppercase mt-1 text-center leading-tight px-1" id="action-label">BLADE SMASH</span>
         </button>
 
-        <!-- Primary Hero Button: TRANSFORM (Bot <-> Vehicle) -->
+        <!-- Dinobot Mode Button (Direct Toggle to Triceratops / Brachiosaur / Stegosaur / Pterosaur) -->
+        <button id="btn-dino" class="tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-teal-400 via-emerald-600 to-green-900 border-2 border-lime-300 flex flex-col items-center justify-center text-white select-none mb-1">
+            <span class="text-2xl sm:text-3xl leading-none" id="dino-icon">🦕</span>
+            <span class="text-[10px] sm:text-xs font-extrabold tracking-tight uppercase mt-0.5">DINOBOT</span>
+            <span class="text-[8px] sm:text-[9px] font-bold bg-slate-950/80 text-lime-300 px-1.5 py-0.2 rounded-full mt-0.5 truncate max-w-[92%]" id="dino-sub">TRICERATOPS</span>
+        </button>
+
+        <!-- Primary Hero Button: TRANSFORM (Cycles Bot -> Vehicle -> Dino) -->
         <button id="btn-transform" class="tactile-btn beacon-pulse relative w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-b from-lime-400 via-green-500 to-emerald-700 border-4 border-yellow-300 flex flex-col items-center justify-center text-slate-950 select-none">
             <svg class="w-8 h-8 sm:w-10 sm:h-10 stroke-slate-950 fill-none" viewBox="0 0 24 24" stroke-width="2.4">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -298,6 +305,28 @@
                     gain.connect(this.ctx.destination);
                     osc.start(now + idx * 0.065);
                     osc.stop(now + idx * 0.065 + 0.07);
+                });
+            }
+            playDinoRoar(botType = 'BOULDER') {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const isPterosaur = botType === 'BLADES';
+                const baseFreq = isPterosaur ? 720 : (botType === 'CHASE' ? 165 : 115);
+                [1.0, 1.35].forEach((mult, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = isPterosaur ? 'triangle' : 'sawtooth';
+                    osc.frequency.setValueAtTime(baseFreq * mult, now + idx * 0.04);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 1.45 : 0.68), now + 0.22);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 0.55 : 0.42), now + 0.46);
+                    gain.gain.setValueAtTime(0.13, now + idx * 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.48);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.04);
+                    osc.stop(now + 0.5);
                 });
             }
             playBotSwitch() {
@@ -1320,11 +1349,17 @@
                 rightArm: new THREE.Group(),
                 leftLeg: new THREE.Group(),
                 rightLeg: new THREE.Group(),
+                dinoGroup: new THREE.Group(),
+                dinoHead: new THREE.Group(),
+                dinoTail: new THREE.Group(),
+                dinoLeftWing: new THREE.Group(),
+                dinoRightWing: new THREE.Group(),
                 wheels: [],
                 rotors: null,
                 tailRotor: null,
                 lightbar: null,
-                nozzleTip: new THREE.Object3D()
+                nozzleTip: new THREE.Object3D(),
+                dinoNozzleTip: new THREE.Object3D()
             };
 
             chassis.add(parts.torso);
@@ -1335,6 +1370,11 @@
             chassis.add(parts.rightArm);
             chassis.add(parts.leftLeg);
             chassis.add(parts.rightLeg);
+            chassis.add(parts.dinoGroup);
+            parts.dinoGroup.add(parts.dinoHead);
+            parts.dinoGroup.add(parts.dinoTail);
+            parts.dinoGroup.add(parts.dinoLeftWing);
+            parts.dinoGroup.add(parts.dinoRightWing);
 
             if (botType === 'BOULDER') {
                 // TV Show Boulder: Vibrant Chartreuse-Lime Green (#76d31b), Construction Yellow (#ffcc00) & Silver Trim
@@ -1438,6 +1478,83 @@
                     foot.position.set(0, -2.15, 0.32);
                     legG.add(foot);
                 });
+
+                // DINOBOT MODE: BOULDER TRICERATOPS (Armored Frill Shield, 3 Horns, Saddle & Tail)
+                const triSaddle = new THREE.Mesh(new THREE.BoxGeometry(2.85, 0.95, 2.95), matGreen);
+                triSaddle.position.set(0, 2.65, -0.05);
+                triSaddle.castShadow = true;
+                parts.dinoGroup.add(triSaddle);
+
+                const triSpine = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.35, 2.8), matYellow);
+                triSpine.position.set(0, 3.2, -0.05);
+                parts.dinoGroup.add(triSpine);
+
+                // Triceratops Frill Shield & 3-Horned Skull
+                const frillOuter = new THREE.Mesh(
+                    new THREE.CylinderGeometry(2.15, 1.65, 0.38, 8).rotateX(Math.PI * 0.38),
+                    matYellow
+                );
+                frillOuter.position.set(0, 0.95, -0.25);
+                frillOuter.castShadow = true;
+                parts.dinoHead.add(frillOuter);
+
+                const frillInner = new THREE.Mesh(
+                    new THREE.CylinderGeometry(1.75, 1.35, 0.44, 8).rotateX(Math.PI * 0.38),
+                    matGreen
+                );
+                frillInner.position.set(0, 0.95, -0.22);
+                parts.dinoHead.add(frillInner);
+
+                // Chrome Frill Crown Studs
+                [-1.3, -0.68, 0, 0.68, 1.3].forEach((fx, idx) => {
+                    const stud = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.52, 6).rotateX(-0.35), matChrome);
+                    stud.position.set(fx, 2.15 - Math.abs(idx - 2) * 0.22, -0.65);
+                    parts.dinoHead.add(stud);
+                });
+
+                const triSkull = new THREE.Mesh(new THREE.BoxGeometry(1.75, 1.32, 1.95), matGreen);
+                triSkull.position.set(0, 0.15, 0.65);
+                triSkull.castShadow = true;
+                parts.dinoHead.add(triSkull);
+
+                const triEyes = new THREE.Mesh(new THREE.BoxGeometry(1.84, 0.36, 0.58), matVisorCyan);
+                triEyes.position.set(0, 0.38, 0.85);
+                triEyes.userData.noOutline = true;
+                parts.dinoHead.add(triEyes);
+
+                const triBeak = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.78, 1.25, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4),
+                    matYellow
+                );
+                triBeak.position.set(0, -0.05, 1.95);
+                parts.dinoHead.add(triBeak);
+
+                // Two Long Chrome Brow Horns + Nose Horn
+                [-0.58, 0.58].forEach(hx => {
+                    const browHorn = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.24, 2.35, 8).rotateX(Math.PI * 0.38),
+                        matChrome
+                    );
+                    browHorn.position.set(hx, 0.92, 1.65);
+                    parts.dinoHead.add(browHorn);
+                });
+                const noseHorn = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.22, 1.05, 8).rotateX(Math.PI * 0.18),
+                    matYellow
+                );
+                noseHorn.position.set(0, 0.55, 2.05);
+                parts.dinoHead.add(noseHorn);
+
+                // Triceratops Heavy Segmented Tail
+                const triTailBase = new THREE.Mesh(new THREE.BoxGeometry(1.38, 1.08, 1.65), matGreen);
+                triTailBase.position.set(0, 0, -0.75);
+                parts.dinoTail.add(triTailBase);
+                const triTailTip = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.68, 2.1, 6).rotateX(-Math.PI / 2),
+                    matYellow
+                );
+                triTailTip.position.set(0, -0.05, -2.35);
+                parts.dinoTail.add(triTailTip);
             }
 
             else if (botType === 'HEATWAVE') {
@@ -1551,6 +1668,76 @@
                     boot.position.set(0, -2.15, 0.25);
                     legG.add(boot);
                 });
+
+                // DINOBOT MODE: HEATWAVE BRACHIOSAURUS (Towering Articulated Neck, Crested Head & Water-Cannon Snout)
+                const brachShell = new THREE.Mesh(new THREE.BoxGeometry(2.92, 1.15, 3.15), matRed);
+                brachShell.position.set(0, 2.75, -0.1);
+                brachShell.castShadow = true;
+                parts.dinoGroup.add(brachShell);
+
+                const brachGoldTrim = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.36, 2.65), matGold);
+                brachGoldTrim.position.set(0, 2.65, -0.1);
+                parts.dinoGroup.add(brachGoldTrim);
+
+                // Towering Brachiosaurus Neck + Head Assembly (attached to parts.dinoHead pivot)
+                const neckLower = new THREE.Mesh(new THREE.BoxGeometry(1.38, 2.25, 1.38), matRed);
+                neckLower.position.set(0, 0.95, 0.22);
+                neckLower.rotation.x = 0.18;
+                neckLower.castShadow = true;
+                parts.dinoHead.add(neckLower);
+
+                const neckUpper = new THREE.Mesh(new THREE.BoxGeometry(1.18, 2.35, 1.18), matCrimson);
+                neckUpper.position.set(0, 2.85, 0.55);
+                neckUpper.rotation.x = 0.12;
+                neckUpper.castShadow = true;
+                parts.dinoHead.add(neckUpper);
+
+                // Gold Neck Armor Segments
+                [0.65, 1.65, 2.65].forEach((ny, idx) => {
+                    const plate = new THREE.Mesh(new THREE.BoxGeometry(1.26, 0.34, 0.42), matGold);
+                    plate.position.set(0, ny, 0.82 + idx * 0.14);
+                    parts.dinoHead.add(plate);
+                });
+
+                // Brachiosaurus Domed Skull, Gold Nasal Crest & Water-Cannon Snout
+                const brachSkull = new THREE.Mesh(new THREE.BoxGeometry(1.48, 1.18, 1.85), matRed);
+                brachSkull.position.set(0, 4.15, 1.05);
+                brachSkull.castShadow = true;
+                parts.dinoHead.add(brachSkull);
+
+                const brachCrest = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.78, 1.35), matGold);
+                brachCrest.position.set(0, 4.88, 0.95);
+                parts.dinoHead.add(brachCrest);
+
+                const brachEyes = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.36, 0.58), matVisorGold);
+                brachEyes.position.set(0, 4.3, 1.25);
+                brachEyes.userData.noOutline = true;
+                parts.dinoHead.add(brachEyes);
+
+                const brachSnout = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.62, 1.15), matChrome);
+                brachSnout.position.set(0, 3.88, 1.95);
+                parts.dinoHead.add(brachSnout);
+
+                const dinoNozzle = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.28, 0.36, 0.75, 10).rotateX(Math.PI / 2),
+                    matGold
+                );
+                dinoNozzle.position.set(0, 3.88, 2.55);
+                parts.dinoHead.add(dinoNozzle);
+
+                parts.dinoNozzleTip.position.set(0, 3.88, 3.05);
+                parts.dinoHead.add(parts.dinoNozzleTip);
+
+                // Sweeping Brachiosaurus Counterbalance Tail
+                const brachTailBase = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.05, 1.95), matRed);
+                brachTailBase.position.set(0, 0, -0.85);
+                parts.dinoTail.add(brachTailBase);
+                const brachTailTip = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.68, 2.75, 6).rotateX(-Math.PI / 2),
+                    matCrimson
+                );
+                brachTailTip.position.set(0, -0.1, -2.85);
+                parts.dinoTail.add(brachTailTip);
             }
 
             else if (botType === 'CHASE') {
@@ -1646,6 +1833,89 @@
                     const boot = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.54, 1.78), matBlack);
                     boot.position.set(0, -2.1, 0.25);
                     legG.add(boot);
+                });
+
+                // DINOBOT MODE: CHASE STEGOSAURUS (Double Row of Dorsal Plates, Police Dino Head & Spiked Thagomizer Tail)
+                const stegoBack = new THREE.Mesh(new THREE.BoxGeometry(2.55, 1.15, 3.1), matBlue);
+                stegoBack.position.set(0, 2.55, -0.05);
+                stegoBack.castShadow = true;
+                parts.dinoGroup.add(stegoBack);
+
+                const stegoFlank = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.55, 2.35), matWhite);
+                stegoFlank.position.set(0, 2.45, -0.05);
+                parts.dinoGroup.add(stegoFlank);
+
+                // Iconic Double Row of Alternating Stegosaurus Dorsal Plates
+                const plateZPositions = [-1.35, -0.8, -0.25, 0.3, 0.85, 1.35];
+                plateZPositions.forEach((pz, idx) => {
+                    const side = idx % 2 === 0 ? -1 : 1;
+                    const plateSize = idx === 2 || idx === 3 ? 1.25 : (idx === 1 || idx === 4 ? 1.05 : 0.82);
+                    const plateGroup = new THREE.Group();
+                    plateGroup.position.set(side * 0.44, 3.25 + (plateSize - 0.8) * 0.35, pz);
+                    plateGroup.rotation.z = side * -0.18;
+
+                    const outerPlate = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.22, plateSize, plateSize),
+                        matGold
+                    );
+                    outerPlate.rotation.x = Math.PI / 4;
+                    outerPlate.castShadow = true;
+                    plateGroup.add(outerPlate);
+
+                    const innerCore = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.26, plateSize * 0.62, plateSize * 0.62),
+                        matVisorCyan
+                    );
+                    innerCore.rotation.x = Math.PI / 4;
+                    innerCore.userData.noOutline = true;
+                    plateGroup.add(innerCore);
+
+                    parts.dinoGroup.add(plateGroup);
+                });
+
+                // Low-Slung Armored Stegosaurus Head
+                const stegoSkull = new THREE.Mesh(new THREE.BoxGeometry(1.26, 0.98, 1.75), matBlue);
+                stegoSkull.position.set(0, 0.05, 0.65);
+                stegoSkull.castShadow = true;
+                parts.dinoHead.add(stegoSkull);
+
+                const stegoCrest = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.32, 1.45), matGold);
+                stegoCrest.position.set(0, 0.58, 0.55);
+                parts.dinoHead.add(stegoCrest);
+
+                const stegoEyes = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.32, 0.52), matVisorCyan);
+                stegoEyes.position.set(0, 0.2, 0.85);
+                stegoEyes.userData.noOutline = true;
+                parts.dinoHead.add(stegoEyes);
+
+                const stegoSnout = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.62, 1.25, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4),
+                    matChrome
+                );
+                stegoSnout.position.set(0, -0.04, 1.85);
+                parts.dinoHead.add(stegoSnout);
+
+                // Spiked Thagomizer Tail (4 Chrome/Gold Spikes)
+                const stegoTailBase = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.95, 1.85), matBlue);
+                stegoTailBase.position.set(0, 0, -0.8);
+                parts.dinoTail.add(stegoTailBase);
+
+                const stegoTailTip = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.58, 2.05, 6).rotateX(-Math.PI / 2),
+                    matWhite
+                );
+                stegoTailTip.position.set(0, 0.05, -2.45);
+                parts.dinoTail.add(stegoTailTip);
+
+                [-1, 1].forEach(side => {
+                    [-2.15, -2.75].forEach((sz, sIdx) => {
+                        const spike = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.18, 1.35, 6).rotateZ(side * -Math.PI * 0.36),
+                            sIdx === 0 ? matGold : matChrome
+                        );
+                        spike.position.set(side * 0.68, 0.32, sz);
+                        parts.dinoTail.add(spike);
+                    });
                 });
             }
 
@@ -1750,6 +2020,79 @@
                         parts.tailRotor = tailR;
                     }
                 });
+
+                // DINOBOT MODE: BLADES PTEROSAUR (Crested Pteranodon Head, Long Beak & Articulated Flapping Wings)
+                const pteroBack = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.95, 2.75), matOrange);
+                pteroBack.position.set(0, 2.45, 0.05);
+                pteroBack.castShadow = true;
+                parts.dinoGroup.add(pteroBack);
+
+                // Pterosaur Crested Head & Pointed Beak
+                const pteroSkull = new THREE.Mesh(new THREE.BoxGeometry(1.22, 1.05, 1.58), matWhite);
+                pteroSkull.position.set(0, 0.15, 0.55);
+                pteroSkull.castShadow = true;
+                parts.dinoHead.add(pteroSkull);
+
+                const pteroEyes = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.34, 0.55), matVisorCyan);
+                pteroEyes.position.set(0, 0.32, 0.78);
+                pteroEyes.userData.noOutline = true;
+                parts.dinoHead.add(pteroEyes);
+
+                // Backward-Swept Pteranodon Cranial Crest
+                const pteroCrest = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.45, 2.35, 4).rotateX(-Math.PI * 0.42).rotateZ(Math.PI / 4),
+                    matOrange
+                );
+                pteroCrest.position.set(0, 0.72, -0.78);
+                pteroCrest.castShadow = true;
+                parts.dinoHead.add(pteroCrest);
+
+                // Long Aerodynamic Pterosaur Beak
+                const pteroUpperBeak = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.56, 2.55, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4),
+                    matOrange
+                );
+                pteroUpperBeak.position.set(0, 0.08, 2.35);
+                pteroUpperBeak.castShadow = true;
+                parts.dinoHead.add(pteroUpperBeak);
+
+                const pteroLowerJaw = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.38, 1.95, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4),
+                    matVisorGold
+                );
+                pteroLowerJaw.position.set(0, -0.22, 2.05);
+                parts.dinoHead.add(pteroLowerJaw);
+
+                // Articulated Left & Right Pterosaur Wings (11-unit total wingspan)
+                [-1, 1].forEach(side => {
+                    const wingG = side === -1 ? parts.dinoLeftWing : parts.dinoRightWing;
+                    const spar = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.24, 0.46), matOrange);
+                    spar.position.set(side * 2.6, 0, 0.45);
+                    spar.castShadow = true;
+                    wingG.add(spar);
+
+                    const membrane = new THREE.Mesh(new THREE.BoxGeometry(5.0, 0.12, 2.25), matWhite);
+                    membrane.position.set(side * 2.5, -0.04, -0.55);
+                    membrane.castShadow = true;
+                    wingG.add(membrane);
+
+                    const wingTip = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.16, 2.3), matOrange);
+                    wingTip.position.set(side * 4.45, 0, -0.55);
+                    wingG.add(wingTip);
+
+                    const wingClaw = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.65, 6).rotateX(Math.PI / 2), matChrome);
+                    wingClaw.position.set(side * 2.6, 0.1, 0.85);
+                    wingG.add(wingClaw);
+                });
+
+                // Pterosaur Rudder Tail Vane
+                const pteroTailShaft = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.28, 1.85), matWhite);
+                pteroTailShaft.position.set(0, 0, -0.85);
+                parts.dinoTail.add(pteroTailShaft);
+
+                const pteroTailVane = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.18, 1.25), matOrange);
+                pteroTailVane.position.set(0, 0, -1.95);
+                parts.dinoTail.add(pteroTailVane);
             }
 
             // Apply Saturday-Morning Cartoon Black Ink Outlines & Panel Creases to the entire Bot Rig!
@@ -1777,47 +2120,51 @@
             BLADES:   { x: -8,  y: hqY + 16.8, z: -45, rotY: 0.4, morph: 1.0 } // Parked on Rooftop Helipad!
         };
 
-        // Universal Rig Joint Interpolator (Handles Bot Mode m=0 <-> Vehicle Mode m=1)
-        function applyBotRigMorph(rig, m, walkCycle, speed, smashTimer, now) {
+        // Universal Rig Joint Interpolator (Handles Bot Mode <-> Vehicle Mode m <-> Dinobot Mode d)
+        function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now) {
             const walkSin = Math.sin(walkCycle);
             const isMoving = Math.abs(speed) > 0.5;
             const smashOffset = smashTimer > 0 ? Math.sin((smashTimer / 0.45) * Math.PI) : 0;
+            const isPtero = rig.botType === 'BLADES';
 
-            // 1. Torso
+            // 1. Torso (Upright in Bot, Low Cab in Vehicle, Horizontal Dinosaur Core in Dinobot)
+            const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : 0) - smashOffset * 0.5;
+            const dinoTorsoY = (rig.botType === 'HEATWAVE' ? 2.35 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.16 : 0);
             rig.torso.position.set(
                 0,
-                THREE.MathUtils.lerp(3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : 0) - smashOffset * 0.5, 1.65, m),
-                THREE.MathUtils.lerp(0, 0.25, m)
+                botTorsoY * (1 - m - d) + 1.65 * m + dinoTorsoY * d,
+                0.25 * m + 0.05 * d
             );
-            rig.torso.rotation.x = THREE.MathUtils.lerp(smashOffset * 0.4, 0, m);
+            rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + (Math.PI * 0.48) * d;
 
-            // 2. Head retracts into vehicle cab
+            // 2. Robot Head retracts into cab/chest in both Vehicle and Dinobot modes
+            const headRetract = Math.min(1, m + d);
             rig.head.position.set(
                 0,
-                THREE.MathUtils.lerp(5.45 - smashOffset * 0.35, 1.95, m),
-                THREE.MathUtils.lerp(0.06, 0.15, m)
+                THREE.MathUtils.lerp(5.45 - smashOffset * 0.35, 1.95, headRetract),
+                THREE.MathUtils.lerp(0.06, 0.15, headRetract)
             );
-            rig.head.scale.setScalar(THREE.MathUtils.lerp(1.0, 0.25, m));
+            rig.head.scale.setScalar(THREE.MathUtils.lerp(1.0, 0.22, headRetract));
 
             // 3. Front Attachment (Dozer Blade / Fire Bumper / Police Push-bar / Copter Nose)
             if (rig.botType === 'BOULDER') {
                 rig.frontAttachment.position.set(
                     0,
-                    THREE.MathUtils.lerp(3.4 - smashOffset * 1.1, 0.92, m),
-                    THREE.MathUtils.lerp(1.25 + smashOffset * 0.9, 2.75, m)
+                    (3.4 - smashOffset * 1.1) * (1 - m - d) + 0.92 * m + 1.55 * d,
+                    (1.25 + smashOffset * 0.9) * (1 - m - d) + 2.75 * m + 1.35 * d
                 );
-                rig.frontAttachment.rotation.x = THREE.MathUtils.lerp(-0.2, 0.05, m);
+                rig.frontAttachment.rotation.x = -0.2 * (1 - m - d) + 0.05 * m + 0.45 * d;
             } else if (rig.botType === 'BLADES') {
                 rig.frontAttachment.position.set(
                     0,
-                    THREE.MathUtils.lerp(3.65, 1.55, m),
-                    THREE.MathUtils.lerp(0.85, 2.05, m)
+                    3.65 * (1 - m - d) + 1.55 * m + 1.95 * d,
+                    0.85 * (1 - m - d) + 2.05 * m + 0.95 * d
                 );
             } else {
                 rig.frontAttachment.position.set(
                     0,
-                    THREE.MathUtils.lerp(2.75, 0.72, m),
-                    THREE.MathUtils.lerp(1.05, 2.45, m)
+                    2.75 * (1 - m - d) + 0.72 * m + 1.55 * d,
+                    1.05 * (1 - m - d) + 2.45 * m + 1.35 * d
                 );
             }
 
@@ -1825,54 +2172,104 @@
             if (rig.botType === 'HEATWAVE') {
                 rig.backAttachment.position.set(
                     0,
-                    THREE.MathUtils.lerp(4.2, 2.55, m),
-                    THREE.MathUtils.lerp(-1.25, -1.15, m)
+                    4.2 * (1 - m - d) + 2.55 * m + 2.15 * d,
+                    -1.25 * (1 - m - d) - 1.15 * m - 0.55 * d
                 );
-                rig.backAttachment.rotation.x = THREE.MathUtils.lerp(-0.35, 0, m);
+                rig.backAttachment.rotation.x = -0.35 * (1 - m - d);
+                rig.backAttachment.scale.setScalar(THREE.MathUtils.lerp(1.0, 0.45, d));
             } else if (rig.botType === 'BLADES') {
                 rig.backAttachment.position.set(
                     0,
-                    THREE.MathUtils.lerp(4.4, 2.15, m),
-                    THREE.MathUtils.lerp(-1.1, 0.1, m)
+                    4.4 * (1 - m - d) + 2.15 * m + 2.1 * d,
+                    -1.1 * (1 - m - d) + 0.1 * m - 0.4 * d
                 );
-                rig.backAttachment.rotation.x = THREE.MathUtils.lerp(-1.25, 0, m);
+                rig.backAttachment.rotation.x = -1.25 * (1 - m);
                 if (rig.rotors) {
                     const spinRate = m > 0.3 ? 0.032 : 0.004;
                     rig.rotors.rotation.y = now * spinRate;
-                    const bladeScale = THREE.MathUtils.lerp(0.48, 1.0, m);
+                    const bladeScale = (0.48 * (1 - m) + 1.0 * m) * (1 - d * 0.75);
                     rig.rotors.scale.set(bladeScale, 1, bladeScale);
                 }
             }
 
-            // 5. Left & Right Arms
+            // 5. Left & Right Arms (Robot Arms -> Vehicle Front Sides -> Quadruped Front Dino Legs / Pterosaur Wing Roots)
             const armSwingL = isMoving ? walkSin * 0.65 : 0;
             const armSwingR = isMoving ? -walkSin * 0.65 : 0;
+            const dinoArmX = isPtero ? 1.15 : 1.45;
+            const dinoArmY = isPtero ? 2.25 : 2.25;
+            const dinoArmZ = isPtero ? 0.25 : 1.18;
+            const dinoArmRotL = isPtero ? Math.PI / 2 : armSwingL * 0.75;
+            const dinoArmRotR = isPtero ? Math.PI / 2 : armSwingR * 0.75;
+
             rig.leftArm.position.set(
-                THREE.MathUtils.lerp(-1.75, -1.48, m),
-                THREE.MathUtils.lerp(4.2, 1.25, m),
-                THREE.MathUtils.lerp(0, 0.65, m)
+                -1.75 * (1 - m - d) - 1.48 * m - dinoArmX * d,
+                4.2 * (1 - m - d) + 1.25 * m + dinoArmY * d,
+                0.65 * m + dinoArmZ * d
             );
             rig.rightArm.position.set(
-                THREE.MathUtils.lerp(1.75, 1.48, m),
-                THREE.MathUtils.lerp(4.2, 1.25, m),
-                THREE.MathUtils.lerp(0, 0.65, m)
+                1.75 * (1 - m - d) + 1.48 * m + dinoArmX * d,
+                4.2 * (1 - m - d) + 1.25 * m + dinoArmY * d,
+                0.65 * m + dinoArmZ * d
             );
-            rig.leftArm.rotation.x = THREE.MathUtils.lerp(armSwingL - smashOffset * 1.4, Math.PI / 2, m);
-            rig.rightArm.rotation.x = THREE.MathUtils.lerp(armSwingR - smashOffset * 1.4, Math.PI / 2, m);
+            rig.leftArm.rotation.x = (armSwingL - smashOffset * 1.4) * (1 - m - d) + (Math.PI / 2) * m + dinoArmRotL * d;
+            rig.rightArm.rotation.x = (armSwingR - smashOffset * 1.4) * (1 - m - d) + (Math.PI / 2) * m + dinoArmRotR * d;
 
-            // 6. Left & Right Legs
+            // 6. Left & Right Legs (Robot Legs -> Vehicle Rear -> Quadruped Hind Dino Legs / Pterosaur Talons)
+            const dinoLegX = isPtero ? 0.72 : 1.18;
+            const dinoLegY = isPtero ? 1.85 : 2.25;
+            const dinoLegZ = isPtero ? -1.05 : -1.18;
+            const dinoLegRotL = isPtero ? -Math.PI * 0.36 : -armSwingL * 0.75;
+            const dinoLegRotR = isPtero ? -Math.PI * 0.36 : -armSwingR * 0.75;
+
             rig.leftLeg.position.set(
-                THREE.MathUtils.lerp(-0.78, -1.05, m),
-                THREE.MathUtils.lerp(2.35, 1.15, m),
-                THREE.MathUtils.lerp(0, -1.25, m)
+                -0.78 * (1 - m - d) - 1.05 * m - dinoLegX * d,
+                2.35 * (1 - m - d) + 1.15 * m + dinoLegY * d,
+                -1.25 * m + dinoLegZ * d
             );
             rig.rightLeg.position.set(
-                THREE.MathUtils.lerp(0.78, 1.05, m),
-                THREE.MathUtils.lerp(2.35, 1.15, m),
-                THREE.MathUtils.lerp(0, -1.25, m)
+                0.78 * (1 - m - d) + 1.05 * m + dinoLegX * d,
+                2.35 * (1 - m - d) + 1.15 * m + dinoLegY * d,
+                -1.25 * m + dinoLegZ * d
             );
-            rig.leftLeg.rotation.x = THREE.MathUtils.lerp(-armSwingL * 0.85, -Math.PI / 2, m);
-            rig.rightLeg.rotation.x = THREE.MathUtils.lerp(-armSwingR * 0.85, -Math.PI / 2, m);
+            rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) - (Math.PI / 2) * m + dinoLegRotL * d;
+            rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) - (Math.PI / 2) * m + dinoLegRotR * d;
+
+            // 7. Dinobot Anatomy Group (Triceratops, Brachiosaurus, Stegosaurus, Pterosaur)
+            if (rig.dinoGroup) {
+                rig.dinoGroup.visible = d > 0.02;
+                const dScale = Math.max(0.001, d);
+                rig.dinoGroup.scale.setScalar(dScale);
+
+                if (rig.botType === 'BOULDER') {
+                    // Triceratops Frill, 3-Horned Head & Tail
+                    rig.dinoHead.position.set(0, 2.25 - smashOffset * 0.45, 1.55 + smashOffset * 0.95);
+                    rig.dinoHead.rotation.x = smashOffset * 0.38 + (isMoving ? Math.sin(walkCycle * 2) * 0.06 : 0);
+                    rig.dinoTail.position.set(0, 2.25, -1.55);
+                    rig.dinoTail.rotation.y = isMoving ? walkSin * 0.32 : Math.sin(now * 0.003) * 0.12;
+                } else if (rig.botType === 'HEATWAVE') {
+                    // Brachiosaurus Towering Neck, Crested Head & Sweeping Tail
+                    rig.dinoHead.position.set(0, 2.35, 1.15);
+                    rig.dinoHead.rotation.x = (isMoving ? Math.sin(walkCycle) * 0.08 : Math.sin(now * 0.0025) * 0.05) + smashOffset * 0.25;
+                    rig.dinoTail.position.set(0, 2.2, -1.55);
+                    rig.dinoTail.rotation.y = isMoving ? walkSin * 0.35 : Math.sin(now * 0.003) * 0.14;
+                } else if (rig.botType === 'CHASE') {
+                    // Stegosaurus Head & Spiked Thagomizer Tail Whip
+                    rig.dinoHead.position.set(0, 2.1, 1.55);
+                    rig.dinoHead.rotation.y = isMoving ? walkSin * 0.12 : 0;
+                    rig.dinoTail.position.set(0, 2.25, -1.5);
+                    rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.42 : Math.sin(now * 0.0035) * 0.16) + smashOffset * 0.95;
+                } else if (rig.botType === 'BLADES') {
+                    // Pterosaur Crested Beak Head & Flapping Wings
+                    rig.dinoHead.position.set(0, 2.35, 1.35);
+                    rig.dinoHead.rotation.x = isMoving ? 0.12 : 0;
+                    rig.dinoTail.position.set(0, 2.25, -1.45);
+                    rig.dinoLeftWing.position.set(-1.15, 2.45, 0.15);
+                    rig.dinoRightWing.position.set(1.15, 2.45, 0.15);
+                    const flapAngle = Math.sin(now * (isMoving ? 0.015 : 0.008)) * (isMoving ? 0.52 : 0.28);
+                    rig.dinoLeftWing.rotation.z = flapAngle;
+                    rig.dinoRightWing.rotation.z = -flapAngle;
+                }
+            }
 
             // Spin Wheels & Flash Emergency Lightbars
             rig.wheels.forEach(w => {
@@ -1895,55 +2292,73 @@
             BOULDER: {
                 name: 'BOULDER',
                 vehName: 'BULLDOZER',
+                dinoName: 'TRICERATOPS',
+                dinoIcon: '🦕',
                 colorClass: 'text-lime-300',
                 dotClass: 'bg-lime-400',
                 botActionIcon: '🔨',
                 botActionLabel: 'QUAKE SMASH',
                 vehActionIcon: '🚜',
-                vehActionLabel: 'BLADE RAM'
+                vehActionLabel: 'BLADE RAM',
+                dinoActionIcon: '🦏',
+                dinoActionLabel: 'TRICERA CHARGE'
             },
             HEATWAVE: {
                 name: 'HEATWAVE',
                 vehName: 'FIRE ENGINE',
+                dinoName: 'BRACHIOSAUR',
+                dinoIcon: '🦕',
                 colorClass: 'text-rose-300',
                 dotClass: 'bg-rose-500',
                 botActionIcon: '🌊',
                 botActionLabel: 'WATER CANNON',
                 vehActionIcon: '🚒',
-                vehActionLabel: 'HYDRO DELUGE'
+                vehActionLabel: 'HYDRO DELUGE',
+                dinoActionIcon: '🌊',
+                dinoActionLabel: 'DINO HYDRO JET'
             },
             CHASE: {
                 name: 'CHASE',
                 vehName: 'POLICE CRUISER',
+                dinoName: 'STEGOSAURUS',
+                dinoIcon: '🦖',
                 colorClass: 'text-sky-300',
                 dotClass: 'bg-sky-400',
                 botActionIcon: '⚡',
                 botActionLabel: 'EMP SHOCKWAVE',
                 vehActionIcon: '🚨',
-                vehActionLabel: 'SIREN NITRO'
+                vehActionLabel: 'SIREN NITRO',
+                dinoActionIcon: '⚡',
+                dinoActionLabel: 'TAIL SPIKE EMP'
             },
             BLADES: {
                 name: 'BLADES',
                 vehName: 'HELICOPTER',
+                dinoName: 'PTEROSAUR',
+                dinoIcon: '🦅',
                 colorClass: 'text-amber-300',
                 dotClass: 'bg-amber-400',
                 botActionIcon: '🌪️',
                 botActionLabel: 'ROTOR CYCLONE',
                 vehActionIcon: '🛟',
-                vehActionLabel: 'AIRLIFT PULSE'
+                vehActionLabel: 'AIRLIFT PULSE',
+                dinoActionIcon: '🦅',
+                dinoActionLabel: 'WING GALE'
             }
         };
 
         const player = {
             botType: 'BOULDER',
-            mode: 'BOT',          // 'BOT' or 'VEHICLE'
-            morph: 0,
+            mode: 'BOT',          // 'BOT', 'VEHICLE', or 'DINO'
+            morph: 0,             // Vehicle morph (0 -> 1)
             targetMorph: 0,
+            dinoMorph: 0,         // Dinobot morph (0 -> 1)
+            targetDinoMorph: 0,
             pos: new THREE.Vector3(0, 5, -15), // Starts on the Rescue HQ Swap Pad
             heading: 0,
             speed: 0,
             vy: 0,
-            flightAlt: 0,         // Vertical flight offset when Blades is in Helicopter Mode
+            flightAlt: 0,         // Vertical flight offset when Blades is in Helicopter or Pterosaur Mode
             ascendInput: 0,       // +1 Ascend, -1 Descend
             grounded: true,
             walkCycle: 0,
@@ -2004,18 +2419,37 @@
         function syncHUDToActiveBot() {
             const meta = BOT_METADATA[player.botType];
             const isVeh = player.mode === 'VEHICLE';
-            const modeLabel = isVeh ? `${meta.vehName} MODE` : `BOT MODE`;
+            const isDino = player.mode === 'DINO';
+            const modeLabel = isDino ? `${meta.dinoName} MODE` : (isVeh ? `${meta.vehName} MODE` : `BOT MODE`);
 
             document.getElementById('mode-readout').textContent = `${meta.name} • ${modeLabel}`;
             document.getElementById('mode-readout').className = `text-xs sm:text-sm font-bold tracking-wide uppercase ${meta.colorClass}`;
             document.getElementById('mode-dot').className = `w-2.5 h-2.5 rounded-full ${meta.dotClass}`;
-            document.getElementById('transform-sub').textContent = isVeh ? 'TO ROBOT' : `TO ${meta.vehName}`;
 
-            document.getElementById('action-icon').textContent = isVeh ? meta.vehActionIcon : meta.botActionIcon;
-            document.getElementById('action-label').textContent = isVeh ? meta.vehActionLabel : meta.botActionLabel;
+            const nextTransformLabel = player.mode === 'BOT'
+                ? `TO ${meta.vehName}`
+                : (player.mode === 'VEHICLE' ? `TO ${meta.dinoName}` : 'TO ROBOT');
+            document.getElementById('transform-sub').textContent = nextTransformLabel;
 
-            // Helicopter Flight UI vs Ground Bot UI
-            const isFlyingCopter = (player.botType === 'BLADES' && isVeh);
+            const dinoIconEl = document.getElementById('dino-icon');
+            const dinoSubEl = document.getElementById('dino-sub');
+            const btnDino = document.getElementById('btn-dino');
+            if (dinoIconEl) dinoIconEl.textContent = meta.dinoIcon;
+            if (dinoSubEl) dinoSubEl.textContent = isDino ? 'TO ROBOT' : meta.dinoName;
+            if (btnDino) {
+                btnDino.classList.toggle('ring-4', isDino);
+                btnDino.classList.toggle('ring-yellow-300', isDino);
+            }
+
+            document.getElementById('action-icon').textContent = isDino
+                ? meta.dinoActionIcon
+                : (isVeh ? meta.vehActionIcon : meta.botActionIcon);
+            document.getElementById('action-label').textContent = isDino
+                ? meta.dinoActionLabel
+                : (isVeh ? meta.vehActionLabel : meta.botActionLabel);
+
+            // Helicopter & Pterosaur Flight UI vs Ground Bot UI
+            const isFlyingCopter = (player.botType === 'BLADES' && (isVeh || isDino));
             const btnDescend = document.getElementById('btn-descend');
             const altSep = document.getElementById('altitude-sep');
             const altReadout = document.getElementById('altitude-readout');
@@ -2034,7 +2468,7 @@
                 document.getElementById('jump-label').textContent = isVeh ? 'SONAR' : 'JUMP';
             }
 
-            // Highlight active bot card in Top Roster
+            // Highlight active bot card in Bottom-Left Roster
             document.querySelectorAll('.bot-card').forEach(btn => {
                 if (btn.dataset.bot === player.botType) {
                     btn.classList.add('active-bot');
@@ -2051,8 +2485,8 @@
             waypointGroup.visible = false;
             sfx.playBotSwitch();
 
-            // If switching to Blades while already in the air or vehicle mode, keep smooth state
-            if (newBotType === 'BLADES' && player.mode === 'VEHICLE') {
+            // If switching to Blades while already in vehicle or dino mode, lift into flight
+            if (newBotType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                 player.flightAlt = Math.max(player.flightAlt, 14);
             } else if (newBotType !== 'BLADES') {
                 player.flightAlt = 0;
@@ -2063,12 +2497,18 @@
         }
 
         function updateAllBotTransforms(dt, now) {
-            // Smoothly interpolate active player morph
+            // Smoothly interpolate active player vehicle & dino morphs
             const morphSpeed = 3.8;
             if (player.morph < player.targetMorph) {
                 player.morph = Math.min(player.targetMorph, player.morph + dt * morphSpeed);
             } else if (player.morph > player.targetMorph) {
                 player.morph = Math.max(player.targetMorph, player.morph - dt * morphSpeed);
+            }
+
+            if (player.dinoMorph < player.targetDinoMorph) {
+                player.dinoMorph = Math.min(player.targetDinoMorph, player.dinoMorph + dt * morphSpeed);
+            } else if (player.dinoMorph > player.targetDinoMorph) {
+                player.dinoMorph = Math.max(player.targetDinoMorph, player.dinoMorph - dt * morphSpeed);
             }
 
             Object.keys(botRigs).forEach(botKey => {
@@ -2077,20 +2517,20 @@
                     // Active Bot follows player physics position & heading
                     rig.root.position.copy(player.pos);
                     rig.root.rotation.y = player.heading;
-                    // Subtle helicopter pitch tilt when flying forward
-                    if (botKey === 'BLADES' && player.mode === 'VEHICLE') {
+                    // Subtle forward pitch tilt when Blades is flying in Helicopter or Pterosaur mode
+                    if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                         rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (player.speed / 65) * 0.28, dt * 6);
                     } else {
                         rig.chassis.rotation.x = 0;
                     }
-                    applyBotRigMorph(rig, player.morph, player.walkCycle, player.speed, player.smashTimer, now);
+                    applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now);
                 } else {
                     // Inactive Bots stay parked in standby at Rescue Bots Headquarters!
                     const slot = HQ_PARKING_SLOTS[botKey];
                     rig.root.position.set(slot.x, slot.y, slot.z);
                     rig.root.rotation.y = slot.rotY;
                     rig.chassis.rotation.x = 0;
-                    applyBotRigMorph(rig, slot.morph, 0, 0, 0, now);
+                    applyBotRigMorph(rig, slot.morph, 0, 0, 0, 0, now);
                 }
             });
         }
@@ -2265,11 +2705,12 @@
             }
         }
 
-        // High-Pressure Cel-Shaded Cartoon Water Cannon Stream for Heatwave
+        // High-Pressure Cel-Shaded Cartoon Water Cannon Stream for Heatwave (Fire Engine Turret or Brachiosaur Snout!)
         function spawnWaterCannonStream() {
             const rig = botRigs.HEATWAVE;
             const nozzleWorldPos = new THREE.Vector3();
-            rig.nozzleTip.getWorldPosition(nozzleWorldPos);
+            const activeNozzle = player.mode === 'DINO' ? rig.dinoNozzleTip : rig.nozzleTip;
+            activeNozzle.getWorldPosition(nozzleWorldPos);
 
             const dirX = Math.sin(player.heading);
             const dirZ = Math.cos(player.heading);
@@ -2425,7 +2866,7 @@
             });
 
             // Keep ground bots on safe land if the child taps deep ocean water
-            const isFlyingCopter = (player.botType === 'BLADES' && player.mode === 'VEHICLE');
+            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
             let ty = getTerrainHeight(hitPoint.x, hitPoint.z);
             if (!isFlyingCopter && ty < -1.0) {
                 const angle = Math.atan2(hitPoint.z, hitPoint.x);
@@ -2530,43 +2971,86 @@
             activePointerDown = false;
         });
 
-        // Transform Toggle (Robot <-> Vehicle / Helicopter)
-        function triggerTransform() {
-            if (player.mode === 'BOT') {
-                player.mode = 'VEHICLE';
+        // Mode Transition Helper (Supports BOT, VEHICLE, and DINO Modes)
+        function setPlayerMode(nextMode) {
+            player.mode = nextMode;
+            if (nextMode === 'VEHICLE') {
                 player.targetMorph = 1.0;
+                player.targetDinoMorph = 0.0;
                 sfx.playTransform(true);
-                // If Blades transforms into Helicopter Mode, automatically lift off into hover!
                 if (player.botType === 'BLADES') {
                     player.flightAlt = Math.max(player.flightAlt, 16);
                     player.grounded = false;
                 }
+            } else if (nextMode === 'DINO') {
+                player.targetMorph = 0.0;
+                player.targetDinoMorph = 1.0;
+                sfx.playTransform(true);
+                sfx.playDinoRoar(player.botType);
+                if (player.botType === 'BLADES') {
+                    player.flightAlt = Math.max(player.flightAlt, 18);
+                    player.grounded = false;
+                } else {
+                    player.flightAlt = 0;
+                }
+                const meta = BOT_METADATA[player.botType];
+                showToast("DINOBOT MODE!", `${meta.name} • ${meta.dinoName}!`);
             } else {
                 player.mode = 'BOT';
                 player.targetMorph = 0.0;
+                player.targetDinoMorph = 0.0;
                 player.flightAlt = 0;
                 sfx.playTransform(false);
             }
             syncHUDToActiveBot();
         }
 
-        // Bot-Specific Special Action (Boulder Smash/Ram, Heatwave Water Cannon, Chase Siren EMP, Blades Cyclone)
+        // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot)
+        function triggerTransform() {
+            if (player.mode === 'BOT') {
+                setPlayerMode('VEHICLE');
+            } else if (player.mode === 'VEHICLE') {
+                setPlayerMode('DINO');
+            } else {
+                setPlayerMode('BOT');
+            }
+        }
+
+        // Direct Dinobot Mode Toggle Button
+        function triggerDinoMode() {
+            if (player.mode === 'DINO') {
+                setPlayerMode('BOT');
+            } else {
+                setPlayerMode('DINO');
+            }
+        }
+
+        // Bot-Specific Special Action (Adapts across Bot, Vehicle, and Dinobot Modes!)
         function triggerPrimaryAction() {
             if (player.botType === 'HEATWAVE') {
-                // Activate High-Pressure Water Cannon Stream for 1.6 seconds!
-                player.waterTimer = 1.6;
+                // High-Pressure Water Cannon Stream (from Ladder Turret or Brachiosaur Snout!)
+                player.waterTimer = 1.65;
+                if (player.mode === 'DINO') {
+                    player.smashTimer = 0.45;
+                    sfx.playDinoRoar('HEATWAVE');
+                }
                 sfx.playWaterSpray();
                 return;
             }
 
             if (player.botType === 'CHASE') {
-                // Police Siren Turbo Boost + EMP Shockwave Ring!
+                // Police Siren Turbo Boost / Stegosaurus Tail Spike EMP Shockwave!
                 player.boostTimer = 1.45;
-                player.sonarTimer = 1.4;
-                sfx.playSirenPulse();
+                player.sonarTimer = 1.45;
+                if (player.mode === 'DINO') {
+                    player.smashTimer = 0.45;
+                    sfx.playDinoRoar('CHASE');
+                } else {
+                    sfx.playSirenPulse();
+                }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 15.5) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 16.5) {
                             clearHazardNode(beacon, n);
                         }
                     });
@@ -2575,13 +3059,17 @@
             }
 
             if (player.botType === 'BLADES') {
-                // Rotor Cyclone / Airlift Pulse (clears hazards directly underneath or around Blades!)
-                player.sonarTimer = 1.4;
-                player.boostTimer = 1.1;
-                sfx.playSmash();
+                // Rotor Cyclone / Pterosaur Wing Gale (clears hazards underneath or around Blades!)
+                player.sonarTimer = 1.45;
+                player.boostTimer = 1.2;
+                if (player.mode === 'DINO') {
+                    sfx.playDinoRoar('BLADES');
+                } else {
+                    sfx.playSmash();
+                }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 18.0) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 18.5) {
                             clearHazardNode(beacon, n);
                         }
                     });
@@ -2589,13 +3077,18 @@
                 return;
             }
 
-            // Default: BOULDER Quake Smash / Dozer Blade Ram
-            if (player.mode === 'BOT') {
+            // Default: BOULDER Quake Smash / Dozer Blade Ram / Triceratops Horn Charge
+            if (player.mode === 'BOT' || player.mode === 'DINO') {
                 player.smashTimer = 0.45;
-                sfx.playSmash();
+                if (player.mode === 'DINO') {
+                    player.boostTimer = 1.25;
+                    sfx.playDinoRoar('BOULDER');
+                } else {
+                    sfx.playSmash();
+                }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 13.5) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 15.0) {
                             clearHazardNode(beacon, n);
                         }
                     });
@@ -2614,12 +3107,12 @@
         }
 
         function triggerSecondaryAction() {
-            if (player.botType === 'BLADES' && player.mode === 'VEHICLE') {
+            if (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                 player.flightAlt = Math.min(95, player.flightAlt + 12);
                 sfx.playTransform(false);
                 return;
             }
-            if (player.mode === 'BOT' && player.grounded) {
+            if ((player.mode === 'BOT' || player.mode === 'DINO') && player.grounded) {
                 player.vy = 21.0;
                 player.grounded = false;
                 sfx.playSmash();
@@ -2630,7 +3123,7 @@
         }
 
         function triggerDescendAction() {
-            if (player.botType === 'BLADES' && player.mode === 'VEHICLE') {
+            if (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                 player.flightAlt = Math.max(2, player.flightAlt - 12);
             }
         }
@@ -2652,11 +3145,12 @@
         }
 
         bindButton('btn-transform', triggerTransform);
+        bindButton('btn-dino', triggerDinoMode);
         bindButton('btn-action', triggerPrimaryAction);
         bindButton('btn-jump-scan', triggerSecondaryAction);
         bindButton('btn-descend', triggerDescendAction);
 
-        // Bind Top-Left 4-Bot Roster Cards
+        // Bind Bottom-Left 4-Bot Roster Cards
         document.querySelectorAll('.bot-card').forEach(card => {
             const botType = card.dataset.bot;
             card.addEventListener('touchstart', e => {
@@ -2689,7 +3183,7 @@
             player.speed = 0;
             player.hasWaypoint = false;
             waypointGroup.visible = false;
-            player.flightAlt = player.botType === 'BLADES' && player.mode === 'VEHICLE' ? 16 : 0;
+            player.flightAlt = player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO') ? 16 : 0;
             input.camYaw = Math.PI;
             closeUtilityMenu();
             showToast("COMMAND CENTER WARP", "Arrived at Rescue Bots Firehouse HQ!");
@@ -2761,7 +3255,7 @@
             showToast("EMERGENCY DISPATCH!", "8 New Island Emergencies Active!");
         });
 
-        // Keyboard Shortcuts (1-4 Switch Bot, WASD Move, Space Transform, E/Shift Special, Q/C Ascend/Descend)
+        // Keyboard Shortcuts (1-4 Switch Bot, WASD Move, Space Cycle Transform, V Dino Mode, E/Shift Special, Q/C Ascend/Descend)
         window.addEventListener('keydown', e => {
             input.keys[e.code] = true;
             if (e.code === 'Digit1') switchRescueBot('BOULDER');
@@ -2771,6 +3265,9 @@
             if (e.code === 'Space' && !e.repeat) {
                 e.preventDefault();
                 triggerTransform();
+            }
+            if (e.code === 'KeyV' && !e.repeat) {
+                triggerDinoMode();
             }
             if ((e.code === 'KeyE' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat) {
                 triggerPrimaryAction();
@@ -2901,19 +3398,25 @@
             if (player.boostTimer > 0) player.boostTimer = Math.max(0, player.boostTimer - dt);
             if (player.autoActionCooldown > 0) player.autoActionCooldown = Math.max(0, player.autoActionCooldown - dt);
 
-            const isFlyingCopter = (player.botType === 'BLADES' && player.mode === 'VEHICLE');
+            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
             const onRoad = isPointOnRoad(player.pos.x, player.pos.z);
 
-            // Top Speed per Rescue Bot & Mode
+            // Top Speed per Rescue Bot & Mode (Bot, Vehicle, and Dinobot!)
             let maxSpeed = 26; // Bot walking speed
             if (player.mode === 'VEHICLE') {
                 if (player.botType === 'CHASE') maxSpeed = player.boostTimer > 0 ? 74 : (onRoad ? 58 : 44);
                 else if (player.botType === 'BLADES') maxSpeed = player.boostTimer > 0 ? 78 : 62;
                 else if (player.botType === 'HEATWAVE') maxSpeed = player.boostTimer > 0 ? 58 : (onRoad ? 46 : 36);
                 else maxSpeed = player.boostTimer > 0 ? 54 : (onRoad ? 42 : 34); // Boulder
+            } else if (player.mode === 'DINO') {
+                // Dinobots excel off-road as well as on highways!
+                if (player.botType === 'BLADES') maxSpeed = player.boostTimer > 0 ? 80 : 64; // Pterosaur flight
+                else if (player.botType === 'CHASE') maxSpeed = player.boostTimer > 0 ? 68 : 48; // Stegosaurus charge
+                else if (player.botType === 'BOULDER') maxSpeed = player.boostTimer > 0 ? 64 : 45; // Triceratops stampede
+                else maxSpeed = player.boostTimer > 0 ? 58 : 42; // Heatwave Brachiosaurus stride
             }
 
-            const turnRate = isFlyingCopter ? 3.2 : (player.mode === 'VEHICLE' ? 3.0 : 4.2);
+            const turnRate = isFlyingCopter ? 3.2 : (player.mode === 'VEHICLE' ? 3.0 : (player.mode === 'DINO' ? 3.5 : 4.2));
 
             // Automatic Tap-to-Move Steering & Throttle
             if (player.hasWaypoint) {
@@ -2950,10 +3453,10 @@
             }
 
             const targetSpeed = moveY * maxSpeed;
-            const accel = player.mode === 'VEHICLE' ? 8.5 : 13.0;
+            const accel = player.mode === 'VEHICLE' ? 8.5 : (player.mode === 'DINO' ? 10.5 : 13.0);
             player.speed = THREE.MathUtils.lerp(player.speed, targetSpeed, Math.min(1, dt * accel));
 
-            if (player.boostTimer > 0 && player.mode === 'VEHICLE') {
+            if (player.boostTimer > 0 && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                 player.speed = maxSpeed;
             }
 
@@ -3138,7 +3641,7 @@
             }
 
             // Camera Distance & Pitch per View Mode (Default Mode 0 is significantly pulled back & elevated)
-            let baseDist = isFlyingCopter ? 44.0 : (player.mode === 'VEHICLE' ? 38.0 : 34.0);
+            let baseDist = isFlyingCopter ? 44.0 : (player.mode === 'VEHICLE' || player.mode === 'DINO' ? 39.0 : 34.0);
             let activePitch = 0.48;
             if (input.camZoomMode === 1) {
                 // Extra-Wide Sky Map View
