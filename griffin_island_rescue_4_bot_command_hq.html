@@ -56,7 +56,7 @@
             transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .bot-card.active-bot {
-            transform: translateY(-2px) scale(1.04);
+            transform: translateX(4px) scale(1.04);
             box-shadow: 0 0 18px rgba(250, 204, 21, 0.55);
             border-color: #facc15 !important;
         }
@@ -112,38 +112,6 @@
                         Nearest: Scanning Island...
                     </div>
                 </div>
-
-                <!-- 4-Bot HQ Team Switcher Bar -->
-                <div class="hud-glass rounded-2xl p-1.5 flex items-center gap-1.5 border border-white/20">
-                    <button data-bot="BOULDER" class="bot-card active-bot px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-lime-600/90 to-emerald-800/90 border-2 border-lime-300/50 flex items-center gap-1.5 text-left">
-                        <span class="text-base sm:text-lg">🚜</span>
-                        <div class="leading-tight">
-                            <div class="text-[10px] sm:text-xs font-extrabold text-white">BOULDER</div>
-                            <div class="text-[8px] sm:text-[9px] text-lime-200 font-semibold">Dozer • Smash</div>
-                        </div>
-                    </button>
-                    <button data-bot="HEATWAVE" class="bot-card px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-red-600/90 to-rose-900/90 border-2 border-red-300/40 flex items-center gap-1.5 text-left">
-                        <span class="text-base sm:text-lg">🚒</span>
-                        <div class="leading-tight">
-                            <div class="text-[10px] sm:text-xs font-extrabold text-white">HEATWAVE</div>
-                            <div class="text-[8px] sm:text-[9px] text-rose-200 font-semibold">Fire • Water Jet</div>
-                        </div>
-                    </button>
-                    <button data-bot="CHASE" class="bot-card px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-blue-600/90 to-indigo-900/90 border-2 border-blue-300/40 flex items-center gap-1.5 text-left">
-                        <span class="text-base sm:text-lg">🚓</span>
-                        <div class="leading-tight">
-                            <div class="text-[10px] sm:text-xs font-extrabold text-white">CHASE</div>
-                            <div class="text-[8px] sm:text-[9px] text-sky-200 font-semibold">Police • EMP</div>
-                        </div>
-                    </button>
-                    <button data-bot="BLADES" class="bot-card px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-orange-500/90 to-amber-700/90 border-2 border-orange-200/40 flex items-center gap-1.5 text-left">
-                        <span class="text-base sm:text-lg">🚁</span>
-                        <div class="leading-tight">
-                            <div class="text-[10px] sm:text-xs font-extrabold text-white">BLADES</div>
-                            <div class="text-[8px] sm:text-[9px] text-amber-100 font-semibold">Copter • Flight</div>
-                        </div>
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -159,39 +127,72 @@
             <div class="text-xs sm:text-sm font-bold text-white mt-0.5">Tap any Rescue Bot on the Roster or press <span class="text-amber-300">[1 - 4]</span> to Switch!</div>
         </div>
 
-        <!-- Right: Utility Controls -->
-        <div class="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2 pointer-events-auto">
-            <button id="btn-hq-warp" class="hud-glass hover:bg-cyan-900/70 active:scale-95 px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-bold border border-cyan-400/50 text-cyan-200" title="Return to Firehouse Headquarters">
-                <span>🏢</span>
-                <span class="hidden sm:inline">Warp to HQ</span>
+        <!-- Right: Hamburger Utility Menu -->
+        <div class="relative pointer-events-auto" id="utility-menu-container">
+            <button id="btn-menu-toggle" class="hud-glass hover:bg-slate-800/80 active:scale-95 w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center border border-white/25 text-white shadow-xl" aria-label="Menu" aria-expanded="false">
+                <svg id="menu-icon-bars" class="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2.4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <svg id="menu-icon-close" class="hidden w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" stroke-width="2.4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
             </button>
-            <button id="btn-time" class="hud-glass hover:bg-slate-800/80 active:scale-95 px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-bold border border-amber-400/40">
-                <span id="time-icon">☀️</span>
-                <span id="time-label" class="hidden md:inline">Daylight</span>
-            </button>
-            <button id="btn-cam" class="hud-glass hover:bg-slate-800/80 active:scale-95 px-3 py-2 rounded-xl flex items-center gap-1.5 text-xs sm:text-sm font-bold border border-sky-400/40">
-                <span>🔭</span>
-                <span id="cam-label" class="hidden md:inline">View: WIDE</span>
-            </button>
-            <button id="btn-sound" class="hud-glass hover:bg-slate-800/80 active:scale-95 px-2.5 py-2 rounded-xl flex items-center text-xs sm:text-sm font-bold border border-emerald-400/40">
-                <span id="sound-icon">🔊</span>
-            </button>
-            <button id="btn-reset" class="hud-glass hover:bg-rose-900/60 active:scale-95 px-2.5 py-2 rounded-xl flex items-center gap-1 text-xs sm:text-sm font-bold border border-rose-400/40">
-                <span>🔄</span>
-                <span class="hidden lg:inline">Reset World</span>
-            </button>
+
+            <div id="utility-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 hud-glass rounded-2xl p-2 flex flex-col gap-1.5 border border-white/20 shadow-2xl">
+                <button id="btn-hq-warp" class="hover:bg-cyan-900/70 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-cyan-400/50 text-cyan-200 w-full text-left" title="Return to Firehouse Headquarters">
+                    <span>🏢</span>
+                    <span>Warp to HQ</span>
+                </button>
+                <button id="btn-time" class="hover:bg-slate-800/80 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-amber-400/40 w-full text-left">
+                    <span id="time-icon">☀️</span>
+                    <span id="time-label">Daylight</span>
+                </button>
+                <button id="btn-cam" class="hover:bg-slate-800/80 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-sky-400/40 w-full text-left">
+                    <span>🔭</span>
+                    <span id="cam-label">View: WIDE</span>
+                </button>
+                <button id="btn-sound" class="hover:bg-slate-800/80 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-emerald-400/40 w-full text-left">
+                    <span id="sound-icon">🔊</span>
+                    <span id="sound-label">Sounds: ON</span>
+                </button>
+                <button id="btn-reset" class="hover:bg-rose-900/60 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-rose-400/40 w-full text-left">
+                    <span>🔄</span>
+                    <span>Reset World</span>
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- Bottom Left: Kid-Friendly Tap-Anywhere Instruction Badge -->
-    <div class="fixed bottom-6 left-5 sm:bottom-9 sm:left-8 z-20 pointer-events-none flex items-center gap-3 hud-glass px-4 py-3 rounded-3xl border-2 border-amber-400/70 shadow-2xl">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl shadow-inner animate-bounce">
-            👆
-        </div>
-        <div class="leading-tight">
-            <div class="text-xs sm:text-sm font-extrabold text-amber-300 uppercase tracking-wide">Tap Anywhere To Go!</div>
-            <div class="text-[10px] sm:text-xs text-slate-200 font-semibold">Tap the island or emergencies &amp; your Bot drives there!</div>
-        </div>
+    <!-- Bottom Left: 4-Bot HQ Team Switcher Column -->
+    <div id="bot-roster" class="fixed bottom-6 left-5 sm:bottom-9 sm:left-8 z-20 pointer-events-auto hud-glass rounded-2xl p-2 flex flex-col gap-2 border border-white/20">
+        <button data-bot="BOULDER" class="bot-card active-bot px-3 py-2 rounded-xl bg-gradient-to-b from-lime-600/90 to-emerald-800/90 border-2 border-lime-300/50 flex items-center gap-2.5 text-left w-full">
+            <span class="text-lg sm:text-xl">🚜</span>
+            <div class="leading-tight">
+                <div class="text-xs sm:text-sm font-extrabold text-white">BOULDER</div>
+                <div class="text-[9px] sm:text-[10px] text-lime-200 font-semibold">Dozer • Smash</div>
+            </div>
+        </button>
+        <button data-bot="HEATWAVE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-red-600/90 to-rose-900/90 border-2 border-red-300/40 flex items-center gap-2.5 text-left w-full">
+            <span class="text-lg sm:text-xl">🚒</span>
+            <div class="leading-tight">
+                <div class="text-xs sm:text-sm font-extrabold text-white">HEATWAVE</div>
+                <div class="text-[9px] sm:text-[10px] text-rose-200 font-semibold">Fire • Water Jet</div>
+            </div>
+        </button>
+        <button data-bot="CHASE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-blue-600/90 to-indigo-900/90 border-2 border-blue-300/40 flex items-center gap-2.5 text-left w-full">
+            <span class="text-lg sm:text-xl">🚓</span>
+            <div class="leading-tight">
+                <div class="text-xs sm:text-sm font-extrabold text-white">CHASE</div>
+                <div class="text-[9px] sm:text-[10px] text-sky-200 font-semibold">Police • EMP</div>
+            </div>
+        </button>
+        <button data-bot="BLADES" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-orange-500/90 to-amber-700/90 border-2 border-orange-200/40 flex items-center gap-2.5 text-left w-full">
+            <span class="text-lg sm:text-xl">🚁</span>
+            <div class="leading-tight">
+                <div class="text-xs sm:text-sm font-extrabold text-white">BLADES</div>
+                <div class="text-[9px] sm:text-[10px] text-amber-100 font-semibold">Copter • Flight</div>
+            </div>
+        </button>
     </div>
 
     <!-- Bottom Center: Active Bot Telemetry, Speed, Altitude & Controls Hint -->
@@ -2459,12 +2460,29 @@
             return Boolean(
                 target.closest('button') ||
                 target.closest('header') ||
+                target.closest('#bot-roster') ||
                 target.closest('#victory-modal')
             );
         }
 
+        function closeUtilityMenu() {
+            const dropdown = document.getElementById('utility-menu-dropdown');
+            const toggleBtn = document.getElementById('btn-menu-toggle');
+            const iconBars = document.getElementById('menu-icon-bars');
+            const iconClose = document.getElementById('menu-icon-close');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+                if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
+                if (iconBars) iconBars.classList.remove('hidden');
+                if (iconClose) iconClose.classList.add('hidden');
+            }
+        }
+
         // Touch Anywhere on Screen to Move (Supports Single Tap or Hold-and-Drag Steering)
         window.addEventListener('touchstart', e => {
+            if (!e.target.closest('#utility-menu-container')) {
+                closeUtilityMenu();
+            }
             if (isUIElementTarget(e.target)) return;
             e.preventDefault();
             sfx.init();
@@ -2494,6 +2512,9 @@
 
         // Mouse Click or Hold-Drag Anywhere to Move (Desktop & iPad Trackpad)
         window.addEventListener('mousedown', e => {
+            if (!e.target.closest('#utility-menu-container')) {
+                closeUtilityMenu();
+            }
             if (e.button !== 0 || isUIElementTarget(e.target)) return;
             sfx.init();
             activePointerDown = true;
@@ -2649,6 +2670,18 @@
             });
         });
 
+        // Hamburger Utility Menu Toggle
+        bindButton('btn-menu-toggle', () => {
+            const dropdown = document.getElementById('utility-menu-dropdown');
+            const toggleBtn = document.getElementById('btn-menu-toggle');
+            const iconBars = document.getElementById('menu-icon-bars');
+            const iconClose = document.getElementById('menu-icon-close');
+            const isHidden = dropdown.classList.toggle('hidden');
+            toggleBtn.setAttribute('aria-expanded', String(!isHidden));
+            iconBars.classList.toggle('hidden', !isHidden);
+            iconClose.classList.toggle('hidden', isHidden);
+        });
+
         // Warp to Rescue Bots Headquarters Button
         bindButton('btn-hq-warp', () => {
             player.pos.set(HQ_SWAP_PAD.x, getTerrainHeight(HQ_SWAP_PAD.x, HQ_SWAP_PAD.z) + 0.5, HQ_SWAP_PAD.z);
@@ -2658,6 +2691,7 @@
             waypointGroup.visible = false;
             player.flightAlt = player.botType === 'BLADES' && player.mode === 'VEHICLE' ? 16 : 0;
             input.camYaw = Math.PI;
+            closeUtilityMenu();
             showToast("COMMAND CENTER WARP", "Arrived at Rescue Bots Firehouse HQ!");
         });
 
@@ -2703,6 +2737,8 @@
         bindButton('btn-sound', () => {
             sfx.enabled = !sfx.enabled;
             document.getElementById('sound-icon').textContent = sfx.enabled ? '🔊' : '🔇';
+            const soundLabel = document.getElementById('sound-label');
+            if (soundLabel) soundLabel.textContent = sfx.enabled ? 'Sounds: ON' : 'Sounds: OFF';
         });
 
         bindButton('btn-reset', () => {
@@ -2712,6 +2748,7 @@
             player.hasWaypoint = false;
             waypointGroup.visible = false;
             buildHazardSites();
+            closeUtilityMenu();
             showToast("ISLAND RESET", "All 8 Emergencies Respawned!");
         });
 
