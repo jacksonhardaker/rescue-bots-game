@@ -690,6 +690,51 @@
                     osc.stop(t + 0.4);
                 });
             }
+            playThunderRumble() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(80, now);
+                osc.frequency.exponentialRampToValueAtTime(28, now + 1.4);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(150, now);
+                filter.frequency.exponentialRampToValueAtTime(55, now + 1.4);
+
+                gain.gain.setValueAtTime(0.24, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 1.55);
+            }
+            playVolcanoRumble() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(45, now);
+                osc.frequency.linearRampToValueAtTime(55, now + 0.6);
+                osc.frequency.linearRampToValueAtTime(35, now + 1.2);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 1.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 1.3);
+            }
             ensureContinuousLoops() {
                 if (this.loopsReady || !this.ctx || this.ctx.state !== 'running') return;
                 const ctx = this.ctx;
@@ -2614,6 +2659,269 @@
                 flashTimer: 0
             });
         });
+
+        // =====================================================================
+        // 5D. WEATHER & ISLAND EVENTS (Sunny Day, Rainstorm, Volcano Ash & Night Ops)
+        // =====================================================================
+        // 1. Procedural Rain Particle System
+        function createRainSystem() {
+            const rainCount = 220;
+            const rainGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.4, 4);
+            const rainMat = new THREE.MeshBasicMaterial({ color: 0x93c5fd, transparent: true, opacity: 0.68 });
+            const rainGroup = new THREE.Group();
+            const rainDrops = [];
+
+            for (let i = 0; i < rainCount; i++) {
+                const drop = new THREE.Mesh(rainGeo, rainMat);
+                drop.userData.noOutline = true;
+                drop.position.set(
+                    (Math.random() - 0.5) * 115,
+                    Math.random() * 65,
+                    (Math.random() - 0.5) * 115
+                );
+                drop.rotation.z = 0.08;
+                rainGroup.add(drop);
+                rainDrops.push({ mesh: drop, speed: 55 + Math.random() * 25 });
+            }
+            rainGroup.visible = false;
+            return { group: rainGroup, drops: rainDrops };
+        }
+        const rainSystem = createRainSystem();
+        scene.add(rainSystem.group);
+
+        // 3. Volcano Ash & Molten Ember Particle System
+        function createVolcanoEmberSystem() {
+            const emberCount = 140;
+            const emberGeo = new THREE.DodecahedronGeometry(0.42, 0);
+            const emberMats = [
+                new THREE.MeshBasicMaterial({ color: 0xff4500, transparent: true, opacity: 0.88 }),
+                new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.88 }),
+                new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.92 })
+            ];
+            const emberGroup = new THREE.Group();
+            const embers = [];
+
+            for (let i = 0; i < emberCount; i++) {
+                const mesh = new THREE.Mesh(emberGeo, emberMats[i % emberMats.length]);
+                mesh.userData.noOutline = true;
+                mesh.position.set(
+                    (Math.random() - 0.5) * 120,
+                    Math.random() * 50,
+                    (Math.random() - 0.5) * 120
+                );
+                emberGroup.add(mesh);
+                embers.push({
+                    mesh,
+                    vy: 3.5 + Math.random() * 5.0,
+                    driftFreq: 1.5 + Math.random() * 2.0,
+                    driftAmp: 2.0 + Math.random() * 3.5,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+            emberGroup.visible = false;
+            return { group: emberGroup, embers };
+        }
+        const volcanoEmberSystem = createVolcanoEmberSystem();
+        scene.add(volcanoEmberSystem.group);
+
+        // 4. Starry Night Ops Constellations & Glowing Cartoon Moon
+        function createStarField() {
+            const starGroup = new THREE.Group();
+            const starCount = 420;
+            const starGeo = new THREE.OctahedronGeometry(2.4, 0);
+            const starColors = [0xffffff, 0xfef08a, 0xbae6fd, 0xfbcfe8, 0x67e8f9];
+            const starMeshes = [];
+
+            for (let i = 0; i < starCount; i++) {
+                const theta = Math.random() * Math.PI * 2;
+                const phi = 0.12 + Math.random() * 1.33; // From just above horizon to zenith
+                const dist = 1100 + Math.random() * 450;
+
+                const x = dist * Math.cos(theta) * Math.cos(phi);
+                const y = dist * Math.sin(phi);
+                const z = dist * Math.sin(theta) * Math.cos(phi);
+
+                const c = starColors[i % starColors.length];
+                const mat = new THREE.MeshBasicMaterial({
+                    color: c,
+                    fog: false,
+                    transparent: true,
+                    opacity: 0.92,
+                    depthWrite: false
+                });
+
+                const star = new THREE.Mesh(starGeo, mat);
+                star.position.set(x, y, z);
+                star.scale.set(0.65, 1.85, 0.65);
+                star.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+                star.userData.noOutline = true;
+                star.userData.baseScale = 0.75 + Math.random() * 0.85;
+                star.userData.twinkleSpeed = 1.2 + Math.random() * 2.8;
+                star.userData.phase = Math.random() * Math.PI * 2;
+
+                starGroup.add(star);
+                starMeshes.push(star);
+            }
+
+            // Big Glowing Cartoon Moon
+            const moonGroup = new THREE.Group();
+            moonGroup.position.set(-420, 560, -960);
+
+            const moonMesh = new THREE.Mesh(
+                new THREE.SphereGeometry(38, 20, 20),
+                new THREE.MeshBasicMaterial({ color: 0xfef9c3, fog: false })
+            );
+            moonMesh.userData.noOutline = true;
+            moonGroup.add(moonMesh);
+
+            // Soft glowing luminous halo ring around moon
+            const haloMesh = new THREE.Mesh(
+                new THREE.RingGeometry(40, 72, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xfef08a,
+                    transparent: true,
+                    opacity: 0.38,
+                    side: THREE.DoubleSide,
+                    fog: false,
+                    depthWrite: false
+                })
+            );
+            haloMesh.userData.noOutline = true;
+            moonGroup.add(haloMesh);
+
+            starGroup.add(moonGroup);
+            starGroup.visible = false;
+
+            return { group: starGroup, stars: starMeshes, moonGroup, haloMesh };
+        }
+        const starField = createStarField();
+        scene.add(starField.group);
+
+        // 5. Starry Night Ops Auroral Ribbon
+        function createAuroraMesh() {
+            const auroraGeo = new THREE.PlaneGeometry(1600, 190, 24, 6);
+            const c = document.createElement('canvas');
+            c.width = 256;
+            c.height = 128;
+            const ctx = c.getContext('2d');
+            const grad = ctx.createLinearGradient(0, 0, 0, 128);
+            grad.addColorStop(0, 'rgba(52, 211, 153, 0)');
+            grad.addColorStop(0.35, 'rgba(52, 211, 153, 0.45)');
+            grad.addColorStop(0.70, 'rgba(56, 189, 248, 0.40)');
+            grad.addColorStop(1, 'rgba(168, 85, 247, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 256, 128);
+
+            const tex = new THREE.CanvasTexture(c);
+            const auroraMat = new THREE.MeshBasicMaterial({
+                map: tex,
+                transparent: true,
+                opacity: 0.72,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                fog: false
+            });
+            const aurora = new THREE.Mesh(auroraGeo, auroraMat);
+            aurora.position.set(0, 260, -950);
+            aurora.userData.noOutline = true;
+            aurora.visible = false;
+            return aurora;
+        }
+        const auroraMesh = createAuroraMesh();
+        scene.add(auroraMesh);
+
+        // Weather Modes Definition
+        const WEATHER_MODES = [
+            {
+                id: 'SUNNY',
+                name: 'Sunny Day',
+                icon: '☀️',
+                skyColor: 0x5ec5ff,
+                fogColor: 0x5ec5ff,
+                sunColor: 0xfff7e6,
+                sunIntensity: 1.25,
+                hemiIntensity: 0.82,
+                headlightIntensity: 0,
+                banner: "☀️ SUNNY DAY!",
+                desc: "Bright blue skies & warm sunshine across Griffin Rock!"
+            },
+            {
+                id: 'RAIN',
+                name: 'Summer Rainstorm',
+                icon: '🌧️',
+                skyColor: 0x334155,
+                fogColor: 0x334155,
+                sunColor: 0x94a3b8,
+                sunIntensity: 0.58,
+                hemiIntensity: 0.48,
+                headlightIntensity: 2.2,
+                banner: "🌧️ SUMMER RAINSTORM!",
+                desc: "Pitter-patter rain, wipers active & distant thunder!"
+            },
+            {
+                id: 'VOLCANO',
+                name: 'Volcano Ash Glow',
+                icon: '🌋',
+                skyColor: 0x431407,
+                fogColor: 0x7c2d12,
+                sunColor: 0xf97316,
+                sunIntensity: 0.88,
+                hemiIntensity: 0.52,
+                headlightIntensity: 2.8,
+                banner: "🌋 VOLCANO ASH GLOW!",
+                desc: "Fiery twilight & floating molten embers from the caldera!"
+            },
+            {
+                id: 'NIGHT',
+                name: 'Starry Night Ops',
+                icon: '🌙',
+                skyColor: 0x0b132b,
+                fogColor: 0x0b132b,
+                sunColor: 0x93c5fd,
+                sunIntensity: 0.32,
+                hemiIntensity: 0.28,
+                headlightIntensity: 3.5,
+                banner: "🌙 NIGHT OPS!",
+                desc: "Midnight stars, vehicle high-beams & shimmering auroras!"
+            }
+        ];
+
+        let currentWeatherIdx = 0;
+        let lightningTimer = 8.0;
+        let lightningFlashTimer = 0;
+
+        function applyWeatherMode(idx, announce = true) {
+            currentWeatherIdx = ((idx % WEATHER_MODES.length) + WEATHER_MODES.length) % WEATHER_MODES.length;
+            const w = WEATHER_MODES[currentWeatherIdx];
+
+            scene.background.setHex(w.skyColor);
+            scene.fog.color.setHex(w.fogColor);
+            hemiLight.intensity = w.hemiIntensity;
+            sunLight.intensity = w.sunIntensity;
+            sunLight.color.setHex(w.sunColor);
+            headlight.intensity = w.headlightIntensity;
+
+            rainSystem.group.visible = (w.id === 'RAIN');
+            volcanoEmberSystem.group.visible = (w.id === 'VOLCANO');
+            auroraMesh.visible = (w.id === 'NIGHT');
+            starField.group.visible = (w.id === 'NIGHT');
+
+            const timeIcon = document.getElementById('time-icon');
+            const timeLabel = document.getElementById('time-label');
+            if (timeIcon) timeIcon.textContent = w.icon;
+            if (timeLabel) timeLabel.textContent = w.name;
+
+            progression.weatherMode = w.id;
+            saveProgression();
+
+            if (announce) {
+                showToast(w.banner, w.desc);
+                if (w.id === 'RAIN') sfx.playThunderRumble();
+                else if (w.id === 'VOLCANO') sfx.playVolcanoRumble();
+                else if (w.id === 'SUNNY') sfx.playStuntChime();
+                speakBotCatchphrase(player.botType, 'WEATHER_' + w.id);
+            }
+        }
 
         // Fast-Travel & Bot-Swap Outpost Pads across the 10X Island
         const OUTPOST_PADS = [
@@ -4612,6 +4920,22 @@
                 STUNT: [
                     "Boulder airborne! Who says bulldozers can't fly?",
                     "Heavy metal high jump! Rock on!"
+                ],
+                WEATHER_SUNNY: [
+                    "What a beautiful sunny day on Griffin Rock! Boulder is ready to roll!",
+                    "Clear skies and bright sun! Perfect day for Rescue Bots!"
+                ],
+                WEATHER_RAIN: [
+                    "Rain on the rocks! Bulldozer treads have all the grip we need!",
+                    "A little mud never stopped a bulldozer!"
+                ],
+                WEATHER_VOLCANO: [
+                    "The mountain is grumbling! Boulder is ready for heavy rock clearing!",
+                    "Volcano heat rising! Keep your hard hats on, team!"
+                ],
+                WEATHER_NIGHT: [
+                    "Night Ops! Starry skies make for a peaceful patrol.",
+                    "Headlights on! Boulder rolling through the night!"
                 ]
             },
             HEATWAVE: {
@@ -4642,6 +4966,22 @@
                 STUNT: [
                     "Blazing through the sky! Yeah!",
                     "Hot wheels in the air! Stunt cleared!"
+                ],
+                WEATHER_SUNNY: [
+                    "Clear skies and bright sunshine! Rescue Bots, roll to the rescue!",
+                    "Sunshine all over the island! Heatwave ready for action!"
+                ],
+                WEATHER_RAIN: [
+                    "Summer storm! Fire engine wipers on, team!",
+                    "Rain or shine, nothing stops the Rescue Bots!"
+                ],
+                WEATHER_VOLCANO: [
+                    "Volcano heat active! Water Cannon at the ready!",
+                    "High thermal alert! We'll cool this caldera down!"
+                ],
+                WEATHER_NIGHT: [
+                    "Night Ops engaged! Headlights bright, let's keep Griffin Rock safe!",
+                    "Emergency beacons active! Patrolling the night!"
                 ]
             },
             CHASE: {
@@ -4672,6 +5012,22 @@
                 STUNT: [
                     "Pursuit velocity exceeded! Outstanding aerial maneuver!",
                     "High-speed aerial jump executed!"
+                ],
+                WEATHER_SUNNY: [
+                    "Atmospheric conditions: optimal. Visibility: one hundred percent!",
+                    "Daylight patrol underway. All streets clear!"
+                ],
+                WEATHER_RAIN: [
+                    "Advisory: wet pavement ahead. Police cruiser traction control engaged!",
+                    "Storm precautions in effect. Driving with caution!"
+                ],
+                WEATHER_VOLCANO: [
+                    "Thermal warning from Volcano Ridge. Enforcing safe perimeter!",
+                    "Caldera seismic activity detected. Stand by for emergency response!"
+                ],
+                WEATHER_NIGHT: [
+                    "Night patrol protocol initiated. All beacons illuminated.",
+                    "Cruiser headlights engaged. Griffin Rock is secure under our watch."
                 ]
             },
             BLADES: {
@@ -4702,6 +5058,22 @@
                 STUNT: [
                     "Woohoo! Look at me soar! That's a sky stunt!",
                     "Now that was prime flight formation!"
+                ],
+                WEATHER_SUNNY: [
+                    "Warm sunshine and clear skies! Woohoo! Perfect day for flying!",
+                    "Blue skies and sunshine! Flying high over Griffin Rock!"
+                ],
+                WEATHER_RAIN: [
+                    "Flying through the rain! It's like a free rotor wash!",
+                    "A little bumpy in the clouds, but Blades can handle it!"
+                ],
+                WEATHER_VOLCANO: [
+                    "Ooh, look at those glowing embers! Better keep our altitude!",
+                    "Warm updrafts from the volcano! Flying carefully!"
+                ],
+                WEATHER_NIGHT: [
+                    "Look at the northern lights! The sky looks magical tonight!",
+                    "Night flight! Look at all the town lights down there!"
                 ]
             }
         };
@@ -5163,7 +5535,7 @@
         // PERSISTENT PROGRESSION (Release-Version Scoped localStorage)
         // & DYNAMIC ENDLESS EMERGENCY SPAWNER + RESCUE STAR RANKS
         // =====================================================================
-        const RELEASE_VERSION = '2026.11.02.5';
+        const RELEASE_VERSION = '2026.11.02.6';
         const PROGRESSION_STORAGE_PREFIX = 'rescue_bots_progression_';
         const PROGRESSION_STORAGE_KEY = `${PROGRESSION_STORAGE_PREFIX}${RELEASE_VERSION}`;
         const progression = {
@@ -5173,7 +5545,8 @@
             totalEnergonCubes: 0,
             totalStuntsCompleted: 0,
             autoSpawnEmergencies: true,
-            buddyBotType: 'HEATWAVE'
+            buddyBotType: 'HEATWAVE',
+            weatherMode: 'SUNNY'
         };
 
         const RESCUE_STAR_RANKS = [
@@ -5233,6 +5606,9 @@
                         }
                         if (typeof parsed.buddyBotType === 'string' && BOT_METADATA[parsed.buddyBotType]) {
                             progression.buddyBotType = parsed.buddyBotType;
+                        }
+                        if (typeof parsed.weatherMode === 'string') {
+                            progression.weatherMode = parsed.weatherMode;
                         }
                     } else {
                         // Schema version mismatch: overwrite with clean release-scoped defaults
@@ -6137,6 +6513,8 @@
         loadProgression();
         buildHazardSites();
         buildEnergonCubes();
+        const savedWeatherIdx = WEATHER_MODES.findIndex(m => m.id === progression.weatherMode);
+        applyWeatherMode(savedWeatherIdx !== -1 ? savedWeatherIdx : 0, false);
 
         /***********************************************************************
          * 8B. LIVING WORLD NPC SYSTEM (HUMANS & CIVILIAN VEHICLES + ENGLISH VOICE)
@@ -7390,37 +7768,8 @@
             }
         });
 
-        let timePreset = 0;
         bindButton('btn-time', () => {
-            timePreset = (timePreset + 1) % 3;
-            if (timePreset === 0) {
-                scene.background.setHex(0x68c2ff);
-                scene.fog.color.setHex(0x68c2ff);
-                hemiLight.intensity = 0.76;
-                sunLight.intensity = 1.18;
-                sunLight.color.setHex(0xfff7e6);
-                headlight.intensity = 0;
-                document.getElementById('time-icon').textContent = '☀️';
-                document.getElementById('time-label').textContent = 'Daylight';
-            } else if (timePreset === 1) {
-                scene.background.setHex(0xf97316);
-                scene.fog.color.setHex(0xf97316);
-                hemiLight.intensity = 0.55;
-                sunLight.intensity = 0.95;
-                sunLight.color.setHex(0xfdba74);
-                headlight.intensity = 1.6;
-                document.getElementById('time-icon').textContent = '🌅';
-                document.getElementById('time-label').textContent = 'Sunset';
-            } else {
-                scene.background.setHex(0x0b132b);
-                scene.fog.color.setHex(0x0b132b);
-                hemiLight.intensity = 0.25;
-                sunLight.intensity = 0.28;
-                sunLight.color.setHex(0x93c5fd);
-                headlight.intensity = 3.2;
-                document.getElementById('time-icon').textContent = '🌙';
-                document.getElementById('time-label').textContent = 'Night Ops';
-            }
+            applyWeatherMode(currentWeatherIdx + 1, true);
         });
 
         bindButton('btn-cam', () => {
@@ -7486,6 +7835,9 @@
             }
             if (e.code === 'KeyB' && !e.repeat) {
                 cycleBuddyBot();
+            }
+            if (e.code === 'KeyT' && !e.repeat) {
+                applyWeatherMode(currentWeatherIdx + 1, true);
             }
         });
         window.addEventListener('keyup', e => {
@@ -8199,6 +8551,70 @@
             }
             waterMesh.position.y = -0.45 + Math.sin(now * 0.0025) * 0.22;
             shorelineFoamRing.scale.setScalar(1.0 + Math.sin(now * 0.003) * 0.008);
+
+            // Animate Active Weather System & Island Events
+            const currentMode = WEATHER_MODES[currentWeatherIdx];
+            if (currentMode.id === 'RAIN') {
+                rainSystem.group.position.set(player.pos.x, player.pos.y, player.pos.z);
+                const drops = rainSystem.drops;
+                for (let i = 0; i < drops.length; i++) {
+                    const d = drops[i];
+                    d.mesh.position.y -= d.speed * dt;
+                    if (d.mesh.position.y < -5) {
+                        d.mesh.position.y = 55 + Math.random() * 8;
+                        d.mesh.position.x = (Math.random() - 0.5) * 115;
+                        d.mesh.position.z = (Math.random() - 0.5) * 115;
+                    }
+                }
+
+                // Distant Lightning & Thunder
+                lightningTimer -= dt;
+                if (lightningTimer <= 0) {
+                    lightningTimer = 8.0 + Math.random() * 9.0;
+                    lightningFlashTimer = 0.12;
+                    sunLight.intensity = 2.8;
+                    scene.background.setHex(0xdbeafe);
+                    setTimeout(() => {
+                        if (WEATHER_MODES[currentWeatherIdx].id === 'RAIN') {
+                            sfx.playThunderRumble();
+                        }
+                    }, 280);
+                }
+                if (lightningFlashTimer > 0) {
+                    lightningFlashTimer -= dt;
+                    if (lightningFlashTimer <= 0 && WEATHER_MODES[currentWeatherIdx].id === 'RAIN') {
+                        scene.background.setHex(WEATHER_MODES[currentWeatherIdx].skyColor);
+                        sunLight.intensity = WEATHER_MODES[currentWeatherIdx].sunIntensity;
+                    }
+                }
+            } else if (currentMode.id === 'VOLCANO') {
+                volcanoEmberSystem.group.position.set(player.pos.x, player.pos.y, player.pos.z);
+                const embers = volcanoEmberSystem.embers;
+                for (let i = 0; i < embers.length; i++) {
+                    const e = embers[i];
+                    e.mesh.position.y += e.vy * dt;
+                    e.mesh.position.x += Math.sin(now * 0.002 * e.driftFreq + e.phase) * e.driftAmp * dt;
+                    if (e.mesh.position.y > 50) {
+                        e.mesh.position.y = -2;
+                        e.mesh.position.x = (Math.random() - 0.5) * 120;
+                        e.mesh.position.z = (Math.random() - 0.5) * 120;
+                    }
+                }
+                volcanoLavaPool.scale.setScalar(1.0 + Math.sin(now * 0.008) * 0.08);
+            } else if (currentMode.id === 'NIGHT') {
+                auroraMesh.rotation.z = Math.sin(now * 0.001) * 0.035;
+                auroraMesh.position.y = 260 + Math.sin(now * 0.0016) * 12;
+                auroraMesh.material.opacity = 0.65 + Math.sin(now * 0.0025) * 0.12;
+
+                // Animate twinkling diamond stars & pulsing moon halo
+                const stars = starField.stars;
+                for (let i = 0; i < stars.length; i++) {
+                    const s = stars[i];
+                    const sc = s.userData.baseScale * (1.0 + Math.sin(now * 0.0022 * s.userData.twinkleSpeed + s.userData.phase) * 0.38);
+                    s.scale.set(sc * 0.65, sc * 1.85, sc * 0.65);
+                }
+                starField.haloMesh.scale.setScalar(1.0 + Math.sin(now * 0.002) * 0.08);
+            }
 
             // Spin Robo-Wash Roller Brushes
             const washActive = player.inCarWash || buddyBot.inCarWash;
