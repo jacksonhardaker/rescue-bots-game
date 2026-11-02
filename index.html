@@ -650,6 +650,46 @@
                     osc.stop(now + i * 0.075 + 0.5);
                 });
             }
+            playSoapSuds() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                for (let i = 0; i < 3; i++) {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    const t = now + i * 0.04;
+                    osc.type = 'sine';
+                    const startFreq = 480 + Math.random() * 380;
+                    osc.frequency.setValueAtTime(startFreq, t);
+                    osc.frequency.exponentialRampToValueAtTime(startFreq * 2.2, t + 0.055);
+                    gain.gain.setValueAtTime(0.09, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.065);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.07);
+                }
+            }
+            playStuntChime() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    const t = now + idx * 0.05;
+                    osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+                    osc.frequency.setValueAtTime(freq, t);
+                    gain.gain.setValueAtTime(0.18, t);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(t);
+                    osc.stop(t + 0.4);
+                });
+            }
             ensureContinuousLoops() {
                 if (this.loopsReady || !this.ctx || this.ctx.state !== 'running') return;
                 const ctx = this.ctx;
@@ -1783,6 +1823,151 @@
         worldColliders.push({ x: HQ_POS.x, z: HQ_POS.z, r: 19.5 });
 
         // =====================================================================
+        // 5A-2. FIREHOUSE ROBO-WASH (Interactive Drive-Through Car Wash Bay)
+        //       Located at X: -36, Z: -45 beside Firehouse HQ
+        // =====================================================================
+        const ROBO_WASH_POS = { x: -36, z: -45 };
+        const roboWashGroup = new THREE.Group();
+        const rwY = getTerrainHeight(ROBO_WASH_POS.x, ROBO_WASH_POS.z);
+        roboWashGroup.position.set(ROBO_WASH_POS.x, rwY, ROBO_WASH_POS.z);
+
+        // Shiny Wet Drainage Slab on the ground
+        const rwSlab = new THREE.Mesh(
+            new THREE.BoxGeometry(13, 0.4, 20),
+            new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.15, metalness: 0.65 })
+        );
+        rwSlab.position.set(0, 0.2, 0);
+        rwSlab.receiveShadow = true;
+        roboWashGroup.add(rwSlab);
+
+        // Yellow & Black Safety Guide Rails flanking the entrance & exit
+        const matHazardYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
+        [-6.0, 6.0].forEach(rx => {
+            const rail = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.9, 19.5), matHazardYellow);
+            rail.position.set(rx, 0.65, 0);
+            rail.castShadow = true;
+            roboWashGroup.add(rail);
+        });
+
+        // 2 Big Portal Arches (Front entrance at z=+9, Rear exit at z=-9)
+        [-9, 9].forEach(az => {
+            const archGroup = new THREE.Group();
+            archGroup.position.set(0, 0, az);
+
+            // Left & Right Portal Posts
+            [-6.0, 6.0].forEach(px => {
+                const post = new THREE.Mesh(new THREE.BoxGeometry(1.4, 9.8, 1.4), matHazardYellow);
+                post.position.set(px, 4.9, 0);
+                post.castShadow = true;
+                archGroup.add(post);
+            });
+
+            // Top Crossbar Arch
+            const crossbar = new THREE.Mesh(new THREE.BoxGeometry(13.4, 1.6, 1.6), matHazardYellow);
+            crossbar.position.set(0, 9.8, 0);
+            crossbar.castShadow = true;
+            archGroup.add(crossbar);
+
+            // Signboard on Front Arch
+            if (az === 9) {
+                const signBg = new THREE.Mesh(new THREE.BoxGeometry(10.5, 2.6, 0.8), matBrickRed);
+                signBg.position.set(0, 11.2, 0.2);
+                archGroup.add(signBg);
+
+                const cSign = document.createElement('canvas');
+                cSign.width = 512;
+                cSign.height = 128;
+                const cCtx = cSign.getContext('2d');
+                cCtx.fillStyle = '#0284c7';
+                cCtx.fillRect(0, 0, 512, 128);
+                cCtx.fillStyle = '#facc15';
+                cCtx.font = 'bold 50px Arial, sans-serif';
+                cCtx.textAlign = 'center';
+                cCtx.textBaseline = 'middle';
+                cCtx.fillText('ROBO-WASH', 256, 64);
+                const texSign = new THREE.CanvasTexture(cSign);
+                const signFace = new THREE.Mesh(
+                    new THREE.PlaneGeometry(9.8, 2.2),
+                    new THREE.MeshBasicMaterial({ map: texSign })
+                );
+                signFace.position.set(0, 11.2, 0.65);
+                archGroup.add(signFace);
+            }
+
+            roboWashGroup.add(archGroup);
+        });
+
+        // Overhead Glass Roof Canopy
+        const rwCanopy = new THREE.Mesh(
+            new THREE.BoxGeometry(13.2, 0.4, 18.2),
+            matGlass
+        );
+        rwCanopy.position.set(0, 9.6, 0);
+        roboWashGroup.add(rwCanopy);
+
+        // 2 Big Vertical Foam Roller Brushes (Cyan & Magenta foam discs)
+        const matBrushCyan = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+        const matBrushPink = new THREE.MeshToonMaterial({ color: 0xec4899, gradientMap: toonGrad3 });
+        const matBrushYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
+        const matBrushOrange = new THREE.MeshToonMaterial({ color: 0xf97316, gradientMap: toonGrad3 });
+
+        function createVerticalBrush(bx, bz, matA, matB) {
+            const bGroup = new THREE.Group();
+            bGroup.position.set(bx, 0.5, bz);
+
+            const spindle = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 8.2, 8), matDarkSteel);
+            spindle.position.y = 4.1;
+            bGroup.add(spindle);
+
+            const discCount = 10;
+            for (let d = 0; d < discCount; d++) {
+                const discMat = d % 2 === 0 ? matA : matB;
+                const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.65, 1.65, 0.72, 10), discMat);
+                disc.position.y = 0.6 + d * 0.78;
+                disc.castShadow = true;
+                bGroup.add(disc);
+            }
+            return bGroup;
+        }
+
+        const rwLeftBrush = createVerticalBrush(-3.8, 0, matBrushCyan, matBrushPink);
+        const rwRightBrush = createVerticalBrush(3.8, 0, matBrushPink, matBrushCyan);
+        roboWashGroup.add(rwLeftBrush);
+        roboWashGroup.add(rwRightBrush);
+
+        // 1 Horizontal Overhead Roller Brush (Yellow & Orange foam discs)
+        const rwTopBrush = new THREE.Group();
+        rwTopBrush.position.set(0, 7.8, 0);
+        const topSpindle = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 8.8, 8).rotateZ(Math.PI / 2), matDarkSteel);
+        rwTopBrush.add(topSpindle);
+        for (let d = -4; d <= 4; d++) {
+            const tDisc = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.35, 1.35, 0.85, 10).rotateZ(Math.PI / 2),
+                d % 2 === 0 ? matBrushYellow : matBrushOrange
+            );
+            tDisc.position.x = d * 0.95;
+            tDisc.castShadow = true;
+            rwTopBrush.add(tDisc);
+        }
+        roboWashGroup.add(rwTopBrush);
+
+        // 4 Overhead Soap Mist Spray Nozzles
+        [-2.8, 2.8].forEach(nx => {
+            [-4.5, 4.5].forEach(nz => {
+                const nozzle = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.9, 8), matSteel);
+                nozzle.position.set(nx, 9.3, nz);
+                nozzle.rotation.x = Math.PI;
+                roboWashGroup.add(nozzle);
+            });
+        });
+
+        applyCartoonInkOutlines(roboWashGroup, 1.03, true);
+        scene.add(roboWashGroup);
+        registerCullableObject(roboWashGroup, ROBO_WASH_POS.x, rwY + 5, ROBO_WASH_POS.z, 28);
+        worldColliders.push({ x: ROBO_WASH_POS.x - 6.2, z: ROBO_WASH_POS.z, r: 2.2 });
+        worldColliders.push({ x: ROBO_WASH_POS.x + 6.2, z: ROBO_WASH_POS.z, r: 2.2 });
+
+        // =====================================================================
         // 5B. GRIFFIN TOWN BUILDINGS, REGIONAL VILLAGES, LIGHTHOUSE & SKY ARRAY
         // =====================================================================
         function createTownBuilding(x, z, w, h, d, roofColor, wallColor, rotY = 0) {
@@ -2361,6 +2546,74 @@
         createStuntRamp(32, 740, 0.0);
         createStuntRamp(-680, 25, -Math.PI / 2);
         createStuntRamp(680, 25, Math.PI / 2);
+
+        // =====================================================================
+        // 5B-3. SKY STUNT HOOPS (Interactive Aerial Rings across Griffin Rock)
+        // =====================================================================
+        const STUNT_HOOPS = [
+            { id: 1, name: "HQ Ramp Stunt Launch", x: 26, y: 15.5, z: 236, rotY: 0.15, radius: 6.2, color: 0x38bdf8 },
+            { id: 2, name: "Town Plaza Sky Ring", x: 0, y: 25.0, z: -15, rotY: 0, radius: 7.2, color: 0xfacc15 },
+            { id: 3, name: "West Tech Leap", x: -235, y: 16.5, z: 25, rotY: -1.35, radius: 6.2, color: 0xa855f7 },
+            { id: 4, name: "Cliffside Overlook", x: 252, y: 24.0, z: -130, rotY: 0.85, radius: 6.5, color: 0xf43f5e },
+            { id: 5, name: "Volcano Caldera Flight Ring", x: -735, y: 68.0, z: -755, rotY: 0.4, radius: 8.0, color: 0xf97316 },
+            { id: 6, name: "South Harbor Ocean Bay Ring", x: 0, y: 16.0, z: 1250, rotY: 0, radius: 7.2, color: 0x06b6d4 }
+        ];
+
+        const stuntHoopRigs = [];
+
+        STUNT_HOOPS.forEach((hDef, idx) => {
+            const hGroup = new THREE.Group();
+            hGroup.position.set(hDef.x, hDef.y, hDef.z);
+            hGroup.rotation.y = hDef.rotY;
+
+            // Outer Glowing Torus Hoop
+            const torusGeo = new THREE.TorusGeometry(hDef.radius, 0.48, 12, 36);
+            const torusMat = new THREE.MeshBasicMaterial({ color: hDef.color, transparent: true, opacity: 0.92 });
+            const torusMesh = new THREE.Mesh(torusGeo, torusMat);
+            torusMesh.userData.noOutline = true;
+            hGroup.add(torusMesh);
+
+            // Halo Sparkle Ring
+            const haloGeo = new THREE.RingGeometry(hDef.radius * 0.94, hDef.radius * 1.06, 32);
+            const haloMat = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.35,
+                side: THREE.DoubleSide
+            });
+            const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+            haloMesh.userData.noOutline = true;
+            hGroup.add(haloMesh);
+
+            // Inner Rotating 4-Pointed Star / Chevrons
+            const starPivot = new THREE.Group();
+            for (let i = 0; i < 4; i++) {
+                const ang = (i / 4) * Math.PI * 2;
+                const chev = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.7, 2.0, 4),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff })
+                );
+                chev.position.set(Math.cos(ang) * (hDef.radius - 1.1), Math.sin(ang) * (hDef.radius - 1.1), 0);
+                chev.rotation.z = ang - Math.PI / 2;
+                chev.userData.noOutline = true;
+                starPivot.add(chev);
+            }
+            hGroup.add(starPivot);
+
+            scene.add(hGroup);
+            registerCullableObject(hGroup, hDef.x, hDef.y, hDef.z, hDef.radius * 2.5);
+
+            stuntHoopRigs.push({
+                def: hDef,
+                group: hGroup,
+                torusMesh,
+                haloMesh,
+                starPivot,
+                baseY: hDef.y,
+                cooldown: 0,
+                flashTimer: 0
+            });
+        });
 
         // Fast-Travel & Bot-Swap Outpost Pads across the 10X Island
         const OUTPOST_PADS = [
@@ -4351,6 +4604,14 @@
                 RESCUE: [
                     "Obstacles cleared! Griffin Rock is safe and sound!",
                     "Another emergency scooped clean! Great work, Rescue Bots!"
+                ],
+                WASH: [
+                    "Boulder is squeaky clean and rock solid!",
+                    "Dozer blade all washed down and ready to roll!"
+                ],
+                STUNT: [
+                    "Boulder airborne! Who says bulldozers can't fly?",
+                    "Heavy metal high jump! Rock on!"
                 ]
             },
             HEATWAVE: {
@@ -4373,6 +4634,14 @@
                 RESCUE: [
                     "Fire out, citizens safe! That's how Rescue Bots roll!",
                     "Emergency cleared! Another job well done, team!"
+                ],
+                WASH: [
+                    "Washed down and fired up! Ready for rescue!",
+                    "Heatwave sparkling clean and rolling out!"
+                ],
+                STUNT: [
+                    "Blazing through the sky! Yeah!",
+                    "Hot wheels in the air! Stunt cleared!"
                 ]
             },
             CHASE: {
@@ -4395,6 +4664,14 @@
                 RESCUE: [
                     "Hazard secured! Citizens of Griffin Rock, you are safe now!",
                     "By the book! Emergency resolved, team!"
+                ],
+                WASH: [
+                    "Regulations satisfied: police cruiser cleanliness at one hundred percent!",
+                    "Clean, polished, and ready for patrol!"
+                ],
+                STUNT: [
+                    "Pursuit velocity exceeded! Outstanding aerial maneuver!",
+                    "High-speed aerial jump executed!"
                 ]
             },
             BLADES: {
@@ -4417,6 +4694,14 @@
                 RESCUE: [
                     "Woohoo! Air rescue complete! Everyone is safe and sound!",
                     "We did it! High-flying Rescue Bots save the day!"
+                ],
+                WASH: [
+                    "Woohoo! That tickles! Rotor blades all shiny and clean!",
+                    "Freshly washed and ready to soar!"
+                ],
+                STUNT: [
+                    "Woohoo! Look at me soar! That's a sky stunt!",
+                    "Now that was prime flight formation!"
                 ]
             }
         };
@@ -4459,7 +4744,10 @@
             sonarTimer: 0,
             autoActionCooldown: 0,
             waypoint: new THREE.Vector3(0, 5, -15),
-            hasWaypoint: false
+            hasWaypoint: false,
+            inCarWash: false,
+            lastWashSoundTime: 0,
+            turboGlazeTimer: 0    // Squeaky Clean Robo-Wash speed shine buff
         };
 
         // Follow-Along AI Rescue Bot Wingman ("Buddy Bot")
@@ -4478,7 +4766,8 @@
             smashTimer: 0,
             scoopTimer: 0,
             waterTimer: 0,
-            actionCooldown: 0
+            actionCooldown: 0,
+            inCarWash: false
         };
 
         // Cheerful 3D Target Waypoint Marker (Pulsing Ring + Bouncing Arrow + Light Beam)
@@ -4874,7 +5163,7 @@
         // PERSISTENT PROGRESSION (Release-Version Scoped localStorage)
         // & DYNAMIC ENDLESS EMERGENCY SPAWNER + RESCUE STAR RANKS
         // =====================================================================
-        const RELEASE_VERSION = '2026.11.02.4';
+        const RELEASE_VERSION = '2026.11.02.5';
         const PROGRESSION_STORAGE_PREFIX = 'rescue_bots_progression_';
         const PROGRESSION_STORAGE_KEY = `${PROGRESSION_STORAGE_PREFIX}${RELEASE_VERSION}`;
         const progression = {
@@ -4882,6 +5171,7 @@
             totalEmergenciesResolved: 0,
             totalCitizensRescued: 0,
             totalEnergonCubes: 0,
+            totalStuntsCompleted: 0,
             autoSpawnEmergencies: true,
             buddyBotType: 'HEATWAVE'
         };
@@ -4896,7 +5186,7 @@
         let lastKnownRankLevel = 1;
 
         function getHeroPoints(prog = progression) {
-            return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3;
+            return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0);
         }
 
         function getRescueStarRank(prog = progression) {
@@ -4934,6 +5224,9 @@
                         }
                         if (Number.isFinite(parsed.totalEnergonCubes) && parsed.totalEnergonCubes >= 0) {
                             progression.totalEnergonCubes = Math.floor(parsed.totalEnergonCubes);
+                        }
+                        if (Number.isFinite(parsed.totalStuntsCompleted) && parsed.totalStuntsCompleted >= 0) {
+                            progression.totalStuntsCompleted = Math.floor(parsed.totalStuntsCompleted);
                         }
                         if (typeof parsed.autoSpawnEmergencies === 'boolean') {
                             progression.autoSpawnEmergencies = parsed.autoSpawnEmergencies;
@@ -5390,6 +5683,67 @@
                     vz: Math.sin(angle) * spd,
                     gravity: 28,
                     life: 0.95
+                });
+            }
+        }
+
+        function spawnSoapSudsParticles(x, y, z, count = 6) {
+            const bubbleColors = [0xffffff, 0xbae6fd, 0xfbcfe8, 0xfef08a, 0xa5f3fc];
+            for (let i = 0; i < count; i++) {
+                const radius = 0.45 + Math.random() * 0.75;
+                const bGeo = new THREE.SphereGeometry(radius, 8, 8);
+                const bMesh = new THREE.Mesh(
+                    bGeo,
+                    new THREE.MeshBasicMaterial({
+                        color: bubbleColors[i % bubbleColors.length],
+                        transparent: true,
+                        opacity: 0.85
+                    })
+                );
+                bMesh.userData.noOutline = true;
+                bMesh.position.set(
+                    x + (Math.random() - 0.5) * 3.6,
+                    y + Math.random() * 2.2,
+                    z + (Math.random() - 0.5) * 3.6
+                );
+                scene.add(bMesh);
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 2.0 + Math.random() * 4.5;
+                activeParticles.push({
+                    mesh: bMesh,
+                    vx: Math.cos(ang) * spd,
+                    vy: 2.2 + Math.random() * 3.8,
+                    vz: Math.sin(ang) * spd,
+                    gravity: -1.2,
+                    life: 0.95 + Math.random() * 0.45
+                });
+            }
+        }
+
+        function spawnSparkleGlints(x, y, z, count = 12) {
+            for (let i = 0; i < count; i++) {
+                const gGeo = new THREE.OctahedronGeometry(0.45 + Math.random() * 0.4, 0);
+                const gMesh = new THREE.Mesh(
+                    gGeo,
+                    new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xffffff : 0xfacc15, transparent: true, opacity: 0.95 })
+                );
+                gMesh.scale.set(0.65, 1.85, 0.65);
+                gMesh.userData.noOutline = true;
+                gMesh.position.set(
+                    x + (Math.random() - 0.5) * 3.6,
+                    y + 0.8 + Math.random() * 2.6,
+                    z + (Math.random() - 0.5) * 3.6
+                );
+                scene.add(gMesh);
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 3.5 + Math.random() * 6.5;
+                activeParticles.push({
+                    mesh: gMesh,
+                    vx: Math.cos(ang) * spd,
+                    vy: 3.5 + Math.random() * 5.5,
+                    vz: Math.sin(ang) * spd,
+                    gravity: 12.0,
+                    life: 0.85 + Math.random() * 0.35
                 });
             }
         }
@@ -7220,6 +7574,26 @@
                 mCtx.strokeRect(ox - sz / 2, oz - sz / 2, sz, sz);
             });
 
+            // Draw Firehouse Robo-Wash Bay
+            const rwx = cx + ROBO_WASH_POS.x * mapScale;
+            const rwz = cy + ROBO_WASH_POS.z * mapScale;
+            mCtx.fillStyle = '#06b6d4';
+            mCtx.fillRect(rwx - 3.5, rwz - 3.5, 7, 7);
+            mCtx.strokeStyle = '#ffffff';
+            mCtx.lineWidth = 1;
+            mCtx.strokeRect(rwx - 3.5, rwz - 3.5, 7, 7);
+
+            // Draw Sky Stunt Hoops (Purple/Emerald Rings)
+            stuntHoopRigs.forEach(rig => {
+                const hx = cx + rig.def.x * mapScale;
+                const hz = cy + rig.def.z * mapScale;
+                mCtx.strokeStyle = rig.cooldown > 0 ? '#4ade80' : '#c084fc';
+                mCtx.lineWidth = 1.4;
+                mCtx.beginPath();
+                mCtx.arc(hx, hz, 3.8, 0, Math.PI * 2);
+                mCtx.stroke();
+            });
+
             // Draw Active Long-Distance Waypoint on Minimap
             if (player.hasWaypoint) {
                 const wpx = cx + player.waypoint.x * mapScale;
@@ -7432,6 +7806,12 @@
                 }
             }
             if (player.autoActionCooldown > 0) player.autoActionCooldown = Math.max(0, player.autoActionCooldown - dt);
+            if (player.turboGlazeTimer > 0) {
+                player.turboGlazeTimer = Math.max(0, player.turboGlazeTimer - dt);
+                if (Math.random() < 0.45) {
+                    spawnSparkleGlints(player.pos.x, player.pos.y + 0.6, player.pos.z, 1);
+                }
+            }
 
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
             const onRoad = isPointOnRoad(player.pos.x, player.pos.z);
@@ -7449,6 +7829,9 @@
                 else if (player.botType === 'CHASE') maxSpeed = player.boostTimer > 0 ? 68 : 48; // Stegosaurus charge
                 else if (player.botType === 'BOULDER') maxSpeed = player.boostTimer > 0 ? 64 : 45; // Triceratops stampede
                 else maxSpeed = player.boostTimer > 0 ? 58 : 42; // Heatwave Brachiosaurus stride
+            }
+            if (player.turboGlazeTimer > 0) {
+                maxSpeed *= 1.25;
             }
 
             const turnRate = isFlyingCopter ? 3.2 : (player.mode === 'VEHICLE' ? 3.0 : (player.mode === 'DINO' ? 3.5 : 4.2));
@@ -7816,6 +8199,102 @@
             }
             waterMesh.position.y = -0.45 + Math.sin(now * 0.0025) * 0.22;
             shorelineFoamRing.scale.setScalar(1.0 + Math.sin(now * 0.003) * 0.008);
+
+            // Spin Robo-Wash Roller Brushes
+            const washActive = player.inCarWash || buddyBot.inCarWash;
+            const brushSpeed = washActive ? 16.0 : 3.2;
+            rwLeftBrush.rotation.y += dt * brushSpeed;
+            rwRightBrush.rotation.y -= dt * brushSpeed;
+            rwTopBrush.rotation.x += dt * brushSpeed;
+
+            // Firehouse Robo-Wash Detection
+            const dwX = Math.abs(player.pos.x - ROBO_WASH_POS.x);
+            const dwZ = Math.abs(player.pos.z - ROBO_WASH_POS.z);
+            const insideWash = dwX < 4.8 && dwZ < 7.8 && player.pos.y < rwY + 8.5;
+
+            if (insideWash) {
+                if (!player.inCarWash) {
+                    player.inCarWash = true;
+                    sfx.playSoapSuds();
+                }
+                if (Math.random() < 0.7) {
+                    spawnSoapSudsParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 2);
+                }
+                if (now - (player.lastWashSoundTime || 0) > 170) {
+                    player.lastWashSoundTime = now;
+                    sfx.playSoapSuds();
+                }
+            } else if (player.inCarWash) {
+                player.inCarWash = false;
+                player.turboGlazeTimer = 5.0;
+                player.boostTimer = Math.max(player.boostTimer, 3.5);
+                sfx.playStuntChime();
+                spawnSparkleGlints(player.pos.x, player.pos.y + 1.8, player.pos.z, 18);
+                showToast("🧼 ROBO-WASH!", "Squeaky Clean & Turbo Glazed!");
+                speakBotCatchphrase(player.botType, 'WASH');
+            }
+
+            if (buddyBot.botType) {
+                const bdwX = Math.abs(buddyBot.pos.x - ROBO_WASH_POS.x);
+                const bdwZ = Math.abs(buddyBot.pos.z - ROBO_WASH_POS.z);
+                const bInsideWash = bdwX < 5.0 && bdwZ < 8.0 && buddyBot.pos.y < rwY + 8.5;
+                if (bInsideWash && !buddyBot.inCarWash) {
+                    buddyBot.inCarWash = true;
+                } else if (!bInsideWash && buddyBot.inCarWash) {
+                    buddyBot.inCarWash = false;
+                    spawnSparkleGlints(buddyBot.pos.x, buddyBot.pos.y + 1.8, buddyBot.pos.z, 14);
+                }
+            }
+
+            // Animate & Check Sky Stunt Hoops
+            stuntHoopRigs.forEach((rig, idx) => {
+                if (rig.cooldown > 0) rig.cooldown -= dt;
+                rig.starPivot.rotation.z += dt * 2.2;
+                rig.group.position.y = rig.baseY + Math.sin(now * 0.003 + idx) * 0.55;
+
+                if (rig.flashTimer > 0) {
+                    rig.flashTimer -= dt;
+                    const flashVal = Math.floor(now / 70) % 2 === 0 ? 0xffffff : 0xfacc15;
+                    rig.torusMesh.material.color.setHex(flashVal);
+                    rig.haloMesh.scale.setScalar(1.25 + Math.sin(now * 0.02) * 0.15);
+                } else {
+                    rig.torusMesh.material.color.setHex(rig.def.color);
+                    rig.haloMesh.scale.setScalar(1.0 + Math.sin(now * 0.005 + idx) * 0.05);
+                }
+
+                if (rig.cooldown <= 0) {
+                    const distToHoop = Math.hypot(
+                        player.pos.x - rig.def.x,
+                        player.pos.y - rig.group.position.y,
+                        player.pos.z - rig.def.z
+                    );
+                    if (distToHoop < rig.def.radius) {
+                        rig.cooldown = 4.0;
+                        rig.flashTimer = 1.0;
+                        sfx.playStuntChime();
+                        spawnBurstParticles(rig.def.x, rig.group.position.y, rig.def.z, 0xfacc15, 20, 1.4);
+                        spawnSparkleGlints(rig.def.x, rig.group.position.y, rig.def.z, 16);
+
+                        player.speed = Math.max(player.speed + 22, isFlyingCopter ? 78 : 65);
+                        player.boostTimer = Math.max(player.boostTimer, 2.5);
+
+                        progression.totalStuntsCompleted = (progression.totalStuntsCompleted || 0) + 1;
+                        saveProgression();
+
+                        showToast("⭐ SKY STUNT!", `${rig.def.name} Cleared! (${progression.totalStuntsCompleted} Total)`);
+                        speakBotCatchphrase(player.botType, 'STUNT');
+
+                        const newRank = getRescueStarRank();
+                        if (newRank.level > lastKnownRankLevel) {
+                            lastKnownRankLevel = newRank.level;
+                            sfx.playRankUp();
+                            spawnBurstParticles(player.pos.x, player.pos.y + 3.5, player.pos.z, 0xfacc15, 22, 1.45);
+                            showToast(`RANK UP! ${newRank.stars}`, `${newRank.title} Achieved!`);
+                            speakBotCatchphrase(player.botType, 'RESCUE');
+                        }
+                    }
+                }
+            });
 
             const nowSec = now * 0.001;
             const restoredCount = beacons.filter(b => b.restored).length;
