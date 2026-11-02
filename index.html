@@ -89,10 +89,10 @@
     <header class="fixed top-2.5 left-2.5 right-2.5 z-20 flex flex-wrap items-start justify-between pointer-events-none gap-2">
         <!-- Left: Minimap + Mission Progress -->
         <div class="flex items-start gap-2.5 pointer-events-auto">
-            <div class="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full hud-glass p-1.5 flex items-center justify-center overflow-hidden border-2 border-amber-400/60 shadow-xl shrink-0">
-                <canvas id="minimap-canvas" width="160" height="160" class="w-full h-full rounded-full"></canvas>
-                <div class="absolute top-1 text-[10px] font-bold tracking-wider text-amber-300 drop-shadow">N</div>
-                <div class="absolute bottom-1.5 px-1.5 py-0.2 rounded bg-slate-950/80 text-[8px] sm:text-[9px] mono-font text-lime-300 font-bold truncate max-w-[90%]" id="zone-label">RESCUE HQ</div>
+            <div id="minimap-container" title="Tap anywhere on the Minimap to Auto-Pilot there!" class="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full hud-glass p-1.5 flex items-center justify-center overflow-hidden border-2 border-amber-400/60 hover:border-cyan-400 shadow-xl shrink-0 cursor-pointer transition-colors">
+                <canvas id="minimap-canvas" width="160" height="160" class="w-full h-full rounded-full cursor-pointer"></canvas>
+                <div class="absolute top-1 text-[10px] font-bold tracking-wider text-amber-300 drop-shadow pointer-events-none">N</div>
+                <div class="absolute bottom-1.5 px-1.5 py-0.2 rounded bg-slate-950/80 text-[8px] sm:text-[9px] mono-font text-lime-300 font-bold truncate max-w-[90%] pointer-events-none" id="zone-label">RESCUE HQ</div>
             </div>
 
             <div class="flex flex-col gap-2">
@@ -107,6 +107,7 @@
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-xs sm:text-sm font-bold text-white" id="mission-status-text">Emergencies Resolved: 0 / 8</span>
+                        <span class="text-[9px] uppercase tracking-wider text-cyan-300 font-bold">Tap Map to Auto-Pilot</span>
                     </div>
                     <!-- 8 Emergency Pip Indicators -->
                     <div class="flex items-center gap-1 mt-0.5" id="beacon-pips"></div>
@@ -1002,15 +1003,16 @@
         sunLight.castShadow = true;
         sunLight.shadow.mapSize.width = 2048;
         sunLight.shadow.mapSize.height = 2048;
-        sunLight.shadow.camera.near = 40;
-        sunLight.shadow.camera.far = 950;
-        const shadowD = 380;
+        sunLight.shadow.camera.near = 25;
+        sunLight.shadow.camera.far = 750;
+        const shadowD = 180;
         sunLight.shadow.camera.left = -shadowD;
         sunLight.shadow.camera.right = shadowD;
         sunLight.shadow.camera.top = shadowD;
         sunLight.shadow.camera.bottom = -shadowD;
         sunLight.shadow.bias = -0.0005;
         scene.add(sunLight);
+        scene.add(sunLight.target);
 
         /***********************************************************************
          * 5. HIGH-FIDELITY CARTOON TERRAIN, VECTOR ROAD NETWORK & 3D GROUND DETAILS
@@ -1615,6 +1617,53 @@
         createStuntRamp(32, 740, 0.0);
         createStuntRamp(-680, 25, -Math.PI / 2);
         createStuntRamp(680, 25, Math.PI / 2);
+
+        // Fast-Travel & Bot-Swap Outpost Pads across the 10X Island
+        const OUTPOST_PADS = [
+            { name: "Rescue Bots HQ", x: 0, z: -10, r: 14.0, isHQ: true },
+            { name: "South Harbor Outpost", x: 0, z: 1110, r: 14.0 },
+            { name: "West Tech Outpost", x: -1090, z: 25, r: 14.0 },
+            { name: "North Observatory Pad", x: 0, z: -1090, r: 14.0 },
+            { name: "Lighthouse Point Pad", x: 1120, z: 50, r: 14.0 },
+            { name: "Sky Array Outpost", x: 762, z: -780, r: 14.0 }
+        ];
+        const outpostPadRings = [];
+
+        OUTPOST_PADS.forEach(pad => {
+            if (pad.isHQ) return; // HQ already has swapPadGroup built above
+            const py = getTerrainHeight(pad.x, pad.z);
+            const padGroup = new THREE.Group();
+            padGroup.position.set(pad.x, py + 0.14, pad.z);
+
+            const ringMesh = new THREE.Mesh(
+                new THREE.RingGeometry(6.8, 8.8, 32),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide })
+            );
+            ringMesh.rotation.x = -Math.PI / 2;
+            ringMesh.userData.noOutline = true;
+            padGroup.add(ringMesh);
+            outpostPadRings.push(ringMesh);
+
+            const innerGlow = new THREE.Mesh(
+                new THREE.CircleGeometry(6.6, 32),
+                new THREE.MeshBasicMaterial({ color: 0x0284c7, transparent: true, opacity: 0.32, side: THREE.DoubleSide })
+            );
+            innerGlow.rotation.x = -Math.PI / 2;
+            innerGlow.position.y = -0.02;
+            innerGlow.userData.noOutline = true;
+            padGroup.add(innerGlow);
+
+            const beaconPillar = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.1, 1.1, 24, 12, 1, true),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false })
+            );
+            beaconPillar.position.y = 12;
+            beaconPillar.userData.noOutline = true;
+            padGroup.add(beaconPillar);
+
+            scene.add(padGroup);
+            registerCullableObject(padGroup, pad.x, py + 12, pad.z, 30);
+        });
 
         // =====================================================================
         // 5C. SECTOR-CHUNKED INSTANCED FORESTS, BUSHES & ROCKS FOR VIEWPORT CULLING
@@ -5095,14 +5144,28 @@
                 mCtx.fillRect(vx - 1.5, vz - 1.5, 3.0, 3.0);
             }
 
-            // Draw Rescue Bots Headquarters Cyan Square Icon
-            const hqx = cx + HQ_POS.x * mapScale;
-            const hqz = cy + HQ_POS.z * mapScale;
-            mCtx.fillStyle = '#38bdf8';
-            mCtx.fillRect(hqx - 4, hqz - 4, 8, 8);
-            mCtx.strokeStyle = '#ffffff';
-            mCtx.lineWidth = 1;
-            mCtx.strokeRect(hqx - 4, hqz - 4, 8, 8);
+            // Draw 6 Fast-Travel Outpost Pads (Cyan Squares)
+            OUTPOST_PADS.forEach(pad => {
+                const ox = cx + pad.x * mapScale;
+                const oz = cy + pad.z * mapScale;
+                mCtx.fillStyle = pad.isHQ ? '#38bdf8' : '#22d3ee';
+                const sz = pad.isHQ ? 8 : 6;
+                mCtx.fillRect(ox - sz / 2, oz - sz / 2, sz, sz);
+                mCtx.strokeStyle = '#ffffff';
+                mCtx.lineWidth = 1;
+                mCtx.strokeRect(ox - sz / 2, oz - sz / 2, sz, sz);
+            });
+
+            // Draw Active Long-Distance Waypoint on Minimap
+            if (player.hasWaypoint) {
+                const wpx = cx + player.waypoint.x * mapScale;
+                const wpz = cy + player.waypoint.z * mapScale;
+                mCtx.strokeStyle = '#facc15';
+                mCtx.lineWidth = 1.6;
+                mCtx.beginPath();
+                mCtx.arc(wpx, wpz, 5.5, 0, Math.PI * 2);
+                mCtx.stroke();
+            }
 
             // Draw 8 Emergency Beacons
             let nearestDist = Infinity;
@@ -5148,6 +5211,101 @@
             mCtx.fill();
             mCtx.restore();
         }
+
+        // =====================================================================
+        // 10B. MINIMAP AUTO-PILOT WAYPOINT INTERACTION
+        // =====================================================================
+        function handleMinimapTap(clientX, clientY) {
+            sfx.init();
+            const rect = minimapCanvas.getBoundingClientRect();
+            const scaleX = minimapCanvas.width / rect.width;
+            const scaleY = minimapCanvas.height / rect.height;
+            const canvasX = (clientX - rect.left) * scaleX;
+            const canvasY = (clientY - rect.top) * scaleY;
+
+            const cx = minimapCanvas.width / 2;
+            const cy = minimapCanvas.height / 2;
+            const mapScale = (cx * 0.78) / 1720;
+
+            let worldX = (canvasX - cx) / mapScale;
+            let worldZ = (canvasY - cy) / mapScale;
+
+            const maxRadius = 1720;
+            const r = Math.hypot(worldX, worldZ);
+            if (r > maxRadius) {
+                worldX = (worldX / r) * maxRadius;
+                worldZ = (worldZ / r) * maxRadius;
+            }
+
+            let destinationLabel = getZoneName(worldX, worldZ);
+
+            // Magnetically snap waypoint to an active Emergency Beacon or Outpost Pad if tapped nearby on the Minimap
+            let closestBeaconDist = 180;
+            beacons.forEach(b => {
+                if (!b.restored) {
+                    const d = Math.hypot(worldX - b.x, worldZ - b.z);
+                    if (d < closestBeaconDist) {
+                        closestBeaconDist = d;
+                        worldX = b.x;
+                        worldZ = b.z;
+                        destinationLabel = b.name;
+                    }
+                }
+            });
+
+            if (closestBeaconDist === 180) {
+                let closestPadDist = 160;
+                OUTPOST_PADS.forEach(pad => {
+                    const d = Math.hypot(worldX - pad.x, worldZ - pad.z);
+                    if (d < closestPadDist) {
+                        closestPadDist = d;
+                        worldX = pad.x;
+                        worldZ = pad.z;
+                        destinationLabel = pad.name;
+                    }
+                });
+            }
+
+            // Ensure ground bots stay on safe land if ocean water is tapped on the Minimap
+            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+            let ty = getTerrainHeight(worldX, worldZ);
+            if (!isFlyingCopter && ty < -1.0) {
+                const angle = Math.atan2(worldZ, worldX);
+                for (let testDist = Math.min(r, 1620); testDist > 50; testDist -= 25) {
+                    const tx = Math.cos(angle) * testDist;
+                    const tz = Math.sin(angle) * testDist;
+                    const testY = getTerrainHeight(tx, tz);
+                    if (testY >= -0.5) {
+                        worldX = tx;
+                        worldZ = tz;
+                        ty = testY;
+                        break;
+                    }
+                }
+            }
+
+            const markerY = Math.max(0.0, ty);
+            player.waypoint.set(worldX, markerY, worldZ);
+            player.hasWaypoint = true;
+            player.boostTimer = Math.max(player.boostTimer, 3.5);
+            waypointGroup.position.set(worldX, markerY, worldZ);
+            waypointGroup.visible = true;
+            sfx.playWaypointTap();
+            showToast(`AUTO-PILOT WAYPOINT`, `Steering toward ${destinationLabel}!`, 'amber');
+            renderMinimap();
+        }
+
+        minimapCanvas.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleMinimapTap(e.clientX, e.clientY);
+        });
+        minimapCanvas.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                handleMinimapTap(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: false });
 
         /***********************************************************************
          * 11. MAIN PHYSICS, AUTO-PILOT WAYPOINT STEERING & WIDE CAMERA LOOP
@@ -5370,14 +5528,28 @@
                 });
             });
 
-            // Check Proximity to Rescue Bots HQ Swap Pad
-            const distToSwapPad = Math.hypot(player.pos.x - HQ_SWAP_PAD.x, player.pos.z - HQ_SWAP_PAD.z);
+            // Check Proximity to Rescue Bots HQ Swap Pad or any Regional Outpost Pad
+            let onAnyOutpostPad = false;
+            for (let i = 0; i < OUTPOST_PADS.length; i++) {
+                const pad = OUTPOST_PADS[i];
+                if (Math.hypot(player.pos.x - pad.x, player.pos.z - pad.z) < pad.r) {
+                    onAnyOutpostPad = true;
+                    break;
+                }
+            }
             const hqPrompt = document.getElementById('hq-bay-prompt');
-            if (distToSwapPad < HQ_SWAP_PAD.r) {
+            if (onAnyOutpostPad) {
                 hqPrompt.classList.remove('hidden');
             } else {
                 hqPrompt.classList.add('hidden');
             }
+
+            // Dynamic Shadow Tracking across the 10X Island (Texel-snapped to prevent shadow edge swimming)
+            const snapX = Math.round(player.pos.x / 4) * 4;
+            const snapZ = Math.round(player.pos.z / 4) * 4;
+            sunLight.target.position.set(snapX, player.pos.y, snapZ);
+            sunLight.position.set(snapX + 160, player.pos.y + 260, snapZ + 130);
+            sunLight.target.updateMatrixWorld();
 
             // Update Headlight & Sonar Ring
             headlight.position.set(player.pos.x, player.pos.y + 3.5, player.pos.z);
@@ -5479,9 +5651,12 @@
                 wpArrowCone.rotation.y += dt * 3.0;
             }
 
-            // Animate HQ Radar Dish, Lighthouse Beam, Ocean Waves & Flickering Fires
+            // Animate HQ Radar Dish, Outpost Rings, Lighthouse Beam, Ocean Waves & Flickering Fires
             hqRadarPivot.rotation.y += dt * 1.4;
             swapPadRing.rotation.z += dt * 0.8;
+            for (let i = 0; i < outpostPadRings.length; i++) {
+                outpostPadRings[i].rotation.z += dt * 0.8;
+            }
             lhBeamPivot.rotation.y += dt * 1.1;
             waterMesh.position.y = -0.45 + Math.sin(now * 0.0025) * 0.22;
             shorelineFoamRing.scale.setScalar(1.0 + Math.sin(now * 0.003) * 0.008);
