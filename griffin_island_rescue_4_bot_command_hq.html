@@ -883,61 +883,264 @@
         scene.add(sunLight);
 
         /***********************************************************************
-         * 5. TERRAIN MESH, RESCUE BOTS HEADQUARTERS & ISLAND LANDMARKS
+         * 5. HIGH-FIDELITY CARTOON TERRAIN, VECTOR ROAD NETWORK & 3D GROUND DETAILS
          ***********************************************************************/
-        const terrainGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 220, 220);
+        function createHighResTerrainTexture() {
+            const TEX_SIZE = 2048;
+            const c = document.createElement('canvas');
+            c.width = TEX_SIZE;
+            c.height = TEX_SIZE;
+            const ctx = c.getContext('2d');
+
+            // 1. Base Biome Pixel Map (Meadow Grass, Highland, Mountain Slate, Volcano & Golden Sand)
+            const BASE_SIZE = 512;
+            const baseCanvas = document.createElement('canvas');
+            baseCanvas.width = BASE_SIZE;
+            baseCanvas.height = BASE_SIZE;
+            const bCtx = baseCanvas.getContext('2d');
+            const imgData = bCtx.createImageData(BASE_SIZE, BASE_SIZE);
+            const data = imgData.data;
+
+            for (let py = 0; py < BASE_SIZE; py++) {
+                const wz = (py / BASE_SIZE - 0.5) * WORLD_SIZE;
+                for (let px = 0; px < BASE_SIZE; px++) {
+                    const wx = (px / BASE_SIZE - 0.5) * WORLD_SIZE;
+                    const wy = getTerrainHeight(wx, wz);
+                    const distVolcano = Math.hypot(wx + 240, wz + 250);
+
+                    let r = 74, g = 175, b = 42; // Rich Saturday-Morning Cartoon Meadow Green
+
+                    if (wy < -0.2) {
+                        // Shallow coastal water / shoreline foam tint
+                        r = 56; g = 189; b = 248;
+                    } else if (wy < 0.65) {
+                        // Wet golden shoreline sand
+                        r = 217; g = 155; b = 38;
+                    } else if (wy < 2.1) {
+                        // Warm golden beach sand
+                        r = 245; g = 208; b = 92;
+                    } else if (distVolcano < 36 && wy > 46) {
+                        // Volcano molten lava rim
+                        r = 249; g = 95; b = 22;
+                    } else if (distVolcano < 145 && wy > 24) {
+                        // Dark volcanic basalt rock
+                        const band = Math.sin(wy * 0.45) > 0 ? 0 : 12;
+                        r = 71 + band; g = 85 + band; b = 105 + band;
+                    } else if (wy > 34) {
+                        // Highland cliff slate rock with cel-shaded contour bands
+                        const band = Math.sin(wy * 0.5) > 0 ? 14 : 0;
+                        r = 100 + band; g = 116 + band; b = 139 + band;
+                    } else if (wy > 16) {
+                        // Lush upland forest green
+                        const patch = Math.sin(wx * 0.04) * Math.cos(wz * 0.04) > 0 ? 10 : 0;
+                        r = 52 + patch; g = 148 + patch; b = 34 + patch;
+                    } else {
+                        // Rolling meadow check-pattern & organic clover patches
+                        const wave = Math.sin(wx * 0.035) * Math.cos(wz * 0.035);
+                        if (wave > 0.15) {
+                            r = 82; g = 183; b = 46;
+                        } else if (wave < -0.25) {
+                            r = 64; g = 160; b = 35;
+                        }
+                    }
+
+                    const idx = (py * BASE_SIZE + px) * 4;
+                    data[idx] = r;
+                    data[idx + 1] = g;
+                    data[idx + 2] = b;
+                    data[idx + 3] = 255;
+                }
+            }
+            bCtx.putImageData(imgData, 0, 0);
+
+            // Upscale base biome map smoothly onto the 2048x2048 master canvas
+            ctx.imageSmoothingEnabled = true;
+            ctx.drawImage(baseCanvas, 0, 0, TEX_SIZE, TEX_SIZE);
+
+            // Transform canvas coordinate system directly to World Coordinates (-WORLD_SIZE/2 .. +WORLD_SIZE/2)
+            ctx.save();
+            ctx.scale(TEX_SIZE / WORLD_SIZE, TEX_SIZE / WORLD_SIZE);
+            ctx.translate(WORLD_SIZE / 2, WORLD_SIZE / 2);
+
+            // 2. Hand-Drawn Cartoon Topographic Contour Lines & Grass Texture Strokes
+            ctx.strokeStyle = 'rgba(20, 83, 45, 0.22)';
+            ctx.lineWidth = 1.2;
+            for (let i = 0; i < 950; i++) {
+                const ang = (i * 1.6180339) * Math.PI * 2;
+                const rad = 85 + (i / 950) * 415;
+                const gx = Math.cos(ang) * rad;
+                const gz = Math.sin(ang) * rad;
+                const gy = getTerrainHeight(gx, gz);
+                if (gy > 2.5 && gy < 32) {
+                    ctx.beginPath();
+                    ctx.moveTo(gx - 2.2, gz + 1.2);
+                    ctx.lineTo(gx, gz - 2.4);
+                    ctx.lineTo(gx + 2.2, gz + 1.2);
+                    ctx.stroke();
+                }
+            }
+
+            // 3. Crisp Paved Town Plaza & Harbor Cargo Dock Apron (Warm Stone Tiles + Ink Outlines)
+            function drawPavedPlaza(cx, cz, w, h, radius) {
+                const x0 = cx - w / 2;
+                const z0 = cz - h / 2;
+
+                // Outer cartoon black ink curb border
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.roundRect(x0 - 2.2, z0 - 2.2, w + 4.4, h + 4.4, radius + 2);
+                ctx.fill();
+
+                // Outer concrete curb rim
+                ctx.fillStyle = '#cbd5e1';
+                ctx.beginPath();
+                ctx.roundRect(x0, z0, w, h, radius);
+                ctx.fill();
+
+                // Inner warm slate stone plaza floor (prevents blinding white blowout!)
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath();
+                ctx.roundRect(x0 + 3.5, z0 + 3.5, w - 7, h - 7, Math.max(2, radius - 2));
+                ctx.fill();
+
+                // Crisp architectural pavement tile grid
+                ctx.save();
+                ctx.clip();
+                ctx.strokeStyle = 'rgba(15, 23, 42, 0.22)';
+                ctx.lineWidth = 0.65;
+                const tileStep = 10;
+                for (let tx = x0; tx <= x0 + w; tx += tileStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(tx, z0);
+                    ctx.lineTo(tx, z0 + h);
+                    ctx.stroke();
+                }
+                for (let tz = z0; tz <= z0 + h; tz += tileStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(x0, tz);
+                    ctx.lineTo(x0 + w, tz);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            // Griffin Town & Firehouse HQ Central Plaza
+            drawPavedPlaza(0, 6, 188, 138, 18);
+            // South Harbor Cargo Port Concrete Apron
+            drawPavedPlaza(0, 355, 116, 76, 12);
+
+            // 4. Crisp Vector Highway Loop, Central Avenue & Town Crossroad
+            function traceHighwayLoopPath() {
+                const steps = 240;
+                ctx.beginPath();
+                for (let i = 0; i <= steps; i++) {
+                    const theta = (i / steps) * Math.PI * 2;
+                    const r = getRoadLoopRadius(theta);
+                    const rx = Math.cos(theta) * r;
+                    const rz = Math.sin(theta) * r;
+                    if (i === 0) ctx.moveTo(rx, rz);
+                    else ctx.lineTo(rx, rz);
+                }
+                ctx.closePath();
+            }
+
+            function traceTownRoadsPath() {
+                ctx.beginPath();
+                // North-South Central Avenue (from HQ at Z=-45 to Harbor at Z=365)
+                ctx.moveTo(0, -52);
+                ctx.lineTo(0, 365);
+                // East-West Griffin Town Crossroad
+                ctx.moveTo(-328, 25);
+                ctx.lineTo(342, 25);
+            }
+
+            // Layer 4A: Outer Black Ink Road Curb Outline
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 22.5;
+            traceHighwayLoopPath();
+            ctx.stroke();
+            traceTownRoadsPath();
+            ctx.stroke();
+
+            // Layer 4B: Light Concrete Sidewalk / Shoulder Curbs
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 19.8;
+            traceHighwayLoopPath();
+            ctx.stroke();
+            traceTownRoadsPath();
+            ctx.stroke();
+
+            // Layer 4C: Inner Curb Ink Line
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 16.2;
+            traceHighwayLoopPath();
+            ctx.stroke();
+            traceTownRoadsPath();
+            ctx.stroke();
+
+            // Layer 4D: Rich Charcoal-Slate Asphalt Roadway
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 14.8;
+            traceHighwayLoopPath();
+            ctx.stroke();
+            traceTownRoadsPath();
+            ctx.stroke();
+
+            // Layer 4E: Crisp Dashed Yellow Highway Centerlines
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 1.1;
+            ctx.setLineDash([5.5, 5.5]);
+            traceHighwayLoopPath();
+            ctx.stroke();
+            traceTownRoadsPath();
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Layer 4F: Crisp White Pedestrian Zebra Crosswalks in Griffin Town & HQ
+            function drawCrosswalk(cx, cz, horizontal) {
+                ctx.fillStyle = '#f8fafc';
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 0.35;
+                for (let s = -5.5; s <= 5.5; s += 2.2) {
+                    if (horizontal) {
+                        ctx.fillRect(cx + s - 0.65, cz - 2.2, 1.3, 4.4);
+                        ctx.strokeRect(cx + s - 0.65, cz - 2.2, 1.3, 4.4);
+                    } else {
+                        ctx.fillRect(cx - 2.2, cz + s - 0.65, 4.4, 1.3);
+                        ctx.strokeRect(cx - 2.2, cz + s - 0.65, 4.4, 1.3);
+                    }
+                }
+            }
+            drawCrosswalk(0, 12, true);
+            drawCrosswalk(0, 38, true);
+            drawCrosswalk(-14, 25, false);
+            drawCrosswalk(14, 25, false);
+
+            ctx.restore();
+
+            const tex = new THREE.CanvasTexture(c);
+            tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        const terrainGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 256, 256);
         terrainGeo.rotateX(-Math.PI / 2);
         const posAttr = terrainGeo.attributes.position;
-        const colors = [];
-        const colorTmp = new THREE.Color();
-
         for (let i = 0; i < posAttr.count; i++) {
             const vx = posAttr.getX(i);
             const vz = posAttr.getZ(i);
-            const vy = getTerrainHeight(vx, vz);
-            posAttr.setY(i, vy);
-
-            const distVolcano = Math.hypot(vx + 240, vz + 250);
-            const r = Math.hypot(vx, vz);
-            const theta = Math.atan2(vz, vx);
-            const roadR = getRoadLoopRadius(theta);
-            const distFromLoopCenter = Math.abs(r - roadR);
-
-            // Crisp Saturday-Morning Cartoon Stepped Terrain Palette
-            if (vy < -0.15) {
-                colorTmp.setHex(0xffffff); // Bright Cartoon Shoreline Foam Band
-            } else if (vy < 1.35) {
-                colorTmp.setHex(0xffe066); // Vivid Cartoon Golden Beach Sand
-            } else if (distVolcano < 35 && vy > 48) {
-                colorTmp.setHex(0xff5400); // Cartoon Volcano Lava Orange
-            } else if (
-                distFromLoopCenter < 1.15 ||
-                (Math.abs(vx) < 0.95 && vz > -65 && vz < 365) ||
-                (Math.abs(vz - 25) < 0.95 && vx > -320 && vx < 340)
-            ) {
-                colorTmp.setHex(0xffd60a); // Bold Painted Yellow Highway Centerline
-            } else if (isPointOnRoad(vx, vz)) {
-                colorTmp.setHex(0x3b4252); // Cel-Shaded Cartoon Asphalt Road
-            } else if (Math.hypot(vx, vz + 10) < 75 || Math.hypot(vx, vz - 355) < 58) {
-                colorTmp.setHex(0xcbd5e1); // Bright Cartoon Concrete Plaza
-            } else if (vy > 36) {
-                colorTmp.setHex(0x64748b); // Cool Slate Cartoon Cliff Rock
-            } else if (vy > 18) {
-                colorTmp.setHex(0x38b000); // Vibrant Mid-Highland Cartoon Green
-            } else {
-                // Stepped 2-tone Cartoon Meadow Grass
-                const stepPattern = Math.sin(vx * 0.045) * Math.cos(vz * 0.045) > 0 ? 0x70e000 : 0x55c500;
-                colorTmp.setHex(stepPattern);
-            }
-            colors.push(colorTmp.r, colorTmp.g, colorTmp.b);
+            posAttr.setY(i, getTerrainHeight(vx, vz));
         }
-        terrainGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
         terrainGeo.computeVertexNormals();
 
+        const terrainTexture = createHighResTerrainTexture();
         const terrainMesh = new THREE.Mesh(
             terrainGeo,
             new THREE.MeshToonMaterial({
-                vertexColors: true,
+                map: terrainTexture,
                 gradientMap: toonGrad3
             })
         );
@@ -1094,11 +1297,20 @@
             group.position.set(x, gy, z);
             group.rotation.y = rotY;
 
+            // 3D Raised Sidewalk Foundation Curb Plinth under each Town Building
+            const plinth = new THREE.Mesh(
+                new THREE.BoxGeometry(w + 4.4, 0.55, d + 4.4),
+                new THREE.MeshToonMaterial({ color: 0xcbd5e1, gradientMap: toonGrad3 })
+            );
+            plinth.position.y = 0.27;
+            plinth.receiveShadow = true;
+            group.add(plinth);
+
             const body = new THREE.Mesh(
                 new THREE.BoxGeometry(w, h, d),
                 new THREE.MeshToonMaterial({ color: wallColor, gradientMap: toonGrad3 })
             );
-            body.position.y = h / 2;
+            body.position.y = h / 2 + 0.45;
             body.castShadow = true;
             body.receiveShadow = true;
             group.add(body);
@@ -1107,14 +1319,14 @@
                 new THREE.ConeGeometry(Math.max(w, d) * 0.76, 4.8, 4),
                 new THREE.MeshToonMaterial({ color: roofColor, gradientMap: toonGrad3 })
             );
-            roof.position.y = h + 2.4;
+            roof.position.y = h + 2.85;
             roof.rotation.y = Math.PI / 4;
             roof.castShadow = true;
             group.add(roof);
 
             const winMat = new THREE.MeshBasicMaterial({ map: texWindshieldCyan });
             const win = new THREE.Mesh(new THREE.BoxGeometry(w * 0.68, h * 0.45, d + 0.25), winMat);
-            win.position.y = h * 0.55;
+            win.position.y = h * 0.55 + 0.45;
             win.userData.noOutline = true;
             group.add(win);
 
@@ -1286,6 +1498,106 @@
         scene.add(instTrunks);
         scene.add(instLeaves);
         scene.add(instLeavesOutline);
+
+        // Instanced 3D Cel-Shaded Meadow Bushes / Grass Clusters & Coastal Outcrop Rocks (With Cartoon Ink Outlines)
+        const bushCount = 340;
+        const bushGeo = new THREE.DodecahedronGeometry(1.35, 0);
+        const instBushes = new THREE.InstancedMesh(
+            bushGeo,
+            new THREE.MeshToonMaterial({ color: 0x22c55e, gradientMap: toonGrad3 }),
+            bushCount
+        );
+        const instBushesOutline = new THREE.InstancedMesh(bushGeo, matInkOutline, bushCount);
+        let placedBushes = 0;
+        for (let attempt = 0; attempt < 1500 && placedBushes < bushCount; attempt++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 78 + Math.random() * 425;
+            const bx = Math.cos(angle) * dist;
+            const bz = Math.sin(angle) * dist;
+            const by = getTerrainHeight(bx, bz);
+            if (by < 2.6 || by > 32) continue;
+            if (isPointOnRoad(bx, bz)) continue;
+            if (Math.hypot(bx, bz - 6) < 96) continue;
+            if (Math.hypot(bx, bz - 355) < 62) continue;
+
+            const s = 0.65 + Math.random() * 0.9;
+            dummy.position.set(bx, by + 0.55 * s, bz);
+            dummy.scale.set(s * 1.25, s * 0.78, s * 1.15);
+            dummy.rotation.set(0, Math.random() * Math.PI, 0);
+            dummy.updateMatrix();
+            instBushes.setMatrixAt(placedBushes, dummy.matrix);
+
+            dummy.scale.set(s * 1.25 * 1.09, s * 0.78 * 1.09, s * 1.15 * 1.09);
+            dummy.updateMatrix();
+            instBushesOutline.setMatrixAt(placedBushes, dummy.matrix);
+            placedBushes++;
+        }
+        scene.add(instBushes);
+        scene.add(instBushesOutline);
+
+        const rockCount = 160;
+        const envRockGeo = new THREE.DodecahedronGeometry(1.85, 0);
+        const instRocks = new THREE.InstancedMesh(
+            envRockGeo,
+            new THREE.MeshToonMaterial({ color: 0x64748b, gradientMap: toonGrad3 }),
+            rockCount
+        );
+        const instRocksOutline = new THREE.InstancedMesh(envRockGeo, matInkOutline, rockCount);
+        instRocks.castShadow = true;
+        instRocks.receiveShadow = true;
+        let placedRocks = 0;
+        for (let attempt = 0; attempt < 900 && placedRocks < rockCount; attempt++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 105 + Math.random() * 430;
+            const rx = Math.cos(angle) * dist;
+            const rz = Math.sin(angle) * dist;
+            const ry = getTerrainHeight(rx, rz);
+            if (ry < 0.8 || isPointOnRoad(rx, rz)) continue;
+            if (Math.hypot(rx, rz - 6) < 102) continue;
+            if (Math.hypot(rx, rz - 355) < 65) continue;
+
+            const s = 0.6 + Math.random() * 1.35;
+            dummy.position.set(rx, ry + 0.65 * s, rz);
+            dummy.scale.set(s * 1.3, s * 0.85, s);
+            dummy.rotation.set(attempt * 0.3, attempt * 0.7, 0);
+            dummy.updateMatrix();
+            instRocks.setMatrixAt(placedRocks, dummy.matrix);
+
+            dummy.scale.set(s * 1.3 * 1.08, s * 0.85 * 1.08, s * 1.08);
+            dummy.updateMatrix();
+            instRocksOutline.setMatrixAt(placedRocks, dummy.matrix);
+            placedRocks++;
+        }
+        scene.add(instRocks);
+        scene.add(instRocksOutline);
+
+        // Cartoon Streetlamps along Griffin Town Plaza & Central Avenue
+        function createTownStreetlamp(lx, lz) {
+            const lampG = new THREE.Group();
+            const ly = getTerrainHeight(lx, lz);
+            lampG.position.set(lx, ly, lz);
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.28, 7.2, 8), matDarkSteel);
+            post.position.y = 3.6;
+            post.castShadow = true;
+            lampG.add(post);
+            const bulb = new THREE.Mesh(
+                new THREE.SphereGeometry(0.68, 10, 10),
+                new THREE.MeshBasicMaterial({ color: 0xfef08a })
+            );
+            bulb.position.y = 7.4;
+            bulb.userData.noOutline = true;
+            lampG.add(bulb);
+            const cap = new THREE.Mesh(new THREE.ConeGeometry(0.95, 0.55, 8), matDarkSteel);
+            cap.position.y = 7.95;
+            lampG.add(cap);
+            applyCartoonInkOutlines(lampG, 1.06, false);
+            scene.add(lampG);
+        }
+        [
+            [-12, -2], [12, -2], [-12, 14], [12, 14],
+            [-12, 36], [12, 36], [-12, 56], [12, 56],
+            [-32, 14], [32, 14], [-32, 36], [32, 36]
+        ].forEach(([lx, lz]) => createTownStreetlamp(lx, lz));
 
         /***********************************************************************
          * 6. CEL-SHADED TV-ACCURATE ARTICULATED MODELS FOR ALL 4 RESCUE BOTS
