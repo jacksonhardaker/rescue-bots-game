@@ -113,10 +113,15 @@
                     <div id="nearest-hazard-hint" class="text-[10px] sm:text-[11px] text-amber-300 truncate mt-0.5">
                         Nearest: Scanning Island...
                     </div>
-                    <!-- Persistent Career Progression Stats (Saved in localStorage) -->
+                    <!-- Persistent Career Progression Stats & Star Rank (Saved in localStorage) -->
                     <div id="career-stats-row" class="flex items-center justify-between gap-2 pt-1 mt-0.5 border-t border-white/15 text-[10px] sm:text-[11px] font-bold text-lime-300">
-                        <span>🏅 Total Rescues: <span id="stat-total-emergencies" class="text-white">0</span></span>
-                        <span>👥 Citizens: <span id="stat-total-citizens" class="text-cyan-300">0</span></span>
+                        <span>🏅 Rescues: <span id="stat-total-emergencies" class="text-white">0</span></span>
+                        <span>👥 Saved: <span id="stat-total-citizens" class="text-cyan-300">0</span></span>
+                        <span>⚡ Energon: <span id="stat-total-energon" class="text-yellow-300">0</span></span>
+                    </div>
+                    <div class="flex items-center justify-between gap-2 pt-0.5 text-[10px] sm:text-[11px] font-extrabold">
+                        <span id="stat-rank-badge" class="text-amber-300 tracking-wide">⭐ CADET BOT</span>
+                        <span id="stat-rank-next" class="text-[9px] sm:text-[10px] text-slate-300 font-semibold">Next Rank: 10 pts</span>
                     </div>
                 </div>
             </div>
@@ -584,6 +589,42 @@
                     gain.connect(this.ctx.destination);
                     osc.start(now + i * 0.055);
                     osc.stop(now + i * 0.055 + 0.17);
+                });
+            }
+            playEnergonCollect() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [659.25, 880, 1174.66, 1567.98].forEach((n, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n, now + i * 0.045);
+                    gain.gain.setValueAtTime(0.14, now + i * 0.045);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.045 + 0.24);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.045);
+                    osc.stop(now + i * 0.045 + 0.25);
+                });
+            }
+            playRankUp() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98].forEach((n, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = i % 2 === 0 ? 'triangle' : 'sine';
+                    osc.frequency.setValueAtTime(n, now + i * 0.075);
+                    gain.gain.setValueAtTime(0.18, now + i * 0.075);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.075 + 0.48);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.075);
+                    osc.stop(now + i * 0.075 + 0.5);
                 });
             }
             ensureContinuousLoops() {
@@ -4331,6 +4372,7 @@
             netTarget: new THREE.Vector3(),
             sirenActive: false,   // Optional continuous Siren Toggle for Heatwave & Chase
             boostTimer: 0,
+            energonBoostTimer: 0, // Rainbow Energon Turbo & Super-Jump Boost timer
             waterTimer: 0,
             sonarTimer: 0,
             autoActionCooldown: 0,
@@ -4644,17 +4686,42 @@
 
         // =====================================================================
         // PERSISTENT PROGRESSION (Release-Version Scoped localStorage)
-        // & DYNAMIC ENDLESS EMERGENCY SPAWNER STATE
+        // & DYNAMIC ENDLESS EMERGENCY SPAWNER + RESCUE STAR RANKS
         // =====================================================================
-        const RELEASE_VERSION = '2026.11.02.1';
+        const RELEASE_VERSION = '2026.11.02.2';
         const PROGRESSION_STORAGE_PREFIX = 'rescue_bots_progression_';
         const PROGRESSION_STORAGE_KEY = `${PROGRESSION_STORAGE_PREFIX}${RELEASE_VERSION}`;
         const progression = {
             releaseVersion: RELEASE_VERSION,
             totalEmergenciesResolved: 0,
             totalCitizensRescued: 0,
+            totalEnergonCubes: 0,
             autoSpawnEmergencies: true
         };
+
+        const RESCUE_STAR_RANKS = [
+            { level: 1, minPts: 0,   stars: '⭐',         title: 'CADET BOT',            nextPts: 10 },
+            { level: 2, minPts: 10,  stars: '⭐⭐',       title: 'JUNIOR RESPONDER',     nextPts: 25 },
+            { level: 3, minPts: 25,  stars: '⭐⭐⭐',     title: 'ISLAND SPECIALIST',    nextPts: 50 },
+            { level: 4, minPts: 50,  stars: '⭐⭐⭐⭐',   title: 'GRIFFIN ROCK CAPTAIN', nextPts: 90 },
+            { level: 5, minPts: 90,  stars: '⭐⭐⭐⭐⭐', title: 'PRIME RESCUE HERO',    nextPts: null }
+        ];
+        let lastKnownRankLevel = 1;
+
+        function getHeroPoints(prog = progression) {
+            return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3;
+        }
+
+        function getRescueStarRank(prog = progression) {
+            const pts = getHeroPoints(prog);
+            let current = RESCUE_STAR_RANKS[0];
+            for (let i = 0; i < RESCUE_STAR_RANKS.length; i++) {
+                if (pts >= RESCUE_STAR_RANKS[i].minPts) {
+                    current = RESCUE_STAR_RANKS[i];
+                }
+            }
+            return { ...current, pts };
+        }
 
         function loadProgression() {
             try {
@@ -4678,6 +4745,9 @@
                         if (Number.isFinite(parsed.totalCitizensRescued) && parsed.totalCitizensRescued >= 0) {
                             progression.totalCitizensRescued = Math.floor(parsed.totalCitizensRescued);
                         }
+                        if (Number.isFinite(parsed.totalEnergonCubes) && parsed.totalEnergonCubes >= 0) {
+                            progression.totalEnergonCubes = Math.floor(parsed.totalEnergonCubes);
+                        }
                         if (typeof parsed.autoSpawnEmergencies === 'boolean') {
                             progression.autoSpawnEmergencies = parsed.autoSpawnEmergencies;
                         }
@@ -4689,10 +4759,15 @@
             } catch (err) {
                 // Fallback gracefully if localStorage is unavailable or malformed
             }
+            lastKnownRankLevel = getRescueStarRank(progression).level;
             syncProgressionHUD();
         }
 
         function saveProgression() {
+            const newRank = getRescueStarRank(progression);
+            const rankedUp = newRank.level > lastKnownRankLevel;
+            lastKnownRankLevel = newRank.level;
+
             try {
                 progression.releaseVersion = RELEASE_VERSION;
                 window.localStorage.setItem(PROGRESSION_STORAGE_KEY, JSON.stringify(progression));
@@ -4700,17 +4775,44 @@
                 // Ignore storage quota / private mode restrictions
             }
             syncProgressionHUD();
+
+            if (rankedUp) {
+                sfx.playRankUp();
+                spawnBurstParticles(player.pos.x, player.pos.y + 3.5, player.pos.z, 0xfacc15, 22, 1.45);
+                showToast(`RANK UP! ${newRank.stars}`, `Promoted to ${newRank.title}!`);
+                triggerNPCSpeech(
+                    "Chief Charlie Burns",
+                    "Rescue Command",
+                    `Congratulations, Rescue Bots! You've been promoted to ${newRank.title}! Griffin Rock is proud of you!`,
+                    0.88,
+                    true
+                );
+            }
         }
 
         function syncProgressionHUD() {
             const totalEmEl = document.getElementById('stat-total-emergencies');
             const totalCitEl = document.getElementById('stat-total-citizens');
+            const totalEnEl = document.getElementById('stat-total-energon');
             if (totalEmEl) totalEmEl.textContent = String(progression.totalEmergenciesResolved);
             if (totalCitEl) totalCitEl.textContent = String(progression.totalCitizensRescued);
+            if (totalEnEl) totalEnEl.textContent = String(progression.totalEnergonCubes);
+
+            const rankInfo = getRescueStarRank(progression);
+            const rankBadgeEl = document.getElementById('stat-rank-badge');
+            const rankNextEl = document.getElementById('stat-rank-next');
+            if (rankBadgeEl) {
+                rankBadgeEl.textContent = `${rankInfo.stars} ${rankInfo.title}`;
+            }
+            if (rankNextEl) {
+                rankNextEl.textContent = rankInfo.nextPts
+                    ? `Next: ${rankInfo.pts}/${rankInfo.nextPts} pts`
+                    : `MAX RANK (${rankInfo.pts} pts)`;
+            }
 
             const vicSummaryEl = document.getElementById('victory-career-summary');
             if (vicSummaryEl) {
-                vicSummaryEl.textContent = `🏅 Lifetime Emergencies Resolved: ${progression.totalEmergenciesResolved} • 👥 Citizens Rescued: ${progression.totalCitizensRescued}`;
+                vicSummaryEl.textContent = `${rankInfo.stars} ${rankInfo.title} • 🏅 Rescues: ${progression.totalEmergenciesResolved} • 👥 Citizens: ${progression.totalCitizensRescued} • ⚡ Energon: ${progression.totalEnergonCubes}`;
             }
 
             const endlessIcon = document.getElementById('endless-icon');
@@ -5241,6 +5343,9 @@
                 progression.totalCitizensRescued += rescuedHere;
                 saveProgression();
 
+                // Pop out 3 Bonus Golden Energon Cubes around the resolved emergency site!
+                spawnBonusEnergonCubes(beacon.x, beacon.z, 3);
+
                 showToast("CITIZENS RESCUED!", `${beacon.name} Cleared by ${player.botType}!`);
 
                 // Have the active Rescue Bot speak an iconic victory catchphrase & turn Stranded Citizens' gems green!
@@ -5266,8 +5371,218 @@
             }
         }
 
+        // =====================================================================
+        // 8A-2. GOLDEN ENERGON CUBES (3yo Magnetic Pickup + Rainbow Turbo Trail)
+        // =====================================================================
+        const energonCubes = [];
+        const energonCoreGeo = new THREE.OctahedronGeometry(1.05, 0);
+        const energonShellGeo = new THREE.BoxGeometry(1.75, 1.75, 1.75);
+        const energonRingGeo = new THREE.RingGeometry(1.35, 1.85, 20).rotateX(-Math.PI / 2);
+        const matEnergonCore = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        const matEnergonGold = new THREE.MeshBasicMaterial({
+            color: 0xfacc15,
+            transparent: true,
+            opacity: 0.72,
+            side: THREE.DoubleSide
+        });
+        const matEnergonRing = new THREE.MeshBasicMaterial({
+            color: 0xfef08a,
+            transparent: true,
+            opacity: 0.75,
+            side: THREE.DoubleSide
+        });
+        const RAINBOW_TRAIL_COLORS = [0xef4444, 0xf97316, 0xfacc15, 0x4ade80, 0x38bdf8, 0xa855f7];
+        let rainbowTrailIdx = 0;
+
+        function createEnergonCubeMesh() {
+            const root = new THREE.Group();
+            const cubePivot = new THREE.Group();
+            cubePivot.position.y = 2.4;
+
+            const core = new THREE.Mesh(energonCoreGeo, matEnergonCore);
+            const shell = new THREE.Mesh(energonShellGeo, matEnergonGold);
+            const outline = new THREE.Mesh(energonShellGeo, matInkOutline);
+            outline.scale.setScalar(1.09);
+
+            cubePivot.add(core, shell, outline);
+            root.add(cubePivot);
+
+            const baseRing = new THREE.Mesh(energonRingGeo, matEnergonRing);
+            baseRing.position.y = 0.28;
+            root.add(baseRing);
+
+            return { root, cubePivot, baseRing };
+        }
+
+        const ENERGON_SPAWN_SITES = [
+            // Immediate HQ & Town Square Ring (Easy instant pickups right from the start for the 3-year-old!)
+            { x: 0, z: 8, alt: 0 },
+            { x: -24, z: 14, alt: 0 },
+            { x: 24, z: 14, alt: 0 },
+            { x: 0, z: 54, alt: 0 },
+            { x: -64, z: 25, alt: 0 },
+            { x: 64, z: 25, alt: 0 },
+            // Stunt Ramp Apex Cubes (Jump the ramp or drive past to magnet-scoop!)
+            { x: 45, z: -38, alt: 2.8 },
+            { x: -55, z: 48, alt: 2.8 },
+            { x: 0, z: 195, alt: 3.2 },
+            { x: -210, z: 25, alt: 3.2 },
+            { x: 225, z: 25, alt: 3.2 },
+            { x: 0, z: -240, alt: 3.2 },
+            // Highway & Coastal Ring Cubes
+            { x: 0, z: 375, alt: 0 },
+            { x: 375, z: 0, alt: 0 },
+            { x: 0, z: -375, alt: 0 },
+            { x: -375, z: 0, alt: 0 },
+            { x: 0, z: 740, alt: 0 },
+            { x: 740, z: 25, alt: 0 },
+            { x: 0, z: -740, alt: 0 },
+            { x: -740, z: 25, alt: 0 },
+            // Outer District Landmark Treasures
+            { x: -25, z: 1235, alt: 6.5 },   // Aboard the South Harbor Rescue Ferry deck!
+            { x: 35, z: 1155, alt: 0 },      // Under the South Harbor Gantry Crane
+            { x: -705, z: -725, alt: 0 },    // Volcano Ridge Rim
+            { x: 0, z: -1125, alt: 0 },      // North Observatory Courtyard
+            { x: -1140, z: 25, alt: 0 },     // Doc Greene's West Tech Dome Plaza
+            { x: 1125, z: 25, alt: 0 },      // East Lighthouse Overlook
+            // High-Altitude Sky Energon Cubes for Blades (Helicopter & Pterosaur Flight!)
+            { x: 0, z: -15, alt: 22 },
+            { x: 0, z: 140, alt: 24 },
+            { x: 150, z: -120, alt: 26 },
+            { x: -160, z: -140, alt: 26 },
+            { x: 760, z: -760, alt: 28 },
+            { x: 0, z: 1160, alt: 26 }
+        ];
+
+        function buildEnergonCubes() {
+            energonCubes.forEach(c => scene.remove(c.mesh.root));
+            energonCubes.length = 0;
+
+            ENERGON_SPAWN_SITES.forEach((pt, idx) => {
+                const mesh = createEnergonCubeMesh();
+                const gy = Math.max(0.0, getTerrainHeight(pt.x, pt.z));
+                const baseY = gy + (pt.alt || 0);
+                mesh.root.position.set(pt.x, baseY, pt.z);
+                if (pt.alt && pt.alt > 8) {
+                    mesh.baseRing.visible = false; // Floating sky cube
+                }
+                scene.add(mesh.root);
+                energonCubes.push({
+                    homeX: pt.x,
+                    homeY: baseY,
+                    homeZ: pt.z,
+                    x: pt.x,
+                    y: baseY,
+                    z: pt.z,
+                    phase: idx * 0.75,
+                    collected: false,
+                    collectedAtTime: -1,
+                    isBonusDrop: false,
+                    mesh
+                });
+            });
+        }
+
+        function spawnBonusEnergonCubes(centerX, centerZ, count = 3) {
+            for (let i = 0; i < count; i++) {
+                const ang = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+                const dist = 6.5 + Math.random() * 3.5;
+                const cx = centerX + Math.cos(ang) * dist;
+                const cz = centerZ + Math.sin(ang) * dist;
+                const cy = Math.max(0.2, getTerrainHeight(cx, cz));
+                const mesh = createEnergonCubeMesh();
+                mesh.root.position.set(cx, cy, cz);
+                scene.add(mesh.root);
+                energonCubes.push({
+                    homeX: cx,
+                    homeY: cy,
+                    homeZ: cz,
+                    x: cx,
+                    y: cy,
+                    z: cz,
+                    phase: i * 1.4,
+                    collected: false,
+                    collectedAtTime: -1,
+                    isBonusDrop: true,
+                    mesh
+                });
+            }
+        }
+
+        function updateEnergonCubes(dt, now) {
+            const nowSec = now * 0.001;
+            for (let i = energonCubes.length - 1; i >= 0; i--) {
+                const c = energonCubes[i];
+                if (c.collected) {
+                    // Respawn world Energon Cubes after 45s once the player moves >110m away
+                    if (!c.isBonusDrop && (nowSec - c.collectedAtTime) > 45.0) {
+                        const distFromHome = Math.hypot(player.pos.x - c.homeX, player.pos.z - c.homeZ);
+                        if (distFromHome > 110.0) {
+                            c.collected = false;
+                            c.x = c.homeX;
+                            c.y = c.homeY;
+                            c.z = c.homeZ;
+                            c.mesh.root.position.set(c.x, c.y, c.z);
+                            c.mesh.root.visible = true;
+                        }
+                    }
+                    continue;
+                }
+
+                // Spin & bob the glowing crystal cube
+                c.mesh.cubePivot.rotation.y += dt * 2.2;
+                c.mesh.cubePivot.rotation.x = Math.sin(nowSec * 2.5 + c.phase) * 0.35;
+                c.mesh.cubePivot.position.y = 2.4 + Math.sin(nowSec * 3.8 + c.phase) * 0.45;
+                const ringPulse = 1.0 + Math.sin(nowSec * 4.5 + c.phase) * 0.14;
+                c.mesh.baseRing.scale.setScalar(ringPulse);
+
+                // Generous 16.5m 3D Magnetic Attraction so a 3-year-old easily scoops cubes by driving/flying nearby!
+                const dx = player.pos.x - c.x;
+                const dy = (player.pos.y + 1.5) - (c.y + 2.0);
+                const dz = player.pos.z - c.z;
+                const dist3D = Math.hypot(dx, dy, dz);
+
+                if (dist3D < 16.5) {
+                    const pullSpeed = THREE.MathUtils.lerp(18.0, 42.0, 1.0 - Math.min(1.0, dist3D / 16.5));
+                    c.x += (dx / Math.max(0.1, dist3D)) * pullSpeed * dt;
+                    c.y += (dy / Math.max(0.1, dist3D)) * pullSpeed * dt;
+                    c.z += (dz / Math.max(0.1, dist3D)) * pullSpeed * dt;
+                    c.mesh.root.position.set(c.x, c.y, c.z);
+
+                    if (dist3D < 4.6) {
+                        // Collected Golden Energon Cube!
+                        sfx.playEnergonCollect();
+                        spawnBurstParticles(c.x, c.y + 2.0, c.z, 0xfacc15, 14, 1.25);
+
+                        // Grant 4.5s Rainbow Energon Turbo & Super-Jump Boost!
+                        player.energonBoostTimer = 4.5;
+                        player.boostTimer = Math.max(player.boostTimer, 2.5);
+
+                        progression.totalEnergonCubes += 1;
+                        saveProgression();
+
+                        if (c.isBonusDrop) {
+                            scene.remove(c.mesh.root);
+                            energonCubes.splice(i, 1);
+                        } else {
+                            c.collected = true;
+                            c.collectedAtTime = nowSec;
+                            c.mesh.root.visible = false;
+                        }
+                    }
+                } else {
+                    // Gently return to home position if player drove past without collecting
+                    c.x = THREE.MathUtils.lerp(c.x, c.homeX, Math.min(1, dt * 3.0));
+                    c.y = THREE.MathUtils.lerp(c.y, c.homeY, Math.min(1, dt * 3.0));
+                    c.z = THREE.MathUtils.lerp(c.z, c.homeZ, Math.min(1, dt * 3.0));
+                    c.mesh.root.position.set(c.x, c.y, c.z);
+                }
+            }
+        }
+
         loadProgression();
         buildHazardSites();
+        buildEnergonCubes();
 
         /***********************************************************************
          * 8B. LIVING WORLD NPC SYSTEM (HUMANS & CIVILIAN VEHICLES + ENGLISH VOICE)
@@ -6282,7 +6597,7 @@
                 return;
             }
             if ((player.mode === 'BOT' || player.mode === 'DINO') && player.grounded) {
-                player.vy = 21.0;
+                player.vy = player.energonBoostTimer > 0 ? 28.5 : 21.0;
                 player.grounded = false;
                 sfx.playSmash();
             } else {
@@ -6445,8 +6760,9 @@
             player.hasWaypoint = false;
             waypointGroup.visible = false;
             buildHazardSites();
+            buildEnergonCubes();
             closeUtilityMenu();
-            showToast("ISLAND RESET", "All 8 Emergencies Respawned!");
+            showToast("ISLAND RESET", "All 8 Emergencies & Energon Cubes Respawned!");
         });
 
         bindButton('btn-keep-exploring', () => {
@@ -6531,6 +6847,16 @@
             mCtx.moveTo(cx - 1120 * mapScale, cy + 25 * mapScale);
             mCtx.lineTo(cx + 1180 * mapScale, cy + 25 * mapScale);
             mCtx.stroke();
+
+            // Draw Golden Energon Cubes on Minimap (Sparkling Gold Dots)
+            mCtx.fillStyle = '#facc15';
+            for (let i = 0; i < energonCubes.length; i++) {
+                const ec = energonCubes[i];
+                if (ec.collected) continue;
+                const ex = cx + ec.x * mapScale;
+                const ez = cy + ec.z * mapScale;
+                mCtx.fillRect(ex - 1.6, ez - 1.6, 3.2, 3.2);
+            }
 
             // Draw Civilian Vehicle NPCs (Moving Amber Dots) & Human NPCs (Cyan Dots)
             mCtx.fillStyle = '#38bdf8';
@@ -6741,6 +7067,16 @@
             if (player.winchTimer > 0) player.winchTimer = Math.max(0, player.winchTimer - dt);
             if (player.netTimer > 0) player.netTimer = Math.max(0, player.netTimer - dt);
             if (player.boostTimer > 0) player.boostTimer = Math.max(0, player.boostTimer - dt);
+            if (player.energonBoostTimer > 0) {
+                player.energonBoostTimer = Math.max(0, player.energonBoostTimer - dt);
+                // Spawn a cheerful Rainbow Energon Sparkle Trail behind the Rescue Bot!
+                if (Math.random() < 0.65) {
+                    const trailColor = RAINBOW_TRAIL_COLORS[(rainbowTrailIdx++) % RAINBOW_TRAIL_COLORS.length];
+                    const behindX = player.pos.x - Math.sin(player.heading) * 2.6 + (Math.random() - 0.5) * 1.4;
+                    const behindZ = player.pos.z - Math.cos(player.heading) * 2.6 + (Math.random() - 0.5) * 1.4;
+                    spawnBurstParticles(behindX, player.pos.y + 0.8, behindZ, trailColor, 1, 0.35);
+                }
+            }
             if (player.autoActionCooldown > 0) player.autoActionCooldown = Math.max(0, player.autoActionCooldown - dt);
 
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
@@ -7155,6 +7491,7 @@
             });
 
             updatePhysics(dt, now);
+            updateEnergonCubes(dt, now);
             updateAllBotTransforms(dt, now);
             updateLivingWorldNPCs(dt, now);
             updateViewportCulling();
