@@ -3124,10 +3124,14 @@
         };
 
         // Universal Rig Joint Interpolator (Handles Bot Mode <-> Vehicle Mode m <-> Dinobot Mode d)
-        function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now) {
+        function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0) {
             const walkSin = Math.sin(walkCycle);
             const isMoving = Math.abs(speed) > 0.5;
             const smashOffset = smashTimer > 0 ? Math.sin((smashTimer / 0.45) * Math.PI) : 0;
+            // Bulldozer Scoop Wave: dips blade low in first 30%, then lifts hydraulic arms & curls blade high!
+            const scoopProgress = scoopTimer > 0 ? (1.0 - scoopTimer / 0.85) : 0;
+            const scoopLift = scoopTimer > 0 ? Math.sin(scoopProgress * Math.PI) : 0;
+            const scoopCurl = scoopTimer > 0 ? Math.sin((scoopProgress - 0.18) * Math.PI * 1.2) : 0;
             const isPtero = rig.botType === 'BLADES';
 
             // 1. Torso (Upright in Bot, Low Chassis in Vehicle, Horizontal Dinosaur Core in Dinobot)
@@ -3365,30 +3369,31 @@
 
             if (rig.botType === 'BOULDER') {
                 // In Bot mode: wide heroic stance; In Bulldozer mode: legs swing forward (-PI/2) & slide together (X: ±0.88) so the two blade halves lock seamlessly!
-                const dozerLiftY = smashOffset * 0.38 * m;
+                const dozerLiftY = (smashOffset * 0.38 + scoopLift * 0.78) * m;
                 rig.leftLeg.position.set(
                     -0.96 * (1 - m - d) - 0.88 * m - dinoLegX * d,
                     2.35 * (1 - m - d) + (0.94 + dozerLiftY) * m + dinoLegY * d,
-                    0.72 * m + dinoLegZ * d
+                    (0.72 + scoopLift * 0.25) * m + dinoLegZ * d
                 );
                 rig.rightLeg.position.set(
                     0.96 * (1 - m - d) + 0.88 * m + dinoLegX * d,
                     2.35 * (1 - m - d) + (0.94 + dozerLiftY) * m + dinoLegY * d,
-                    0.72 * m + dinoLegZ * d
+                    (0.72 + scoopLift * 0.25) * m + dinoLegZ * d
                 );
-                rig.leftLeg.rotation.x = (-armSwingL * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - smashOffset * 0.25) * m + dinoLegRotL * d;
-                rig.rightLeg.rotation.x = (-armSwingR * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - smashOffset * 0.25) * m + dinoLegRotR * d;
+                const legScoopPitch = (smashOffset * 0.25 + scoopLift * 0.38) * m;
+                rig.leftLeg.rotation.x = (-armSwingL * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - legScoopPitch) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = (-armSwingR * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - legScoopPitch) * m + dinoLegRotR * d;
 
-                // Articulate hydraulic lift cylinder & C-frame push-arm linkage along the shins/treads
+                // Articulate hydraulic lift cylinder & C-frame push-arm linkage along the shins/treads during Bulldozer Scoop!
                 if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
-                    const linkageShiftZ = -0.18 * m;
-                    rig.leftLegWheelMount.position.set(-0.18 * m, -0.15 * m, linkageShiftZ);
-                    rig.rightLegWheelMount.position.set(0.18 * m, -0.15 * m, linkageShiftZ);
+                    const linkageShiftZ = (-0.18 - scoopLift * 0.28) * m;
+                    rig.leftLegWheelMount.position.set(-0.18 * m, (-0.15 - scoopLift * 0.22) * m, linkageShiftZ);
+                    rig.rightLegWheelMount.position.set(0.18 * m, (-0.15 - scoopLift * 0.22) * m, linkageShiftZ);
                 }
 
-                // Angle the interlocking bucket-feet in Bulldozer mode & curl upward during Blade Ram (`smashOffset`)!
+                // Angle the interlocking bucket-feet in Bulldozer mode & curl upward during Bulldozer Scoop (`scoopCurl` / `smashOffset`)!
                 if (rig.leftFoot && rig.rightFoot) {
-                    const bucketTilt = (-0.18 + smashOffset * 0.48) * m;
+                    const bucketTilt = (-0.18 + smashOffset * 0.48 + scoopCurl * 0.72) * m + (scoopCurl * 0.35) * (1 - m - d);
                     rig.leftFoot.rotation.x = bucketTilt;
                     rig.rightFoot.rotation.x = bucketTilt;
                 }
@@ -3521,7 +3526,7 @@
                 botActionIcon: '🔨',
                 botActionLabel: 'QUAKE SMASH',
                 vehActionIcon: '🚜',
-                vehActionLabel: 'BLADE RAM',
+                vehActionLabel: 'DOZER SCOOP',
                 dinoActionIcon: '🦏',
                 dinoActionLabel: 'TRICERA CHARGE'
             },
@@ -3546,10 +3551,10 @@
                 dinoIcon: '🦖',
                 colorClass: 'text-sky-300',
                 dotClass: 'bg-sky-400',
-                botActionIcon: '⚡',
-                botActionLabel: 'EMP SHOCKWAVE',
-                vehActionIcon: '🚨',
-                vehActionLabel: 'SIREN NITRO',
+                botActionIcon: '🕸️',
+                botActionLabel: 'ENERGY NET',
+                vehActionIcon: '🪝',
+                vehActionLabel: 'TOW WINCH NET',
                 dinoActionIcon: '⚡',
                 dinoActionLabel: 'TAIL SPIKE EMP'
             },
@@ -3562,8 +3567,8 @@
                 dotClass: 'bg-amber-400',
                 botActionIcon: '🌪️',
                 botActionLabel: 'ROTOR CYCLONE',
-                vehActionIcon: '🛟',
-                vehActionLabel: 'AIRLIFT PULSE',
+                vehActionIcon: '🪝',
+                vehActionLabel: 'RESCUE WINCH',
                 dinoActionIcon: '🦅',
                 dinoActionLabel: 'WING GALE'
             }
@@ -3585,6 +3590,10 @@
             grounded: true,
             walkCycle: 0,
             smashTimer: 0,
+            scoopTimer: 0,        // Boulder Bulldozer Scoop & Hydraulic Lift cycle
+            winchTimer: 0,        // Blades Helicopter Rescue Winch deployment
+            netTimer: 0,          // Chase Police Energy Net & Tow Winch deployment
+            netTarget: new THREE.Vector3(),
             boostTimer: 0,
             waterTimer: 0,
             sonarTimer: 0,
@@ -3637,6 +3646,71 @@
         const sonarMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0, side: THREE.DoubleSide });
         const sonarMesh = new THREE.Mesh(sonarGeo, sonarMat);
         scene.add(sonarMesh);
+
+        // Blades' Helicopter Rescue Winch (Retractable Hoist Cable + Rescue Hook & Airlift Basket)
+        const winchGroup = new THREE.Group();
+        winchGroup.visible = false;
+        const winchDrum = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.45, 0.45, 0.9, 10).rotateZ(Math.PI / 2),
+            new THREE.MeshToonMaterial({ color: 0xff6b00, gradientMap: toonGrad3 })
+        );
+        winchGroup.add(winchDrum);
+
+        const winchCableGeo = new THREE.CylinderGeometry(0.11, 0.11, 1.0, 8);
+        winchCableGeo.translate(0, -0.5, 0); // Origin at top of cable so scale.y extends straight down!
+        const winchCableMesh = new THREE.Mesh(
+            winchCableGeo,
+            new THREE.MeshBasicMaterial({ color: 0xe2e8f0 })
+        );
+        winchGroup.add(winchCableMesh);
+
+        const winchHookAssembly = new THREE.Group();
+        const winchHarnessRing = new THREE.Mesh(
+            new THREE.TorusGeometry(1.25, 0.22, 10, 20).rotateX(Math.PI / 2),
+            new THREE.MeshToonMaterial({ color: 0xffbe0b, gradientMap: toonGrad3 })
+        );
+        const winchHook = new THREE.Mesh(
+            new THREE.TorusGeometry(0.55, 0.15, 8, 14, Math.PI * 1.45),
+            matChrome
+        );
+        winchHook.position.y = 0.45;
+        const winchGlowRing = new THREE.Mesh(
+            new THREE.RingGeometry(1.4, 2.3, 24).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75, side: THREE.DoubleSide })
+        );
+        winchGlowRing.position.y = -0.15;
+        winchHookAssembly.add(winchHarnessRing, winchHook, winchGlowRing);
+        winchGroup.add(winchHookAssembly);
+        scene.add(winchGroup);
+
+        // Chase's Police Energy Net & Tow Winch Tether
+        const energyNetGroup = new THREE.Group();
+        energyNetGroup.visible = false;
+
+        const towTetherGeo = new THREE.CylinderGeometry(0.12, 0.12, 1.0, 8);
+        towTetherGeo.rotateX(Math.PI / 2);
+        towTetherGeo.translate(0, 0, 0.5); // Origin at start so lookAt() + scale.z stretches to target!
+        const towTetherMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 });
+        const towTetherMesh = new THREE.Mesh(towTetherGeo, towTetherMat);
+        energyNetGroup.add(towTetherMesh);
+
+        const energyNetDome = new THREE.Group();
+        const netWireMesh = new THREE.Mesh(
+            new THREE.IcosahedronGeometry(3.4, 1),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.92 })
+        );
+        const netInnerCore = new THREE.Mesh(
+            new THREE.IcosahedronGeometry(3.2, 1),
+            new THREE.MeshBasicMaterial({ color: 0x0284c7, transparent: true, opacity: 0.26, side: THREE.DoubleSide })
+        );
+        const netBaseRing = new THREE.Mesh(
+            new THREE.RingGeometry(2.8, 3.6, 24).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
+        );
+        netBaseRing.position.y = 0.2;
+        energyNetDome.add(netWireMesh, netInnerCore, netBaseRing);
+        energyNetGroup.add(energyNetDome);
+        scene.add(energyNetGroup);
 
         function syncHUDToActiveBot() {
             const meta = BOT_METADATA[player.botType];
@@ -3735,7 +3809,7 @@
                     } else {
                         rig.chassis.rotation.x = 0;
                     }
-                    applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now);
+                    applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer);
                 } else {
                     // Inactive Bots stay parked in standby at Rescue Bots Headquarters!
                     const slot = HQ_PARKING_SLOTS[botKey];
@@ -3749,20 +3823,62 @@
 
         /***********************************************************************
          * 8. 8 ISLAND-WIDE EMERGENCIES (Rockslides, Fires, Sky Array, Pileups)
+         *    & STRANDED CITIZEN RESCUES
          ***********************************************************************/
         const EMERGENCY_SITES = [
-            { id: 0, name: "Harbor Dock Rockslide", type: "ROCKSLIDE", x: 0, z: 1080 },
-            { id: 1, name: "Town East Blaze", type: "FIRE", x: 145, z: 25 },
-            { id: 2, name: "Lighthouse Cliff Slide", type: "ROCKSLIDE", x: 1090, z: 55 },
-            { id: 3, name: "Volcano Ridge Inferno", type: "FIRE", x: -680, z: -700 },
-            { id: 4, name: "Quarry Canyon Collapse", type: "ROCKSLIDE", x: -920, z: -480 },
-            { id: 5, name: "Sky Array Dish Outage", type: "SKY_RESCUE", x: 780, z: -780 },
-            { id: 6, name: "North Observatory Fire", type: "FIRE", x: 65, z: -1060 },
-            { id: 7, name: "West Tech Highway Pileup", type: "ROCKSLIDE", x: -1050, z: 25 }
+            {
+                id: 0, name: "Harbor Dock Rockslide", type: "ROCKSLIDE", x: 0, z: 1080,
+                citizenName: "Dockworker Pete", citizenRole: "Stranded Dock Crew",
+                helpCall: "Help! Rescue Bots! We're trapped by the rockslide at the Harbor Dock!",
+                shirtColor: 0xf59e0b, hairColor: 0x451a03, voicePitch: 0.96
+            },
+            {
+                id: 1, name: "Town East Blaze", type: "FIRE", x: 145, z: 25,
+                citizenName: "Baker Jerry", citizenRole: "Trapped Shopkeeper",
+                helpCall: "Help! Heatwave! The Town East Blaze is surrounding our bakery!",
+                shirtColor: 0xec4899, hairColor: 0x78350f, voicePitch: 1.08
+            },
+            {
+                id: 2, name: "Lighthouse Cliff Slide", type: "ROCKSLIDE", x: 1090, z: 55,
+                citizenName: "Keeper Clara", citizenRole: "Stranded Watcher",
+                helpCall: "Help! We're trapped by the boulder slide on Lighthouse Cliff!",
+                shirtColor: 0x06b6d4, hairColor: 0xb45309, voicePitch: 1.16
+            },
+            {
+                id: 3, name: "Volcano Ridge Inferno", type: "FIRE", x: -680, z: -700,
+                citizenName: "Vulcanologist Marco", citizenRole: "Trapped Scientist",
+                helpCall: "Help! We're cut off by the Volcano Ridge Inferno! Bring the Water Cannon!",
+                shirtColor: 0xf97316, hairColor: 0x1e293b, voicePitch: 0.94
+            },
+            {
+                id: 4, name: "Quarry Canyon Collapse", type: "ROCKSLIDE", x: -920, z: -480,
+                citizenName: "Foreman Cole", citizenRole: "Pinned Quarry Crew",
+                helpCall: "Help! We're trapped by the Quarry Canyon Collapse! Scoop these boulders clear!",
+                shirtColor: 0xeab308, hairColor: 0x475569, voicePitch: 0.90
+            },
+            {
+                id: 5, name: "Sky Array Dish Outage", type: "SKY_RESCUE", x: 780, z: -780,
+                citizenName: "Engineer Chloe", citizenRole: "Stranded Tower Crew",
+                helpCall: "Help! Blades! We're stranded at the Sky Array Dish! Lower your Rescue Winch!",
+                shirtColor: 0x38bdf8, hairColor: 0x9a3412, voicePitch: 1.18
+            },
+            {
+                id: 6, name: "North Observatory Fire", type: "FIRE", x: 65, z: -1060,
+                citizenName: "Dr. Elena Vance", citizenRole: "Trapped Astronomer",
+                helpCall: "Help! The North Observatory Fire has blocked our exit! Please extinguish the flames!",
+                shirtColor: 0xa855f7, hairColor: 0x0f172a, voicePitch: 1.14
+            },
+            {
+                id: 7, name: "West Tech Highway Pileup", type: "ROCKSLIDE", x: -1050, z: 25,
+                citizenName: "Commuter Toby", citizenRole: "Stranded Driver",
+                helpCall: "Help! Chase! We're pinned by the West Tech Highway Pileup! Deploy your Tow Winch!",
+                shirtColor: 0x22c55e, hairColor: 0x78350f, voicePitch: 1.02
+            }
         ];
 
         const beacons = [];
         const activeParticles = []; // Unified pool for Rock Debris, Water Cannon Stream & Fire Sparks
+        let lastGlobalVoiceTime = -99;
 
         const matBeaconRed = new THREE.MeshBasicMaterial({ color: 0xff1e42 });
         const matBeaconOrange = new THREE.MeshBasicMaterial({ color: 0xff6414 });
@@ -3773,10 +3889,152 @@
         const boulderGeo = new THREE.DodecahedronGeometry(2.3, 0);
         const fireConeGeo = new THREE.ConeGeometry(2.1, 5.5, 7);
 
+        // Shared English Speech + HUD Banner announcer for both Patrol NPCs & Stranded Emergency Citizens
+        function triggerNPCSpeech(speakerName, speakerRole, speechText, voicePitch = 1.05, forceSpeak = false) {
+            const nowSec = performance.now() * 0.001;
+            if (!forceSpeak && nowSec - lastGlobalVoiceTime < 8.5) return false;
+            lastGlobalVoiceTime = nowSec;
+
+            const bubble = document.getElementById('npc-speech-bubble');
+            const nameEl = document.getElementById('npc-speaker-name');
+            const roleEl = document.getElementById('npc-speaker-role');
+            const textEl = document.getElementById('npc-speech-text');
+            if (bubble && nameEl && roleEl && textEl) {
+                nameEl.textContent = speakerName.toUpperCase();
+                roleEl.textContent = speakerRole.toUpperCase();
+                textEl.textContent = `"${speechText}"`;
+                bubble.classList.remove('hidden');
+                clearTimeout(window._npcBubbleTimeout);
+                window._npcBubbleTimeout = setTimeout(() => {
+                    bubble.classList.add('hidden');
+                }, 6800);
+            }
+
+            if (sfx.enabled && 'speechSynthesis' in window) {
+                try {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(speechText);
+                    utter.lang = 'en-US';
+                    utter.rate = 1.05;
+                    utter.pitch = voicePitch;
+                    utter.volume = 1.0;
+
+                    const voices = window.speechSynthesis.getVoices();
+                    if (voices && voices.length > 0) {
+                        const enVoice = voices.find(v => v.lang && v.lang.startsWith('en-US') && /Samantha|Alex|Daniel|Google|Natural|Enhanced/i.test(v.name))
+                            || voices.find(v => v.lang && v.lang.startsWith('en'));
+                        if (enVoice) utter.voice = enVoice;
+                    }
+                    window.speechSynthesis.speak(utter);
+                } catch (err) {
+                    // Fallback gracefully if speechSynthesis is restricted
+                }
+            }
+            return true;
+        }
+
+        // Build Articulated 3D Cel-Shaded Human NPC Mesh (Used for Town Citizens & Stranded Emergency Citizens)
+        function createHumanNPCMesh(cfg) {
+            const root = new THREE.Group();
+
+            const matSkin = new THREE.MeshToonMaterial({ color: cfg.skinColor || 0xfde047, gradientMap: toonGrad3 });
+            const matShirt = new THREE.MeshToonMaterial({ color: cfg.shirtColor || 0x2563eb, gradientMap: toonGrad3 });
+            const matPants = new THREE.MeshToonMaterial({ color: cfg.pantsColor || 0x1e293b, gradientMap: toonGrad3 });
+            const matHair = new THREE.MeshToonMaterial({ color: cfg.hairColor || 0x78350f, gradientMap: toonGrad3 });
+            const matIndicator = new THREE.MeshBasicMaterial({ color: cfg.indicatorColor || 0x38bdf8 });
+
+            // Torso
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.45, 0.68), matShirt);
+            torso.position.y = 2.15;
+            torso.castShadow = true;
+            root.add(torso);
+
+            // Head
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.95, 0.95), matSkin);
+            head.position.y = 3.45;
+            head.castShadow = true;
+            root.add(head);
+
+            // Eyes & Smile on Front (+Z) of Head
+            const eyeGeo = new THREE.BoxGeometry(0.14, 0.16, 0.08);
+            const matEye = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+            const leftEye = new THREE.Mesh(eyeGeo, matEye);
+            leftEye.position.set(-0.22, 0.1, 0.48);
+            leftEye.userData.noOutline = true;
+            const rightEye = new THREE.Mesh(eyeGeo, matEye);
+            rightEye.position.set(0.22, 0.1, 0.48);
+            rightEye.userData.noOutline = true;
+            const smile = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.08, 0.08), matEye);
+            smile.position.set(0, -0.18, 0.48);
+            smile.userData.noOutline = true;
+            head.add(leftEye, rightEye, smile);
+
+            // Hair or Hat/Helmet
+            const hairCap = new THREE.Mesh(new THREE.BoxGeometry(1.06, 0.36, 1.08), matHair);
+            hairCap.position.set(0, 0.44, 0);
+            head.add(hairCap);
+            if (cfg.hasVisorHat) {
+                const brim = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.12, 0.45), matHair);
+                brim.position.set(0, 0.32, 0.62);
+                head.add(brim);
+            }
+
+            // Articulated Arms
+            const leftArmPivot = new THREE.Group();
+            leftArmPivot.position.set(-0.78, 2.75, 0);
+            const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1.25, 0.38), matShirt);
+            leftArm.position.y = -0.52;
+            leftArmPivot.add(leftArm);
+            root.add(leftArmPivot);
+
+            const rightArmPivot = new THREE.Group();
+            rightArmPivot.position.set(0.78, 2.75, 0);
+            const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1.25, 0.38), matShirt);
+            rightArm.position.y = -0.52;
+            rightArmPivot.add(rightArm);
+            root.add(rightArmPivot);
+
+            // Articulated Legs
+            const leftLegPivot = new THREE.Group();
+            leftLegPivot.position.set(-0.32, 1.42, 0);
+            const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.44, 1.38, 0.46), matPants);
+            leftLeg.position.y = -0.68;
+            leftLegPivot.add(leftLeg);
+            root.add(leftLegPivot);
+
+            const rightLegPivot = new THREE.Group();
+            rightLegPivot.position.set(0.32, 1.42, 0);
+            const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.44, 1.38, 0.46), matPants);
+            rightLeg.position.y = -0.68;
+            rightLegPivot.add(rightLeg);
+            root.add(rightLegPivot);
+
+            // Floating Speech/SOS Gem Indicator above NPC head
+            const radioGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.46, 0), matIndicator);
+            radioGem.position.y = 4.85;
+            root.add(radioGem);
+
+            root.scale.setScalar(1.22);
+            applyCartoonInkOutlines(root, 1.06, false);
+
+            return {
+                root,
+                head,
+                leftArmPivot,
+                rightArmPivot,
+                leftLegPivot,
+                rightLegPivot,
+                radioGem
+            };
+        }
+
         function buildHazardSites() {
             beacons.forEach(b => {
                 scene.remove(b.group);
                 b.nodes.forEach(n => scene.remove(n.mesh));
+                if (b.strandedCitizens) {
+                    b.strandedCitizens.forEach(sc => scene.remove(sc.rig.root));
+                }
             });
             beacons.length = 0;
 
@@ -3872,6 +4130,35 @@
                     });
                 }
 
+                // Spawn 2 Stranded Citizens at the Emergency Site waving & calling out for rescue!
+                const strandedCitizens = [];
+                for (let c = 0; c < 2; c++) {
+                    const cAng = idx * 0.8 + c * Math.PI * 0.65 + 0.35;
+                    const cx = site.x + Math.cos(cAng) * 9.2;
+                    const cz = site.z + Math.sin(cAng) * 9.2;
+                    const cy = Math.max(0.2, getTerrainHeight(cx, cz));
+                    const cRig = createHumanNPCMesh({
+                        shirtColor: c === 0 ? site.shirtColor : 0xfacc15,
+                        pantsColor: 0x1e293b,
+                        hairColor: site.hairColor,
+                        hasVisorHat: c === 0,
+                        indicatorColor: 0xff1e42
+                    });
+                    cRig.root.position.set(cx, cy, cz);
+                    scene.add(cRig.root);
+                    strandedCitizens.push({
+                        name: site.citizenName,
+                        role: site.citizenRole,
+                        helpCall: site.helpCall,
+                        voicePitch: site.voicePitch,
+                        x: cx,
+                        y: cy,
+                        z: cz,
+                        lastCallTime: -99,
+                        rig: cRig
+                    });
+                }
+
                 beacons.push({
                     id: site.id,
                     name: site.name,
@@ -3882,6 +4169,7 @@
                     orb,
                     skyBeam,
                     nodes: siteNodes,
+                    strandedCitizens,
                     restored: false
                 });
             });
@@ -3917,15 +4205,53 @@
             }
         }
 
-        // High-Pressure Cel-Shaded Cartoon Water Cannon Stream for Heatwave (Fire Engine Turret or Brachiosaur Snout!)
+        // Aimed High-Pressure Ballistic Water Cannon Arc for Heatwave (Automatically targets nearest active Fire/Hazard!)
         function spawnWaterCannonStream() {
             const rig = botRigs.HEATWAVE;
             const nozzleWorldPos = new THREE.Vector3();
             const activeNozzle = player.mode === 'DINO' ? rig.dinoNozzleTip : rig.nozzleTip;
             activeNozzle.getWorldPosition(nozzleWorldPos);
 
-            const dirX = Math.sin(player.heading);
-            const dirZ = Math.cos(player.heading);
+            // Find closest uncleared hazard node within 34m to aim the Water Cannon arc directly onto the flames!
+            let targetNode = null;
+            let bestDist = 34.0;
+            beacons.forEach(beacon => {
+                if (beacon.restored) return;
+                beacon.nodes.forEach(n => {
+                    if (n.cleared) return;
+                    const d = Math.hypot(n.x - player.pos.x, n.z - player.pos.z);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        targetNode = n;
+                    }
+                });
+            });
+
+            let baseVx, baseVy, baseVz;
+            const gravity = 24;
+
+            if (targetNode) {
+                const dx = targetNode.x - nozzleWorldPos.x;
+                const dz = targetNode.z - nozzleWorldPos.z;
+                const dy = (targetNode.y + 1.6) - nozzleWorldPos.y;
+                const horizDist = Math.max(4.0, Math.hypot(dx, dz));
+                const flightTime = THREE.MathUtils.clamp(horizDist / 38.0, 0.22, 0.78);
+
+                baseVx = dx / flightTime;
+                baseVz = dz / flightTime;
+                // High ballistic arc that peaks in the middle and lands squarely on the target fire!
+                baseVy = (dy + 0.5 * gravity * flightTime * flightTime) / flightTime;
+
+                // Rotate Heatwave's roof ladder turret toward the targeted fire!
+                const worldAimYaw = Math.atan2(dx, dz);
+                rig.backAttachment.rotation.y = worldAimYaw - player.heading;
+            } else {
+                rig.backAttachment.rotation.y = 0;
+                const jetSpeed = 42;
+                baseVx = Math.sin(player.heading) * jetSpeed;
+                baseVz = Math.cos(player.heading) * jetSpeed;
+                baseVy = 9.5;
+            }
 
             for (let i = 0; i < 3; i++) {
                 const dropGroup = new THREE.Group();
@@ -3942,18 +4268,14 @@
                 dropGroup.position.copy(nozzleWorldPos);
                 scene.add(dropGroup);
 
-                const spreadX = (Math.random() - 0.5) * 4.5;
-                const spreadZ = (Math.random() - 0.5) * 4.5;
-                const jetSpeed = 44 + Math.random() * 12;
-
                 activeParticles.push({
                     mesh: dropGroup,
-                    vx: dirX * jetSpeed + spreadX,
-                    vy: 5.5 + Math.random() * 3.5,
-                    vz: dirZ * jetSpeed + spreadZ,
-                    gravity: 22,
+                    vx: baseVx + (Math.random() - 0.5) * 3.8,
+                    vy: baseVy + (Math.random() - 0.5) * 2.4,
+                    vz: baseVz + (Math.random() - 0.5) * 3.8,
+                    gravity,
                     isWater: true,
-                    life: 0.85
+                    life: 0.88
                 });
             }
         }
@@ -4004,7 +4326,23 @@
                 beacon.skyBeam.material.opacity = 0.15;
                 sfx.playBeaconRestore();
                 spawnBurstParticles(beacon.x, beacon.group.position.y + 9, beacon.z, 0xa3e635, 18, 1.3);
-                showToast("EMERGENCY RESOLVED!", `${beacon.name} Cleared by ${ player.botType }!`);
+                showToast("CITIZENS RESCUED!", `${beacon.name} Cleared by ${player.botType}!`);
+
+                // Turn Stranded Citizens' overhead gems green & have them cheer and thank the Rescue Bot in English!
+                if (beacon.strandedCitizens && beacon.strandedCitizens.length > 0) {
+                    beacon.strandedCitizens.forEach(sc => {
+                        sc.rig.radioGem.material.color.setHex(0x22c55e);
+                    });
+                    const speaker = beacon.strandedCitizens[0];
+                    const botName = BOT_METADATA[player.botType] ? BOT_METADATA[player.botType].name : player.botType;
+                    triggerNPCSpeech(
+                        speaker.name,
+                        "Rescued Citizen",
+                        `Hooray! Thank you, ${botName}! You saved us at the ${beacon.name}!`,
+                        speaker.voicePitch,
+                        true
+                    );
+                }
                 updateMissionHUD();
             }
         }
@@ -4016,7 +4354,6 @@
          ***********************************************************************/
         const humanNPCs = [];
         const vehicleNPCs = [];
-        let lastGlobalVoiceTime = -99;
 
         function getCompassDirection(dx, dz) {
             // In world coords: -Z is North, +Z is South, +X is East, -X is West
@@ -4068,149 +4405,14 @@
 
         function speakClosestDisasterForNPC(npc, forceSpeak = false) {
             const nowSec = performance.now() * 0.001;
-            if (!forceSpeak) {
-                if (nowSec - lastGlobalVoiceTime < 9.5) return;
-                if (nowSec - (npc.lastSpokeTime || -99) < 24.0) return;
-            }
-
-            npc.lastSpokeTime = nowSec;
-            lastGlobalVoiceTime = nowSec;
-            npc.waveTimer = 4.5;
+            if (!forceSpeak && nowSec - (npc.lastSpokeTime || -99) < 24.0) return;
 
             const report = getClosestDisasterReport(npc.x, npc.z);
-
-            // Update Top HUD Speech Banner
-            const bubble = document.getElementById('npc-speech-bubble');
-            const nameEl = document.getElementById('npc-speaker-name');
-            const roleEl = document.getElementById('npc-speaker-role');
-            const textEl = document.getElementById('npc-speech-text');
-            if (bubble && nameEl && roleEl && textEl) {
-                nameEl.textContent = npc.name.toUpperCase();
-                roleEl.textContent = npc.role.toUpperCase();
-                textEl.textContent = report.bannerText;
-                bubble.classList.remove('hidden');
-                clearTimeout(window._npcBubbleTimeout);
-                window._npcBubbleTimeout = setTimeout(() => {
-                    bubble.classList.add('hidden');
-                }, 6800);
+            const spoke = triggerNPCSpeech(npc.name, npc.role, report.speechText, npc.voicePitch || 1.05, forceSpeak);
+            if (spoke) {
+                npc.lastSpokeTime = nowSec;
+                npc.waveTimer = 4.5;
             }
-
-            // Speak aloud in English using Web Speech API (SpeechSynthesis)
-            if (sfx.enabled && 'speechSynthesis' in window) {
-                try {
-                    window.speechSynthesis.cancel();
-                    const utter = new SpeechSynthesisUtterance(report.speechText);
-                    utter.lang = 'en-US';
-                    utter.rate = 1.04;
-                    utter.pitch = npc.voicePitch || 1.05;
-                    utter.volume = 1.0;
-
-                    const voices = window.speechSynthesis.getVoices();
-                    if (voices && voices.length > 0) {
-                        const enVoice = voices.find(v => v.lang && v.lang.startsWith('en-US') && /Samantha|Alex|Daniel|Google|Natural|Enhanced/i.test(v.name))
-                            || voices.find(v => v.lang && v.lang.startsWith('en'));
-                        if (enVoice) utter.voice = enVoice;
-                    }
-                    window.speechSynthesis.speak(utter);
-                } catch (err) {
-                    // Fallback gracefully if speechSynthesis is restricted
-                }
-            }
-        }
-
-        // Build Articulated 3D Cel-Shaded Human NPC Mesh
-        function createHumanNPCMesh(cfg) {
-            const root = new THREE.Group();
-
-            const matSkin = new THREE.MeshToonMaterial({ color: cfg.skinColor || 0xfde047, gradientMap: toonGrad3 });
-            const matShirt = new THREE.MeshToonMaterial({ color: cfg.shirtColor || 0x2563eb, gradientMap: toonGrad3 });
-            const matPants = new THREE.MeshToonMaterial({ color: cfg.pantsColor || 0x1e293b, gradientMap: toonGrad3 });
-            const matHair = new THREE.MeshToonMaterial({ color: cfg.hairColor || 0x78350f, gradientMap: toonGrad3 });
-            const matIndicator = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-
-            // Torso
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.45, 0.68), matShirt);
-            torso.position.y = 2.15;
-            torso.castShadow = true;
-            root.add(torso);
-
-            // Head
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.95, 0.95), matSkin);
-            head.position.y = 3.45;
-            head.castShadow = true;
-            root.add(head);
-
-            // Eyes & Smile on Front (+Z) of Head
-            const eyeGeo = new THREE.BoxGeometry(0.14, 0.16, 0.08);
-            const matEye = new THREE.MeshBasicMaterial({ color: 0x0f172a });
-            const leftEye = new THREE.Mesh(eyeGeo, matEye);
-            leftEye.position.set(-0.22, 0.1, 0.48);
-            leftEye.userData.noOutline = true;
-            const rightEye = new THREE.Mesh(eyeGeo, matEye);
-            rightEye.position.set(0.22, 0.1, 0.48);
-            rightEye.userData.noOutline = true;
-            const smile = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.08, 0.08), matEye);
-            smile.position.set(0, -0.18, 0.48);
-            smile.userData.noOutline = true;
-            head.add(leftEye, rightEye, smile);
-
-            // Hair or Hat/Helmet
-            const hairCap = new THREE.Mesh(new THREE.BoxGeometry(1.06, 0.36, 1.08), matHair);
-            hairCap.position.set(0, 0.44, 0);
-            head.add(hairCap);
-            if (cfg.hasVisorHat) {
-                const brim = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.12, 0.45), matHair);
-                brim.position.set(0, 0.32, 0.62);
-                head.add(brim);
-            }
-
-            // Articulated Arms
-            const leftArmPivot = new THREE.Group();
-            leftArmPivot.position.set(-0.78, 2.75, 0);
-            const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1.25, 0.38), matShirt);
-            leftArm.position.y = -0.52;
-            leftArmPivot.add(leftArm);
-            root.add(leftArmPivot);
-
-            const rightArmPivot = new THREE.Group();
-            rightArmPivot.position.set(0.78, 2.75, 0);
-            const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1.25, 0.38), matShirt);
-            rightArm.position.y = -0.52;
-            rightArmPivot.add(rightArm);
-            root.add(rightArmPivot);
-
-            // Articulated Legs
-            const leftLegPivot = new THREE.Group();
-            leftLegPivot.position.set(-0.32, 1.42, 0);
-            const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.44, 1.38, 0.46), matPants);
-            leftLeg.position.y = -0.68;
-            leftLegPivot.add(leftLeg);
-            root.add(leftLegPivot);
-
-            const rightLegPivot = new THREE.Group();
-            rightLegPivot.position.set(0.32, 1.42, 0);
-            const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.44, 1.38, 0.46), matPants);
-            rightLeg.position.y = -0.68;
-            rightLegPivot.add(rightLeg);
-            root.add(rightLegPivot);
-
-            // Floating Speech/Radio Gem Indicator above NPC head
-            const radioGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), matIndicator);
-            radioGem.position.y = 4.85;
-            root.add(radioGem);
-
-            root.scale.setScalar(1.22);
-            applyCartoonInkOutlines(root, 1.06, false);
-
-            return {
-                root,
-                head,
-                leftArmPivot,
-                rightArmPivot,
-                leftLegPivot,
-                rightLegPivot,
-                radioGem
-            };
         }
 
         // Build 3D Cel-Shaded Civilian Vehicle NPC Mesh (Sedan, Pickup, Van, Island Bus)
@@ -4530,6 +4732,49 @@
                 npc.rig.radioGem.position.y = 4.85 + Math.sin(nowSec * 3.5 + i) * 0.22;
             }
 
+            // 1B. Update Stranded Citizens at the 8 Emergency Sites (Wave both arms & call out for rescue in English!)
+            for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
+                const b = beacons[bIdx];
+                if (!b.strandedCitizens) continue;
+                const distToSite = Math.hypot(player.pos.x - b.x, player.pos.z - b.z);
+
+                for (let cIdx = 0; cIdx < b.strandedCitizens.length; cIdx++) {
+                    const sc = b.strandedCitizens[cIdx];
+                    const targetYaw = Math.atan2(player.pos.x - sc.x, player.pos.z - sc.z);
+                    sc.rig.root.rotation.y = targetYaw;
+
+                    if (!b.restored) {
+                        // Frantic two-handed overhead SOS wave & distress hop!
+                        const waveOsc = Math.sin(nowSec * 12.0 + cIdx * 1.8) * 0.42;
+                        sc.rig.leftArmPivot.rotation.x = -Math.PI * 0.84;
+                        sc.rig.rightArmPivot.rotation.x = -Math.PI * 0.84;
+                        sc.rig.leftArmPivot.rotation.z = waveOsc + 0.25;
+                        sc.rig.rightArmPivot.rotation.z = -waveOsc - 0.25;
+                        sc.rig.root.position.y = sc.y + Math.abs(Math.sin(nowSec * 7.5 + cIdx)) * 0.42;
+
+                        // Pulse red/amber SOS distress gem
+                        sc.rig.radioGem.rotation.y += dt * 5.0;
+                        sc.rig.radioGem.scale.setScalar(1.0 + Math.sin(nowSec * 10.0) * 0.25);
+
+                        // Call out for help in English when the Rescue Bot approaches within 36m!
+                        if (distToSite < 36.0 && cIdx === 0 && (nowSec - sc.lastCallTime > 20.0)) {
+                            if (triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc.voicePitch, false)) {
+                                sc.lastCallTime = nowSec;
+                            }
+                        }
+                    } else {
+                        // Rescued! Happy celebration wave & green gem!
+                        sc.rig.leftArmPivot.rotation.x = 0;
+                        sc.rig.leftArmPivot.rotation.z = 0;
+                        sc.rig.rightArmPivot.rotation.x = -Math.PI * 0.78;
+                        sc.rig.rightArmPivot.rotation.z = Math.sin(nowSec * 8.0 + cIdx) * 0.35 - 0.2;
+                        sc.rig.root.position.y = sc.y;
+                        sc.rig.radioGem.rotation.y += dt * 2.5;
+                        sc.rig.radioGem.scale.setScalar(1.0);
+                    }
+                }
+            }
+
             // 2. Update Civilian Vehicles along Inner Ring, Outer Ring, N-S, and E-W Highways
             for (let i = 0; i < vehicleNPCs.length; i++) {
                 const v = vehicleNPCs[i];
@@ -4683,6 +4928,11 @@
                     const n = b.nodes[j];
                     if (!n.cleared) {
                         n.mesh.visible = showNodes;
+                    }
+                }
+                if (b.strandedCitizens) {
+                    for (let c = 0; c < b.strandedCitizens.length; c++) {
+                        b.strandedCitizens[c].rig.root.visible = showNodes;
                     }
                 }
             }
@@ -4978,7 +5228,7 @@
         // Bot-Specific Special Action (Adapts across Bot, Vehicle, and Dinobot Modes!)
         function triggerPrimaryAction() {
             if (player.botType === 'HEATWAVE') {
-                // High-Pressure Water Cannon Stream (from Ladder Turret or Brachiosaur Snout!)
+                // Aimed High-Pressure Water Cannon Arc (from Ladder Turret or Brachiosaur Snout!)
                 player.waterTimer = 1.65;
                 if (player.mode === 'DINO') {
                     player.smashTimer = 0.45;
@@ -4989,9 +5239,34 @@
             }
 
             if (player.botType === 'CHASE') {
-                // Police Siren Turbo Boost / Stegosaurus Tail Spike EMP Shockwave!
+                // Police Energy Net & Tow Winch / Stegosaurus Tail Spike EMP Shockwave!
                 player.boostTimer = 1.45;
                 player.sonarTimer = 1.45;
+                player.netTimer = 1.35;
+
+                // Target the closest uncleared hazard node within 26m, or deploy 12m in front of Chase!
+                let targetNode = null;
+                let bestDist = 26.0;
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared) {
+                            const d = Math.hypot(player.pos.x - n.x, player.pos.z - n.z);
+                            if (d < bestDist) {
+                                bestDist = d;
+                                targetNode = n;
+                            }
+                        }
+                    });
+                });
+
+                if (targetNode) {
+                    player.netTarget.set(targetNode.x, targetNode.y + 0.5, targetNode.z);
+                } else {
+                    const tx = player.pos.x + Math.sin(player.heading) * 12.0;
+                    const tz = player.pos.z + Math.cos(player.heading) * 12.0;
+                    player.netTarget.set(tx, Math.max(0, getTerrainHeight(tx, tz)) + 0.5, tz);
+                }
+
                 if (player.mode === 'DINO') {
                     player.smashTimer = 0.45;
                     sfx.playDinoRoar('CHASE');
@@ -5000,7 +5275,7 @@
                 }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 16.5) {
+                        if (!n.cleared && (Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 18.5 || Math.hypot(player.netTarget.x - n.x, player.netTarget.z - n.z) < 10.0)) {
                             clearHazardNode(beacon, n);
                         }
                     });
@@ -5009,7 +5284,8 @@
             }
 
             if (player.botType === 'BLADES') {
-                // Rotor Cyclone / Pterosaur Wing Gale (clears hazards underneath or around Blades!)
+                // Helicopter Rescue Winch & Rotor Cyclone / Pterosaur Wing Gale!
+                player.winchTimer = 1.65;
                 player.sonarTimer = 1.45;
                 player.boostTimer = 1.2;
                 if (player.mode === 'DINO') {
@@ -5019,7 +5295,7 @@
                 }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 18.5) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 20.5) {
                             clearHazardNode(beacon, n);
                         }
                     });
@@ -5027,33 +5303,31 @@
                 return;
             }
 
-            // Default: BOULDER Quake Smash / Dozer Blade Ram / Triceratops Horn Charge
-            if (player.mode === 'BOT' || player.mode === 'DINO') {
-                player.smashTimer = 0.45;
-                if (player.mode === 'DINO') {
-                    player.boostTimer = 1.25;
-                    sfx.playDinoRoar('BOULDER');
-                } else {
-                    sfx.playSmash();
-                }
-                beacons.forEach(beacon => {
-                    beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 15.0) {
-                            clearHazardNode(beacon, n);
-                        }
-                    });
-                });
-                spawnBurstParticles(
-                    player.pos.x + Math.sin(player.heading) * 4.0,
-                    player.pos.y,
-                    player.pos.z + Math.cos(player.heading) * 4.0,
-                    0xfacc15,
-                    8
-                );
+            // Default: BOULDER Bulldozer Scoop / Quake Smash / Triceratops Horn Charge
+            player.scoopTimer = 0.85;
+            player.smashTimer = 0.45;
+            if (player.mode === 'DINO') {
+                player.boostTimer = 1.25;
+                sfx.playDinoRoar('BOULDER');
             } else {
-                player.boostTimer = 1.3;
+                if (player.mode === 'VEHICLE') player.boostTimer = 1.15;
                 sfx.playSmash();
             }
+            beacons.forEach(beacon => {
+                beacon.nodes.forEach(n => {
+                    if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 16.5) {
+                        clearHazardNode(beacon, n);
+                    }
+                });
+            });
+            spawnBurstParticles(
+                player.pos.x + Math.sin(player.heading) * 4.2,
+                player.pos.y + 0.6,
+                player.pos.z + Math.cos(player.heading) * 4.2,
+                0xfacc15,
+                10,
+                1.15
+            );
         }
 
         function triggerSecondaryAction() {
@@ -5480,6 +5754,9 @@
             }
 
             if (player.smashTimer > 0) player.smashTimer = Math.max(0, player.smashTimer - dt);
+            if (player.scoopTimer > 0) player.scoopTimer = Math.max(0, player.scoopTimer - dt);
+            if (player.winchTimer > 0) player.winchTimer = Math.max(0, player.winchTimer - dt);
+            if (player.netTimer > 0) player.netTimer = Math.max(0, player.netTimer - dt);
             if (player.boostTimer > 0) player.boostTimer = Math.max(0, player.boostTimer - dt);
             if (player.autoActionCooldown > 0) player.autoActionCooldown = Math.max(0, player.autoActionCooldown - dt);
 
@@ -5641,22 +5918,61 @@
                 triggerPrimaryAction();
             }
 
-            // Heatwave High-Pressure Water Cannon Stream & Fire Extinguishing
+            // Heatwave Aimed High-Pressure Water Cannon Arc & Fire Extinguishing
             if (player.waterTimer > 0 && player.botType === 'HEATWAVE') {
                 player.waterTimer = Math.max(0, player.waterTimer - dt);
                 spawnWaterCannonStream();
                 if (Math.random() < 0.25) sfx.playWaterSpray();
 
-                // Check if water stream hits any hazard within 28m in front or around Heatwave
-                const aimX = player.pos.x + Math.sin(player.heading) * 12;
-                const aimZ = player.pos.z + Math.cos(player.heading) * 12;
+                // Extinguish any hazard node within 30m of Heatwave or along his forward arc
+                const aimX = player.pos.x + Math.sin(player.heading) * 14;
+                const aimZ = player.pos.z + Math.cos(player.heading) * 14;
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && (Math.hypot(aimX - n.x, aimZ - n.z) < 16.5 || Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 15.0)) {
+                        if (!n.cleared && (Math.hypot(aimX - n.x, aimZ - n.z) < 18.5 || Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 28.0)) {
                             clearHazardNode(beacon, n);
                         }
                     });
                 });
+            }
+
+            // Animate Blades' Helicopter Rescue Winch Cable & Airlift Hook
+            if (player.winchTimer > 0 && player.botType === 'BLADES') {
+                winchGroup.visible = true;
+                const winchTopY = player.pos.y + 1.1;
+                winchGroup.position.set(player.pos.x, winchTopY, player.pos.z);
+
+                const maxDrop = Math.max(3.2, winchTopY - groundY - 0.35);
+                // Smoothly extend cable down to ground and hoist back up!
+                const winchPhase = Math.sin((1.0 - player.winchTimer / 1.65) * Math.PI);
+                const curLen = Math.max(1.2, maxDrop * Math.min(1.0, winchPhase * 1.35));
+                winchCableMesh.scale.y = curLen;
+                winchHookAssembly.position.y = -curLen;
+                winchHookAssembly.rotation.y = now * 0.008;
+            } else {
+                winchGroup.visible = false;
+            }
+
+            // Animate Chase's Police Energy Net & Tow Winch Tether
+            if (player.netTimer > 0 && player.botType === 'CHASE') {
+                energyNetGroup.visible = true;
+                const startX = player.pos.x + Math.sin(player.heading) * 2.2;
+                const startY = player.pos.y + 1.6;
+                const startZ = player.pos.z + Math.cos(player.heading) * 2.2;
+
+                towTetherMesh.position.set(startX, startY, startZ);
+                towTetherMesh.lookAt(player.netTarget);
+                const tetherDist = Math.max(1.0, towTetherMesh.position.distanceTo(player.netTarget));
+                const netProgress = 1.0 - (player.netTimer / 1.35);
+                const extendFactor = Math.min(1.0, netProgress * 3.5);
+                towTetherMesh.scale.set(1, 1, tetherDist * extendFactor);
+
+                energyNetDome.position.copy(player.netTarget);
+                const domeScale = Math.sin(Math.min(1.0, netProgress * 1.4) * Math.PI * 0.85) * 1.15;
+                energyNetDome.scale.setScalar(Math.max(0.1, domeScale));
+                energyNetDome.rotation.y = now * 0.006;
+            } else {
+                energyNetGroup.visible = false;
             }
 
             // Direct Contact / Ramming Hazard Nodes (Cleared easily when driving or walking up to them!)
