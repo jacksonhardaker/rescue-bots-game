@@ -1660,6 +1660,10 @@
                 rightFoot: new THREE.Group(),
                 leftLegWheelMount: new THREE.Group(),
                 rightLegWheelMount: new THREE.Group(),
+                leftArmWheelMount: new THREE.Group(),
+                rightArmWheelMount: new THREE.Group(),
+                leftDoorWing: new THREE.Group(),
+                rightDoorWing: new THREE.Group(),
                 dinoGroup: new THREE.Group(),
                 dinoHead: new THREE.Group(),
                 dinoTail: new THREE.Group(),
@@ -2188,39 +2192,67 @@
             }
 
             else if (botType === 'CHASE') {
-                // TV Show Chase: Deep Police Cobalt Blue (#1648b8), Crisp White Doors, Gold Police Badge
+                // TV Show & Legacy United Chase: Deep Police Cobalt Blue (#1648b8), Crisp White Doors, Gold Police Badge
                 const matBlue = new THREE.MeshToonMaterial({ color: 0x1648b8, gradientMap: toonGrad4 });
                 const matWhite = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad4 });
                 const matBlack = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
                 const matGold = new THREE.MeshToonMaterial({ color: 0xffcc00, gradientMap: toonGrad4 });
+                const matRedTail = new THREE.MeshBasicMaterial({ color: 0xef4444 });
                 const matFace = new THREE.MeshBasicMaterial({ map: texFaceChase });
 
-                // Sleek Police Cruiser Hood/Cab Chest
-                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.24, 1.94), matBlue);
+                // 1. Torso: Police Cruiser Cabin Roof & Raked Front Windshield (Pitches backward +90° in Vehicle mode so chest becomes the Roof!)
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.42, 2.28, 1.88), matBlue);
                 chest.castShadow = true;
                 parts.torso.add(chest);
 
-                const whiteDoors = new THREE.Mesh(new THREE.BoxGeometry(2.46, 0.98, 1.3), matWhite);
-                whiteDoors.position.set(0, -0.15, -0.1);
-                parts.torso.add(whiteDoors);
-
-                const windshield = new THREE.Mesh(new THREE.BoxGeometry(1.98, 0.9, 2.02), matCabGlass);
-                windshield.position.set(0, 0.48, 0.05);
+                // Raked Front Police Windshield on Upper Chest (Becomes the sloped front windshield in Cruiser mode)
+                const windshield = new THREE.Mesh(new THREE.BoxGeometry(2.12, 0.96, 1.94), matCabGlass);
+                windshield.position.set(0, 0.56, 0.05);
+                windshield.rotation.x = -0.18;
                 windshield.userData.noOutline = true;
                 parts.torso.add(windshield);
 
-                const badge = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.72, 2.06), matEmblem);
-                badge.position.set(0, -0.45, 0.02);
+                // Side Cabin Windows & White Police Roof Pillar Trim
+                const cabinSideGlass = new THREE.Mesh(new THREE.BoxGeometry(2.48, 1.15, 0.86), matCabGlass);
+                cabinSideGlass.position.set(0, 0.12, 0.34);
+                cabinSideGlass.userData.noOutline = true;
+                parts.torso.add(cabinSideGlass);
+
+                const roofWhitePanel = new THREE.Mesh(new THREE.BoxGeometry(2.18, 1.08, 0.24), matWhite);
+                roofWhitePanel.position.set(0, -0.32, 0.88);
+                parts.torso.add(roofWhitePanel);
+
+                // Rescue Bots Police Badge on Chest Roof Panel
+                const badge = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.76, 0.28), matEmblem);
+                badge.position.set(0, -0.32, 0.92);
                 badge.userData.noOutline = true;
                 parts.torso.add(badge);
 
-                // Police Roof Lightbar
-                const lb = createLightbar(1.88);
-                lb.group.position.set(0, 1.25, 0.1);
+                // Rear Backlight Window & Trunk Spoiler Deck at Lower Torso (Becomes the rear trunk/spoiler when torso pitches +90°!)
+                const rearDeck = new THREE.Mesh(new THREE.BoxGeometry(2.46, 0.62, 1.86), matBlue);
+                rearDeck.position.set(0, -1.16, -0.02);
+                rearDeck.castShadow = true;
+                parts.torso.add(rearDeck);
+
+                const spoilerWing = new THREE.Mesh(new THREE.BoxGeometry(2.54, 0.22, 0.52), matBlack);
+                spoilerWing.position.set(0, -1.42, 0.72);
+                parts.torso.add(spoilerWing);
+
+                // Rear Cruiser Taillights on Lower Torso Edge
+                [-0.82, 0.82].forEach(tx => {
+                    const tailLamp = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.18, 0.34), matRedTail);
+                    tailLamp.position.set(tx, -1.44, 0.18);
+                    tailLamp.userData.noOutline = true;
+                    parts.torso.add(tailLamp);
+                });
+
+                // Police Siren Lightbar (Sits immediately behind Chase's head in Bot mode -> Shifts onto the Roof in Cruiser mode!)
+                const lb = createLightbar(1.94);
+                lb.group.position.set(0, 1.32, -0.38);
                 parts.torso.add(lb.group);
                 parts.lightbar = lb;
 
-                // Police Officer Helmet & Cartoon Cyan Optics
+                // 2. Police Officer Helmet & Cartoon Cyan Optics (Retracts into Cabin in Vehicle Mode)
                 const helm = new THREE.Mesh(new THREE.BoxGeometry(1.22, 1.18, 1.22), matBlue);
                 helm.castShadow = true;
                 parts.head.add(helm);
@@ -2232,54 +2264,120 @@
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
 
-                // Police Push-Bar Bumper & Grille
-                const pushBar = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.78, 0.58), matBlack);
-                pushBar.castShadow = true;
-                parts.frontAttachment.add(pushBar);
-
-                // Door-Wing Shoulders & Front Interceptor Wheels
+                // 3. Arms with Articulated White Police Doors & Sliding Rear Cruiser Wheels
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.leftArm : parts.rightArm;
-                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.18, 1.24), matBlue);
+                    const doorWingG = side === -1 ? parts.leftDoorWing : parts.rightDoorWing;
+                    const armWheelMount = side === -1 ? parts.leftArmWheelMount : parts.rightArmWheelMount;
+
+                    // Broad Police Shoulder Guard (Rear Quarter Panel in Cruiser Mode)
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.06, 1.26, 1.34), matBlue);
                     shoulder.castShadow = true;
                     armG.add(shoulder);
 
-                    // Angled Police Door Wing
-                    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.7, 1.18), matWhite);
-                    wing.position.set(side * 0.64, 0.45, -0.25);
-                    wing.rotation.z = side * -0.35;
-                    armG.add(wing);
+                    const shoulderGoldTrim = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.24, 1.38), matGold);
+                    shoulderGoldTrim.position.set(0, 0.48, 0);
+                    armG.add(shoulderGoldTrim);
 
-                    const wheel = createWheelAssembly(0.68, 0.46);
-                    wheel.position.set(side * 0.52, -0.35, 0.15);
-                    armG.add(wheel);
-                    parts.wheels.push(wheel);
+                    // Articulated White Police Door Panel (Angles outward as Shoulder Door-Wings in Bot mode -> Folds flat as Side Doors in Cruiser mode!)
+                    doorWingG.position.set(side * 0.56, -0.35, 0.08);
+                    doorWingG.rotation.z = side * -0.38;
+                    armG.add(doorWingG);
 
-                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.86, 1.28, 1.02), matWhite);
-                    forearm.position.set(0, -1.3, 0.1);
+                    const doorPanel = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.92, 1.24), matWhite);
+                    doorPanel.castShadow = true;
+                    doorWingG.add(doorPanel);
+
+                    const doorBlackStripe = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.88, 0.36), matBlack);
+                    doorBlackStripe.position.set(side * 0.02, 0, -0.18);
+                    doorWingG.add(doorBlackStripe);
+
+                    const doorGoldShield = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.46, 0.46), matGold);
+                    doorGoldShield.position.set(side * 0.03, -0.1, 0.22);
+                    doorWingG.add(doorGoldShield);
+
+                    // Rear Cruiser Wheel on Sliding Mount (Shifts downward in Vehicle mode so Rear Tires touch the ground!)
+                    armWheelMount.position.set(side * 0.54, -0.22, -0.05);
+                    armG.add(armWheelMount);
+
+                    const rearWheel = createWheelAssembly(0.68, 0.46);
+                    armWheelMount.add(rearWheel);
+                    parts.wheels.push(rearWheel);
+
+                    // White Forearm & Police Gauntlet
+                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.32, 1.12), matWhite);
+                    forearm.position.set(0, -1.32, 0.06);
+                    forearm.castShadow = true;
                     armG.add(forearm);
+
+                    const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.42, 1.16), matBlack);
+                    cuff.position.set(0, -1.85, 0.06);
+                    armG.add(cuff);
                 });
 
-                // Agile Interceptor Legs & Rear Spoiler/Wheels
+                // 4. Legs & Headlight Feet (Extend & Press Together in Front to Form the Front Hood, Fenders, Front Wheels & Bullbar Bumper!)
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
-                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.45, 1.14), matWhite);
-                    thigh.position.y = -0.5;
+                    const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
+                    const legWheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
+
+                    // White Upper Thigh / Cowl
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.12, 1.36, 1.24), matWhite);
+                    thigh.position.set(-side * 0.06, -0.52, 0);
                     legG.add(thigh);
 
-                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.48, 1.48), matBlue);
-                    shin.position.set(0, -1.45, 0.1);
+                    // Cobalt Blue Lower Leg / Split Front Cruiser Hood & Front Fender Half
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.32, 1.62, 1.56), matBlue);
+                    shin.position.set(-side * 0.08, -1.42, 0.12);
                     shin.castShadow = true;
                     legG.add(shin);
 
-                    const wheel = createWheelAssembly(0.68, 0.46);
-                    wheel.position.set(side * 0.55, -1.5, 0);
-                    legG.add(wheel);
-                    parts.wheels.push(wheel);
+                    // White Hood Stripe & Center Intake Scoop on Front of Shins (Forms the Police Hood when legs swing forward!)
+                    const hoodStripe = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.48, 0.34), matWhite);
+                    hoodStripe.position.set(-side * 0.08, -1.42, 0.76);
+                    legG.add(hoodStripe);
 
-                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.54, 1.78), matBlack);
-                    boot.position.set(0, -2.1, 0.25);
-                    legG.add(boot);
+                    const hoodGoldTrim = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.42, 0.38), matGold);
+                    hoodGoldTrim.position.set(-side * 0.48, -1.42, 0.78);
+                    legG.add(hoodGoldTrim);
+
+                    // Front Cruiser Wheel on Sliding Shin Mount (Shifts downward in Vehicle mode so Front Tires touch the ground!)
+                    legWheelMount.position.set(side * 0.56, -1.48, 0.05);
+                    legG.add(legWheelMount);
+
+                    const frontWheel = createWheelAssembly(0.68, 0.46);
+                    legWheelMount.add(frontWheel);
+                    parts.wheels.push(frontWheel);
+
+                    // Articulated Police Foot with Headlights & Push-Bar Bullbar Bumper right on his Feet!
+                    footG.position.set(-side * 0.08, -2.18, 0.22);
+                    legG.add(footG);
+
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.62, 1.82), matBlack);
+                    boot.castShadow = true;
+                    footG.add(boot);
+
+                    // Glowing Police Headlight Lens on Toe/Sole of Foot (Faces straight forward when legs swing to -90°!)
+                    const headlightLens = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.36, 0.42), matVisorGold);
+                    headlightLens.position.set(side * 0.22, -0.18, 0.66);
+                    headlightLens.userData.noOutline = true;
+                    footG.add(headlightLens);
+
+                    // Chrome Front Grille Half on Inward Side of Foot
+                    const footGrille = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.38, 0.54), matGrille);
+                    footGrille.position.set(-side * 0.34, -0.18, 0.62);
+                    footGrille.userData.noOutline = true;
+                    footG.add(footGrille);
+
+                    // Police Push-Bar Bullbar Guard on Bottom of Foot (Forms the front Police Push-Bumper in Cruiser Mode!)
+                    const bullbarBumper = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.28, 0.88), matBlack);
+                    bullbarBumper.position.set(0, -0.34, 0.42);
+                    bullbarBumper.castShadow = true;
+                    footG.add(bullbarBumper);
+
+                    const bullbarUpright = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.42, 0.96), matChrome);
+                    bullbarUpright.position.set(-side * 0.24, -0.36, 0.48);
+                    footG.add(bullbarUpright);
                 });
 
                 // DINOBOT MODE: CHASE STEGOSAURUS (Double Row of Dorsal Plates, Police Dino Head & Spiked Thagomizer Tail)
@@ -2577,17 +2675,30 @@
             // 1. Torso (Upright in Bot, Low Chassis in Vehicle, Horizontal Dinosaur Core in Dinobot)
             const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : 0) - smashOffset * 0.5;
             const dinoTorsoY = (rig.botType === 'HEATWAVE' ? 2.35 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.16 : 0);
-            const vehTorsoY = rig.botType === 'BOULDER' ? 1.52 : (rig.botType === 'HEATWAVE' ? 1.78 : 1.65);
-            const vehTorsoZ = rig.botType === 'BOULDER' ? -0.35 : (rig.botType === 'HEATWAVE' ? 1.15 : 0.25);
+            const vehTorsoY = rig.botType === 'BOULDER' ? 1.52 : (rig.botType === 'HEATWAVE' ? 1.78 : (rig.botType === 'CHASE' ? 1.42 : 1.65));
+            const vehTorsoZ = rig.botType === 'BOULDER' ? -0.35 : (rig.botType === 'HEATWAVE' ? 1.15 : (rig.botType === 'CHASE' ? -0.42 : 0.25));
             rig.torso.position.set(
                 0,
                 botTorsoY * (1 - m - d) + vehTorsoY * m + dinoTorsoY * d,
                 vehTorsoZ * m + 0.05 * d
             );
-            rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + (Math.PI * 0.48) * d;
+            const vehTorsoRotX = rig.botType === 'CHASE' ? (Math.PI / 2) * m : 0;
+            rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + vehTorsoRotX + (Math.PI * 0.48) * d;
 
-            // 2. Head: For Boulder, tucks in and angles forward to become the Bulldozer Cab!
-            // For Heatwave, retracts straight down into his Full Cab Chest!
+            // For Chase, his police lightbar sits immediately behind his head in Bot mode, then shifts onto the cruiser roof in Vehicle mode!
+            if (rig.botType === 'CHASE' && rig.lightbar) {
+                rig.lightbar.group.position.set(
+                    0,
+                    1.32 * (1 - m) + 0.18 * m,
+                    -0.38 * (1 - m) + 1.05 * m
+                );
+                rig.lightbar.group.rotation.x = -(Math.PI / 2) * m;
+            }
+
+            // 2. Head:
+            // - Boulder: Tucks in and angles forward to become the Bulldozer Cab!
+            // - Heatwave: Retracts straight down into his Full Cab Chest!
+            // - Chase: Tucks down inside his Cabin Roof Chest!
             if (rig.botType === 'BOULDER') {
                 rig.head.position.set(
                     0,
@@ -2607,6 +2718,15 @@
                 rig.head.rotation.x = 0;
                 const hwHeadScale = 1.0 * (1 - m - d) + 0.28 * m + 0.22 * d;
                 rig.head.scale.setScalar(hwHeadScale);
+            } else if (rig.botType === 'CHASE') {
+                rig.head.position.set(
+                    0,
+                    (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.38 * m + 1.95 * d,
+                    0.06 * (1 - m - d) - 0.42 * m + 0.15 * d
+                );
+                rig.head.rotation.x = 0;
+                const chaseHeadScale = 1.0 * (1 - m - d) + 0.25 * m + 0.22 * d;
+                rig.head.scale.setScalar(chaseHeadScale);
             } else {
                 const headRetract = Math.min(1, m + d);
                 rig.head.position.set(
@@ -2618,7 +2738,7 @@
                 rig.head.scale.setScalar(THREE.MathUtils.lerp(1.0, 0.22, headRetract));
             }
 
-            // 3. Front Attachment (Engine Nose Block for Boulder / Police Push-bar / Copter Nose)
+            // 3. Front Attachment (Engine Nose Block for Boulder / Copter Nose for Blades)
             if (rig.botType === 'BOULDER') {
                 rig.frontAttachment.position.set(
                     0,
@@ -2667,6 +2787,7 @@
             // 5. Left & Right Arms
             // - Boulder: Arms fold down along the chassis flanks to become Caterpillar Treads
             // - Heatwave: Arms wrap around the front of the cab (providing front wheels) while forearms & fingers swing inward to form the front bumper!
+            // - Chase: Arms tuck in along the cabin sides to form the White Police Doors & Rear Cruiser Wheels!
             const armSwingL = isMoving ? walkSin * 0.65 : 0;
             const armSwingR = isMoving ? -walkSin * 0.65 : 0;
             const dinoArmX = isPtero ? 1.15 : 1.45;
@@ -2675,9 +2796,9 @@
             const dinoArmRotL = isPtero ? Math.PI / 2 : armSwingL * 0.75;
             const dinoArmRotR = isPtero ? Math.PI / 2 : armSwingR * 0.75;
 
-            const vehArmX = rig.botType === 'BOULDER' ? 1.42 : (rig.botType === 'HEATWAVE' ? 1.34 : 1.48);
-            const vehArmY = rig.botType === 'BOULDER' ? 0.92 : (rig.botType === 'HEATWAVE' ? 1.14 : 1.25);
-            const vehArmZ = rig.botType === 'BOULDER' ? -0.68 : (rig.botType === 'HEATWAVE' ? 1.46 : 0.65);
+            const vehArmX = rig.botType === 'BOULDER' ? 1.42 : (rig.botType === 'HEATWAVE' ? 1.34 : (rig.botType === 'CHASE' ? 0.88 : 1.48));
+            const vehArmY = rig.botType === 'BOULDER' ? 0.92 : (rig.botType === 'HEATWAVE' ? 1.14 : (rig.botType === 'CHASE' ? 1.02 : 1.25));
+            const vehArmZ = rig.botType === 'BOULDER' ? -0.68 : (rig.botType === 'HEATWAVE' ? 1.46 : (rig.botType === 'CHASE' ? -1.18 : 0.65));
 
             rig.leftArm.position.set(
                 -1.78 * (1 - m - d) - vehArmX * m - dinoArmX * d,
@@ -2697,10 +2818,25 @@
                 rig.leftForearm.rotation.z = (Math.PI / 2) * m;
                 rig.rightForearm.rotation.z = -(Math.PI / 2) * m;
             }
+            if (rig.botType === 'CHASE') {
+                // Fold Chase's angled shoulder door-wings flat into the Police Cruiser side doors & shift rear wheels onto the ground!
+                if (rig.leftDoorWing && rig.rightDoorWing) {
+                    rig.leftDoorWing.rotation.z = 0.38 * (1 - m);
+                    rig.rightDoorWing.rotation.z = -0.38 * (1 - m);
+                    rig.leftDoorWing.position.y = -0.35 * (1 - m) - 0.85 * m;
+                    rig.rightDoorWing.position.y = -0.35 * (1 - m) - 0.85 * m;
+                }
+                if (rig.leftArmWheelMount && rig.rightArmWheelMount) {
+                    const armWheelZ = -0.05 * (1 - m) + 0.32 * m;
+                    rig.leftArmWheelMount.position.z = armWheelZ;
+                    rig.rightArmWheelMount.position.z = armWheelZ;
+                }
+            }
 
             // 6. Left & Right Legs
             // - Boulder: Legs swing forward & lock together so his Feet form the Bulldozer Bucket!
             // - Heatwave: Legs fold up behind the Cab to form the Rear Fire Truck Body & provide 2 tandem wheels on each side!
+            // - Chase: Legs swing forward (-PI/2) & press together in front of the cabin to form the Front Police Hood, Fenders, Front Wheels & Headlight/Bullbar Feet!
             const dinoLegX = isPtero ? 0.72 : 1.18;
             const dinoLegY = isPtero ? 1.85 : 2.25;
             const dinoLegZ = isPtero ? -1.05 : -1.18;
@@ -2748,6 +2884,27 @@
                     const wheelGroundShiftZ = -0.05 * (1 - m) + 0.36 * m;
                     rig.leftLegWheelMount.position.z = wheelGroundShiftZ;
                     rig.rightLegWheelMount.position.z = wheelGroundShiftZ;
+                }
+            } else if (rig.botType === 'CHASE') {
+                // In Police Cruiser mode: legs swing forward (-PI/2) and press together to form the sleek front hood, front wheels, headlights & push-bar bumper!
+                rig.leftLeg.position.set(
+                    -0.82 * (1 - m - d) - 0.74 * m - dinoLegX * d,
+                    2.35 * (1 - m - d) + 0.86 * m + dinoLegY * d,
+                    -0.05 * m + dinoLegZ * d
+                );
+                rig.rightLeg.position.set(
+                    0.82 * (1 - m - d) + 0.74 * m + dinoLegX * d,
+                    2.35 * (1 - m - d) + 0.86 * m + dinoLegY * d,
+                    -0.05 * m + dinoLegZ * d
+                );
+                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) - (Math.PI / 2) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) - (Math.PI / 2) * m + dinoLegRotR * d;
+
+                // Shift front shin wheel mounts downward (-Z in leg space -> -Y in world space when leg is rotated -90°) so front tires rest on the ground!
+                if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
+                    const frontWheelZ = 0.05 * (1 - m) - 0.16 * m;
+                    rig.leftLegWheelMount.position.z = frontWheelZ;
+                    rig.rightLegWheelMount.position.z = frontWheelZ;
                 }
             } else {
                 rig.leftLeg.position.set(
