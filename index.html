@@ -870,6 +870,101 @@
                 oscHi.start(now);
                 oscHi.stop(now + 0.6);
             }
+            playShipHorn() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Deep resonant dual-tone marine foghorn / ferry horn (110Hz A2 + 146.83Hz D3)
+                [110.0, 146.83, 220.0].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = idx === 2 ? 'sawtooth' : 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(idx === 2 ? 0.08 : 0.22, now + 0.12);
+                    gain.gain.setValueAtTime(idx === 2 ? 0.08 : 0.22, now + 1.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.45);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 1.5);
+                });
+            }
+            playDockClank() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Heavy metallic clank
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(85, now);
+                osc.frequency.exponentialRampToValueAtTime(28, now + 0.25);
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.38);
+            }
+            playMagnetZap() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Deep 60Hz magnetic buzz + arcing hum
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(60, now);
+                osc.frequency.linearRampToValueAtTime(120, now + 0.5);
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.linearRampToValueAtTime(0.25, now + 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.7);
+            }
+            playBoingSound() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Cartoon trampoline boing (upward pitch chirp + vibrato)
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.exponentialRampToValueAtTime(760, now + 0.28);
+                gain.gain.setValueAtTime(0.28, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.58);
+            }
+            playTargetSplat() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Target bell chime + wet paint pop
+                [1318.51, 1567.98].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                });
+            }
             ensureContinuousLoops() {
                 if (this.loopsReady || !this.ctx || this.ctx.state !== 'running') return;
                 const ctx = this.ctx;
@@ -1505,9 +1600,15 @@
             if (Math.abs(x) <= 16.0 && z >= 1180 && z <= 1278) {
                 return 3.4;
             }
-            // Docked Ferry Boat Deck
-            if (Math.abs(x - 36) <= 7.5 && z >= 1210 && z <= 1254) {
-                return 6.8;
+            // Docked or Sailing Ferry Boat Deck
+            if (typeof ferryController !== 'undefined' && ferryController && ferryController.currentPos) {
+                const fdx = x - ferryController.currentPos.x;
+                const fdz = z - ferryController.currentPos.z;
+                if (Math.abs(fdx) <= 7.5 && Math.abs(fdz) <= 20.0) {
+                    return ferryController.currentPos.y + 5.0;
+                }
+            } else if (Math.abs(x - 36) <= 7.5 && z >= 1210 && z <= 1254) {
+                return 5.0;
             }
             // Stunt Ramp Surfaces (allows vehicles & bots to smoothly drive and run up the ramp incline)
             for (let i = 0; i < ramps.length; i++) {
@@ -1542,6 +1643,9 @@
         }
 
         function getZoneName(x, z) {
+            if (typeof ferryController !== 'undefined' && ferryController && ferryController.currentPos && Math.hypot(x - ferryController.currentPos.x, z - ferryController.currentPos.z) < 32) return "SOUTH HARBOR FERRY";
+            if (Math.hypot(x + 32, z - 1160) < 30) return "HARBOR CRANE YARD";
+            if (Math.hypot(x + 1170, z - 95) < 45) return "DOC GREENE'S TESTING YARD";
             if (Math.hypot(x - 36, z + 45) < 18) return "HQ LAUNCH CATAPULT";
             if (Math.hypot(x - 82, z - 58) < 26) return "GRIFFIN ROCK DINER";
             if (Math.hypot(x + 1060, z - 42) < 32) return "ENERGON TURBO-CHARGER";
@@ -2881,64 +2985,171 @@
         scene.add(pierGroup);
         registerCullableObject(pierGroup, 0, 2, 1228, 65);
 
-        // 1A. Twin Harbor Gantry Cargo Cranes flanking the Pier
+        // 1A. South Harbor Gantry Cargo Cranes & Interactive High-Flying Magnet Crane
         const matCraneYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
         const matContainerRed = new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 });
         const matContainerBlue = new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad3 });
         const matContainerGreen = new THREE.MeshToonMaterial({ color: 0x16a34a, gradientMap: toonGrad3 });
         const matContainerOrange = new THREE.MeshToonMaterial({ color: 0xf97316, gradientMap: toonGrad3 });
 
-        [-32, 32].forEach((craneX, cIdx) => {
-            const craneZ = 1172;
+        // East Static Cargo Gantry Crane (x: 32, z: 1172)
+        {
+            const craneX = 32, craneZ = 1172;
             const cy = Math.max(0.5, getTerrainHeight(craneX, craneZ));
             const craneGroup = new THREE.Group();
             craneGroup.position.set(craneX, cy, craneZ);
 
-            // 4 Gantry Portal Legs
             [[-4.5, -4.5], [4.5, -4.5], [-4.5, 4.5], [4.5, 4.5]].forEach(([lx, lz]) => {
                 const leg = new THREE.Mesh(new THREE.BoxGeometry(1.4, 24, 1.4), matCraneYellow);
                 leg.position.set(lx, 12, lz);
                 leg.castShadow = true;
                 craneGroup.add(leg);
             });
-
-            // Upper Gantry Cross-Platform & Operator Cab
             const platform = new THREE.Mesh(new THREE.BoxGeometry(12, 2.2, 12), matCraneYellow);
             platform.position.y = 24.5;
             craneGroup.add(platform);
-
             const opCab = new THREE.Mesh(new THREE.BoxGeometry(5.5, 4.2, 5.5), matSteel);
             opCab.position.set(0, 27.5, 2.0);
             craneGroup.add(opCab);
-
             const opGlass = new THREE.Mesh(new THREE.BoxGeometry(5.7, 2.4, 4.2), matGlass);
             opGlass.position.set(0, 27.8, 2.5);
             craneGroup.add(opGlass);
-
-            // Long Horizontal Boom extending out over the Harbor Water (+Z)
             const boom = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.4, 38), matCraneYellow);
             boom.position.set(0, 29.8, 10);
             boom.castShadow = true;
             craneGroup.add(boom);
-
-            // Hoist Cables & Suspended Shipping Container
             const hoistCable = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 12, 8), matDarkSteel);
             hoistCable.position.set(0, 22.5, 22);
             craneGroup.add(hoistCable);
-
-            const slungContainer = new THREE.Mesh(
-                new THREE.BoxGeometry(5.2, 5.2, 11.5),
-                cIdx === 0 ? matContainerRed : matContainerBlue
-            );
+            const slungContainer = new THREE.Mesh(new THREE.BoxGeometry(5.2, 5.2, 11.5), matContainerBlue);
             slungContainer.position.set(0, 14.5, 22);
             slungContainer.castShadow = true;
             craneGroup.add(slungContainer);
-
             applyCartoonInkOutlines(craneGroup, 1.035, true);
             scene.add(craneGroup);
             registerCullableObject(craneGroup, craneX, cy + 16, craneZ + 8, 42);
             worldColliders.push({ x: craneX, z: craneZ, r: 6.5 });
-        });
+        }
+
+        // =====================================================================
+        // INTERACTIVE HIGH-FLYING MAGNETIC GANTRY CRANE (At X: -32, Z: 1172)
+        // =====================================================================
+        const craneInteractive = {
+            craneX: -32,
+            craneZ: 1172,
+            padX: -32,
+            padZ: 1148,
+            dropX: -32,
+            dropZ: 1210,
+            state: 'IDLE', // 'IDLE', 'LOCKING', 'HOISTING', 'SWINGING', 'RELEASING', 'RESETTING'
+            timer: 0,
+            cooldown: 0,
+            boomPivot: null,
+            cableMesh: null,
+            magnetGroup: null,
+            padLights: []
+        };
+
+        {
+            const cy = Math.max(0.5, getTerrainHeight(craneInteractive.craneX, craneInteractive.craneZ));
+            const craneGroup = new THREE.Group();
+            craneGroup.position.set(craneInteractive.craneX, cy, craneInteractive.craneZ);
+
+            [[-4.5, -4.5], [4.5, -4.5], [-4.5, 4.5], [4.5, 4.5]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(new THREE.BoxGeometry(1.4, 24, 1.4), matCraneYellow);
+                leg.position.set(lx, 12, lz);
+                leg.castShadow = true;
+                craneGroup.add(leg);
+            });
+            const platform = new THREE.Mesh(new THREE.BoxGeometry(12, 2.2, 12), matCraneYellow);
+            platform.position.y = 24.5;
+            craneGroup.add(platform);
+            const opCab = new THREE.Mesh(new THREE.BoxGeometry(5.5, 4.2, 5.5), matSteel);
+            opCab.position.set(0, 27.5, 2.0);
+            craneGroup.add(opCab);
+            const opGlass = new THREE.Mesh(new THREE.BoxGeometry(5.7, 2.4, 4.2), matGlass);
+            opGlass.position.set(0, 27.8, 2.5);
+            craneGroup.add(opGlass);
+
+            // Rotating Upper Boom Pivot
+            const boomPivot = new THREE.Group();
+            boomPivot.position.set(0, 29.8, 0);
+
+            const boom = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.4, 48), matCraneYellow);
+            boom.position.set(0, 0, 0);
+            boom.castShadow = true;
+            boomPivot.add(boom);
+
+            const cableMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 22, 8), matDarkSteel);
+            cableMesh.position.set(0, -11, -24);
+            boomPivot.add(cableMesh);
+
+            const magnetGroup = new THREE.Group();
+            magnetGroup.position.set(0, -21.5, -24);
+
+            const magnetPlate = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.4, 2.6, 1.1, 16),
+                matDarkSteel
+            );
+            magnetGroup.add(magnetPlate);
+
+            const magnetGlow = new THREE.Mesh(
+                new THREE.TorusGeometry(1.8, 0.35, 8, 20),
+                new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+            );
+            magnetGlow.rotation.x = Math.PI / 2;
+            magnetGlow.position.y = -0.45;
+            magnetGroup.add(magnetGlow);
+
+            const magnetBulb = new THREE.Mesh(
+                new THREE.SphereGeometry(0.65, 8, 8),
+                new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+            );
+            magnetBulb.position.y = 0.8;
+            magnetGroup.add(magnetBulb);
+
+            boomPivot.add(magnetGroup);
+            craneGroup.add(boomPivot);
+
+            craneInteractive.boomPivot = boomPivot;
+            craneInteractive.cableMesh = cableMesh;
+            craneInteractive.magnetGroup = magnetGroup;
+
+            applyCartoonInkOutlines(craneGroup, 1.035, true);
+            scene.add(craneGroup);
+            registerCullableObject(craneGroup, craneInteractive.craneX, cy + 16, craneInteractive.craneZ, 48);
+            worldColliders.push({ x: craneInteractive.craneX, z: craneInteractive.craneZ, r: 6.5 });
+        }
+
+        // Ground Target Pickup Pad for Crane Magnet at (-32, 1148)
+        {
+            const padY = Math.max(0.5, getTerrainHeight(craneInteractive.padX, craneInteractive.padZ));
+            const padMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(9.0, 0.35, 9.0),
+                new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.35 })
+            );
+            padMesh.position.set(craneInteractive.padX, padY + 0.18, craneInteractive.padZ);
+            padMesh.receiveShadow = true;
+            scene.add(padMesh);
+
+            const padBorder = new THREE.Mesh(
+                new THREE.RingGeometry(3.2, 4.1, 24).rotateX(-Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
+            );
+            padBorder.position.set(craneInteractive.padX, padY + 0.37, craneInteractive.padZ);
+            scene.add(padBorder);
+
+            [[-3.8, -3.8], [3.8, -3.8], [-3.8, 3.8], [3.8, 3.8]].forEach(([ox, oz]) => {
+                const bulb = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.35, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+                );
+                bulb.position.set(craneInteractive.padX + ox, padY + 0.5, craneInteractive.padZ + oz);
+                bulb.userData.noOutline = true;
+                scene.add(bulb);
+                craneInteractive.padLights.push(bulb);
+            });
+        }
 
         // 1B. Stacked Colorful Shipping Containers in South Harbor Yard
         const containerMats = [matContainerRed, matContainerBlue, matContainerGreen, matContainerOrange, matCraneYellow];
@@ -2972,52 +3183,289 @@
             worldColliders.push({ x: yard.x, z: yard.z, r: 9.5 });
         });
 
-        // 1C. Docked Griffin Rock Rescue Boat / Ferry in the Harbor Bay (floating in water at y = -0.45)
+        // =====================================================================
+        // 1C. RIDEABLE SOUTH HARBOR RESCUE FERRY BOAT
+        // =====================================================================
+        const ferryController = {
+            state: 'DOCKED', // 'DOCKED', 'BOARDING', 'CRUISING', 'DOCKING'
+            timeInState: 0,
+            cruiseTime: 0,
+            dockPos: new THREE.Vector3(36, -0.2, 1232),
+            dockRotY: 0,
+            currentPos: new THREE.Vector3(36, -0.2, 1232),
+            prevPos: new THREE.Vector3(36, -0.2, 1232),
+            currentRotY: 0,
+            rampMesh: null,
+            rampAngle: 0,
+            lastCommentTime: 0,
+            waypoints: [
+                { x: 36, z: 1232 },
+                { x: 36, z: 1290 },
+                { x: 90, z: 1370 },
+                { x: 210, z: 1410 },
+                { x: 340, z: 1350 },
+                { x: 250, z: 1270 },
+                { x: 90, z: 1240 },
+                { x: 36, z: 1232 }
+            ]
+        };
+
         const harborFerryGroup = new THREE.Group();
-        harborFerryGroup.position.set(36, -0.2, 1232);
-        const ferryHull = new THREE.Mesh(
-            new THREE.BoxGeometry(15, 5.2, 42),
-            new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 })
-        );
+        harborFerryGroup.position.copy(ferryController.dockPos);
+
+        const matFerryRed = new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 });
+        const matFerryWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 });
+
+        const ferryHull = new THREE.Mesh(new THREE.BoxGeometry(16, 5.2, 42), matFerryRed);
         ferryHull.position.y = 2.2;
         ferryHull.castShadow = true;
         harborFerryGroup.add(ferryHull);
 
         const ferryBow = new THREE.Mesh(
-            new THREE.ConeGeometry(10.6, 14, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4),
-            new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 })
+            new THREE.ConeGeometry(11.2, 14, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4),
+            matFerryRed
         );
         ferryBow.scale.set(1.0, 0.48, 1.0);
         ferryBow.position.set(0, 2.2, 27.5);
         harborFerryGroup.add(ferryBow);
 
-        const ferryDeck = new THREE.Mesh(
-            new THREE.BoxGeometry(13.2, 4.4, 28),
-            new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 })
+        const ferryCarDeck = new THREE.Mesh(
+            new THREE.BoxGeometry(12.4, 0.5, 36),
+            new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35 })
         );
-        ferryDeck.position.set(0, 7.0, -2);
-        ferryDeck.castShadow = true;
-        harborFerryGroup.add(ferryDeck);
+        ferryCarDeck.position.set(0, 4.8, 0);
+        ferryCarDeck.receiveShadow = true;
+        harborFerryGroup.add(ferryCarDeck);
 
-        const ferryBridge = new THREE.Mesh(
-            new THREE.BoxGeometry(11.8, 3.6, 10),
-            new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 })
-        );
-        ferryBridge.position.set(0, 11.0, 4);
+        for (let lz = -14; lz <= 14; lz += 4.5) {
+            const stripe = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.7, 2.5).rotateX(-Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+            );
+            stripe.position.set(0, 5.08, lz);
+            harborFerryGroup.add(stripe);
+        }
+
+        [-5.8, 5.8].forEach(rx => {
+            const rail = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 35), matHazardYellow);
+            rail.position.set(rx, 5.7, 0);
+            harborFerryGroup.add(rail);
+        });
+
+        const ferryBridge = new THREE.Mesh(new THREE.BoxGeometry(12.2, 3.8, 10), matFerryWhite);
+        ferryBridge.position.set(0, 10.2, 2.0);
+        ferryBridge.castShadow = true;
         harborFerryGroup.add(ferryBridge);
 
-        const ferryGlass = new THREE.Mesh(new THREE.BoxGeometry(12.1, 1.8, 8.2), matGlass);
-        ferryGlass.position.set(0, 11.3, 4.5);
+        const ferryGlass = new THREE.Mesh(new THREE.BoxGeometry(12.4, 1.8, 8.2), matGlass);
+        ferryGlass.position.set(0, 10.5, 2.5);
         harborFerryGroup.add(ferryGlass);
 
-        [-2.8, 2.8].forEach(stackX => {
+        [-3.0, 3.0].forEach(stackX => {
             const funnel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.5, 5.5, 10), matCraneYellow);
-            funnel.position.set(stackX, 14.5, -5);
+            funnel.position.set(stackX, 13.8, -7);
             harborFerryGroup.add(funnel);
         });
+
+        const helipadDisc = new THREE.Mesh(
+            new THREE.CylinderGeometry(4.2, 4.2, 0.25, 24),
+            new THREE.MeshBasicMaterial({ color: 0x0284c7 })
+        );
+        helipadDisc.position.set(0, 12.2, 2.0);
+        harborFerryGroup.add(helipadDisc);
+
+        const helipadRing = new THREE.Mesh(
+            new THREE.RingGeometry(3.4, 3.9, 24).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
+        );
+        helipadRing.position.set(0, 12.35, 2.0);
+        harborFerryGroup.add(helipadRing);
+
+        const hBar1 = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 3.2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+        hBar1.position.set(-1.0, 12.36, 2.0);
+        harborFerryGroup.add(hBar1);
+        const hBar2 = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 3.2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+        hBar2.position.set(1.0, 12.36, 2.0);
+        harborFerryGroup.add(hBar2);
+        const hCross = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.7).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+        hCross.position.set(0, 12.36, 2.0);
+        harborFerryGroup.add(hCross);
+
+        const ferryRampPivot = new THREE.Group();
+        ferryRampPivot.position.set(0, 4.8, -18);
+        const rampSlab = new THREE.Mesh(
+            new THREE.BoxGeometry(10.5, 0.45, 9.5),
+            new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.35 })
+        );
+        rampSlab.position.set(0, 0, -4.75);
+        rampSlab.receiveShadow = true;
+        ferryRampPivot.add(rampSlab);
+        harborFerryGroup.add(ferryRampPivot);
+        ferryController.rampMesh = ferryRampPivot;
+
+        // Fixed Pier Boarding Bridge connecting South Harbor Pier Deck to Ferry Mooring Slip
+        const pierBridge = new THREE.Mesh(
+            new THREE.BoxGeometry(11.2, 0.8, 16.5),
+            new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.35 })
+        );
+        pierBridge.position.set(24, 2.2, 1210);
+        pierBridge.rotation.y = 0.55;
+        scene.add(pierBridge);
+
         applyCartoonInkOutlines(harborFerryGroup, 1.035, true);
         scene.add(harborFerryGroup);
         registerCullableObject(harborFerryGroup, 36, 6, 1232, 45);
+
+        // =====================================================================
+        // 1D. DOC GREENE'S ANTI-GRAVITY TESTING YARD (X: -1170, Z: 95)
+        // =====================================================================
+        const testYard = {
+            baseX: -1170,
+            baseZ: 95,
+            bouncePad: { x: -1170, z: 88, radius: 5.5, mesh: null },
+            speedStrip: { minX: -1210, maxX: -1130, z: 114, width: 7.0 },
+            targets: []
+        };
+
+        const testYardGroup = new THREE.Group();
+        const testYardY = Math.max(0.5, getTerrainHeight(testYard.baseX, testYard.baseZ));
+        testYard.baseY = testYardY;
+        testYardGroup.position.set(testYard.baseX, testYardY, testYard.baseZ);
+
+        const testPlinth = new THREE.Mesh(
+            new THREE.BoxGeometry(86, 0.5, 60),
+            new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 })
+        );
+        testPlinth.position.y = 0.25;
+        testPlinth.receiveShadow = true;
+        testYardGroup.add(testPlinth);
+
+        const pBorder = new THREE.Mesh(new THREE.BoxGeometry(87.5, 0.65, 1.2), matHazardYellow);
+        pBorder.position.set(0, 0.45, -29.5);
+        testYardGroup.add(pBorder);
+
+        const cSignTy = document.createElement('canvas');
+        cSignTy.width = 512;
+        cSignTy.height = 128;
+        const cCtxTy = cSignTy.getContext('2d');
+        cCtxTy.fillStyle = '#0f172a';
+        cCtxTy.fillRect(0, 0, 512, 128);
+        cCtxTy.fillStyle = '#84cc16';
+        cCtxTy.font = 'bold 36px Arial, sans-serif';
+        cCtxTy.textAlign = 'center';
+        cCtxTy.textBaseline = 'middle';
+        cCtxTy.fillText("DOC GREENE'S TESTING YARD", 256, 64);
+        const texSignTy = new THREE.CanvasTexture(cSignTy);
+        const tySignFace = new THREE.Mesh(
+            new THREE.PlaneGeometry(16.5, 3.2),
+            new THREE.MeshBasicMaterial({ map: texSignTy })
+        );
+        tySignFace.position.set(0, 7.5, -28.5);
+        testYardGroup.add(tySignFace);
+
+        // 1. Super Mega-Bounce Pad at local (0, -7) => world (-1170, 88)
+        const bounceGroup = new THREE.Group();
+        bounceGroup.position.set(0, 0.5, -7);
+
+        const bounceRim = new THREE.Mesh(
+            new THREE.CylinderGeometry(5.8, 6.4, 0.85, 16),
+            matDarkSteel
+        );
+        bounceRim.position.y = 0.42;
+        bounceGroup.add(bounceRim);
+
+        const bounceMembrane = new THREE.Mesh(
+            new THREE.CylinderGeometry(5.2, 5.2, 0.45, 16),
+            new THREE.MeshToonMaterial({ color: 0x84cc16, gradientMap: toonGrad3 })
+        );
+        bounceMembrane.position.y = 0.85;
+        bounceGroup.add(bounceMembrane);
+
+        const bounceRingGlow = new THREE.Mesh(
+            new THREE.RingGeometry(3.8, 4.8, 20).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0x22d3ee, side: THREE.DoubleSide })
+        );
+        bounceRingGlow.position.y = 1.09;
+        bounceGroup.add(bounceRingGlow);
+
+        testYard.bouncePad.mesh = bounceMembrane;
+        testYardGroup.add(bounceGroup);
+
+        // 2. Supersonic Rainbow Speed Strip at local z: 19 => world z: 114
+        const stripMesh = new THREE.Mesh(
+            new THREE.BoxGeometry(80, 0.45, 7.0),
+            new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.25 })
+        );
+        stripMesh.position.set(0, 0.48, 19);
+        stripMesh.receiveShadow = true;
+        testYardGroup.add(stripMesh);
+
+        const chevronMats = [0xef4444, 0xf97316, 0xfacc15, 0x22c55e, 0x06b6d4, 0x3b82f6, 0xa855f7];
+        for (let cx = -34; cx <= 34; cx += 8) {
+            const chev = new THREE.Mesh(
+                new THREE.PlaneGeometry(1.6, 4.8).rotateX(-Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: chevronMats[Math.abs(cx) % chevronMats.length] })
+            );
+            chev.position.set(cx, 0.72, 19);
+            testYardGroup.add(chev);
+        }
+
+        // 3. 4 Interactive Color Splat Targets
+        const targetDefs = [
+            { id: 0, name: "Pink Splat Target", lx: 25, lz: -17, color: 0xf43f5e },
+            { id: 1, name: "Cyan Splat Target", lx: -25, lz: -17, color: 0x06b6d4 },
+            { id: 2, name: "Lime Splat Target", lx: 25, lz: 7, color: 0x84cc16 },
+            { id: 3, name: "Orange Splat Target", lx: -25, lz: 7, color: 0xf97316 }
+        ];
+
+        targetDefs.forEach(td => {
+            const tGroup = new THREE.Group();
+            tGroup.position.set(td.lx, 0.5, td.lz);
+
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 4.5, 8), matDarkSteel);
+            post.position.y = 2.25;
+            tGroup.add(post);
+
+            const discOuter = new THREE.Mesh(
+                new THREE.CylinderGeometry(2.4, 2.4, 0.45, 16).rotateX(Math.PI / 2),
+                new THREE.MeshToonMaterial({ color: td.color, gradientMap: toonGrad3 })
+            );
+            discOuter.position.y = 4.5;
+            tGroup.add(discOuter);
+
+            const discInner = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.4, 1.4, 0.5, 16).rotateX(Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0xffffff })
+            );
+            discInner.position.y = 4.5;
+            tGroup.add(discInner);
+
+            const discBull = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.65, 0.65, 0.55, 16).rotateX(Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: td.color })
+            );
+            discBull.position.y = 4.5;
+            tGroup.add(discBull);
+
+            testYardGroup.add(tGroup);
+
+            testYard.targets.push({
+                id: td.id,
+                name: td.name,
+                x: testYard.baseX + td.lx,
+                z: testYard.baseZ + td.lz,
+                color: td.color,
+                mesh: tGroup,
+                wobble: 0,
+                cooldown: 0
+            });
+        });
+
+        applyCartoonInkOutlines(testYardGroup, 1.03, true);
+        scene.add(testYardGroup);
+        registerCullableObject(testYardGroup, testYard.baseX, testYardY + 5, testYard.baseZ, 55);
+        worldColliders.push({ x: testYard.baseX - 35, z: testYard.baseZ, r: 2.5 });
+        worldColliders.push({ x: testYard.baseX + 35, z: testYard.baseZ, r: 2.5 });
 
         // 2. Volcano Ridge Caldera (-735, -755): Glowing Animated Lava Pool, Lava Vents & Rising Smoke Plumes
         const volcanoGroup = new THREE.Group();
@@ -5753,6 +6201,18 @@
                 GROUNDBRIDGE: [
                     "Whoa! Instant transit across Griffin Rock! Incredible!",
                     "Doc Greene's inventions never cease to amaze me!"
+                ],
+                FERRY: [
+                    "Smooth sailing! Boulder loves the ocean breeze!",
+                    "Full steam ahead, Captain Shaw!"
+                ],
+                CRANE: [
+                    "Whoa! Heavy lifting is usually my job! That was awesome!",
+                    "Up, up, and dropped right into action!"
+                ],
+                BOUNCE: [
+                    "BOING! Who knew a bulldozer could bounce so high?",
+                    "Doc Greene's trampoline rocks! Literally!"
                 ]
             },
             HEATWAVE: {
@@ -5815,6 +6275,18 @@
                 GROUNDBRIDGE: [
                     "GroundBridge traversal complete! Responding anywhere in seconds!",
                     "Rapid response teleporter! That saves travel time!"
+                ],
+                FERRY: [
+                    "Rescue Ferry on patrol! Harbor waters are all clear!",
+                    "Fire engine on deck! Ready for sea rescue!"
+                ],
+                CRANE: [
+                    "Aerial hoist complete! Bird's eye view of the harbor!",
+                    "Full throttle drop! Rescue Bots, roll to the rescue!"
+                ],
+                BOUNCE: [
+                    "Sky-high bounce! Heatwave airborne!",
+                    "Super bounce engaged! Woohoo!"
                 ]
             },
             CHASE: {
@@ -5877,6 +6349,18 @@
                 GROUNDBRIDGE: [
                     "Sub-space transit logged and approved! Area reached instantly!",
                     "Instant deployment across sector boundaries!"
+                ],
+                FERRY: [
+                    "Maritime patrol protocol active! Harbor perimeter secure!",
+                    "Shipboard stability confirmed. Excellent voyage!"
+                ],
+                CRANE: [
+                    "High-altitude crane maneuver authorized! Outstanding aerial clearance!",
+                    "Aerial deployment executed by the book!"
+                ],
+                BOUNCE: [
+                    "Vertical trajectory optimal! Approaching peak altitude!",
+                    "High-velocity vertical rebound confirmed!"
                 ]
             },
             BLADES: {
@@ -5939,6 +6423,18 @@
                 GROUNDBRIDGE: [
                     "Whoa! Did everything just turn inside out? THAT WAS AWESOME!",
                     "GroundBridge travel is almost as fast as flying!"
+                ],
+                FERRY: [
+                    "Helicopter landing on the ferry helipad! Woohoo!",
+                    "Look at the dolphins jumping in the bay!"
+                ],
+                CRANE: [
+                    "Woohoo! I'm flying without even spinning my rotors! DO IT AGAIN!",
+                    "Highest drop on the island! Woohoooo!"
+                ],
+                BOUNCE: [
+                    "Wooooohoooo! Even higher than my helicopter ceiling! Best bounce ever!",
+                    "Look at me soar! That's anti-gravity!"
                 ]
             }
         };
@@ -5991,7 +6487,13 @@
             lastDinerOrderTime: 0,
             lastDinerPickupTime: 0,
             portalCooldown: 0,    // GroundBridge teleport cooldown
-            chargerCooldown: 0    // Energon Turbo-Charger cooldown
+            chargerCooldown: 0,   // Energon Turbo-Charger cooldown
+            onFerry: false,       // Riding South Harbor Rescue Ferry
+            inCrane: false,       // Hoisted by Magnetic Gantry Crane
+            craneTimer: 0,
+            craneCooldown: 0,
+            bounceCooldown: 0,    // Anti-gravity bounce pad cooldown
+            lastSplatTime: 0
         };
 
         // Follow-Along AI Rescue Bot Wingman ("Buddy Bot")
@@ -6611,7 +7113,12 @@
             'INTERCOM': '📻',
             'CATAPULT': '🚀',
             'GROUNDBRIDGE': '🌀',
-            'ENERGON': '⚡'
+            'ENERGON': '⚡',
+            'FERRY': '🚢',
+            'CRANE': '🏗️',
+            'TESTING YARD': '🧪',
+            'BOUNCE': '🦘',
+            'TARGET': '🎯'
         };
 
         function getSpeakerAvatar(name, role) {
@@ -7153,6 +7660,74 @@
                     vz: Math.sin(ang) * spd,
                     gravity: -0.5,
                     life: 1.0 + Math.random() * 0.4
+                });
+            }
+        }
+
+        function spawnWaterWakeParticles(x, y, z, count = 16) {
+            const foamColors = [0xffffff, 0xe0f2fe, 0xbae6fd, 0x7dd3fc];
+            for (let i = 0; i < count; i++) {
+                const geo = new THREE.CylinderGeometry(0.6 + Math.random() * 0.8, 0.8 + Math.random() * 0.9, 0.2, 8);
+                const mesh = new THREE.Mesh(
+                    geo,
+                    new THREE.MeshBasicMaterial({ color: foamColors[i % foamColors.length], transparent: true, opacity: 0.85 })
+                );
+                mesh.position.set(x + (Math.random() - 0.5) * 4.5, -0.1, z + (Math.random() - 0.5) * 5.0);
+                scene.add(mesh);
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 1.5 + Math.random() * 3.5;
+                activeParticles.push({
+                    mesh,
+                    vx: Math.cos(ang) * spd,
+                    vy: 0.4 + Math.random() * 0.8,
+                    vz: Math.sin(ang) * spd - 3.5, // push outward behind ferry
+                    gravity: 1.2,
+                    life: 1.2 + Math.random() * 0.5
+                });
+            }
+        }
+
+        function spawnMagnetSparkParticles(x, y, z, count = 18) {
+            const sparkColors = [0x38bdf8, 0x0284c7, 0xfacc15, 0xffffff];
+            for (let i = 0; i < count; i++) {
+                const geo = new THREE.OctahedronGeometry(0.35 + Math.random() * 0.3, 0);
+                const mesh = new THREE.Mesh(
+                    geo,
+                    new THREE.MeshBasicMaterial({ color: sparkColors[i % sparkColors.length] })
+                );
+                mesh.position.set(x + (Math.random() - 0.5) * 4.0, y + (Math.random() - 0.5) * 2.0, z + (Math.random() - 0.5) * 4.0);
+                scene.add(mesh);
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 3.5 + Math.random() * 6.0;
+                activeParticles.push({
+                    mesh,
+                    vx: Math.cos(ang) * spd,
+                    vy: (Math.random() - 0.5) * 5.0,
+                    vz: Math.sin(ang) * spd,
+                    gravity: 3.5,
+                    life: 0.65 + Math.random() * 0.35
+                });
+            }
+        }
+
+        function spawnPaintSplatParticles(x, y, z, colorHex = 0xf43f5e, count = 22) {
+            for (let i = 0; i < count; i++) {
+                const geo = i % 2 === 0 ? new THREE.SphereGeometry(0.45 + Math.random() * 0.45, 6, 6) : new THREE.DodecahedronGeometry(0.5, 0);
+                const mesh = new THREE.Mesh(
+                    geo,
+                    new THREE.MeshBasicMaterial({ color: colorHex })
+                );
+                mesh.position.set(x, y, z);
+                scene.add(mesh);
+                const ang = Math.random() * Math.PI * 2;
+                const spd = 4.0 + Math.random() * 9.0;
+                activeParticles.push({
+                    mesh,
+                    vx: Math.cos(ang) * spd,
+                    vy: 2.0 + Math.random() * 8.0,
+                    vz: Math.sin(ang) * spd,
+                    gravity: 16.0,
+                    life: 1.1 + Math.random() * 0.4
                 });
             }
         }
@@ -9094,6 +9669,39 @@
                 mCtx.fill();
             });
 
+            // Draw Rideable South Harbor Ferry (Live Sailing Position)
+            if (typeof ferryController !== 'undefined' && ferryController && ferryController.currentPos) {
+                const fx = cx + ferryController.currentPos.x * mapScale;
+                const fz = cy + ferryController.currentPos.z * mapScale;
+                mCtx.fillStyle = '#e11d48';
+                mCtx.beginPath();
+                mCtx.arc(fx, fz, 4.2, 0, Math.PI * 2);
+                mCtx.fill();
+                mCtx.strokeStyle = '#ffffff';
+                mCtx.lineWidth = 1.2;
+                mCtx.stroke();
+            }
+
+            // Draw Magnetic Gantry Crane Yard
+            const crx = cx + craneInteractive.padX * mapScale;
+            const crz = cy + craneInteractive.padZ * mapScale;
+            mCtx.fillStyle = '#eab308';
+            mCtx.fillRect(crx - 3.2, crz - 3.2, 6.4, 6.4);
+            mCtx.strokeStyle = '#38bdf8';
+            mCtx.lineWidth = 1.2;
+            mCtx.strokeRect(crx - 3.2, crz - 3.2, 6.4, 6.4);
+
+            // Draw Doc Greene's Anti-Gravity Testing Yard
+            const tyx = cx + testYard.baseX * mapScale;
+            const tyz = cy + testYard.baseZ * mapScale;
+            mCtx.fillStyle = '#84cc16';
+            mCtx.beginPath();
+            mCtx.arc(tyx, tyz, 4.5, 0, Math.PI * 2);
+            mCtx.fill();
+            mCtx.strokeStyle = '#22d3ee';
+            mCtx.lineWidth = 1.2;
+            mCtx.stroke();
+
             // Draw Sky Stunt Hoops (Purple/Emerald Rings)
             stuntHoopRigs.forEach(rig => {
                 const hx = cx + rig.def.x * mapScale;
@@ -9393,25 +10001,29 @@
                 player.walkCycle += dt * Math.abs(player.speed) * 0.55;
             }
 
-            const nextX = player.pos.x + Math.sin(player.heading) * player.speed * dt;
-            const nextZ = player.pos.z + Math.cos(player.heading) * player.speed * dt;
-            const nextGroundY = getSurfaceHeight(nextX, nextZ);
-
-            // Blades Helicopter can fly freely over water & mountains; Ground bots stay on land across the 10x island
-            if (isFlyingCopter || nextGroundY > -1.5) {
-                player.pos.x = Math.max(-1820, Math.min(1820, nextX));
-                player.pos.z = Math.max(-1820, Math.min(1820, nextZ));
+            if (player.inCrane) {
+                player.speed = 0;
             } else {
-                player.speed *= -0.4;
-                player.hasWaypoint = false;
-                waypointGroup.visible = false;
+                const nextX = player.pos.x + Math.sin(player.heading) * player.speed * dt;
+                const nextZ = player.pos.z + Math.cos(player.heading) * player.speed * dt;
+                const nextGroundY = getSurfaceHeight(nextX, nextZ);
+
+                // Blades Helicopter can fly freely over water & mountains; Ground bots stay on land across the 10x island
+                if (isFlyingCopter || nextGroundY > -1.5) {
+                    player.pos.x = Math.max(-1820, Math.min(1820, nextX));
+                    player.pos.z = Math.max(-1820, Math.min(1820, nextZ));
+                } else {
+                    player.speed *= -0.4;
+                    player.hasWaypoint = false;
+                    waypointGroup.visible = false;
+                }
             }
 
             // Ground Collision against Buildings & Trees (Slide smoothly around obstacles during Tap-to-Move)
             const groundY = Math.max(-0.5, getSurfaceHeight(player.pos.x, player.pos.z));
             const currentClearance = player.pos.y - groundY;
 
-            if (currentClearance < 12) {
+            if (!player.inCrane && currentClearance < 12) {
                 const playerRadius = 2.4;
                 for (let i = 0; i < worldColliders.length; i++) {
                     const c = worldColliders[i];
@@ -9435,7 +10047,10 @@
             }
 
             // Continuous Hold Ascend/Descend keys for Blades Helicopter
-            if (isFlyingCopter) {
+            if (player.inCrane) {
+                player.grounded = false;
+                player.vy = 0;
+            } else if (isFlyingCopter) {
                 if (input.keys['KeyQ']) player.flightAlt = Math.min(95, player.flightAlt + 28 * dt);
                 if (input.keys['KeyC']) player.flightAlt = Math.max(2, player.flightAlt - 28 * dt);
                 const targetHoverY = groundY + player.flightAlt + Math.sin(now * 0.004) * 0.45;
@@ -9978,6 +10593,310 @@
                     }
                 }
             });
+
+            // =================================================================
+            // 1C. ANIMATE & UPDATE SOUTH HARBOR RESCUE FERRY BOAT
+            // =================================================================
+            if (typeof ferryController !== 'undefined' && ferryController) {
+                ferryController.timeInState += dt;
+                ferryController.prevPos.copy(ferryController.currentPos);
+
+                if (ferryController.state === 'DOCKED') {
+                    ferryController.rampAngle = THREE.MathUtils.lerp(ferryController.rampAngle, 0.42, dt * 2.5);
+                    const dFerryX = Math.abs(player.pos.x - ferryController.currentPos.x);
+                    const dFerryZ = Math.abs(player.pos.z - ferryController.currentPos.z);
+                    const onCarDeck = dFerryX < 6.2 && dFerryZ < 18.5 && player.pos.y >= ferryController.currentPos.y + 4.0 && player.pos.y <= ferryController.currentPos.y + 8.5;
+
+                    if (onCarDeck) {
+                        if (!player.onFerry) {
+                            player.onFerry = true;
+                            sfx.playDockClank();
+                            showToast("🚢 S.S. GRIFFIN ROCK", "Welcome aboard the Rescue Ferry!");
+                            speakBotCatchphrase(player.botType, 'FERRY');
+                            triggerNPCSpeech("Captain Shaw", "Harbor Master", "Welcome aboard the Rescue Ferry! All aboard for the South Harbor cruise!", { x: 36, y: 5.5, z: 1232 }, true);
+                        }
+                        if (ferryController.timeInState > 2.2) {
+                            ferryController.state = 'CRUISING';
+                            ferryController.timeInState = 0;
+                            ferryController.cruiseTime = 0;
+                            sfx.playShipHorn();
+                            showToast("🚢 CAST OFF!", "Ferry sailing across South Harbor Bay!");
+                        }
+                    }
+                } else if (ferryController.state === 'CRUISING') {
+                    ferryController.rampAngle = THREE.MathUtils.lerp(ferryController.rampAngle, -0.65, dt * 2.5);
+                    ferryController.cruiseTime += dt * 0.040; // ~25s for the harbor bay circuit
+
+                    const wps = ferryController.waypoints;
+                    const totalLegs = wps.length - 1;
+                    const progress = Math.min(0.999, ferryController.cruiseTime) * totalLegs;
+                    const legIdx = Math.floor(progress);
+                    const legFrac = progress - legIdx;
+                    const p0 = wps[legIdx];
+                    const p1 = wps[legIdx + 1];
+
+                    const curX = THREE.MathUtils.lerp(p0.x, p1.x, legFrac);
+                    const curZ = THREE.MathUtils.lerp(p0.z, p1.z, legFrac);
+                    const targetHeading = Math.atan2(p1.x - p0.x, p1.z - p0.z);
+
+                    ferryController.currentPos.x = curX;
+                    ferryController.currentPos.z = curZ;
+                    ferryController.currentRotY = THREE.MathUtils.lerp(ferryController.currentRotY, targetHeading, dt * 2.2);
+
+                    if (ferryController.cruiseTime >= 1.0) {
+                        ferryController.state = 'DOCKED';
+                        ferryController.timeInState = 0;
+                        ferryController.currentPos.copy(ferryController.dockPos);
+                        ferryController.currentRotY = ferryController.dockRotY;
+                        sfx.playDockClank();
+                        showToast("🚢 HARBOR SLIP", "Ferry docked safely at South Harbor pier!");
+                        triggerNPCSpeech("Captain Shaw", "Harbor Master", "We have arrived back at South Harbor! Safe travels, Rescue Bots!", { x: 36, y: 5.5, z: 1232 }, true);
+                    }
+
+                    // Periodic water wake particles behind the ferry
+                    if (Math.random() < 0.35) {
+                        const sternX = ferryController.currentPos.x - Math.sin(ferryController.currentRotY) * 20;
+                        const sternZ = ferryController.currentPos.z - Math.cos(ferryController.currentRotY) * 20;
+                        spawnWaterWakeParticles(sternX, 0, sternZ, 4);
+                    }
+                }
+
+                // Wave bobbing & rocking motion
+                const ferryWaveY = -0.2 + Math.sin(now * 0.0028) * 0.28;
+                const ferryRoll = Math.sin(now * 0.0022) * 0.025;
+                const ferryPitch = Math.cos(now * 0.0019) * 0.018;
+
+                ferryController.currentPos.y = ferryWaveY;
+                harborFerryGroup.position.copy(ferryController.currentPos);
+                harborFerryGroup.rotation.set(ferryPitch, ferryController.currentRotY, ferryRoll);
+                if (ferryController.rampMesh) {
+                    ferryController.rampMesh.rotation.x = ferryController.rampAngle;
+                }
+
+                // Carry player & buddy bot with ferry displacement
+                const fDeltaX = ferryController.currentPos.x - ferryController.prevPos.x;
+                const fDeltaZ = ferryController.currentPos.z - ferryController.prevPos.z;
+
+                const curDistToFerry = Math.hypot(player.pos.x - ferryController.currentPos.x, player.pos.z - ferryController.currentPos.z);
+                if (player.onFerry) {
+                    if (curDistToFerry < 22 && !isFlyingCopter) {
+                        player.pos.x += fDeltaX;
+                        player.pos.z += fDeltaZ;
+                    } else if (curDistToFerry >= 24) {
+                        player.onFerry = false;
+                    }
+                }
+
+                if (buddyBot.botType) {
+                    const bDistToFerry = Math.hypot(buddyBot.pos.x - ferryController.currentPos.x, buddyBot.pos.z - ferryController.currentPos.z);
+                    if (bDistToFerry < 22 && !buddyBot.flightAlt) {
+                        buddyBot.pos.x += fDeltaX;
+                        buddyBot.pos.z += fDeltaZ;
+                    }
+                }
+            }
+
+            // =================================================================
+            // 3. ANIMATE & UPDATE HIGH-FLYING MAGNETIC GANTRY CRANE
+            // =================================================================
+            if (typeof craneInteractive !== 'undefined' && craneInteractive) {
+                if (craneInteractive.cooldown > 0) craneInteractive.cooldown -= dt;
+
+                // Animate Ground Pickup Pad Amber/Cyan Strobes
+                craneInteractive.padLights.forEach((light, lIdx) => {
+                    const strobeCycle = (Math.floor(now / 130) + lIdx) % 2 === 0;
+                    light.material.color.setHex(strobeCycle ? 0xfacc15 : 0x38bdf8);
+                });
+
+                if (craneInteractive.state === 'IDLE') {
+                    craneInteractive.boomPivot.rotation.y = THREE.MathUtils.lerp(craneInteractive.boomPivot.rotation.y, 0, dt * 2.0);
+                    craneInteractive.cableMesh.scale.y = THREE.MathUtils.lerp(craneInteractive.cableMesh.scale.y, 1.0, dt * 3.0);
+                    craneInteractive.cableMesh.position.y = -11;
+                    craneInteractive.magnetGroup.position.y = -21.5;
+
+                    const distToCranePad = Math.hypot(player.pos.x - craneInteractive.padX, player.pos.z - craneInteractive.padZ);
+                    if (distToCranePad < 4.5 && player.grounded && craneInteractive.cooldown <= 0 && !player.inCrane) {
+                        player.inCrane = true;
+                        player.speed = 0;
+                        craneInteractive.state = 'LOCKING';
+                        craneInteractive.timer = 0.75;
+                        sfx.playMagnetZap();
+                        spawnMagnetSparkParticles(craneInteractive.padX, player.pos.y + 1.5, craneInteractive.padZ, 22);
+                        showToast("🧲 GANTRY CRANE!", "Electromagnet locked onto Rescue Bot!");
+                        speakBotCatchphrase(player.botType, 'CRANE');
+                        triggerNPCSpeech("Graham Burns", "Chief Engineer", "Magnetic hoist engaged! Fasten your gears for a high-flying swing!", { x: craneInteractive.craneX, y: 28, z: craneInteractive.craneZ }, true);
+                    }
+                } else if (craneInteractive.state === 'LOCKING') {
+                    craneInteractive.timer -= dt;
+                    player.pos.x = craneInteractive.padX;
+                    player.pos.z = craneInteractive.padZ;
+                    player.speed = 0;
+                    if (craneInteractive.timer <= 0) {
+                        craneInteractive.state = 'HOISTING';
+                        craneInteractive.timer = 1.35;
+                        sfx.playWarpWhoosh();
+                    }
+                } else if (craneInteractive.state === 'HOISTING') {
+                    craneInteractive.timer -= dt;
+                    const hoistFrac = 1.0 - Math.max(0, craneInteractive.timer / 1.35);
+                    const hoistY = THREE.MathUtils.lerp(2.0, 24.0, hoistFrac);
+                    player.pos.x = craneInteractive.padX;
+                    player.pos.z = craneInteractive.padZ;
+                    player.pos.y = hoistY;
+                    player.speed = 0;
+
+                    const cableLen = Math.max(2.0, 26.0 - hoistY);
+                    craneInteractive.cableMesh.scale.y = cableLen / 22.0;
+                    craneInteractive.cableMesh.position.y = -cableLen * 0.5;
+                    craneInteractive.magnetGroup.position.y = -cableLen - 0.4;
+
+                    if (Math.random() < 0.3) {
+                        spawnMagnetSparkParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 4);
+                    }
+
+                    if (craneInteractive.timer <= 0) {
+                        craneInteractive.state = 'SWINGING';
+                        craneInteractive.timer = 1.6;
+                    }
+                } else if (craneInteractive.state === 'SWINGING') {
+                    craneInteractive.timer -= dt;
+                    const swingFrac = 1.0 - Math.max(0, craneInteractive.timer / 1.6);
+                    const swingAngle = swingFrac * Math.PI; // 180 degree rotation from north pad to south drop
+                    craneInteractive.boomPivot.rotation.y = swingAngle;
+
+                    const boomRadius = 24.0;
+                    const rad = -Math.PI * 0.5 + swingAngle;
+                    const curBx = craneInteractive.craneX + Math.cos(rad) * boomRadius;
+                    const curBz = craneInteractive.craneZ - Math.sin(rad) * boomRadius;
+
+                    player.pos.x = curBx;
+                    player.pos.z = curBz;
+                    player.pos.y = 24.5;
+                    player.heading = swingAngle;
+                    player.speed = 0;
+
+                    if (craneInteractive.timer <= 0) {
+                        craneInteractive.state = 'RELEASING';
+                        craneInteractive.timer = 0.1;
+                    }
+                } else if (craneInteractive.state === 'RELEASING') {
+                    player.inCrane = false;
+                    craneInteractive.cooldown = 4.5;
+                    craneInteractive.state = 'RESETTING';
+                    craneInteractive.timer = 1.8;
+
+                    sfx.playDockClank();
+                    sfx.playMagnetZap();
+                    spawnMagnetSparkParticles(player.pos.x, player.pos.y, player.pos.z, 28);
+
+                    player.heading = 0; // Launch towards South Harbor bay stunt jump
+                    player.speed = 46.0;
+                    player.vy = 24.0;
+                    player.grounded = false;
+                    player.boostTimer = Math.max(player.boostTimer, 4.0);
+
+                    showToast("🚀 CRANE LAUNCH!", "Super Sky Launch across South Harbor!");
+                    speakBotCatchphrase(player.botType, 'STUNT');
+                } else if (craneInteractive.state === 'RESETTING') {
+                    craneInteractive.timer -= dt;
+                    craneInteractive.boomPivot.rotation.y = THREE.MathUtils.lerp(craneInteractive.boomPivot.rotation.y, 0, dt * 2.2);
+                    craneInteractive.cableMesh.scale.y = THREE.MathUtils.lerp(craneInteractive.cableMesh.scale.y, 1.0, dt * 2.5);
+                    craneInteractive.cableMesh.position.y = -11;
+                    craneInteractive.magnetGroup.position.y = -21.5;
+
+                    if (craneInteractive.timer <= 0) {
+                        craneInteractive.state = 'IDLE';
+                    }
+                }
+            }
+
+            // =================================================================
+            // 4. ANIMATE & UPDATE DOC GREENE'S ANTI-GRAVITY TESTING YARD
+            // =================================================================
+            if (typeof testYard !== 'undefined' && testYard) {
+                if (player.bounceCooldown > 0) player.bounceCooldown -= dt;
+                const tyBaseY = testYard.baseY || 0.5;
+
+                // 1. Super Mega-Bounce Pad at (-1170, 88)
+                const distToBounce = Math.hypot(player.pos.x - testYard.bouncePad.x, player.pos.z - testYard.bouncePad.z);
+                if (distToBounce < testYard.bouncePad.radius && player.pos.y < tyBaseY + 4.5 && player.bounceCooldown <= 0) {
+                    player.bounceCooldown = 1.1;
+                    player.grounded = false;
+                    player.vy = 52.0; // Launches 50m high into orbit!
+                    player.speed = Math.max(player.speed + 12.0, 42.0);
+                    player.boostTimer = Math.max(player.boostTimer, 3.5);
+
+                    sfx.playBoingSound();
+                    spawnBurstParticles(testYard.bouncePad.x, tyBaseY + 1.2, testYard.bouncePad.z, 0x84cc16, 26, 1.6);
+                    spawnSparkleGlints(testYard.bouncePad.x, tyBaseY + 1.5, testYard.bouncePad.z, 20);
+
+                    if (testYard.bouncePad.mesh) {
+                        testYard.bouncePad.mesh.scale.set(1.3, 0.35, 1.3);
+                    }
+
+                    showToast("🧪 MEGA BOUNCE PAD!", "50-Meter Orbital Super Bounce!");
+                    speakBotCatchphrase(player.botType, 'BOUNCE');
+                    triggerNPCSpeech("Frankie Greene", "Cadet", "Woohoo! Look at that orbital hangtime! High altitude test complete!", { x: testYard.baseX, y: tyBaseY + 4, z: testYard.baseZ }, true);
+                }
+                if (testYard.bouncePad.mesh) {
+                    testYard.bouncePad.mesh.scale.lerp(new THREE.Vector3(1, 1, 1), dt * 6.0);
+                }
+
+                // 2. Supersonic Rainbow Speed Strip at x: [-1210, -1130], z: 114
+                const inSpeedStrip = (player.pos.x >= testYard.speedStrip.minX && player.pos.x <= testYard.speedStrip.maxX &&
+                                      Math.abs(player.pos.z - testYard.speedStrip.z) < (testYard.speedStrip.width * 0.5) &&
+                                      player.pos.y < tyBaseY + 4.5);
+                if (inSpeedStrip) {
+                    player.speed = Math.min(84.0, player.speed + 46.0 * dt);
+                    player.boostTimer = Math.max(player.boostTimer, 2.5);
+                    if (Math.random() < 0.45) {
+                        spawnSparkleGlints(player.pos.x, player.pos.y + 0.8, player.pos.z, 4);
+                    }
+                }
+
+                // 3. 4 Interactive Color Splat Targets
+                const hwAimX = player.pos.x + Math.sin(player.heading) * 14;
+                const hwAimZ = player.pos.z + Math.cos(player.heading) * 14;
+                const waterShooting = player.waterTimer > 0 && player.botType === 'HEATWAVE';
+
+                testYard.targets.forEach(tgt => {
+                    if (tgt.cooldown > 0) tgt.cooldown -= dt;
+                    if (tgt.wobble > 0) {
+                        tgt.wobble -= dt * 4.5;
+                        tgt.mesh.rotation.z = Math.sin(tgt.wobble * 12.0) * 0.35;
+                        tgt.mesh.rotation.y = Math.cos(tgt.wobble * 10.0) * 0.25;
+                    } else {
+                        tgt.mesh.rotation.z = 0;
+                        tgt.mesh.rotation.y = 0;
+                    }
+
+                    if (tgt.cooldown <= 0) {
+                        const distToTgt = Math.hypot(player.pos.x - tgt.x, player.pos.z - tgt.z);
+                        const hitByRam = distToTgt < 4.2 && Math.abs(player.pos.y - (tyBaseY + 4.5)) < 4.2;
+                        const hitByWater = waterShooting && (Math.hypot(hwAimX - tgt.x, hwAimZ - tgt.z) < 12.0 || distToTgt < 14.0);
+
+                        if (hitByRam || hitByWater) {
+                            tgt.cooldown = 1.4;
+                            tgt.wobble = 1.0;
+                            sfx.playTargetSplat();
+                            spawnPaintSplatParticles(tgt.x, tyBaseY + 4.5, tgt.z, tgt.color, 24);
+                            showToast("🎯 TARGET HIT!", `${tgt.name} Splatted!`);
+
+                            progression.totalStuntsCompleted = (progression.totalStuntsCompleted || 0) + 1;
+                            saveProgression();
+
+                            const newRank = getRescueStarRank();
+                            if (newRank.level > lastKnownRankLevel) {
+                                lastKnownRankLevel = newRank.level;
+                                sfx.playRankUp();
+                                spawnBurstParticles(player.pos.x, player.pos.y + 3.5, player.pos.z, 0xfacc15, 22, 1.45);
+                                showToast(`RANK UP! ${newRank.stars}`, `${newRank.title} Achieved!`);
+                                speakBotCatchphrase(player.botType, 'RESCUE');
+                            }
+                        }
+                    }
+                });
+            }
 
             // Animate & Check Sky Stunt Hoops
             stuntHoopRigs.forEach((rig, idx) => {
