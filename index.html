@@ -1225,6 +1225,19 @@
                 h = h * flatFactor + 3.0 * (1 - flatFactor);
             }
 
+            // 5B. South Harbor Bay Inlet (carving deep blue ocean bay water from quay at z=1184 out to sea)
+            if (z >= 1184) {
+                const bayHalfWidth = 130.0 + (z - 1184) * 0.48;
+                const ax = Math.abs(x);
+                if (ax < bayHalfWidth + 50.0) {
+                    const bayZBlend = Math.min(1.0, Math.max(0.0, (z - 1184.0) / 14.0));
+                    const bayXBlend = Math.min(1.0, Math.max(0.0, (ax - (bayHalfWidth - 30.0)) / 80.0));
+                    const seabedDepth = -6.8;
+                    const targetH = h * (1.0 - bayZBlend) + seabedDepth * bayZBlend;
+                    h = targetH * (1.0 - bayXBlend) + h * bayXBlend;
+                }
+            }
+
             // 6. Flatten West Tech & Industrial Park (around -1120, 25)
             const distWestHub = Math.hypot(x + 1120, z - 25);
             if (distWestHub < 165) {
@@ -1263,6 +1276,18 @@
             }
 
             return h;
+        }
+
+        function getSurfaceHeight(x, z) {
+            // South Harbor Pier Dock Deck
+            if (Math.abs(x) <= 16.0 && z >= 1180 && z <= 1278) {
+                return 3.4;
+            }
+            // Docked Ferry Boat Deck
+            if (Math.abs(x - 36) <= 7.5 && z >= 1210 && z <= 1254) {
+                return 6.8;
+            }
+            return getTerrainHeight(x, z);
         }
 
         function isPointOnRoad(x, z) {
@@ -1473,8 +1498,8 @@
 
             // Griffin Town & Firehouse HQ Central Plaza
             drawPavedPlaza(0, 6, 220, 160, 20);
-            // South Harbor Cargo Port Concrete Apron
-            drawPavedPlaza(0, 1140, 210, 120, 16);
+            // South Harbor Cargo Port Concrete Apron (meeting South Harbor Bay Quay at z = 1186)
+            drawPavedPlaza(0, 1133, 210, 106, 16);
             // West Tech & Industrial Village Plaza
             drawPavedPlaza(-1120, 25, 170, 140, 16);
             // North Observatory Research Plaza
@@ -1881,16 +1906,50 @@
         registerCullableObject(lighthouseGroup, 1180, lhY + 24, 60, 95);
         worldColliders.push({ x: 1180, z: 60, r: 8.5 });
 
-        // South Harbor Pier, Cargo Cranes, Stacked Shipping Containers & Docked Rescue Ferry (z = +1120 to +1250)
-        const pier = new THREE.Mesh(
-            new THREE.BoxGeometry(32, 3.6, 88),
+        // South Harbor Seawall Bulkhead along the concrete quay apron (z = 1183.5)
+        const harborSeawall = new THREE.Mesh(
+            new THREE.BoxGeometry(212, 7.5, 4.2),
+            new THREE.MeshToonMaterial({ color: 0x64748b, gradientMap: toonGrad3 })
+        );
+        harborSeawall.position.set(0, -0.4, 1183.5);
+        harborSeawall.receiveShadow = true;
+        applyCartoonInkOutlines(harborSeawall, 1.02, true);
+        scene.add(harborSeawall);
+        registerCullableObject(harborSeawall, 0, 1, 1184, 115);
+
+        // South Harbor Pier Dock extending out over South Harbor Bay Water (z = 1180 to 1276)
+        const pierGroup = new THREE.Group();
+        const pierDeck = new THREE.Mesh(
+            new THREE.BoxGeometry(32, 4.0, 96),
             new THREE.MeshToonMaterial({ color: 0x9a3412, gradientMap: toonGrad3 })
         );
-        pier.position.set(0, 1.8, 1215);
-        pier.receiveShadow = true;
-        applyCartoonInkOutlines(pier, 1.03, true);
-        scene.add(pier);
-        registerCullableObject(pier, 0, 2, 1215, 65);
+        pierDeck.position.set(0, 1.4, 1228);
+        pierDeck.receiveShadow = true;
+        pierDeck.castShadow = true;
+        applyCartoonInkOutlines(pierDeck, 1.03, true);
+        pierGroup.add(pierDeck);
+
+        // Marine Wooden / Concrete Support Pilings under the Pier
+        const matPiling = new THREE.MeshToonMaterial({ color: 0x475569, gradientMap: toonGrad3 });
+        for (let pz = 1192; pz <= 1268; pz += 15.2) {
+            [-13, 13].forEach(px => {
+                const piling = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 12, 8), matPiling);
+                piling.position.set(px, -2.5, pz);
+                pierGroup.add(piling);
+            });
+        }
+
+        // Yellow Mooring Cleats / Bollards along Pier edges
+        const matBollard = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
+        for (let bz = 1196; bz <= 1266; bz += 17.5) {
+            [-15, 15].forEach(bx => {
+                const bollard = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.65, 1.4, 8), matBollard);
+                bollard.position.set(bx, 3.8, bz);
+                pierGroup.add(bollard);
+            });
+        }
+        scene.add(pierGroup);
+        registerCullableObject(pierGroup, 0, 2, 1228, 65);
 
         // 1A. Twin Harbor Gantry Cargo Cranes flanking the Pier
         const matCraneYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
@@ -1983,9 +2042,9 @@
             worldColliders.push({ x: yard.x, z: yard.z, r: 9.5 });
         });
 
-        // 1C. Docked Griffin Rock Rescue Boat / Ferry in the Harbor Bay
+        // 1C. Docked Griffin Rock Rescue Boat / Ferry in the Harbor Bay (floating in water at y = -0.45)
         const harborFerryGroup = new THREE.Group();
-        harborFerryGroup.position.set(36, 0.2, 1232);
+        harborFerryGroup.position.set(36, -0.2, 1232);
         const ferryHull = new THREE.Mesh(
             new THREE.BoxGeometry(15, 5.2, 42),
             new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 })
@@ -4815,7 +4874,7 @@
         // PERSISTENT PROGRESSION (Release-Version Scoped localStorage)
         // & DYNAMIC ENDLESS EMERGENCY SPAWNER + RESCUE STAR RANKS
         // =====================================================================
-        const RELEASE_VERSION = '2026.11.02.3';
+        const RELEASE_VERSION = '2026.11.02.4';
         const PROGRESSION_STORAGE_PREFIX = 'rescue_bots_progression_';
         const PROGRESSION_STORAGE_KEY = `${PROGRESSION_STORAGE_PREFIX}${RELEASE_VERSION}`;
         const progression = {
@@ -5580,7 +5639,7 @@
             { x: 0, z: -740, alt: 0 },
             { x: -740, z: 25, alt: 0 },
             // Outer District Landmark Treasures
-            { x: -25, z: 1235, alt: 6.5 },   // Aboard the South Harbor Rescue Ferry deck!
+            { x: 36, z: 1230, alt: 8.5 },    // Aboard the South Harbor Rescue Ferry deck!
             { x: 35, z: 1155, alt: 0 },      // Under the South Harbor Gantry Crane
             { x: -705, z: -725, alt: 0 },    // Volcano Ridge Rim
             { x: 0, z: -1125, alt: 0 },      // North Observatory Courtyard
@@ -6274,7 +6333,7 @@
                 buddyBot.pos.z += Math.cos(buddyBot.heading) * buddyBot.speed * dt;
             }
 
-            const groundY = Math.max(0.0, getTerrainHeight(buddyBot.pos.x, buddyBot.pos.z));
+            const groundY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z));
             if (isFlying) {
                 const targetAlt = Math.max(14, player.flightAlt + Math.sin(now * 0.003) * 1.5);
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, groundY + targetAlt, Math.min(1, dt * 4.5));
@@ -6495,14 +6554,14 @@
                 const rx = ox + dx * t;
                 const ry = oy + dy * t;
                 const rz = oz + dz * t;
-                const th = Math.max(-0.5, getTerrainHeight(rx, rz));
+                const th = Math.max(-0.5, getSurfaceHeight(rx, rz));
                 if (ry <= th) {
                     // 5-step binary search refinement for exact surface hit
                     let lo = prevT, hi = t;
                     for (let b = 0; b < 5; b++) {
                         const mid = (lo + hi) * 0.5;
                         const my = oy + dy * mid;
-                        const mth = Math.max(-0.5, getTerrainHeight(ox + dx * mid, oz + dz * mid));
+                        const mth = Math.max(-0.5, getSurfaceHeight(ox + dx * mid, oz + dz * mid));
                         if (my <= mth) hi = mid;
                         else lo = mid;
                     }
@@ -6583,13 +6642,13 @@
 
             // Keep ground bots on safe land if the child taps deep ocean water
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
-            let ty = getTerrainHeight(hitPoint.x, hitPoint.z);
+            let ty = getSurfaceHeight(hitPoint.x, hitPoint.z);
             if (!isFlyingCopter && ty < -1.0) {
                 const angle = Math.atan2(hitPoint.z, hitPoint.x);
                 for (let testDist = Math.min(r, 1620); testDist > 50; testDist -= 20) {
                     const tx = Math.cos(angle) * testDist;
                     const tz = Math.sin(angle) * testDist;
-                    const testY = getTerrainHeight(tx, tz);
+                    const testY = getSurfaceHeight(tx, tz);
                     if (testY >= -0.5) {
                         hitPoint.x = tx;
                         hitPoint.z = tz;
@@ -7291,13 +7350,13 @@
 
             // Ensure ground bots stay on safe land if ocean water is tapped on the Minimap
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
-            let ty = getTerrainHeight(worldX, worldZ);
+            let ty = getSurfaceHeight(worldX, worldZ);
             if (!isFlyingCopter && ty < -1.0) {
                 const angle = Math.atan2(worldZ, worldX);
                 for (let testDist = Math.min(r, 1620); testDist > 50; testDist -= 25) {
                     const tx = Math.cos(angle) * testDist;
                     const tz = Math.sin(angle) * testDist;
-                    const testY = getTerrainHeight(tx, tz);
+                    const testY = getSurfaceHeight(tx, tz);
                     if (testY >= -0.5) {
                         worldX = tx;
                         worldZ = tz;
@@ -7442,7 +7501,7 @@
 
             const nextX = player.pos.x + Math.sin(player.heading) * player.speed * dt;
             const nextZ = player.pos.z + Math.cos(player.heading) * player.speed * dt;
-            const nextGroundY = getTerrainHeight(nextX, nextZ);
+            const nextGroundY = getSurfaceHeight(nextX, nextZ);
 
             // Blades Helicopter can fly freely over water & mountains; Ground bots stay on land across the 10x island
             if (isFlyingCopter || nextGroundY > -1.5) {
@@ -7455,7 +7514,7 @@
             }
 
             // Ground Collision against Buildings & Trees (Slide smoothly around obstacles during Tap-to-Move)
-            const groundY = Math.max(-0.5, getTerrainHeight(player.pos.x, player.pos.z));
+            const groundY = Math.max(-0.5, getSurfaceHeight(player.pos.x, player.pos.z));
             const currentClearance = player.pos.y - groundY;
 
             if (currentClearance < 12) {
@@ -7687,7 +7746,7 @@
 
             const idealCamX = player.pos.x + Math.sin(input.camYaw) * camHoriz;
             const idealCamZ = player.pos.z + Math.cos(input.camYaw) * camHoriz;
-            const minGroundCamY = getTerrainHeight(idealCamX, idealCamZ) + 4.5;
+            const minGroundCamY = getSurfaceHeight(idealCamX, idealCamZ) + 4.5;
             const idealCamY = Math.max(minGroundCamY, player.pos.y + camHeight + 4.5);
 
             camera.position.lerp(new THREE.Vector3(idealCamX, idealCamY, idealCamZ), Math.min(1, dt * 8));
@@ -7740,8 +7799,9 @@
             for (let i = 0; i < windTurbineRotors.length; i++) {
                 windTurbineRotors[i].rotation.z += dt * (1.8 + i * 0.25);
             }
-            harborFerryGroup.position.y = 0.2 + Math.sin(now * 0.0022) * 0.35;
-            harborFerryGroup.rotation.z = Math.sin(now * 0.0018) * 0.035;
+            harborFerryGroup.position.y = -0.2 + Math.sin(now * 0.0022) * 0.25;
+            harborFerryGroup.rotation.z = Math.sin(now * 0.0018) * 0.03;
+            harborFerryGroup.rotation.x = Math.cos(now * 0.0014) * 0.012;
             volcanoLavaPool.rotation.y += dt * 0.25;
             volcanoLavaPool.scale.setScalar(1.0 + Math.sin(now * 0.005) * 0.04);
             for (let i = 0; i < volcanoSmokePuffs.length; i++) {
