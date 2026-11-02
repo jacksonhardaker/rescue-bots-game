@@ -1349,6 +1349,7 @@
         const matBrickRed = new THREE.MeshToonMaterial({ color: 0xe81e25, gradientMap: toonGrad3 });
         const matSteel = new THREE.MeshToonMaterial({ color: 0xf1f5f9, gradientMap: toonGrad4 });
         const matDarkSteel = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
+        const matChrome = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGradGlossy });
         const matGlass = new THREE.MeshBasicMaterial({ map: texWindshieldCyan });
 
         // Main Firehouse 3-Bay Apparatus Hall
@@ -1581,7 +1582,7 @@
         registerCullableObject(lighthouseGroup, 1180, lhY + 24, 60, 95);
         worldColliders.push({ x: 1180, z: 60, r: 8.5 });
 
-        // South Harbor Pier & Cargo Crane (0, 1215)
+        // South Harbor Pier, Cargo Cranes, Stacked Shipping Containers & Docked Rescue Ferry (z = +1120 to +1250)
         const pier = new THREE.Mesh(
             new THREE.BoxGeometry(32, 3.6, 88),
             new THREE.MeshToonMaterial({ color: 0x9a3412, gradientMap: toonGrad3 })
@@ -1591,6 +1592,375 @@
         applyCartoonInkOutlines(pier, 1.03, true);
         scene.add(pier);
         registerCullableObject(pier, 0, 2, 1215, 65);
+
+        // 1A. Twin Harbor Gantry Cargo Cranes flanking the Pier
+        const matCraneYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
+        const matContainerRed = new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 });
+        const matContainerBlue = new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad3 });
+        const matContainerGreen = new THREE.MeshToonMaterial({ color: 0x16a34a, gradientMap: toonGrad3 });
+        const matContainerOrange = new THREE.MeshToonMaterial({ color: 0xf97316, gradientMap: toonGrad3 });
+
+        [-32, 32].forEach((craneX, cIdx) => {
+            const craneZ = 1172;
+            const cy = Math.max(0.5, getTerrainHeight(craneX, craneZ));
+            const craneGroup = new THREE.Group();
+            craneGroup.position.set(craneX, cy, craneZ);
+
+            // 4 Gantry Portal Legs
+            [[-4.5, -4.5], [4.5, -4.5], [-4.5, 4.5], [4.5, 4.5]].forEach(([lx, lz]) => {
+                const leg = new THREE.Mesh(new THREE.BoxGeometry(1.4, 24, 1.4), matCraneYellow);
+                leg.position.set(lx, 12, lz);
+                leg.castShadow = true;
+                craneGroup.add(leg);
+            });
+
+            // Upper Gantry Cross-Platform & Operator Cab
+            const platform = new THREE.Mesh(new THREE.BoxGeometry(12, 2.2, 12), matCraneYellow);
+            platform.position.y = 24.5;
+            craneGroup.add(platform);
+
+            const opCab = new THREE.Mesh(new THREE.BoxGeometry(5.5, 4.2, 5.5), matSteel);
+            opCab.position.set(0, 27.5, 2.0);
+            craneGroup.add(opCab);
+
+            const opGlass = new THREE.Mesh(new THREE.BoxGeometry(5.7, 2.4, 4.2), matGlass);
+            opGlass.position.set(0, 27.8, 2.5);
+            craneGroup.add(opGlass);
+
+            // Long Horizontal Boom extending out over the Harbor Water (+Z)
+            const boom = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.4, 38), matCraneYellow);
+            boom.position.set(0, 29.8, 10);
+            boom.castShadow = true;
+            craneGroup.add(boom);
+
+            // Hoist Cables & Suspended Shipping Container
+            const hoistCable = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 12, 8), matDarkSteel);
+            hoistCable.position.set(0, 22.5, 22);
+            craneGroup.add(hoistCable);
+
+            const slungContainer = new THREE.Mesh(
+                new THREE.BoxGeometry(5.2, 5.2, 11.5),
+                cIdx === 0 ? matContainerRed : matContainerBlue
+            );
+            slungContainer.position.set(0, 14.5, 22);
+            slungContainer.castShadow = true;
+            craneGroup.add(slungContainer);
+
+            applyCartoonInkOutlines(craneGroup, 1.035, true);
+            scene.add(craneGroup);
+            registerCullableObject(craneGroup, craneX, cy + 16, craneZ + 8, 42);
+            worldColliders.push({ x: craneX, z: craneZ, r: 6.5 });
+        });
+
+        // 1B. Stacked Colorful Shipping Containers in South Harbor Yard
+        const containerMats = [matContainerRed, matContainerBlue, matContainerGreen, matContainerOrange, matCraneYellow];
+        [
+            { x: -86, z: 1125, rotY: 0.05 },
+            { x: 86, z: 1125, rotY: -0.05 },
+            { x: -88, z: 1152, rotY: 0.12 },
+            { x: 88, z: 1152, rotY: -0.12 }
+        ].forEach((yard, yIdx) => {
+            const yardGroup = new THREE.Group();
+            const yy = Math.max(0.5, getTerrainHeight(yard.x, yard.z));
+            yardGroup.position.set(yard.x, yy, yard.z);
+            yardGroup.rotation.y = yard.rotY;
+
+            for (let row = 0; row < 2; row++) {
+                const levels = row === 0 ? 3 : 2;
+                for (let lvl = 0; lvl < levels; lvl++) {
+                    const cMesh = new THREE.Mesh(
+                        new THREE.BoxGeometry(5.6, 5.2, 13.5),
+                        containerMats[(yIdx + row * 2 + lvl) % containerMats.length]
+                    );
+                    cMesh.position.set((row - 0.5) * 6.4, 2.6 + lvl * 5.25, 0);
+                    cMesh.castShadow = true;
+                    cMesh.receiveShadow = true;
+                    yardGroup.add(cMesh);
+                }
+            }
+            applyCartoonInkOutlines(yardGroup, 1.04, true);
+            scene.add(yardGroup);
+            registerCullableObject(yardGroup, yard.x, yy + 8, yard.z, 24);
+            worldColliders.push({ x: yard.x, z: yard.z, r: 9.5 });
+        });
+
+        // 1C. Docked Griffin Rock Rescue Boat / Ferry in the Harbor Bay
+        const harborFerryGroup = new THREE.Group();
+        harborFerryGroup.position.set(36, 0.2, 1232);
+        const ferryHull = new THREE.Mesh(
+            new THREE.BoxGeometry(15, 5.2, 42),
+            new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 })
+        );
+        ferryHull.position.y = 2.2;
+        ferryHull.castShadow = true;
+        harborFerryGroup.add(ferryHull);
+
+        const ferryBow = new THREE.Mesh(
+            new THREE.ConeGeometry(10.6, 14, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4),
+            new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 })
+        );
+        ferryBow.scale.set(1.0, 0.48, 1.0);
+        ferryBow.position.set(0, 2.2, 27.5);
+        harborFerryGroup.add(ferryBow);
+
+        const ferryDeck = new THREE.Mesh(
+            new THREE.BoxGeometry(13.2, 4.4, 28),
+            new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 })
+        );
+        ferryDeck.position.set(0, 7.0, -2);
+        ferryDeck.castShadow = true;
+        harborFerryGroup.add(ferryDeck);
+
+        const ferryBridge = new THREE.Mesh(
+            new THREE.BoxGeometry(11.8, 3.6, 10),
+            new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 })
+        );
+        ferryBridge.position.set(0, 11.0, 4);
+        harborFerryGroup.add(ferryBridge);
+
+        const ferryGlass = new THREE.Mesh(new THREE.BoxGeometry(12.1, 1.8, 8.2), matGlass);
+        ferryGlass.position.set(0, 11.3, 4.5);
+        harborFerryGroup.add(ferryGlass);
+
+        [-2.8, 2.8].forEach(stackX => {
+            const funnel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.5, 5.5, 10), matCraneYellow);
+            funnel.position.set(stackX, 14.5, -5);
+            harborFerryGroup.add(funnel);
+        });
+        applyCartoonInkOutlines(harborFerryGroup, 1.035, true);
+        scene.add(harborFerryGroup);
+        registerCullableObject(harborFerryGroup, 36, 6, 1232, 45);
+
+        // 2. Volcano Ridge Caldera (-735, -755): Glowing Animated Lava Pool, Lava Vents & Rising Smoke Plumes
+        const volcanoGroup = new THREE.Group();
+        const volcX = -735, volcZ = -755;
+        const volcY = getTerrainHeight(volcX, volcZ);
+        volcanoGroup.position.set(volcX, volcY, volcZ);
+
+        // Basalt Crater Rim Boulders ringing the Lava Pool
+        const matBasalt = new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 });
+        for (let i = 0; i < 14; i++) {
+            const ang = (i / 14) * Math.PI * 2;
+            const r = 24 + (i % 2) * 2.5;
+            const rimRock = new THREE.Mesh(
+                new THREE.DodecahedronGeometry(5.5 + (i % 3) * 1.5, 0),
+                matBasalt
+            );
+            rimRock.position.set(Math.cos(ang) * r, 2.2, Math.sin(ang) * r);
+            rimRock.scale.set(1.2, 0.85, 1.1);
+            rimRock.castShadow = true;
+            volcanoGroup.add(rimRock);
+        }
+
+        // Glowing Animated Molten Lava Pool inside the Caldera
+        const volcanoLavaPool = new THREE.Group();
+        volcanoLavaPool.position.y = 1.6;
+        const lavaOuter = new THREE.Mesh(
+            new THREE.CircleGeometry(22.5, 28).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0xff4500 })
+        );
+        lavaOuter.userData.noOutline = true;
+        const lavaInner = new THREE.Mesh(
+            new THREE.CircleGeometry(14.5, 24).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0xffbe0b })
+        );
+        lavaInner.position.y = 0.12;
+        lavaInner.userData.noOutline = true;
+        volcanoLavaPool.add(lavaOuter, lavaInner);
+        volcanoGroup.add(volcanoLavaPool);
+
+        // 3 Glowing Lava Vents / Fumarole Cones around Volcano Ridge
+        [[-28, 18], [26, -20], [18, 28]].forEach(([vx, vz]) => {
+            const ventCone = new THREE.Mesh(new THREE.ConeGeometry(5.2, 7.5, 8, 1, true), matBasalt);
+            ventCone.position.set(vx, 3.5, vz);
+            volcanoGroup.add(ventCone);
+            const ventGlow = new THREE.Mesh(
+                new THREE.CircleGeometry(2.6, 12).rotateX(-Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0xff6b00 })
+            );
+            ventGlow.position.set(vx, 6.2, vz);
+            ventGlow.userData.noOutline = true;
+            volcanoGroup.add(ventGlow);
+        });
+
+        // Rising Volcanic Smoke Plume Puffs
+        const volcanoSmokePuffs = [];
+        const matSmoke = new THREE.MeshToonMaterial({ color: 0x64748b, transparent: true, opacity: 0.72, gradientMap: toonGrad3 });
+        for (let i = 0; i < 6; i++) {
+            const puff = new THREE.Mesh(new THREE.DodecahedronGeometry(4.2, 1), matSmoke);
+            puff.userData.noOutline = true;
+            puff.userData.phase = i / 6;
+            volcanoGroup.add(puff);
+            volcanoSmokePuffs.push(puff);
+        }
+
+        applyCartoonInkOutlines(volcanoGroup, 1.04, false);
+        scene.add(volcanoGroup);
+        registerCullableObject(volcanoGroup, volcX, volcY + 25, volcZ, 68);
+        worldColliders.push({ x: volcX, z: volcZ, r: 24.0 });
+
+        // 3. North Observatory (0, -1165): Giant Rotating Silver Telescope Dome & Solar Panel Arrays
+        const obsX = 0, obsZ = -1165;
+        const obsY = getTerrainHeight(obsX, obsZ);
+        const observatoryGroup = new THREE.Group();
+        observatoryGroup.position.set(obsX, obsY, obsZ);
+
+        const obsBase = new THREE.Mesh(
+            new THREE.CylinderGeometry(15.5, 16.8, 12, 16),
+            new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 })
+        );
+        obsBase.position.y = 6.0;
+        obsBase.castShadow = true;
+        obsBase.receiveShadow = true;
+        observatoryGroup.add(obsBase);
+
+        const obsAccentRing = new THREE.Mesh(
+            new THREE.CylinderGeometry(16.0, 16.0, 1.8, 16),
+            new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad3 })
+        );
+        obsAccentRing.position.y = 11.5;
+        observatoryGroup.add(obsAccentRing);
+
+        // Rotating Silver Hemisphere Dome & Protruding Deep-Space Telescope
+        const observatoryDomePivot = new THREE.Group();
+        observatoryDomePivot.position.y = 12.0;
+
+        const obsDome = new THREE.Mesh(
+            new THREE.SphereGeometry(15.2, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.52),
+            matChrome
+        );
+        obsDome.castShadow = true;
+        observatoryDomePivot.add(obsDome);
+
+        const obsSlot = new THREE.Mesh(new THREE.BoxGeometry(4.6, 12.5, 15.8), matDarkSteel);
+        obsSlot.position.set(0, 6.2, 4.5);
+        observatoryDomePivot.add(obsSlot);
+
+        const telescopeBarrel = new THREE.Mesh(
+            new THREE.CylinderGeometry(2.1, 2.6, 17, 14).rotateX(Math.PI * 0.32),
+            matSteel
+        );
+        telescopeBarrel.position.set(0, 9.5, 9.5);
+        telescopeBarrel.castShadow = true;
+        observatoryDomePivot.add(telescopeBarrel);
+
+        const telescopeLens = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.9, 1.9, 0.6, 14).rotateX(Math.PI * 0.32),
+            matGlass
+        );
+        telescopeLens.position.set(0, 14.0, 16.5);
+        observatoryDomePivot.add(telescopeLens);
+
+        observatoryGroup.add(observatoryDomePivot);
+
+        // Flanking Solar Panel Arrays at North Observatory
+        [-30, 30].forEach(sx => {
+            [-12, 12].forEach(sz => {
+                const solarPedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 4.5, 8), matDarkSteel);
+                solarPedestal.position.set(sx, 2.25, sz);
+                observatoryGroup.add(solarPedestal);
+
+                const solarPanel = new THREE.Mesh(
+                    new THREE.BoxGeometry(10.5, 0.35, 6.8),
+                    new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad3 })
+                );
+                solarPanel.position.set(sx, 4.6, sz);
+                solarPanel.rotation.x = 0.38;
+                solarPanel.castShadow = true;
+                observatoryGroup.add(solarPanel);
+            });
+        });
+
+        applyCartoonInkOutlines(observatoryGroup, 1.035, true);
+        scene.add(observatoryGroup);
+        registerCullableObject(observatoryGroup, obsX, obsY + 15, obsZ, 55);
+        worldColliders.push({ x: obsX, z: obsZ, r: 17.5 });
+
+        // 4. West Tech Park (-1175, 25): Doc Greene's Geodesic Glass Laboratory Dome & Spinning Wind Turbines
+        const techX = -1175, techZ = 25;
+        const techY = getTerrainHeight(techX, techZ);
+        const techLabGroup = new THREE.Group();
+        techLabGroup.position.set(techX, techY, techZ);
+
+        const labRingBase = new THREE.Mesh(
+            new THREE.CylinderGeometry(17.5, 18.5, 6.5, 20),
+            new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 })
+        );
+        labRingBase.position.y = 3.25;
+        labRingBase.castShadow = true;
+        techLabGroup.add(labRingBase);
+
+        const labGlassDome = new THREE.Mesh(
+            new THREE.SphereGeometry(16.2, 18, 12, 0, Math.PI * 2, 0, Math.PI * 0.52),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.38, side: THREE.DoubleSide })
+        );
+        labGlassDome.position.y = 6.2;
+        labGlassDome.userData.noOutline = true;
+        techLabGroup.add(labGlassDome);
+
+        const labGeodesicCage = new THREE.Mesh(
+            new THREE.SphereGeometry(16.4, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.52),
+            new THREE.MeshBasicMaterial({ color: 0xe2e8f0, wireframe: true })
+        );
+        labGeodesicCage.position.y = 6.2;
+        labGeodesicCage.userData.noOutline = true;
+        techLabGroup.add(labGeodesicCage);
+
+        // Glowing Energon Core Column inside Doc Greene's Lab Dome
+        const labCorePillar = new THREE.Mesh(
+            new THREE.CylinderGeometry(2.6, 2.6, 15, 14),
+            new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+        );
+        labCorePillar.position.y = 9.5;
+        labCorePillar.userData.noOutline = true;
+        techLabGroup.add(labCorePillar);
+
+        // 3 Towering Spinning Wind Turbines behind Doc Greene's Lab
+        const windTurbineRotors = [];
+        [[-22, -48], [-28, 0], [-22, 48]].forEach(([wx, wz]) => {
+            const turbineGroup = new THREE.Group();
+            turbineGroup.position.set(wx, 0, wz);
+
+            const tower = new THREE.Mesh(
+                new THREE.CylinderGeometry(1.1, 2.2, 34, 12),
+                new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad3 })
+            );
+            tower.position.y = 17;
+            tower.castShadow = true;
+            turbineGroup.add(tower);
+
+            const nacelle = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.8, 5.8), matSteel);
+            nacelle.position.set(0, 34, 1.0);
+            turbineGroup.add(nacelle);
+
+            const rotorHub = new THREE.Group();
+            rotorHub.position.set(0, 34, 4.2);
+            for (let b = 0; b < 3; b++) {
+                const bladePivot = new THREE.Group();
+                bladePivot.rotation.z = (b / 3) * Math.PI * 2;
+                const blade = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.3, 13.5, 0.35),
+                    new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 })
+                );
+                blade.position.y = 6.8;
+                blade.castShadow = true;
+                const bladeTip = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.32, 2.6, 0.38),
+                    matContainerRed
+                );
+                bladeTip.position.y = 12.2;
+                bladePivot.add(blade, bladeTip);
+                rotorHub.add(bladePivot);
+            }
+            turbineGroup.add(rotorHub);
+            windTurbineRotors.push(rotorHub);
+            techLabGroup.add(turbineGroup);
+        });
+
+        applyCartoonInkOutlines(techLabGroup, 1.035, true);
+        scene.add(techLabGroup);
+        registerCullableObject(techLabGroup, techX - 10, techY + 20, techZ, 78);
+        worldColliders.push({ x: techX, z: techZ, r: 19.0 });
 
         // Sky Array Communications Tower on North-East Peak (780, -780)
         const arrayGroup = new THREE.Group();
@@ -1868,7 +2238,6 @@
          * 6. CEL-SHADED TV-ACCURATE ARTICULATED MODELS FOR ALL 4 RESCUE BOTS
          *    (Boulder, Heatwave, Chase, Blades with Bold Ink Outlines)
          ***********************************************************************/
-        const matChrome = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGradGlossy });
         const matGrille = new THREE.MeshBasicMaterial({ map: texGrille });
         const matTire = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
         const matCabGlass = new THREE.MeshBasicMaterial({ map: texWindshieldCyan });
@@ -6161,13 +6530,31 @@
                 wpArrowCone.rotation.y += dt * 3.0;
             }
 
-            // Animate HQ Radar Dish, Outpost Rings, Lighthouse Beam, Ocean Waves & Flickering Fires
+            // Animate HQ Radar Dish, Outpost Rings, Lighthouse Beam, Regional Landmarks, Ocean Waves & Flickering Fires
             hqRadarPivot.rotation.y += dt * 1.4;
             swapPadRing.rotation.z += dt * 0.8;
             for (let i = 0; i < outpostPadRings.length; i++) {
                 outpostPadRings[i].rotation.z += dt * 0.8;
             }
             lhBeamPivot.rotation.y += dt * 1.1;
+            observatoryDomePivot.rotation.y += dt * 0.35;
+            for (let i = 0; i < windTurbineRotors.length; i++) {
+                windTurbineRotors[i].rotation.z += dt * (1.8 + i * 0.25);
+            }
+            harborFerryGroup.position.y = 0.2 + Math.sin(now * 0.0022) * 0.35;
+            harborFerryGroup.rotation.z = Math.sin(now * 0.0018) * 0.035;
+            volcanoLavaPool.rotation.y += dt * 0.25;
+            volcanoLavaPool.scale.setScalar(1.0 + Math.sin(now * 0.005) * 0.04);
+            for (let i = 0; i < volcanoSmokePuffs.length; i++) {
+                const puff = volcanoSmokePuffs[i];
+                const p = (puff.userData.phase + now * 0.00018) % 1.0;
+                puff.position.set(
+                    Math.sin(p * 6.0 + i) * (4.0 + p * 8.0),
+                    6.0 + p * 46.0,
+                    Math.cos(p * 5.0 + i) * (4.0 + p * 8.0)
+                );
+                puff.scale.setScalar(0.65 + p * 2.1);
+            }
             waterMesh.position.y = -0.45 + Math.sin(now * 0.0025) * 0.22;
             shorelineFoamRing.scale.setScalar(1.0 + Math.sin(now * 0.003) * 0.008);
 
