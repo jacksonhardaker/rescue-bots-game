@@ -107,7 +107,6 @@
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-xs sm:text-sm font-bold text-white" id="mission-status-text">Emergencies Resolved: 0 / 8</span>
-                        <span class="text-[9px] uppercase tracking-wider text-cyan-300 font-bold">Tap Map to Auto-Pilot</span>
                     </div>
                     <!-- 8 Emergency Pip Indicators -->
                     <div class="flex items-center gap-1 mt-0.5" id="beacon-pips"></div>
@@ -1924,6 +1923,8 @@
                 rightSkidMount: new THREE.Group(),
                 leftCockpitShell: new THREE.Group(),
                 rightCockpitShell: new THREE.Group(),
+                dozerCabMount: new THREE.Group(),
+                exhaustStacks: new THREE.Group(),
                 dinoGroup: new THREE.Group(),
                 dinoHead: new THREE.Group(),
                 dinoTail: new THREE.Group(),
@@ -1957,169 +1958,262 @@
                 const matYellow = new THREE.MeshToonMaterial({ color: 0xffcc00, gradientMap: toonGrad4 });
                 const matFace = new THREE.MeshBasicMaterial({ map: texFaceBoulder });
 
-                // Stocky Cartoon Torso & Bulldozer Engine Deck
-                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.75, 2.38, 2.15), matGreen);
+                // 1. Stocky Heroic Torso & Main Bulldozer Frame
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.82, 2.38, 2.15), matGreen);
                 chest.castShadow = true;
                 parts.torso.add(chest);
 
-                // Silver-White TV Show Chest Stripe
-                const chestStripe = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.42, 2.18), matChrome);
+                // Sculpted Yellow & Dark-Steel Waist / Pelvis Block
+                const waistBlock = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.48, 1.92), matYellow);
+                waistBlock.position.set(0, -1.25, 0);
+                parts.torso.add(waistBlock);
+
+                // Silver-White TV Show Chest Stripe & Rescue Bots Emblem
+                const chestStripe = new THREE.Mesh(new THREE.BoxGeometry(2.86, 0.42, 2.18), matChrome);
                 chestStripe.position.set(0, -0.35, 0);
                 parts.torso.add(chestStripe);
 
-                const emblemPlate = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.88, 2.22), matEmblem);
-                emblemPlate.position.set(0, 0.25, 0);
+                const emblemPlate = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.92, 2.22), matEmblem);
+                emblemPlate.position.set(0, 0.28, 0);
                 emblemPlate.userData.noOutline = true;
                 parts.torso.add(emblemPlate);
 
-                // Dual Chrome Smoke Stacks on Back of Torso
-                [-1.02, 1.02].forEach(sx => {
-                    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 2.3, 10), matChrome);
-                    stack.position.set(sx, 1.28, -0.88);
-                    parts.torso.add(stack);
+                // 2. Sliding Bulldozer Operator Cab (`dozerCabMount`) on Upper Back/Collar
+                //    (Retracted behind Boulder's collar in Bot mode -> Slides up & forward over his retracted head in Bulldozer mode!)
+                parts.torso.add(parts.dozerCabMount);
+                const cabPillars = new THREE.Mesh(new THREE.BoxGeometry(1.88, 1.38, 1.48), matGreen);
+                cabPillars.castShadow = true;
+                parts.dozerCabMount.add(cabPillars);
+
+                const cabWindshield = new THREE.Mesh(new THREE.BoxGeometry(1.94, 1.06, 1.22), matCabGlass);
+                cabWindshield.position.set(0, 0.08, 0.04);
+                cabWindshield.userData.noOutline = true;
+                parts.dozerCabMount.add(cabWindshield);
+
+                // ROPS Yellow Roof Canopy & 4 Floodlights
+                const cabRoofCap = new THREE.Mesh(new THREE.BoxGeometry(2.04, 0.24, 1.62), matYellow);
+                cabRoofCap.position.set(0, 0.74, 0);
+                cabRoofCap.castShadow = true;
+                parts.dozerCabMount.add(cabRoofCap);
+
+                [-0.62, -0.22, 0.22, 0.62].forEach(lx => {
+                    const cabLight = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.18, 0.22), matVisorGold);
+                    cabLight.position.set(lx, 0.82, 0.78);
+                    parts.dozerCabMount.add(cabLight);
                 });
 
-                // Front Radiator Grille & Engine Nose Block (sits between treads behind the foot-bucket in Vehicle mode)
-                const noseBlock = new THREE.Mesh(new THREE.BoxGeometry(2.35, 1.18, 1.05), matGreen);
+                // Chrome ROPS Grab Rails on Cab Sides
+                [-0.98, 0.98].forEach(rx => {
+                    const grabRail = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.15, 8), matChrome);
+                    grabRail.position.set(rx, 0.05, 0.58);
+                    parts.dozerCabMount.add(grabRail);
+                });
+
+                // 3. Rear Engine Deck, Counterweight & Articulated Exhaust Stacks (`parts.backAttachment`)
+                //    (Compact backpack with shoulder smokestacks in Bot mode -> Shifts back into the Rear Bulldozer Engine Bay & Counterweight in Vehicle mode!)
+                const rearEngineBay = new THREE.Mesh(new THREE.BoxGeometry(2.58, 1.44, 1.68), matGreen);
+                rearEngineBay.castShadow = true;
+                parts.backAttachment.add(rearEngineBay);
+
+                const rearRadiatorVent = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.96, 1.72), matGrille);
+                rearRadiatorVent.position.set(0, 0.08, -0.02);
+                rearRadiatorVent.userData.noOutline = true;
+                parts.backAttachment.add(rearRadiatorVent);
+
+                const rearCounterweight = new THREE.Mesh(new THREE.BoxGeometry(2.76, 0.78, 0.56), matYellow);
+                rearCounterweight.position.set(0, -0.38, -0.82);
+                rearCounterweight.castShadow = true;
+                parts.backAttachment.add(rearCounterweight);
+
+                const rearHazardStrip = new THREE.Mesh(new THREE.BoxGeometry(2.68, 0.34, 0.60), matHazardMat);
+                rearHazardStrip.position.set(0, -0.38, -0.84);
+                rearHazardStrip.userData.noOutline = true;
+                parts.backAttachment.add(rearHazardStrip);
+
+                [-0.96, 0.96].forEach(tx => {
+                    const tailLight = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.24, 0.16), matSirenRed);
+                    tailLight.position.set(tx, 0.28, -0.84);
+                    parts.backAttachment.add(tailLight);
+                });
+
+                // Articulated Dual Chrome Exhaust Stacks (shift from behind shoulders to beside the front cab hood!)
+                parts.backAttachment.add(parts.exhaustStacks);
+                [-1.08, 1.08].forEach(sx => {
+                    const mufflerBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 1.35, 10), matChrome);
+                    mufflerBarrel.position.set(sx, 0, 0);
+                    parts.exhaustStacks.add(mufflerBarrel);
+
+                    const upperPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 1.15, 10), matChrome);
+                    upperPipe.position.set(sx, 1.12, 0);
+                    parts.exhaustStacks.add(upperPipe);
+
+                    const rainCap = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.12, 0.38), matChrome);
+                    rainCap.position.set(sx, 1.72, -0.04);
+                    rainCap.rotation.x = 0.25;
+                    parts.exhaustStacks.add(rainCap);
+                });
+
+                // 4. Front Sloped Radiator Grille & Engine Nose Hood (`parts.frontAttachment`)
+                const noseBlock = new THREE.Mesh(new THREE.BoxGeometry(2.42, 1.34, 1.65), matGreen);
                 noseBlock.castShadow = true;
                 parts.frontAttachment.add(noseBlock);
-                const noseGrille = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.82, 1.12), matGrille);
-                noseGrille.position.set(0, -0.04, 0.04);
+
+                const noseTopSlope = new THREE.Mesh(new THREE.BoxGeometry(2.28, 0.32, 1.52), matYellow);
+                noseTopSlope.position.set(0, 0.68, -0.02);
+                parts.frontAttachment.add(noseTopSlope);
+
+                const noseGrille = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.92, 0.24), matGrille);
+                noseGrille.position.set(0, -0.04, 0.74);
                 noseGrille.userData.noOutline = true;
                 parts.frontAttachment.add(noseGrille);
 
-                // Articulated Head that Tucks In & Angles Forward to Become the Bulldozer Cab!
-                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.42, 1.24, 1.32), matGreen);
+                [-0.86, 0.86].forEach(hx => {
+                    const noseLight = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.28, 0.22), matVisorGold);
+                    noseLight.position.set(hx, 0.22, 0.78);
+                    parts.frontAttachment.add(noseLight);
+                });
+
+                // 5. Clean Expressive Robot Head (`parts.head` - Retracts straight down into chest in Bulldozer Mode!)
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.44, 1.26, 1.32), matGreen);
                 helm.castShadow = true;
                 parts.head.add(helm);
-                const brim = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.25, 1.46), matYellow);
-                brim.position.set(0, 0.52, 0.14);
+                const brim = new THREE.Mesh(new THREE.BoxGeometry(1.58, 0.26, 1.48), matYellow);
+                brim.position.set(0, 0.54, 0.14);
                 parts.head.add(brim);
                 const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.96, 1.36), matFace);
                 faceMesh.position.set(0, -0.04, 0.04);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
+                const chinGuard = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.26, 1.38), matChrome);
+                chinGuard.position.set(0, -0.54, 0.05);
+                parts.head.add(chinGuard);
 
-                // Bulldozer Cab Canopy sculpted onto the Crown/Back of Boulder's Head
-                // (When head tucks down & angles forward ~82 deg, this forms the raked Bulldozer Operator Cab!)
-                const cabCanopy = new THREE.Group();
-                cabCanopy.position.set(0, 0.22, -0.38);
-                cabCanopy.rotation.x = -0.18;
-
-                const cabPillars = new THREE.Mesh(new THREE.BoxGeometry(1.78, 1.32, 1.22), matGreen);
-                cabPillars.castShadow = true;
-                cabCanopy.add(cabPillars);
-
-                const cabWindshield = new THREE.Mesh(new THREE.BoxGeometry(1.84, 1.08, 0.94), matCabGlass);
-                cabWindshield.position.set(0, 0.16, 0.06);
-                cabWindshield.userData.noOutline = true;
-                cabCanopy.add(cabWindshield);
-
-                const cabRoofCap = new THREE.Mesh(new THREE.BoxGeometry(1.88, 1.38, 0.24), matYellow);
-                cabRoofCap.position.set(0, 0.04, -0.58);
-                cabCanopy.add(cabRoofCap);
-
-                [-0.58, 0.58].forEach(lx => {
-                    const cabLight = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.2, 0.22), matVisorGold);
-                    cabLight.position.set(lx, 0.68, -0.56);
-                    cabCanopy.add(cabLight);
-                });
-                parts.head.add(cabCanopy);
-
-                // Chunky Cartoon Arms that Fold Down to Become the Bulldozer Caterpillar Treads!
+                // 6. Chunky Cartoon Arms with Sliding Caterpillar Tread Mounts (`leftArmWheelMount` / `rightArmWheelMount`)
+                //    & Articulated Forearms (`leftForearm` / `rightForearm`) that Tuck Inward!
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.leftArm : parts.rightArm;
-                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.18, 1.24), matGreen);
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+                    const treadMount = side === -1 ? parts.leftArmWheelMount : parts.rightArmWheelMount;
+
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.18, 1.24), matGreen);
                     shoulder.castShadow = true;
                     armG.add(shoulder);
 
-                    // Heavy Caterpillar Track Pod on outer arm
-                    const trackPod = new THREE.Mesh(new THREE.BoxGeometry(0.84, 3.05, 1.66), matTire);
-                    trackPod.position.set(side * 0.52, -0.65, 0);
+                    // Sliding Caterpillar Tread Assembly on Outer Arm
+                    armG.add(treadMount);
+                    const trackPod = new THREE.Mesh(new THREE.BoxGeometry(0.92, 3.25, 1.68), matTire);
+                    trackPod.position.set(side * 0.54, -0.65, 0);
                     trackPod.castShadow = true;
-                    armG.add(trackPod);
+                    treadMount.add(trackPod);
 
-                    // Rounded top & bottom track sprockets for authentic bulldozer tread silhouette
-                    [-2.12, 0.82].forEach(ty => {
+                    // Rounded Front Idler & Elevated Rear Drive Sprocket Drums
+                    [-2.22, 0.92].forEach(ty => {
                         const trackEnd = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.83, 0.83, 0.84, 14).rotateZ(Math.PI / 2),
+                            new THREE.CylinderGeometry(0.84, 0.84, 0.92, 14).rotateZ(Math.PI / 2),
                             matTire
                         );
-                        trackEnd.position.set(side * 0.52, ty, 0);
+                        trackEnd.position.set(side * 0.54, ty, 0);
                         trackEnd.castShadow = true;
-                        armG.add(trackEnd);
+                        treadMount.add(trackEnd);
                     });
 
-                    // Green outer tread armor rail
-                    const trackRail = new THREE.Mesh(new THREE.BoxGeometry(0.9, 2.35, 0.56), matGreen);
-                    trackRail.position.set(side * 0.52, -0.65, 0);
-                    armG.add(trackRail);
+                    // Heavy Lime-Green & Yellow Bogie Suspension Frame Rail
+                    const trackRail = new THREE.Mesh(new THREE.BoxGeometry(0.98, 2.55, 0.62), matGreen);
+                    trackRail.position.set(side * 0.54, -0.65, 0);
+                    treadMount.add(trackRail);
 
-                    // 3 Spinning Yellow Caterpillar Track Rollers
-                    [-1.55, -0.65, 0.25].forEach(ry => {
+                    const trackBogieBar = new THREE.Mesh(new THREE.BoxGeometry(1.02, 2.15, 0.28), matYellow);
+                    trackBogieBar.position.set(side * 0.54, -0.65, 0);
+                    treadMount.add(trackBogieBar);
+
+                    // 4 Spinning Yellow Caterpillar Track Rollers & Sprockets
+                    [-2.05, -1.12, -0.18, 0.75].forEach(ry => {
                         const roller = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.42, 0.42, 0.96, 12).rotateZ(Math.PI / 2),
+                            new THREE.CylinderGeometry(0.42, 0.42, 1.04, 12).rotateZ(Math.PI / 2),
                             matYellow
                         );
-                        roller.position.set(side * 0.52, ry, 0);
-                        armG.add(roller);
+                        roller.position.set(side * 0.54, ry, 0);
+                        treadMount.add(roller);
                         parts.wheels.push(roller);
                     });
 
-                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.28, 1.12), matYellow);
-                    forearm.position.set(0, -1.35, 0.1);
-                    armG.add(forearm);
+                    // Articulated Forearm & Fist (folds inward inside the tread hull in Bulldozer mode!)
+                    forearmG.position.set(0, -1.25, 0.08);
+                    armG.add(forearmG);
+
+                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.18, 1.08), matYellow);
+                    forearm.castShadow = true;
+                    forearmG.add(forearm);
+
+                    const fist = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.65, 0.84), matDarkSteel);
+                    fist.position.set(0, -0.78, 0.04);
+                    forearmG.add(fist);
                 });
 
-                // Heavy Legs whose Feet Become the Two Halves of the Front Bulldozer Bucket!
+                // 7. Heavy Legs with Articulated Bulldozer Blade Linkage (`leftLegWheelMount` / `rightLegWheelMount`)
+                //    & Interlocking Split Front Bulldozer Blade (`leftFoot` / `rightFoot`)!
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
                     const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
+                    const bladeLinkage = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
 
                     const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.06, 1.48, 1.24), matTire);
                     thigh.position.y = -0.55;
                     legG.add(thigh);
 
-                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.24, 1.48, 1.52), matGreen);
-                    shin.position.set(0, -1.45, 0.1);
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.24, 1.48, 1.48), matGreen);
+                    shin.position.set(0, -1.45, 0.08);
                     shin.castShadow = true;
                     legG.add(shin);
 
-                    // Hydraulic lift piston along the shin (becomes bucket lift cylinder in Bulldozer mode!)
-                    const liftPiston = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.55, 8), matChrome);
-                    liftPiston.position.set(side * 0.25, -1.35, -0.58);
-                    legG.add(liftPiston);
+                    // Articulated Hydraulic Lift Cylinder & Yellow C-Frame Push-Arm Linkage
+                    legG.add(bladeLinkage);
+                    const liftCylinderSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.95, 10), matYellow);
+                    liftCylinderSleeve.position.set(side * 0.36, -0.95, -0.52);
+                    bladeLinkage.add(liftCylinderSleeve);
 
-                    // Articulated Foot / Half-Bulldozer Bucket Assembly
-                    footG.position.set(0, -2.08, 0.24);
+                    const liftPistonRod = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.45, 8), matChrome);
+                    liftPistonRod.position.set(side * 0.36, -1.45, -0.52);
+                    bladeLinkage.add(liftPistonRod);
+
+                    const pushBeam = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.75, 0.38), matYellow);
+                    pushBeam.position.set(side * 0.68, -1.35, 0.22);
+                    pushBeam.castShadow = true;
+                    bladeLinkage.add(pushBeam);
+
+                    // Articulated Foot / Half-Bulldozer Curved Moldboard Blade Assembly
+                    // (When legs slide together to X = ±0.88 in Bulldozer mode, the two 1.82m halves lock flush at X = 0!)
+                    footG.position.set(0, -2.12, 0.24);
                     legG.add(footG);
 
-                    const inwardOffset = -side * 0.04;
-                    const bucketFootBase = new THREE.Mesh(new THREE.BoxGeometry(1.88, 0.72, 1.76), matYellow);
+                    const inwardOffset = -side * 0.03;
+                    const bucketFootBase = new THREE.Mesh(new THREE.BoxGeometry(1.82, 0.74, 1.84), matYellow);
                     bucketFootBase.position.set(inwardOffset, 0, 0);
                     bucketFootBase.castShadow = true;
                     footG.add(bucketFootBase);
 
-                    // Outer Curved Bucket Wing / Ankle Plate
-                    const bucketSideWing = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.92, 1.82), matYellow);
-                    bucketSideWing.position.set(side * 0.84, -0.08, 0);
+                    // Curved Outer Moldboard Cheek Wing & Reinforcement Rib
+                    const bucketSideWing = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.98, 1.92), matYellow);
+                    bucketSideWing.position.set(side * 0.82, -0.10, 0);
                     bucketSideWing.castShadow = true;
                     footG.add(bucketSideWing);
 
-                    // Hazard-Stripe Bucket Top Rim (Toe of boot in Bot mode -> Top rim of Bucket in Dozer mode!)
-                    const bucketHazardRim = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.38, 0.44), matHazardMat);
-                    bucketHazardRim.position.set(inwardOffset, -0.22, 0.68);
+                    // Hazard-Stripe Upper Spill Guard Rim (Toe in Bot mode -> Top spill guard of Bulldozer Blade in Vehicle mode!)
+                    const bucketHazardRim = new THREE.Mesh(new THREE.BoxGeometry(1.84, 0.42, 0.46), matHazardMat);
+                    bucketHazardRim.position.set(inwardOffset, -0.24, 0.72);
+                    bucketHazardRim.rotation.x = 0.22;
                     bucketHazardRim.userData.noOutline = true;
                     footG.add(bucketHazardRim);
 
-                    // Chrome Scraper Cutting Edge (Heel of boot in Bot mode -> Bottom cutting edge of Bucket in Dozer mode!)
-                    const bucketCuttingEdge = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.38, 0.34), matChrome);
-                    bucketCuttingEdge.position.set(inwardOffset, -0.26, -0.75);
+                    // Beveled Chrome Bottom Scraper Cutting Edge (Heel in Bot mode -> Bottom scraper edge of Dozer Blade in Vehicle mode!)
+                    const bucketCuttingEdge = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.44, 0.36), matChrome);
+                    bucketCuttingEdge.position.set(inwardOffset, -0.28, -0.78);
+                    bucketCuttingEdge.rotation.x = -0.22;
                     footG.add(bucketCuttingEdge);
 
-                    // Metallic Inner Bucket Scoop Plate (Sole of boot in Bot mode -> Forward scoop face in Dozer mode!)
-                    const bucketScoopFace = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.18, 1.22), matChrome);
-                    bucketScoopFace.position.set(inwardOffset, -0.34, -0.04);
+                    // Concave Chrome-Steel Moldboard Scoop Plate (Sole in Bot mode -> Curved front dozer face in Vehicle mode!)
+                    const bucketScoopFace = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.22, 1.32), matChrome);
+                    bucketScoopFace.position.set(inwardOffset, -0.36, -0.02);
                     footG.add(bucketScoopFace);
                 });
 
@@ -3039,8 +3133,8 @@
             // 1. Torso (Upright in Bot, Low Chassis in Vehicle, Horizontal Dinosaur Core in Dinobot)
             const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : 0) - smashOffset * 0.5;
             const dinoTorsoY = (rig.botType === 'HEATWAVE' ? 2.35 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.16 : 0);
-            const vehTorsoY = rig.botType === 'BOULDER' ? 1.52 : (rig.botType === 'HEATWAVE' ? 1.78 : (rig.botType === 'CHASE' ? 1.42 : 1.72));
-            const vehTorsoZ = rig.botType === 'BOULDER' ? -0.35 : (rig.botType === 'HEATWAVE' ? 1.15 : (rig.botType === 'CHASE' ? -0.42 : 0.95));
+            const vehTorsoY = rig.botType === 'BOULDER' ? 1.56 : (rig.botType === 'HEATWAVE' ? 1.78 : (rig.botType === 'CHASE' ? 1.42 : 1.72));
+            const vehTorsoZ = rig.botType === 'BOULDER' ? -0.18 : (rig.botType === 'HEATWAVE' ? 1.15 : (rig.botType === 'CHASE' ? -0.42 : 0.95));
             rig.torso.position.set(
                 0,
                 botTorsoY * (1 - m - d) + vehTorsoY * m + dinoTorsoY * d,
@@ -3059,20 +3153,31 @@
                 rig.lightbar.group.rotation.x = -(Math.PI / 2) * m;
             }
 
-            // 2. Head:
-            // - Boulder: Tucks in and angles forward to become the Bulldozer Cab!
+            // 2. Head & Cab Assemblies:
+            // - Boulder: Head retracts straight down into his chest while his ROPS Bulldozer Operator Cab (`dozerCabMount`) slides up & forward from his collar!
             // - Heatwave: Retracts straight down into his Full Cab Chest!
             // - Chase: Tucks down inside his Cabin Roof Chest!
             if (rig.botType === 'BOULDER') {
                 rig.head.position.set(
                     0,
-                    (5.45 - smashOffset * 0.35) * (1 - m - d) + 2.52 * m + 1.95 * d,
-                    0.06 * (1 - m - d) - 0.22 * m + 0.15 * d
+                    (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.52 * m + 1.95 * d,
+                    0.08 * (1 - m - d) - 0.18 * m + 0.15 * d
                 );
-                // Pitch head forward in Vehicle mode so robot face tucks into chest & cab canopy angles up as the Dozer Cab!
-                rig.head.rotation.x = 1.42 * m;
-                const boulderHeadScale = 1.0 * (1 - m - d) + 1.18 * m + 0.22 * d;
+                rig.head.rotation.x = 0;
+                const boulderHeadScale = 1.0 * (1 - m - d) + 0.25 * m + 0.22 * d;
                 rig.head.scale.setScalar(boulderHeadScale);
+
+                // Slide Boulder's ROPS Bulldozer Operator Cab from behind his collar up onto the Bulldozer deck!
+                if (rig.dozerCabMount) {
+                    rig.dozerCabMount.position.set(
+                        0,
+                        0.55 * (1 - m - d) + 1.55 * m + 0.25 * d,
+                        -0.92 * (1 - m - d) - 0.08 * m - 0.35 * d
+                    );
+                    rig.dozerCabMount.rotation.x = -0.28 * (1 - m);
+                    const cabScale = 0.72 * (1 - m - d) + 1.0 * m + 0.22 * d;
+                    rig.dozerCabMount.scale.setScalar(Math.max(0.01, cabScale));
+                }
             } else if (rig.botType === 'HEATWAVE') {
                 rig.head.position.set(
                     0,
@@ -3119,14 +3224,16 @@
                 }
             }
 
-            // 3. Front Attachment (Engine Nose Block for Boulder / Copter Nose for Blades)
+            // 3. Front Attachment (Sloped Engine Nose & Louvered Radiator Grille for Boulder / Copter Nose for Blades)
             if (rig.botType === 'BOULDER') {
                 rig.frontAttachment.position.set(
                     0,
-                    2.65 * (1 - m - d) + 1.42 * m + 1.65 * d,
-                    0.65 * (1 - m - d) + 1.08 * m + 1.15 * d
+                    2.85 * (1 - m - d) + 1.48 * m + 1.65 * d,
+                    0.45 * (1 - m - d) + 1.28 * m + 1.15 * d
                 );
                 rig.frontAttachment.rotation.x = 0;
+                const boulderNoseScale = 0.65 * (1 - m - d) + 1.0 * m + 0.35 * d;
+                rig.frontAttachment.scale.setScalar(Math.max(0.01, boulderNoseScale));
             } else if (rig.botType === 'BLADES') {
                 rig.frontAttachment.position.set(
                     0,
@@ -3141,8 +3248,26 @@
                 );
             }
 
-            // 4. Back Attachment (Fire Ladder & Water Cannon / Helicopter Rotors)
-            if (rig.botType === 'HEATWAVE') {
+            // 4. Back Attachment (Bulldozer Rear Engine Deck & Exhaust Stacks / Fire Ladder & Water Cannon / Helicopter Rotors)
+            if (rig.botType === 'BOULDER') {
+                rig.backAttachment.position.set(
+                    0,
+                    3.85 * (1 - m - d) + 1.42 * m + 2.05 * d,
+                    -1.18 * (1 - m - d) - 1.65 * m - 0.65 * d
+                );
+                rig.backAttachment.rotation.x = -0.15 * (1 - m - d);
+                const deckScale = 0.78 * (1 - m - d) + 1.0 * m + 0.35 * d;
+                rig.backAttachment.scale.setScalar(Math.max(0.01, deckScale));
+
+                // Shift Boulder's Dual Chrome Exhaust Stacks from behind his robot shoulders to beside the Bulldozer Cab hood!
+                if (rig.exhaustStacks) {
+                    rig.exhaustStacks.position.set(
+                        0,
+                        1.15 * (1 - m) + 1.08 * m,
+                        0.22 * (1 - m) + 1.65 * m
+                    );
+                }
+            } else if (rig.botType === 'HEATWAVE') {
                 rig.backAttachment.position.set(
                     0,
                     4.2 * (1 - m - d) + 2.45 * m + 2.15 * d,
@@ -3178,9 +3303,9 @@
             const dinoArmRotL = isPtero ? Math.PI / 2 : armSwingL * 0.75;
             const dinoArmRotR = isPtero ? Math.PI / 2 : armSwingR * 0.75;
 
-            const vehArmX = rig.botType === 'BOULDER' ? 1.42 : (rig.botType === 'HEATWAVE' ? 1.34 : (rig.botType === 'CHASE' ? 0.88 : 1.16));
-            const vehArmY = rig.botType === 'BOULDER' ? 0.92 : (rig.botType === 'HEATWAVE' ? 1.14 : (rig.botType === 'CHASE' ? 1.02 : 1.48));
-            const vehArmZ = rig.botType === 'BOULDER' ? -0.68 : (rig.botType === 'HEATWAVE' ? 1.46 : (rig.botType === 'CHASE' ? -1.18 : 1.25));
+            const vehArmX = rig.botType === 'BOULDER' ? 1.46 : (rig.botType === 'HEATWAVE' ? 1.34 : (rig.botType === 'CHASE' ? 0.88 : 1.16));
+            const vehArmY = rig.botType === 'BOULDER' ? 1.08 : (rig.botType === 'HEATWAVE' ? 1.14 : (rig.botType === 'CHASE' ? 1.02 : 1.48));
+            const vehArmZ = rig.botType === 'BOULDER' ? -0.35 : (rig.botType === 'HEATWAVE' ? 1.46 : (rig.botType === 'CHASE' ? -1.18 : 1.25));
 
             rig.leftArm.position.set(
                 -1.78 * (1 - m - d) - vehArmX * m - dinoArmX * d,
@@ -3195,6 +3320,18 @@
             rig.leftArm.rotation.x = (armSwingL - smashOffset * 1.4) * (1 - m - d) + (Math.PI / 2) * m + dinoArmRotL * d;
             rig.rightArm.rotation.x = (armSwingR - smashOffset * 1.4) * (1 - m - d) + (Math.PI / 2) * m + dinoArmRotR * d;
 
+            if (rig.botType === 'BOULDER') {
+                // Slide Boulder's Caterpillar Tread Mounts downward onto the ground & tuck his forearms inward inside the hull!
+                if (rig.leftArmWheelMount && rig.rightArmWheelMount) {
+                    const treadGroundShiftZ = -0.06 * (1 - m) + 0.24 * m;
+                    rig.leftArmWheelMount.position.z = treadGroundShiftZ;
+                    rig.rightArmWheelMount.position.z = treadGroundShiftZ;
+                }
+                if (rig.leftForearm && rig.rightForearm) {
+                    rig.leftForearm.rotation.z = 0.65 * m;
+                    rig.rightForearm.rotation.z = -0.65 * m;
+                }
+            }
             if (rig.botType === 'HEATWAVE' && rig.leftForearm && rig.rightForearm) {
                 // Bend elbows 90 deg inward across the front of the Cab so Heatwave's fingers interlock as the Front Bumper!
                 rig.leftForearm.rotation.z = (Math.PI / 2) * m;
@@ -3227,23 +3364,31 @@
             const dinoLegRotR = isPtero ? -Math.PI * 0.36 : -armSwingR * 0.75;
 
             if (rig.botType === 'BOULDER') {
-                // In Bot mode: wide heroic stance; In Bulldozer mode: legs swing forward (-PI/2) so the two bucket-feet join at the front!
+                // In Bot mode: wide heroic stance; In Bulldozer mode: legs swing forward (-PI/2) & slide together (X: ±0.88) so the two blade halves lock seamlessly!
+                const dozerLiftY = smashOffset * 0.38 * m;
                 rig.leftLeg.position.set(
-                    -0.96 * (1 - m - d) - 0.90 * m - dinoLegX * d,
-                    2.35 * (1 - m - d) + 0.96 * m + dinoLegY * d,
-                    0.62 * m + dinoLegZ * d
+                    -0.96 * (1 - m - d) - 0.88 * m - dinoLegX * d,
+                    2.35 * (1 - m - d) + (0.94 + dozerLiftY) * m + dinoLegY * d,
+                    0.72 * m + dinoLegZ * d
                 );
                 rig.rightLeg.position.set(
-                    0.96 * (1 - m - d) + 0.90 * m + dinoLegX * d,
-                    2.35 * (1 - m - d) + 0.96 * m + dinoLegY * d,
-                    0.62 * m + dinoLegZ * d
+                    0.96 * (1 - m - d) + 0.88 * m + dinoLegX * d,
+                    2.35 * (1 - m - d) + (0.94 + dozerLiftY) * m + dinoLegY * d,
+                    0.72 * m + dinoLegZ * d
                 );
-                rig.leftLeg.rotation.x = (-armSwingL * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2) * m + dinoLegRotL * d;
-                rig.rightLeg.rotation.x = (-armSwingR * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2) * m + dinoLegRotR * d;
+                rig.leftLeg.rotation.x = (-armSwingL * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - smashOffset * 0.25) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = (-armSwingR * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - smashOffset * 0.25) * m + dinoLegRotR * d;
 
-                // Angle the bucket-feet slightly in Bulldozer mode for an authentic curved dozer scoop
+                // Articulate hydraulic lift cylinder & C-frame push-arm linkage along the shins/treads
+                if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
+                    const linkageShiftZ = -0.18 * m;
+                    rig.leftLegWheelMount.position.set(-0.18 * m, -0.15 * m, linkageShiftZ);
+                    rig.rightLegWheelMount.position.set(0.18 * m, -0.15 * m, linkageShiftZ);
+                }
+
+                // Angle the interlocking bucket-feet in Bulldozer mode & curl upward during Blade Ram (`smashOffset`)!
                 if (rig.leftFoot && rig.rightFoot) {
-                    const bucketTilt = -0.18 * m;
+                    const bucketTilt = (-0.18 + smashOffset * 0.48) * m;
                     rig.leftFoot.rotation.x = bucketTilt;
                     rig.rightFoot.rotation.x = bucketTilt;
                 }
