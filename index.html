@@ -4514,34 +4514,76 @@
         const raycaster = new THREE.Raycaster();
         const pointerNDC = new THREE.Vector2();
         const fallbackPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -4.0);
+        const _rayHitPoint = new THREE.Vector3();
         let activePointerDown = false;
+        let pointerScreenX = 0;
+        let pointerScreenY = 0;
+        let lastHoldWaypointTime = 0;
+
+        // Ultra-fast analytical ray-heightfield intersection (~25 math steps vs 131,072 triangle tests on terrainMesh!)
+        function intersectRayWithTerrain(ray, outVec) {
+            const ox = ray.origin.x, oy = ray.origin.y, oz = ray.origin.z;
+            const dx = ray.direction.x, dy = ray.direction.y, dz = ray.direction.z;
+
+            // If ray points near or above the horizon, project 95m forward from player
+            if (dy >= -0.015) {
+                const horizLen = Math.hypot(dx, dz) || 1;
+                outVec.set(
+                    player.pos.x + (dx / horizLen) * 95,
+                    player.pos.y,
+                    player.pos.z + (dz / horizLen) * 95
+                );
+                return outVec;
+            }
+
+            // Coarse march along ray from camera to ocean level (y = -2.0), capped at 900m distance
+            const maxT = Math.min(900, Math.max(20, (oy - (-2.0)) / (-dy)));
+            const steps = 20;
+            const dtStep = maxT / steps;
+            let prevT = 0;
+
+            for (let i = 1; i <= steps; i++) {
+                const t = i * dtStep;
+                const rx = ox + dx * t;
+                const ry = oy + dy * t;
+                const rz = oz + dz * t;
+                const th = Math.max(-0.5, getTerrainHeight(rx, rz));
+                if (ry <= th) {
+                    // 5-step binary search refinement for exact surface hit
+                    let lo = prevT, hi = t;
+                    for (let b = 0; b < 5; b++) {
+                        const mid = (lo + hi) * 0.5;
+                        const my = oy + dy * mid;
+                        const mth = Math.max(-0.5, getTerrainHeight(ox + dx * mid, oz + dz * mid));
+                        if (my <= mth) hi = mid;
+                        else lo = mid;
+                    }
+                    const finalT = (lo + hi) * 0.5;
+                    outVec.set(ox + dx * finalT, oy + dy * finalT, oz + dz * finalT);
+                    return outVec;
+                }
+                prevT = t;
+            }
+
+            // Fallback to horizontal plane intersection if ray didn't cross before maxT
+            if (ray.intersectPlane(fallbackPlane, outVec)) {
+                return outVec;
+            }
+            const horizLen = Math.hypot(dx, dz) || 1;
+            outVec.set(
+                player.pos.x + (dx / horizLen) * 95,
+                player.pos.y,
+                player.pos.z + (dz / horizLen) * 95
+            );
+            return outVec;
+        }
 
         function setDestinationFromScreenPoint(clientX, clientY, playChime = false) {
             pointerNDC.x = (clientX / window.innerWidth) * 2 - 1;
             pointerNDC.y = -(clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(pointerNDC, camera);
 
-            let hitPoint = null;
-
-            // Raycast against terrain and ocean meshes first
-            const hits = raycaster.intersectObjects([terrainMesh, waterMesh], false);
-            if (hits.length > 0) {
-                hitPoint = hits[0].point.clone();
-            } else {
-                // Fallback intersection against horizontal ground plane if child taps near the sky/horizon
-                const planeHit = new THREE.Vector3();
-                const hit = raycaster.ray.intersectPlane(fallbackPlane, planeHit);
-                if (hit) {
-                    hitPoint = planeHit;
-                } else {
-                    // Project forward along camera ray if tapping high in the sky
-                    const dir = raycaster.ray.direction.clone();
-                    dir.y = 0;
-                    dir.normalize();
-                    hitPoint = player.pos.clone().addScaledVector(dir, 95);
-                }
-            }
-
+            const hitPoint = intersectRayWithTerrain(raycaster.ray, _rayHitPoint);
             if (!hitPoint) return;
 
             // Clamp within playable 10x island boundary
@@ -4642,7 +4684,10 @@
             if (e.touches.length > 0) {
                 activePointerDown = true;
                 const t = e.touches[0];
-                setDestinationFromScreenPoint(t.clientX, t.clientY, true);
+                pointerScreenX = t.clientX;
+                pointerScreenY = t.clientY;
+                lastHoldWaypointTime = performance.now();
+                setDestinationFromScreenPoint(pointerScreenX, pointerScreenY, true);
             }
         }, { passive: false });
 
@@ -4651,7 +4696,8 @@
             e.preventDefault();
             if (e.touches.length > 0) {
                 const t = e.touches[0];
-                setDestinationFromScreenPoint(t.clientX, t.clientY, false);
+                pointerScreenX = t.clientX;
+                pointerScreenY = t.clientY;
             }
         }, { passive: false });
 
@@ -4671,15 +4717,22 @@
             if (e.button !== 0 || isUIElementTarget(e.target)) return;
             sfx.init();
             activePointerDown = true;
-            setDestinationFromScreenPoint(e.clientX, e.clientY, true);
+            pointerScreenX = e.clientX;
+            pointerScreenY = e.clientY;
+            lastHoldWaypointTime = performance.now();
+            setDestinationFromScreenPoint(pointerScreenX, pointerScreenY, true);
         });
 
         window.addEventListener('mousemove', e => {
             if (!activePointerDown) return;
-            setDestinationFromScreenPoint(e.clientX, e.clientY, false);
+            pointerScreenX = e.clientX;
+            pointerScreenY = e.clientY;
         });
 
         window.addEventListener('mouseup', () => {
+            activePointerDown = false;
+        });
+        window.addEventListener('blur', () => {
             activePointerDown = false;
         });
 
@@ -5116,6 +5169,11 @@
             if (moveY !== 0 || moveX !== 0) {
                 player.hasWaypoint = false;
                 waypointGroup.visible = false;
+                activePointerDown = false;
+            } else if (activePointerDown && now - lastHoldWaypointTime >= 50) {
+                // Throttled 20Hz waypoint update during continuous click-and-hold / drag
+                lastHoldWaypointTime = now;
+                setDestinationFromScreenPoint(pointerScreenX, pointerScreenY, false);
             }
 
             if (player.smashTimer > 0) player.smashTimer = Math.max(0, player.smashTimer - dt);
