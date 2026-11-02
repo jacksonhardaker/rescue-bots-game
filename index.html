@@ -1740,6 +1740,8 @@
         const worldColliders = [];
         const ramps = [];
         const cullableWorldObjects = []; // Viewport & Distance Frustum Culling Registry for 60 FPS across 10X Map!
+        const humanNPCs = [];
+        const vehicleNPCs = [];
         function registerCullableObject(obj, x, y, z, radius = 28) {
             obj.userData.cullCenter = new THREE.Vector3(x, y, z);
             obj.userData.cullRadius = radius;
@@ -2900,6 +2902,12 @@
             sunLight.intensity = w.sunIntensity;
             sunLight.color.setHex(w.sunColor);
             headlight.intensity = w.headlightIntensity;
+            if (typeof buddyHeadlight !== 'undefined') {
+                buddyHeadlight.intensity = w.headlightIntensity * 0.85;
+            }
+            if (typeof setCivilianVehicleHeadlights === 'function') {
+                setCivilianVehicleHeadlights(w.headlightIntensity > 0);
+            }
 
             rainSystem.group.visible = (w.id === 'RAIN');
             volcanoEmberSystem.group.visible = (w.id === 'VOLCANO');
@@ -5176,10 +5184,14 @@
 
         scene.add(waypointGroup);
 
-        // Headlight Spotlight attached to active player
+        // Headlight Spotlights attached to active player & Buddy Bot wingman
         const headlight = new THREE.SpotLight(0xfffbeb, 0, 95, Math.PI / 3.5, 0.45, 1.2);
         scene.add(headlight);
         scene.add(headlight.target);
+
+        const buddyHeadlight = new THREE.SpotLight(0xfffbeb, 0, 80, Math.PI / 3.6, 0.45, 1.2);
+        scene.add(buddyHeadlight);
+        scene.add(buddyHeadlight.target);
 
         // Sonar / EMP Shockwave Ring Mesh
         const sonarGeo = new THREE.RingGeometry(1.4, 2.2, 36).rotateX(-Math.PI / 2);
@@ -6519,8 +6531,43 @@
         /***********************************************************************
          * 8B. LIVING WORLD NPC SYSTEM (HUMANS & CIVILIAN VEHICLES + ENGLISH VOICE)
          ***********************************************************************/
-        const humanNPCs = [];
-        const vehicleNPCs = [];
+        // Dynamic Civilian Vehicle Headlight Materials & Projection Beams
+        const matNPCHeadlightOn = new THREE.MeshBasicMaterial({ color: 0xfff08a });
+        const matNPCHeadlightOff = new THREE.MeshToonMaterial({ color: 0x94a3b8, gradientMap: toonGrad3 });
+        const matNPCTaillightOn = new THREE.MeshBasicMaterial({ color: 0xff1744 });
+        const matNPCTaillightOff = new THREE.MeshToonMaterial({ color: 0x881337, gradientMap: toonGrad3 });
+        const matNPCBeam = new THREE.MeshBasicMaterial({
+            color: 0xfef08a,
+            transparent: true,
+            opacity: 0.28,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+        const matNPCBeamPool = new THREE.MeshBasicMaterial({
+            color: 0xfef08a,
+            transparent: true,
+            opacity: 0.22,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+
+        function setCivilianVehicleHeadlights(active) {
+            if (!vehicleNPCs || vehicleNPCs.length === 0) return;
+            for (let i = 0; i < vehicleNPCs.length; i++) {
+                const v = vehicleNPCs[i];
+                if (v.beamGroup) v.beamGroup.visible = active;
+                if (v.headlights) {
+                    for (let j = 0; j < v.headlights.length; j++) {
+                        v.headlights[j].material = active ? matNPCHeadlightOn : matNPCHeadlightOff;
+                    }
+                }
+                if (v.taillights) {
+                    for (let j = 0; j < v.taillights.length; j++) {
+                        v.taillights[j].material = active ? matNPCTaillightOn : matNPCTaillightOff;
+                    }
+                }
+            }
+        }
 
         function getCompassDirection(dx, dz) {
             // In world coords: -Z is North, +Z is South, +X is East, -X is West
@@ -6588,8 +6635,6 @@
             const matBody = new THREE.MeshToonMaterial({ color: bodyColorHex, gradientMap: toonGrad3 });
             const matCabinGlass = new THREE.MeshBasicMaterial({ map: texWindshieldCyan });
             const matBumper = new THREE.MeshToonMaterial({ color: 0xe2e8f0, gradientMap: toonGrad3 });
-            const matHeadlight = new THREE.MeshBasicMaterial({ color: 0xfef08a });
-            const matTaillight = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
 
             const wheels = [];
             function addWheelPair(zPos, radius = 0.85, xSpread = 2.05) {
@@ -6681,18 +6726,52 @@
             bumper.position.set(0, 0.85, frontZ);
             root.add(bumper);
 
+            const headlights = [];
+            const taillights = [];
+
             [-1.25, 1.25].forEach(lx => {
-                const hl = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.36, 0.2), matHeadlight);
+                const hl = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.36, 0.2), matNPCHeadlightOff);
                 hl.position.set(lx, 1.35, frontZ + 0.05);
                 root.add(hl);
+                headlights.push(hl);
 
-                const tl = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.36, 0.2), matTaillight);
+                const tl = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.36, 0.2), matNPCTaillightOff);
                 tl.position.set(lx, 1.35, -frontZ - 0.05);
                 root.add(tl);
+                taillights.push(tl);
             });
 
+            // Dual Projected Cartoon Headlight Beams & Road Light Pools
+            const beamGroup = new THREE.Group();
+            [-1.25, 1.25].forEach(lx => {
+                const beamGeo = new THREE.BufferGeometry();
+                const posArr = new Float32Array([
+                    lx - 0.35, 1.35, frontZ,
+                    lx + 0.35, 1.35, frontZ,
+                    lx - 1.75, 0.14, frontZ + 18.0,
+
+                    lx + 0.35, 1.35, frontZ,
+                    lx + 1.75, 0.14, frontZ + 18.0,
+                    lx - 1.75, 0.14, frontZ + 18.0
+                ]);
+                beamGeo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+                beamGeo.computeVertexNormals();
+                const beamMesh = new THREE.Mesh(beamGeo, matNPCBeam);
+                beamMesh.userData.noOutline = true;
+                beamGroup.add(beamMesh);
+
+                const poolGeo = new THREE.PlaneGeometry(3.6, 13.0);
+                poolGeo.rotateX(-Math.PI / 2);
+                const poolMesh = new THREE.Mesh(poolGeo, matNPCBeamPool);
+                poolMesh.position.set(lx * 0.9, 0.10, frontZ + 9.5);
+                poolMesh.userData.noOutline = true;
+                beamGroup.add(poolMesh);
+            });
+            beamGroup.visible = false;
+            root.add(beamGroup);
+
             applyCartoonInkOutlines(root, 1.055, true);
-            return { root, wheels };
+            return { root, wheels, headlights, taillights, beamGroup };
         }
 
         function buildLivingWorldNPCs() {
@@ -6788,7 +6867,10 @@
                     voicePitch: 0.95 + (i % 5) * 0.05,
                     lastSpokeTime: -99,
                     root: meshData.root,
-                    wheels: meshData.wheels
+                    wheels: meshData.wheels,
+                    headlights: meshData.headlights,
+                    taillights: meshData.taillights,
+                    beamGroup: meshData.beamGroup
                 });
             }
 
@@ -6813,7 +6895,10 @@
                     voicePitch: 0.94 + (i % 5) * 0.05,
                     lastSpokeTime: -99,
                     root: meshData.root,
-                    wheels: meshData.wheels
+                    wheels: meshData.wheels,
+                    headlights: meshData.headlights,
+                    taillights: meshData.taillights,
+                    beamGroup: meshData.beamGroup
                 });
             }
 
@@ -6838,9 +6923,15 @@
                     voicePitch: 0.98 + (i % 4) * 0.05,
                     lastSpokeTime: -99,
                     root: meshData.root,
-                    wheels: meshData.wheels
+                    wheels: meshData.wheels,
+                    headlights: meshData.headlights,
+                    taillights: meshData.taillights,
+                    beamGroup: meshData.beamGroup
                 });
             }
+
+            // Sync NPC headlights with initial active weather mode
+            setCivilianVehicleHeadlights(WEATHER_MODES[currentWeatherIdx].headlightIntensity > 0);
         }
 
         function updateLivingWorldNPCs(dt, now) {
@@ -8420,13 +8511,22 @@
             sunLight.position.set(snapX + 160, player.pos.y + 260, snapZ + 130);
             sunLight.target.updateMatrixWorld();
 
-            // Update Headlight & Sonar Ring
+            // Update Headlight Spotlights & Sonar Ring for Player & Buddy Bot
             headlight.position.set(player.pos.x, player.pos.y + 3.5, player.pos.z);
             headlight.target.position.set(
                 player.pos.x + Math.sin(player.heading) * 22,
                 player.pos.y + 0.5,
                 player.pos.z + Math.cos(player.heading) * 22
             );
+
+            if (buddyBot.botType) {
+                buddyHeadlight.position.set(buddyBot.pos.x, buddyBot.pos.y + 3.2, buddyBot.pos.z);
+                buddyHeadlight.target.position.set(
+                    buddyBot.pos.x + Math.sin(buddyBot.heading) * 20,
+                    buddyBot.pos.y + 0.5,
+                    buddyBot.pos.z + Math.cos(buddyBot.heading) * 20
+                );
+            }
 
             if (player.sonarTimer > 0) {
                 player.sonarTimer = Math.max(0, player.sonarTimer - dt);
