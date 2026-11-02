@@ -208,7 +208,7 @@
             <span id="altitude-readout" class="hidden mono-font text-xs text-cyan-300">ALT: 00m</span>
         </div>
         <div class="hidden md:block text-[11px] text-white/70 bg-slate-950/70 px-3 py-0.5 rounded-full border border-white/10">
-            <span class="text-amber-300">TAP SCREEN</span> Drive/Fly • <span class="text-lime-300">1-4</span> Bot • <span class="text-yellow-300">SPACE</span> Cycle Mode • <span class="text-emerald-300">V</span> Dino • <span class="text-sky-300">WASD</span> Move
+            <span class="text-amber-300">TAP SCREEN</span> Drive/Fly • <span class="text-lime-300">1-4</span> Bot • <span class="text-yellow-300">SPACE</span> Cycle Mode • <span class="text-sky-300">WASD</span> Move
         </div>
     </div>
 
@@ -231,13 +231,6 @@
         <button id="btn-action" class="tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-amber-400 via-orange-500 to-red-600 border-2 border-amber-200 flex flex-col items-center justify-center text-white select-none mb-1.5">
             <span class="text-2xl sm:text-3xl leading-none" id="action-icon">🔨</span>
             <span class="text-[10px] sm:text-xs font-bold tracking-wider uppercase mt-1 text-center leading-tight px-1" id="action-label">BLADE SMASH</span>
-        </button>
-
-        <!-- Dinobot Mode Button (Direct Toggle to Triceratops / Brachiosaur / Stegosaur / Pterosaur) -->
-        <button id="btn-dino" class="tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-teal-400 via-emerald-600 to-green-900 border-2 border-lime-300 flex flex-col items-center justify-center text-white select-none mb-1">
-            <span class="text-2xl sm:text-3xl leading-none" id="dino-icon">🦕</span>
-            <span class="text-[10px] sm:text-xs font-extrabold tracking-tight uppercase mt-0.5">DINOBOT</span>
-            <span class="text-[8px] sm:text-[9px] font-bold bg-slate-950/80 text-lime-300 px-1.5 py-0.2 rounded-full mt-0.5 truncate max-w-[92%]" id="dino-sub">TRICERATOPS</span>
         </button>
 
         <!-- Primary Hero Button: TRANSFORM (Cycles Bot -> Vehicle -> Dino) -->
@@ -2856,16 +2849,6 @@
                 : (player.mode === 'VEHICLE' ? `TO ${meta.dinoName}` : 'TO ROBOT');
             document.getElementById('transform-sub').textContent = nextTransformLabel;
 
-            const dinoIconEl = document.getElementById('dino-icon');
-            const dinoSubEl = document.getElementById('dino-sub');
-            const btnDino = document.getElementById('btn-dino');
-            if (dinoIconEl) dinoIconEl.textContent = meta.dinoIcon;
-            if (dinoSubEl) dinoSubEl.textContent = isDino ? 'TO ROBOT' : meta.dinoName;
-            if (btnDino) {
-                btnDino.classList.toggle('ring-4', isDino);
-                btnDino.classList.toggle('ring-yellow-300', isDino);
-            }
-
             document.getElementById('action-icon').textContent = isDino
                 ? meta.dinoActionIcon
                 : (isVeh ? meta.vehActionIcon : meta.botActionIcon);
@@ -3441,15 +3424,6 @@
             }
         }
 
-        // Direct Dinobot Mode Toggle Button
-        function triggerDinoMode() {
-            if (player.mode === 'DINO') {
-                setPlayerMode('BOT');
-            } else {
-                setPlayerMode('DINO');
-            }
-        }
-
         // Bot-Specific Special Action (Adapts across Bot, Vehicle, and Dinobot Modes!)
         function triggerPrimaryAction() {
             if (player.botType === 'HEATWAVE') {
@@ -3570,7 +3544,6 @@
         }
 
         bindButton('btn-transform', triggerTransform);
-        bindButton('btn-dino', triggerDinoMode);
         bindButton('btn-action', triggerPrimaryAction);
         bindButton('btn-jump-scan', triggerSecondaryAction);
         bindButton('btn-descend', triggerDescendAction);
@@ -3680,7 +3653,7 @@
             showToast("EMERGENCY DISPATCH!", "8 New Island Emergencies Active!");
         });
 
-        // Keyboard Shortcuts (1-4 Switch Bot, WASD Move, Space Cycle Transform, V Dino Mode, E/Shift Special, Q/C Ascend/Descend)
+        // Keyboard Shortcuts (1-4 Switch Bot, WASD Move, Space Cycle Transform, E/Shift Special, Q/C Ascend/Descend)
         window.addEventListener('keydown', e => {
             input.keys[e.code] = true;
             if (e.code === 'Digit1') switchRescueBot('BOULDER');
@@ -3690,9 +3663,6 @@
             if (e.code === 'Space' && !e.repeat) {
                 e.preventDefault();
                 triggerTransform();
-            }
-            if (e.code === 'KeyV' && !e.repeat) {
-                triggerDinoMode();
             }
             if ((e.code === 'KeyE' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat) {
                 triggerPrimaryAction();
