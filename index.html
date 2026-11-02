@@ -284,6 +284,7 @@
             constructor() {
                 this.ctx = null;
                 this.enabled = true;
+                this.speechUnlocked = false;
             }
             init() {
                 if (!this.ctx) {
@@ -292,6 +293,22 @@
                 }
                 if (this.ctx && this.ctx.state === 'suspended') {
                     this.ctx.resume();
+                }
+                this.unlockSpeech();
+            }
+            unlockSpeech() {
+                if (this.speechUnlocked || !('speechSynthesis' in window)) return;
+                try {
+                    window.speechSynthesis.getVoices();
+                    const warmUp = new SpeechSynthesisUtterance(' ');
+                    warmUp.volume = 0.01;
+                    warmUp.rate = 2.0;
+                    warmUp.lang = 'en-US';
+                    window._warmUpUtterance = warmUp;
+                    window.speechSynthesis.speak(warmUp);
+                    this.speechUnlocked = true;
+                } catch (err) {
+                    // Ignore if restricted
                 }
             }
             playTransform(toVehicle) {
@@ -3912,20 +3929,37 @@
 
             if (sfx.enabled && 'speechSynthesis' in window) {
                 try {
-                    window.speechSynthesis.cancel();
-                    const utter = new SpeechSynthesisUtterance(speechText);
-                    utter.lang = 'en-US';
-                    utter.rate = 1.05;
-                    utter.pitch = voicePitch;
-                    utter.volume = 1.0;
+                    const speakNow = () => {
+                        if (window.speechSynthesis.paused) {
+                            window.speechSynthesis.resume();
+                        }
+                        const utter = new SpeechSynthesisUtterance(speechText);
+                        utter.lang = 'en-US';
+                        utter.rate = 1.05;
+                        utter.pitch = voicePitch;
+                        utter.volume = 1.0;
 
-                    const voices = window.speechSynthesis.getVoices();
-                    if (voices && voices.length > 0) {
-                        const enVoice = voices.find(v => v.lang && v.lang.startsWith('en-US') && /Samantha|Alex|Daniel|Google|Natural|Enhanced/i.test(v.name))
-                            || voices.find(v => v.lang && v.lang.startsWith('en'));
-                        if (enVoice) utter.voice = enVoice;
+                        const voices = window.speechSynthesis.getVoices();
+                        if (voices && voices.length > 0) {
+                            const enVoice = voices.find(v => v.lang && v.lang.startsWith('en-US') && /Samantha|Alex|Daniel| Nicky|Aaron|Google|Natural|Enhanced/i.test(v.name))
+                                || voices.find(v => v.lang && v.lang.startsWith('en'));
+                            if (enVoice) utter.voice = enVoice;
+                        }
+                        // Keep a global reference on window so iOS Safari WebKit GC doesn't collect the utterance mid-speech!
+                        window._activeUtterance = utter;
+                        utter.onend = () => { if (window._activeUtterance === utter) window._activeUtterance = null; };
+                        utter.onerror = () => { if (window._activeUtterance === utter) window._activeUtterance = null; };
+                        window.speechSynthesis.speak(utter);
+                    };
+
+                    // Avoid iOS Safari WebKit bug where calling cancel() immediately before speak() aborts the new utterance
+                    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                        window.speechSynthesis.cancel();
+                        clearTimeout(window._iosSpeechCancelTimer);
+                        window._iosSpeechCancelTimer = setTimeout(speakNow, 65);
+                    } else {
+                        speakNow();
                     }
-                    window.speechSynthesis.speak(utter);
                 } catch (err) {
                     // Fallback gracefully if speechSynthesis is restricted
                 }
@@ -5052,6 +5086,20 @@
                 }
                 if (tappedNPC) {
                     speakClosestDisasterForNPC(tappedNPC, true);
+                } else {
+                    for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
+                        const b = beacons[bIdx];
+                        if (b.strandedCitizens && Math.hypot(hitPoint.x - b.x, hitPoint.z - b.z) < 24.0) {
+                            const sc = b.strandedCitizens[0];
+                            if (!b.restored) {
+                                triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc.voicePitch, true);
+                            } else {
+                                const botName = BOT_METADATA[player.botType] ? BOT_METADATA[player.botType].name : player.botType;
+                                triggerNPCSpeech(sc.name, "Rescued Citizen", `Thank you, ${botName}! You saved us at the ${b.name}!`, sc.voicePitch, true);
+                            }
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -5147,6 +5195,7 @@
 
         window.addEventListener('touchend', () => {
             activePointerDown = false;
+            sfx.init();
         }, { passive: false });
 
         window.addEventListener('touchcancel', () => {
