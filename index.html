@@ -403,6 +403,17 @@
         .stroke-current { stroke: currentColor; }
         .stroke-slate-950 { stroke: #020617; }
         .fill-none { fill: none; }
+        .fill-amber-300 { fill: #fcd34d; }
+        .fill-amber-400 { fill: #fbbf24; }
+        .fill-amber-500 { fill: #f59e0b; }
+        .fill-yellow-300 { fill: #fde047; }
+        .fill-yellow-400 { fill: #facc15; }
+        .fill-yellow-500 { fill: #eab308; }
+        .stroke-amber-400 { stroke: #fbbf24; }
+        .stroke-amber-500 { stroke: #f59e0b; }
+        .stroke-amber-600 { stroke: #d97706; }
+        .stroke-yellow-400 { stroke: #facc15; }
+        .stroke-yellow-500 { stroke: #eab308; }
 
         @keyframes ping {
             75%, 100% { transform: scale(2); opacity: 0; }
@@ -494,14 +505,14 @@
                     <!-- Persistent Career Progression Stats & Star Rank (Saved in localStorage) -->
                     <div id="career-stats-row" class="flex items-center justify-between gap-2 pt-1 mt-0.5 border-t border-white/15 text-[10px] sm:text-[11px] font-bold text-lime-300">
                         <span class="flex items-center gap-1">
-                            <svg viewBox="0 0 24 24" style="width:13px;height:13px;" class="shrink-0 fill-amber-400 stroke-amber-500" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="14" r="6"/>
-                                <path d="M8.21 13.89L7 2l5 3 5-3-1.21 11.89" fill="#ef4444" stroke="#dc2626"/>
+                            <svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="14" r="6" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/>
+                                <path d="M8.21 13.89L7 2l5 3 5-3-1.21 11.89" fill="#ef4444" stroke="#dc2626" stroke-width="1.2"/>
                             </svg>
                             <span>Rescues: <span id="stat-total-emergencies" class="text-white">0</span></span>
                         </span>
                         <span class="flex items-center gap-1">
-                            <svg viewBox="0 0 24 24" style="width:13px;height:13px;" class="shrink-0 fill-none stroke-cyan-300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;" class="shrink-0" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
                                 <circle cx="9" cy="7" r="4"/>
                                 <path d="M23 21v-2a4 4 0 00-3-3.87"/>
@@ -510,17 +521,17 @@
                             <span>Saved: <span id="stat-total-citizens" class="text-cyan-300">0</span></span>
                         </span>
                         <span class="flex items-center gap-1">
-                            <svg viewBox="0 0 24 24" style="width:13px;height:13px;" class="shrink-0 fill-yellow-300 stroke-yellow-400" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                            <svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#fbbf24" stroke="#d97706" stroke-width="1.4"/>
                             </svg>
-                            <span>Energon: <span id="stat-total-energon" class="text-yellow-300">0</span></span>
+                            <span>Energon: <span id="stat-total-energon" class="text-amber-300">0</span></span>
                         </span>
                     </div>
                     <div class="flex items-center justify-between gap-2 pt-0.5 text-[10px] sm:text-[11px] font-extrabold">
                         <span id="stat-rank-badge" class="text-amber-300 tracking-wide flex items-center gap-1">
                             <span id="stat-rank-stars" class="flex items-center gap-0.5">
-                                <svg viewBox="0 0 24 24" style="width:12px;height:12px;" class="shrink-0 fill-amber-300 stroke-amber-400" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                <svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/>
                                 </svg>
                             </span>
                             <span id="stat-rank-title">CADET BOT</span>
@@ -896,10 +907,10 @@
          ***********************************************************************/
         const SVG_ICONS = {
             // Career Progression & Info Box Indicators (14x14)
-            STAR: `<svg viewBox="0 0 24 24" width="12" height="12" style="width:12px;height:12px;display:inline-block;" class="shrink-0 fill-amber-300 stroke-amber-500" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-            MEDAL: `<svg viewBox="0 0 24 24" width="13" height="13" style="width:13px;height:13px;display:inline-block;" class="shrink-0 fill-amber-400 stroke-amber-500" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M8.21 13.89L7 2l5 3 5-3-1.21 11.89" fill="#ef4444" stroke="#dc2626"/></svg>`,
-            PEOPLE: `<svg viewBox="0 0 24 24" width="13" height="13" style="width:13px;height:13px;display:inline-block;" class="shrink-0 fill-none stroke-cyan-300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`,
-            BOLT: `<svg viewBox="0 0 24 24" width="13" height="13" style="width:13px;height:13px;display:inline-block;" class="shrink-0 fill-yellow-300 stroke-yellow-400" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+            STAR: `<svg viewBox="0 0 24 24" width="13" height="13" style="width:13px;height:13px;display:inline-block;vertical-align:middle;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/></svg>`,
+            MEDAL: `<svg viewBox="0 0 24 24" width="13" height="13" style="width:13px;height:13px;display:inline-block;vertical-align:middle;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/><path d="M8.21 13.89L7 2l5 3 5-3-1.21 11.89" fill="#ef4444" stroke="#dc2626" stroke-width="1.2"/></svg>`,
+            PEOPLE: `<svg viewBox="0 0 24 24" width="13" height="13" style="width:13px;height:13px;display:inline-block;vertical-align:middle;" class="shrink-0" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`,
+            BOLT: `<svg viewBox="0 0 24 24" width="13" height="13" style="width:13px;height:13px;display:inline-block;vertical-align:middle;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#fbbf24" stroke="#d97706" stroke-width="1.4"/></svg>`,
 
             // 4-Bot HQ Roster Vehicles (32x32)
             BOULDER: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
