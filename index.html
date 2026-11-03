@@ -2764,72 +2764,438 @@
             c.width = 256; c.height = 256;
             const ctx = c.getContext('2d');
 
-            // Royal Purple & Deep Violet Speedster Faceplate
-            ctx.fillStyle = '#7c3aed';
+            // Royal Purple Speedster Helmet Frame
+            const helmGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            helmGrad.addColorStop(0, '#8b5cf6');
+            helmGrad.addColorStop(0.3, '#7c3aed');
+            helmGrad.addColorStop(1, '#6d28d9');
+            ctx.fillStyle = helmGrad;
             ctx.fillRect(0, 0, 256, 256);
 
-            // Deep Violet Crown Inset
-            ctx.fillStyle = '#581c87';
-            ctx.fillRect(36, 0, 184, 48);
-
-            // Silver Swept Brow Visor Frame
-            ctx.fillStyle = '#e2e8f0';
+            // Silver Trapezoid Vent in Center Crown (As seen in Reference Photo 4)
+            const ventGrad = ctx.createLinearGradient(0, 0, 0, 52);
+            ventGrad.addColorStop(0, '#ffffff');
+            ventGrad.addColorStop(1, '#cbd5e1');
+            ctx.fillStyle = ventGrad;
             ctx.beginPath();
-            ctx.moveTo(24, 48); ctx.lineTo(232, 48);
-            ctx.lineTo(216, 68); ctx.lineTo(40, 68);
+            ctx.moveTo(116, 2); ctx.lineTo(140, 2);
+            ctx.lineTo(134, 48); ctx.lineTo(122, 48);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Slat cutouts in center vent
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 3;
+            [14, 26, 38].forEach(vy => {
+                ctx.beginPath();
+                ctx.moveTo(122, vy); ctx.lineTo(134, vy);
+                ctx.stroke();
+            });
+
+            // Twin Bright Neon-Green Racing Pinstripes Flanking Center Vent (Exact TV Show Look!)
+            const stripeGrad = ctx.createLinearGradient(0, 0, 0, 56);
+            stripeGrad.addColorStop(0, '#4ade80');
+            stripeGrad.addColorStop(1, '#22c55e');
+
+            [-1, 1].forEach(side => {
+                const sx = 128 + side * 42;
+                ctx.fillStyle = stripeGrad;
+                ctx.beginPath();
+                ctx.moveTo(sx - 10, 0); ctx.lineTo(sx + 10, 0);
+                ctx.lineTo(sx + 8, 54); ctx.lineTo(sx - 8, 54);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 3.5;
+                ctx.stroke();
+            });
+
+            // Cylindrical Silver Ear Communication Pods (Left & Right)
+            [-1, 1].forEach(side => {
+                const ex = side === -1 ? 16 : 240;
+                ctx.fillStyle = '#e2e8f0';
+                ctx.beginPath();
+                ctx.arc(ex, 102, 14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath();
+                ctx.arc(ex, 102, 6, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Sleek Swept Visor Frame
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.moveTo(24, 52); ctx.lineTo(232, 52);
+            ctx.lineTo(214, 134); ctx.lineTo(42, 134);
             ctx.closePath();
             ctx.fill();
 
-            // Ultra-Fast Angled Cyan Visor Optics
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(30, 68, 196, 60);
-
-            const visGrad = ctx.createLinearGradient(0, 72, 0, 124);
-            visGrad.addColorStop(0, '#67e8f9');
-            visGrad.addColorStop(0.5, '#22d3ee');
+            // Wide Curved Cyan Visor Lens
+            const visGrad = ctx.createLinearGradient(0, 56, 0, 130);
+            visGrad.addColorStop(0, '#a5f3fc');
+            visGrad.addColorStop(0.3, '#38bdf8');
+            visGrad.addColorStop(0.8, '#06b6d4');
             visGrad.addColorStop(1, '#0284c7');
             ctx.fillStyle = visGrad;
             ctx.beginPath();
-            ctx.moveTo(38, 76); ctx.lineTo(218, 76);
-            ctx.lineTo(206, 120); ctx.lineTo(50, 120);
+            ctx.moveTo(32, 58); ctx.lineTo(224, 58);
+            ctx.lineTo(208, 128); ctx.lineTo(48, 128);
             ctx.closePath();
             ctx.fill();
 
-            // Diagonal Speed Glare Lines
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            // Glowing Amber/Cyan Eye Optics Visible Behind Translucent Visor (TV Show Detail!)
+            [-1, 1].forEach(side => {
+                const ox = 128 + side * 44;
+                const eyeGrad = ctx.createRadialGradient(ox, 94, 2, ox, 94, 18);
+                eyeGrad.addColorStop(0, 'rgba(254, 240, 138, 0.95)');
+                eyeGrad.addColorStop(0.45, 'rgba(56, 189, 248, 0.7)');
+                eyeGrad.addColorStop(1, 'rgba(6, 182, 212, 0)');
+                ctx.fillStyle = eyeGrad;
+                ctx.beginPath();
+                ctx.ellipse(ox, 94, 18, 12, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Speed Glare Diagonal Flares across Visor
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
             ctx.beginPath();
-            ctx.moveTo(80, 76); ctx.lineTo(110, 76); ctx.lineTo(85, 120); ctx.lineTo(55, 120);
+            ctx.moveTo(82, 58); ctx.lineTo(108, 58); ctx.lineTo(84, 128); ctx.lineTo(58, 128);
             ctx.closePath();
             ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(170, 76); ctx.lineTo(195, 76); ctx.lineTo(170, 120); ctx.lineTo(145, 120);
+            ctx.moveTo(172, 58); ctx.lineTo(196, 58); ctx.lineTo(174, 128); ctx.lineTo(150, 128);
             ctx.closePath();
             ctx.fill();
 
-            // Silver Athletic Lower Face
-            const lowerGrad = ctx.createLinearGradient(0, 128, 0, 250);
-            lowerGrad.addColorStop(0, '#f8fafc');
-            lowerGrad.addColorStop(1, '#94a3b8');
-            ctx.fillStyle = lowerGrad;
+            // Silver Sculpted Faceplate & Jaw (Sharp Speedster Chin)
+            const jawGrad = ctx.createLinearGradient(0, 132, 0, 248);
+            jawGrad.addColorStop(0, '#f8fafc');
+            jawGrad.addColorStop(0.65, '#e2e8f0');
+            jawGrad.addColorStop(1, '#cbd5e1');
+            ctx.fillStyle = jawGrad;
             ctx.beginPath();
-            ctx.moveTo(48, 128); ctx.lineTo(208, 128);
-            ctx.lineTo(184, 238); ctx.lineTo(128, 250); ctx.lineTo(72, 238);
+            ctx.moveTo(50, 134); ctx.lineTo(206, 134);
+            ctx.lineTo(184, 236); ctx.lineTo(128, 248); ctx.lineTo(72, 236);
             ctx.closePath();
             ctx.fill();
-
-            // High-Speed Determined Grin
             ctx.strokeStyle = '#0f172a';
-            ctx.lineWidth = 7;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(84, 184);
-            ctx.quadraticCurveTo(128, 206, 172, 178);
+            ctx.lineWidth = 5;
             ctx.stroke();
 
-            // Outer Outline
+            // Enthusiastic Speedster Smile
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.moveTo(88, 182);
+            ctx.quadraticCurveTo(128, 216, 168, 182);
+            ctx.quadraticCurveTo(128, 196, 88, 182);
+            ctx.closePath();
+            ctx.fill();
+
+            // White Teeth Flash
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(96, 184);
+            ctx.lineTo(160, 184);
+            ctx.quadraticCurveTo(128, 195, 96, 184);
+            ctx.closePath();
+            ctx.fill();
+
+            // Chin Notch Crease
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(128, 222); ctx.lineTo(128, 242);
+            ctx.stroke();
+
+            // Heavy Cartoon Outline
             ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 10;
             ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        // Blurr Chest Panel: Royal Purple with Crisp White Racing Stripe, White Collar & Oval Cyan Canopy Window
+        function makeBlurrChestTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Royal Purple Chest Panel
+            ctx.fillStyle = '#7c3aed';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Bold Crisp White Center Racing Stripe
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(106, 0, 44, 256);
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(106, 0, 44, 256);
+
+            // White Collar Yoke Arch at Top
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.moveTo(16, 0); ctx.lineTo(240, 0);
+            ctx.lineTo(218, 44); ctx.quadraticCurveTo(128, 62, 38, 44);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // Green Autobot Shield Badge
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.moveTo(128, 38);
+            ctx.lineTo(144, 48);
+            ctx.lineTo(138, 72);
+            ctx.lineTo(128, 80);
+            ctx.lineTo(118, 72);
+            ctx.lineTo(112, 48);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            // Oval / Capsule Cyan Cockpit Canopy Window
+            const cy = 168;
+            const rx = 62;
+            const ry = 54;
+            // Outer White Trim
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.ellipse(128, cy, rx + 10, ry + 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            // Cyan Cockpit Glass
+            const glassGrad = ctx.createRadialGradient(114, cy - 18, 8, 128, cy, rx);
+            glassGrad.addColorStop(0, '#a5f3fc');
+            glassGrad.addColorStop(0.35, '#38bdf8');
+            glassGrad.addColorStop(0.75, '#06b6d4');
+            glassGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = glassGrad;
+            ctx.beginPath();
+            ctx.ellipse(128, cy, rx, ry, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Curved Glare Highlights
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.beginPath();
+            ctx.ellipse(116, cy - 20, 32, 14, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Heavy Cartoon Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        // Blurr Shoulder: Royal Purple with Bold Crisp White Speed Lightning Bolt
+        function makeBlurrShoulderTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Royal Purple Shoulder Background
+            ctx.fillStyle = '#7c3aed';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Bold White Speed Lightning Bolt (Exact TV Show Graphic!)
+            ctx.fillStyle = '#f8fafc';
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 7;
+            ctx.lineJoin = 'miter';
+            ctx.beginPath();
+            ctx.moveTo(148, 18);
+            ctx.lineTo(84, 122);
+            ctx.lineTo(136, 122);
+            ctx.lineTo(92, 240);
+            ctx.lineTo(184, 108);
+            ctx.lineTo(138, 108);
+            ctx.lineTo(180, 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Inner Lightning Highlight Accent
+            ctx.fillStyle = '#e0f2fe';
+            ctx.beginPath();
+            ctx.moveTo(148, 30);
+            ctx.lineTo(100, 116);
+            ctx.lineTo(132, 116);
+            ctx.lineTo(106, 205);
+            ctx.lineTo(168, 114);
+            ctx.lineTo(138, 114);
+            ctx.lineTo(166, 30);
+            ctx.closePath();
+            ctx.fill();
+
+            // Heavy Cartoon Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        // Blurr Shin: Royal Purple with Triple Segmented Neon-Green Speed Lightbars
+        function makeBlurrShinTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Royal Purple Shin Panel
+            ctx.fillStyle = '#7c3aed';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Angled Cyan / Silver Speed Housing Frame
+            const frameGrad = ctx.createLinearGradient(0, 20, 0, 236);
+            frameGrad.addColorStop(0, '#38bdf8');
+            frameGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = frameGrad;
+            ctx.beginPath();
+            ctx.moveTo(42, 24); ctx.lineTo(214, 24);
+            ctx.lineTo(228, 228); ctx.lineTo(28, 228);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            // Inner Charcoal Lamp Housing Cavity
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.moveTo(56, 34); ctx.lineTo(200, 34);
+            ctx.lineTo(214, 218); ctx.lineTo(42, 218);
+            ctx.closePath();
+            ctx.fill();
+
+            // Triple Segmented Glowing Neon-Green Speed Lightbars
+            const segY = [44, 102, 160];
+            const segH = 46;
+            segY.forEach((sy, idx) => {
+                const segGrad = ctx.createLinearGradient(0, sy, 0, sy + segH);
+                segGrad.addColorStop(0, '#bbf7d0');
+                segGrad.addColorStop(0.3, '#4ade80');
+                segGrad.addColorStop(1, '#16a34a');
+                ctx.fillStyle = segGrad;
+                const inset = idx * 4;
+                ctx.fillRect(64 - inset, sy, 128 + inset * 2, segH);
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(64 - inset, sy, 128 + inset * 2, segH);
+
+                // Glow Core
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(74 - inset, sy + 6, 24, 12);
+            });
+
+            // Heavy Cartoon Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        // Blurr Multi-Blade Turbine Fan Wheel Texture (Neon Green Rims & Hubs)
+        function makeBlurrTurbineWheelTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Dark Charcoal Tire Recess
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Electric Neon-Green Outer Rim Lip Ring
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 18;
+            ctx.beginPath();
+            ctx.arc(128, 128, 110, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Black Inset Ring
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(128, 128, 100, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Recessed Dark Steel Cavity
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(128, 128, 98, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 10 Radial Angled Multi-Blade Turbine Fan Blades (Exact TV Show Look!)
+            const numBlades = 10;
+            for (let i = 0; i < numBlades; i++) {
+                const angle = (i * 2 * Math.PI) / numBlades;
+                ctx.save();
+                ctx.translate(128, 128);
+                ctx.rotate(angle);
+
+                // Turbine blade polygon
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.moveTo(0, -32);
+                ctx.lineTo(24, -94);
+                ctx.lineTo(44, -92);
+                ctx.lineTo(12, -32);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#334155';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+
+                // Blade highlight
+                ctx.fillStyle = '#475569';
+                ctx.beginPath();
+                ctx.moveTo(8, -32);
+                ctx.lineTo(28, -93);
+                ctx.lineTo(34, -93);
+                ctx.lineTo(12, -32);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            // Neon-Green Center Turbine Hub
+            const hubGrad = ctx.createRadialGradient(122, 122, 4, 128, 128, 36);
+            hubGrad.addColorStop(0, '#86efac');
+            hubGrad.addColorStop(0.5, '#22c55e');
+            hubGrad.addColorStop(1, '#15803d');
+            ctx.fillStyle = hubGrad;
+            ctx.beginPath();
+            ctx.arc(128, 128, 34, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Silver Center Bullet Dome
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.arc(128, 128, 14, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
             return new THREE.CanvasTexture(c);
         }
 
@@ -3050,6 +3416,10 @@
         const texFaceOptimus = makeOptimusFaceTexture();
         const texFaceBumblebee = makeBumblebeeFaceTexture();
         const texFaceBlurr = makeBlurrFaceTexture();
+        const texBlurrChest = makeBlurrChestTexture();
+        const texBlurrShoulder = makeBlurrShoulderTexture();
+        const texBlurrShin = makeBlurrShinTexture();
+        const texBlurrTurbine = makeBlurrTurbineWheelTexture();
         const texFaceSalvage = makeSalvageFaceTexture();
         const texSalvageChest = makeSalvageChestTexture();
         const texFaceHighTide = makeHighTideFaceTexture();
@@ -7223,8 +7593,16 @@
 
         const matBlurrPurple = new THREE.MeshToonMaterial({ color: 0x7c3aed, gradientMap: toonGrad4 });
         const matBlurrViolet = new THREE.MeshToonMaterial({ color: 0x581c87, gradientMap: toonGrad4 });
-        const matBlurrCyan = new THREE.MeshToonMaterial({ color: 0x38bdf8, gradientMap: toonGrad3 });
+        const matBlurrWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 });
+        const matBlurrNeonGreen = new THREE.MeshToonMaterial({ color: 0x22c55e, gradientMap: toonGrad3 });
+        const matBlurrCyan = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+        const matBlurrBlack = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
+        const matBlurrSteel = new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 });
         const matBlurrFace = new THREE.MeshBasicMaterial({ map: texFaceBlurr });
+        const matBlurrChest = new THREE.MeshBasicMaterial({ map: texBlurrChest });
+        const matBlurrShoulder = new THREE.MeshBasicMaterial({ map: texBlurrShoulder });
+        const matBlurrShin = new THREE.MeshBasicMaterial({ map: texBlurrShin });
+        const matBlurrTurbine = new THREE.MeshBasicMaterial({ map: texBlurrTurbine });
 
         const matSalvageLime = new THREE.MeshToonMaterial({ color: 0xcbf827, gradientMap: toonGrad4 });
         const matSalvageBlue = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad4 });
@@ -7253,6 +7631,38 @@
                 matChrome
             );
             wg.add(rim);
+            return wg;
+        }
+
+        // Blurr Multi-Blade Turbine Fan Wheel Assembly (Black Tire + Neon Green Rim Lip & Center Hub)
+        function createBlurrTurbineWheel(radius = 0.68, width = 0.44) {
+            const wg = new THREE.Group();
+            const tire = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius, radius, width, 24).rotateZ(Math.PI / 2),
+                matTire
+            );
+            tire.castShadow = true;
+            wg.add(tire);
+
+            const rim = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius * 0.78, radius * 0.78, width + 0.02, 24).rotateZ(Math.PI / 2),
+                matBlurrNeonGreen
+            );
+            wg.add(rim);
+
+            const discGeom = new THREE.CircleGeometry(radius * 0.76, 24);
+            const discMat = matBlurrTurbine;
+
+            const discMeshOuter = new THREE.Mesh(discGeom, discMat);
+            discMeshOuter.rotation.y = Math.PI / 2;
+            discMeshOuter.position.x = width / 2 + 0.02;
+            wg.add(discMeshOuter);
+
+            const discMeshInner = new THREE.Mesh(discGeom, discMat);
+            discMeshInner.rotation.y = -Math.PI / 2;
+            discMeshInner.position.x = -width / 2 - 0.02;
+            wg.add(discMeshInner);
+
             return wg;
         }
 
@@ -8875,91 +9285,212 @@
             }
 
             else if (botType === 'BLURR') {
-                // TV Show Blurr: Royal Purple (#7c3aed) & Deep Violet (#581c87) Hyper-Speedster
-                // Torso: Aerodynamic Wedge Chest
-                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.55, 2.25, 1.95), matBlurrPurple);
+                // TV Show Blurr: Royal Purple (#7c3aed) Le Mans Hyper-Speedster with Crisp White Center Racing Stripe,
+                // Cyan Bubble Cockpit Canopy, White Shoulder Lightning Bolts, Neon-Green Turbine Fan Wheels,
+                // Triple Segmented Shin Speedbars, and High Rear Black GT Racing Spoiler!
+
+                // 1. Torso: Aerodynamic Le Mans Speedster Cockpit Core
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.45, 2.3, 1.95), matBlurrPurple);
                 chest.castShadow = true;
                 parts.torso.add(chest);
 
-                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.28, 1.98), matBlurrViolet);
-                parts.torso.add(stripe);
+                // Front Chest Panel with Cyan Cockpit Canopy, Center White Stripe & Autobot Crest
+                const chestFace = new THREE.Mesh(new THREE.BoxGeometry(2.35, 2.15, 0.22), matBlurrChest);
+                chestFace.position.set(0, 0.02, 0.98);
+                chestFace.userData.noOutline = true;
+                parts.torso.add(chestFace);
 
-                const chevron = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.18), matBlurrCyan);
-                chevron.position.set(0, 0.55, 1.02);
-                chevron.userData.noOutline = true;
-                parts.torso.add(chevron);
+                // Crisp White Collar Yoke wrapping over shoulders & around neck
+                const collarYoke = new THREE.Mesh(new THREE.BoxGeometry(2.42, 0.36, 1.55), matBlurrWhite);
+                collarYoke.position.set(0, 1.15, -0.05);
+                parts.torso.add(collarYoke);
 
-                [-1.15, 1.15].forEach(sx => {
-                    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.45, 0.95), matBlurrPurple);
-                    fin.position.set(sx, 0.85, -0.8);
-                    fin.rotation.x = -0.25;
-                    parts.torso.add(fin);
+                // Lower Torso / Pelvis: Purple Belt Band with Crisp White Trim & Inverted Chevron Buckle
+                const beltBand = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.45, 1.55), matBlurrPurple);
+                beltBand.position.set(0, -1.25, 0);
+                const beltTrim = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.12, 1.58), matBlurrWhite);
+                beltTrim.position.set(0, -1.14, 0);
+                const beltBuckle = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.35, 0.22), matBlurrWhite);
+                beltBuckle.position.set(0, -1.28, 0.78);
+                const groinPlate = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.75, 1.25), matBlurrPurple);
+                groinPlate.position.set(0, -1.6, 0);
+                parts.torso.add(beltBand, beltTrim, beltBuckle, groinPlate);
+
+                // High Rear Black GT Racing Spoiler (Mounted on Twin Upright Stanchions Behind Head)
+                [-0.85, 0.85].forEach(sx => {
+                    const stanchion = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.85, 0.28), matBlurrBlack);
+                    stanchion.position.set(sx, 1.62, -1.05);
+                    stanchion.castShadow = true;
+                    parts.torso.add(stanchion);
+                });
+                const gtWing = new THREE.Mesh(new THREE.BoxGeometry(3.15, 0.16, 0.78), matBlurrBlack);
+                gtWing.position.set(0, 2.48, -1.05);
+                gtWing.castShadow = true;
+                parts.torso.add(gtWing);
+
+                [-1.58, 1.58].forEach(wx => {
+                    const endplate = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.65, 0.88), matBlurrBlack);
+                    endplate.position.set(wx, 2.48, -1.05);
+                    parts.torso.add(endplate);
                 });
 
-                // Head: Purple Helmet with Swept-Back Center Speed Fin
+                // Front Ground-Effects Splitter with Neon-Green Winglets on `parts.frontAttachment`
+                const noseLip = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.14, 0.85), matBlurrBlack);
+                noseLip.position.set(0, 0.05, 0.35);
+                parts.frontAttachment.add(noseLip);
+
+                [-1.35, 1.35].forEach(nx => {
+                    const winglet = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.08, 0.95), matBlurrNeonGreen);
+                    winglet.position.set(nx, 0.08, 0.35);
+                    parts.frontAttachment.add(winglet);
+                });
+
+                // 2. Head: Purple Helmet with Twin Neon-Green Racing Stripes, Silver Center Vent & Visor
                 const helm = new THREE.Mesh(new THREE.BoxGeometry(1.22, 1.25, 1.22), matBlurrPurple);
                 helm.castShadow = true;
                 parts.head.add(helm);
 
-                const speedFin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.25, 1.6), matBlurrViolet);
-                speedFin.position.set(0, 0.95, -0.3);
-                speedFin.rotation.x = -0.45;
-                parts.head.add(speedFin);
+                const crownDome = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.58, 0.62, 1.22, 16).rotateZ(Math.PI / 2),
+                    matBlurrPurple
+                );
+                crownDome.position.set(0, 0.62, 0);
+                parts.head.add(crownDome);
 
-                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.95, 1.24), matBlurrFace);
-                faceMesh.position.set(0, -0.05, 0.04);
+                // Center Silver Crest Slat
+                const crestSlat = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.22, 1.05), matBlurrWhite);
+                crestSlat.position.set(0, 0.68, 0.05);
+                parts.head.add(crestSlat);
+
+                // Twin Neon-Green Racing Stripes running along top of helmet
+                [-0.22, 0.22].forEach(hx => {
+                    const hStripe = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 1.05), matBlurrNeonGreen);
+                    hStripe.position.set(hx, 0.68, 0.05);
+                    parts.head.add(hStripe);
+                });
+
+                // Cylindrical Silver Ear Communication Pods (Left & Right)
+                [-0.64, 0.64].forEach(ex => {
+                    const ear = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.26, 0.26, 0.18, 14).rotateZ(Math.PI / 2),
+                        matBlurrWhite
+                    );
+                    ear.position.set(ex, 0.05, 0);
+                    parts.head.add(ear);
+                });
+
+                // Face Mesh with glowing optics visor and smile
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.14, 1.02, 1.24), matBlurrFace);
+                faceMesh.position.set(0, -0.04, 0.04);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
 
-                // Arms: Purple Pod Shoulders, Violet Forearms + Low-Profile Wheels
+                // 3. Arms: Broad Rounded Shoulders with White Lightning Bolts, Side Turbine Wheels, & Neon-Green Cuffs
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.leftArm : parts.rightArm;
                     const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
 
-                    const pod = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.18, 1.25), matBlurrPurple);
-                    pod.castShadow = true;
-                    armG.add(pod);
+                    // Rounded Shoulder Pauldron
+                    const pauldron = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.35, 1.45), matBlurrPurple);
+                    pauldron.castShadow = true;
+                    armG.add(pauldron);
 
-                    const wheel = createWheelAssembly(0.64, 0.42);
-                    wheel.position.set(side * 0.46, -0.22, 0.25);
+                    // White Shoulder Top Racing Cap
+                    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.18, 1.38), matBlurrWhite);
+                    cap.position.set(0, 0.72, 0);
+                    armG.add(cap);
+
+                    // Front White Speed Lightning Bolt Graphic Panel
+                    const lightningPanel = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.26, 0.12), matBlurrShoulder);
+                    lightningPanel.position.set(0, 0, 0.74);
+                    lightningPanel.userData.noOutline = true;
+                    armG.add(lightningPanel);
+
+                    // Front Turbine Fan Wheel mounted on outer side of shoulder
+                    const wheel = createBlurrTurbineWheel(0.68, 0.44);
+                    wheel.position.set(side * 0.58, -0.15, 0.05);
                     armG.add(wheel);
                     parts.wheels.push(wheel);
 
-                    forearmG.position.set(0, -1.15, 0);
+                    // Gunmetal Steel Bicep Cylinder
+                    const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.65, 12), matBlurrSteel);
+                    bicep.position.set(0, -0.85, 0);
+                    armG.add(bicep);
+
+                    // Forearm & Hand Group
+                    forearmG.position.set(0, -1.25, 0);
                     armG.add(forearmG);
 
-                    const tube = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.25, 0.85), matBlurrViolet);
-                    tube.position.set(0, -0.45, 0.05);
-                    tube.castShadow = true;
-                    forearmG.add(tube);
+                    // Purple Gauntlet
+                    const gauntlet = new THREE.Mesh(new THREE.BoxGeometry(0.96, 1.35, 0.96), matBlurrPurple);
+                    gauntlet.position.set(0, -0.45, 0.05);
+                    gauntlet.castShadow = true;
+
+                    // Neon-Green Digital Speedometer Cuff Band (TV Show Detail!)
+                    const speedoCuff = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.32, 1.02), matBlurrNeonGreen);
+                    speedoCuff.position.set(0, -0.22, 0.05);
+
+                    // Gunmetal Charcoal Hand
+                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.55), matBlurrSteel);
+                    hand.position.set(0, -1.18, 0.05);
+
+                    forearmG.add(gauntlet, speedoCuff, hand);
                 });
 
-                // Legs: Chrome Thighs, Violet Shins, Purple Boots + Rear Wheels
+                // 4. Legs: Gunmetal Thighs, Aerodynamic Shins with Triple Neon-Green Lightbars, Rear Turbine Wheels, & White Toes
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
 
-                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.12, 1.25, 1.12), matChrome);
+                    // Gunmetal Steel Cylindrical Thigh
+                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.15, 12), matBlurrSteel);
                     thigh.position.set(-side * 0.05, -0.48, 0);
+                    thigh.castShadow = true;
                     legG.add(thigh);
 
-                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.32, 2.25, 1.55), matBlurrViolet);
-                    shin.position.set(-side * 0.08, -1.45, 0.05);
+                    // Articulated Knee Joint Disc
+                    const kneeDisc = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.35, 0.35, 0.35, 12).rotateZ(Math.PI / 2),
+                        matBlurrSteel
+                    );
+                    kneeDisc.position.set(-side * 0.05, -1.05, 0.05);
+                    legG.add(kneeDisc);
+
+                    // Aerodynamic Flared Shin / Fender
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.38, 2.35, 1.65), matBlurrPurple);
+                    shin.position.set(-side * 0.08, -1.75, 0.05);
                     shin.castShadow = true;
                     legG.add(shin);
 
-                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.52, 1.75), matBlurrPurple);
-                    boot.position.set(-side * 0.08, -2.48, 0.18);
-                    boot.castShadow = true;
-                    legG.add(boot);
+                    // Front of Shin: Triple Vertical Neon-Green Speed Lightbars
+                    const shinBars = new THREE.Mesh(new THREE.BoxGeometry(1.22, 2.15, 0.14), matBlurrShin);
+                    shinBars.position.set(-side * 0.08, -1.75, 0.89);
+                    shinBars.userData.noOutline = true;
+                    legG.add(shinBars);
 
+                    // Rear Turbine Wheel Mount (Outer lower shin)
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
-                    wheelMount.position.set(side * 0.55, 0, -0.05);
+                    wheelMount.position.set(side * 0.58, 0, -0.1);
                     legG.add(wheelMount);
 
-                    const w = createWheelAssembly(0.64, 0.42);
-                    w.position.set(0, -1.55, 0);
-                    wheelMount.add(w);
-                    parts.wheels.push(w);
+                    const rw = createBlurrTurbineWheel(0.68, 0.44);
+                    rw.position.set(0, -1.82, 0);
+                    wheelMount.add(rw);
+                    parts.wheels.push(rw);
+
+                    // Foot: Purple Heel + Sloped Crisp White Racing Toe
+                    const heel = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.45, 1.1), matBlurrPurple);
+                    heel.position.set(-side * 0.08, -2.85, -0.2);
+                    heel.castShadow = true;
+
+                    const whiteToe = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.42, 1.15), matBlurrWhite);
+                    whiteToe.position.set(-side * 0.08, -2.87, 0.62);
+                    whiteToe.castShadow = true;
+
+                    // Neon-Green Aerodynamic Side Splitter Winglet (Extending from outer foot)
+                    const sideSplitter = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.08, 1.45), matBlurrNeonGreen);
+                    sideSplitter.position.set(side * 0.65 - side * 0.08, -3.0, 0.35);
+
+                    legG.add(heel, whiteToe, sideSplitter);
                 });
             }
 
@@ -9344,11 +9875,13 @@
             const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' ? 2.35 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.16 : 0);
             const vehTorsoY = (rig.botType === 'BOULDER') ? 1.56
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.78
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? 1.42
+                : (rig.botType === 'BLURR') ? 1.35
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? 1.42
                 : (rig.botType === 'HIGHTIDE') ? 1.58 : 1.72;
             const vehTorsoZ = (rig.botType === 'BOULDER') ? -0.18
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.15
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? -0.42
+                : (rig.botType === 'BLURR') ? 0.35
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? -0.42
                 : (rig.botType === 'HIGHTIDE') ? 0.35 : 0.95;
             rig.torso.position.set(
                 0,
@@ -9403,7 +9936,7 @@
                 rig.head.rotation.x = 0;
                 const hwHeadScale = 1.0 * (1 - m - d) + 0.25 * m + 0.22 * d;
                 rig.head.scale.setScalar(hwHeadScale);
-            } else if (rig.botType === 'CHASE' || rig.botType === 'BLURR') {
+            } else if (rig.botType === 'CHASE') {
                 rig.head.position.set(
                     0,
                     (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.38 * m + 1.95 * d,
@@ -9412,6 +9945,15 @@
                 rig.head.rotation.x = 0;
                 const chaseHeadScale = 1.0 * (1 - m - d) + 0.25 * m + 0.22 * d;
                 rig.head.scale.setScalar(chaseHeadScale);
+            } else if (rig.botType === 'BLURR') {
+                rig.head.position.set(
+                    0,
+                    (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.25 * m + 1.95 * d,
+                    0.06 * (1 - m - d) + 0.35 * m + 0.15 * d
+                );
+                rig.head.rotation.x = 0;
+                const blurrHeadScale = 1.0 * (1 - m - d) + 0.12 * m + 0.22 * d;
+                rig.head.scale.setScalar(blurrHeadScale);
             } else if (rig.botType === 'BUMBLEBEE') {
                 rig.head.position.set(
                     0,
@@ -9464,6 +10006,12 @@
                     0,
                     3.65 * (1 - m - d) + 1.55 * m + 1.95 * d,
                     0.85 * (1 - m - d) + 2.05 * m + 0.95 * d
+                );
+            } else if (rig.botType === 'BLURR') {
+                rig.frontAttachment.position.set(
+                    0,
+                    2.15 * (1 - m - d) + 0.38 * m + 1.55 * d,
+                    0.95 * (1 - m - d) + 2.35 * m + 1.35 * d
                 );
             } else {
                 rig.frontAttachment.position.set(
@@ -9533,15 +10081,18 @@
 
             const vehArmX = (rig.botType === 'BOULDER') ? 1.46
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.36
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? 0.92
+                : (rig.botType === 'BLURR') ? 1.32
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? 0.92
                 : (rig.botType === 'HIGHTIDE') ? 1.25 : 1.16;
             const vehArmY = (rig.botType === 'BOULDER') ? 1.08
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.14
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? 1.02
+                : (rig.botType === 'BLURR') ? 0.95
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? 1.02
                 : (rig.botType === 'HIGHTIDE') ? 1.18 : 1.48;
             const vehArmZ = (rig.botType === 'BOULDER') ? -0.35
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.42
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? -1.18
+                : (rig.botType === 'BLURR') ? 1.35
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? -1.18
                 : (rig.botType === 'HIGHTIDE') ? 0.65 : 1.25;
 
             const armScaleDino = (rig.botType === 'BUMBLEBEE') ? (1.0 - d * 0.85) : 1.0;
@@ -9577,7 +10128,7 @@
                     rig.rightForearm.rotation.z = -0.65 * m;
                 }
             }
-            if (rig.botType === 'HEATWAVE' && rig.leftForearm && rig.rightForearm) {
+            if ((rig.botType === 'HEATWAVE' || rig.botType === 'BLURR') && rig.leftForearm && rig.rightForearm) {
                 rig.leftForearm.rotation.z = (Math.PI / 2) * m;
                 rig.rightForearm.rotation.z = -(Math.PI / 2) * m;
             }
@@ -9646,7 +10197,26 @@
                     rig.leftLegWheelMount.position.z = wheelGroundShiftZ;
                     rig.rightLegWheelMount.position.z = wheelGroundShiftZ;
                 }
-            } else if (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') {
+            } else if (rig.botType === 'BLURR') {
+                rig.leftLeg.position.set(
+                    -0.88 * (1 - m - d) - 0.92 * m - dinoLegX * d,
+                    2.35 * (1 - m - d) + 0.95 * m + dinoLegY * d,
+                    -0.85 * m + dinoLegZ * d
+                );
+                rig.rightLeg.position.set(
+                    0.88 * (1 - m - d) + 0.92 * m + dinoLegX * d,
+                    2.35 * (1 - m - d) + 0.95 * m + dinoLegY * d,
+                    -0.85 * m + dinoLegZ * d
+                );
+                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
+
+                if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
+                    const wheelGroundShiftZ = -0.05 * (1 - m) + 0.38 * m;
+                    rig.leftLegWheelMount.position.z = wheelGroundShiftZ;
+                    rig.rightLegWheelMount.position.z = wheelGroundShiftZ;
+                }
+            } else if (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') {
                 const legPitchVeh = (rig.botType === 'CHASE') ? -(Math.PI / 2) : (Math.PI / 2);
                 rig.leftLeg.position.set(
                     -0.82 * (1 - m - d) - 0.74 * m - dinoLegX * d,
