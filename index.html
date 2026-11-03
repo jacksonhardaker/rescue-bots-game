@@ -1545,6 +1545,13 @@
                     const flatT = Math.max(0, Math.min(1, (distWayward - 65) / 55));
                     wh = wh * flatT + 18.5 * (1 - flatT);
                 }
+                // Smooth road ascent from Causeway Bridge landing (x: 1730, z: 540) up to ruins plateau (x: 1960)
+                if (x >= 1730 && x <= 1960 && Math.abs(z - 540) < 22) {
+                    const roadT = (x - 1730) / (1960 - 1730);
+                    const roadH = 7.5 + roadT * 11.0; // rises gently from 7.5m to 18.5m
+                    const latBlend = Math.max(0, Math.min(1, Math.abs(z - 540) / 22));
+                    wh = THREE.MathUtils.lerp(roadH, wh, latBlend);
+                }
                 return wh;
             }
 
@@ -1578,10 +1585,15 @@
                 }
             }
 
-            // 3. East Lighthouse Peninsula Cliff (1180, 60)
-            const distCliff = Math.hypot(x - 1180, z - 60);
-            if (distCliff < 260) {
-                h += Math.pow((260 - distCliff) / 260, 1.4) * 34;
+            // 3. East Lighthouse Peninsula Cliff (1320, 60) - elevated ocean bluff safely east of Outer Ring Highway
+            const distCliff = Math.hypot(x - 1320, z - 60);
+            if (distCliff < 240) {
+                h += Math.pow((240 - distCliff) / 240, 1.4) * 32;
+            }
+            // Flatten East Lighthouse Lookout Terrace (around 1320, 60)
+            if (distCliff < 85) {
+                const flatFactor = Math.max(0, Math.min(1, (distCliff - 45) / 40));
+                h = h * flatFactor + 14.5 * (1 - flatFactor);
             }
 
             // 4. Flatten Rescue Bots HQ & Griffin Town Central Plaza (around 0, 0)
@@ -1647,11 +1659,12 @@
             const distNS = (z > -1180 && z < 1180) ? Math.abs(x) : 999;
             const distEW = (x > -1180 && x < 1200) ? Math.abs(z - 25) : 999;
             const distCausewayApproach = (x >= 1120 && x <= 1520) ? Math.abs(z - 540) : 999;
-            const minRoadDist = Math.min(distInner, distOuter, distNS, distEW, distCausewayApproach);
+            const distLighthouseRoad = (x >= 1180 && x <= 1320) ? Math.abs(z - 60) : 999;
+            const minRoadDist = Math.min(distInner, distOuter, distNS, distEW, distCausewayApproach, distLighthouseRoad);
 
             if (minRoadDist < 24) {
                 const roadBlend = Math.max(0, Math.min(1, (minRoadDist - 12.0) / 12.0));
-                const idealRoadH = distCausewayApproach < 24 ? 7.5 : Math.max(3.4, h * 0.48 + 2.4);
+                const idealRoadH = distCausewayApproach < 24 ? 7.5 : (distLighthouseRoad < 24 ? 14.5 : Math.max(3.4, h * 0.48 + 2.4));
                 h = h * roadBlend + idealRoadH * (1 - roadBlend);
             }
 
@@ -1671,7 +1684,9 @@
         function getSurfaceHeight(x, z) {
             // Wayward Island Suspension Causeway Bridge (X: 1480 .. 1760, Z: 540)
             if (x >= 1480 && x <= 1760 && Math.abs(z - 540) <= 9.0) {
-                return 7.5;
+                if (x <= 1735) return 7.5;
+                const blendT = (x - 1735) / 25;
+                return THREE.MathUtils.lerp(7.5, getTerrainHeight(x, z), blendT);
             }
             // South Harbor Pier Dock Deck
             if (Math.abs(x) <= 16.0 && z >= 1180 && z <= 1278) {
@@ -1714,10 +1729,12 @@
             if (Math.abs(r - getOuterRoadRadius(theta)) < 13.5) return true;
             // Grand North-South Highway from North Outpost (0, -1160) to South Harbor (0, 1160)
             if (Math.abs(x) < 12.0 && z > -1160 && z < 1160) return true;
-            // Grand East-West Highway from West Tech Park (-1160, 25) to East Lighthouse (1190, 25)
+            // Grand East-West Highway from West Tech Park (-1160, 25) to East Coast Highway (1190, 25)
             if (Math.abs(z - 25) < 12.0 && x > -1160 && x < 1190) return true;
-            // Wayward Causeway Highway and Suspension Bridge (X: 1120 .. 1760, Z: 540)
-            if (Math.abs(z - 540) < 12.5 && x >= 1120 && x <= 1760) return true;
+            // Scenic East Lighthouse Access Road (X: 1180 .. 1320, Z: 60)
+            if (Math.abs(z - 60) < 12.0 && x >= 1180 && x <= 1320) return true;
+            // Wayward Causeway Highway, Suspension Bridge and Island Road (X: 1120 .. 1960, Z: 540)
+            if (Math.abs(z - 540) < 12.5 && x >= 1120 && x <= 1960) return true;
             return false;
         }
 
@@ -1741,7 +1758,7 @@
             if (Math.hypot(x, z - 1140) < 220) return "SOUTH HARBOR PORT";
             if (Math.hypot(x + 1120, z - 25) < 190) return "WEST TECH VILLAGE";
             if (Math.hypot(x, z + 1120) < 190) return "NORTH OBSERVATORY";
-            if (Math.hypot(x - 1180, z - 60) < 220) return "LIGHTHOUSE PENINSULA";
+            if (Math.hypot(x - 1320, z - 60) < 180) return "LIGHTHOUSE PENINSULA";
             if (Math.hypot(x + 820, z + 840) < 380) return "VOLCANO QUARRY";
             if (Math.hypot(x - 780, z + 780) < 350) return "SKY ARRAY PEAK";
             return "GRIFFIN ISLAND HIGHWAY";
@@ -1945,6 +1962,8 @@
             drawPavedPlaza(-750, 750, 150, 130, 18);
             // Wayward Island Ancient Ruins Plateau
             drawPavedPlaza(1960, 540, 160, 140, 22);
+            // East Lighthouse Scenic Lookout Terrace
+            drawPavedPlaza(1320, 60, 65, 65, 16);
 
             // 4. Crisp Vector Inner & Outer Ring Highways + Grand Arterials
             function traceHighwayLoopPath() {
@@ -1976,12 +1995,15 @@
                 // Grand North-South Highway (from North Observatory at Z=-1160 to South Harbor at Z=1160)
                 ctx.moveTo(0, -1160);
                 ctx.lineTo(0, 1160);
-                // Grand East-West Highway (from West Tech Village at X=-1160 to East Lighthouse at X=1190)
+                // Grand East-West Highway (from West Tech Village at X=-1160 to East Coast Highway at X=1190)
                 ctx.moveTo(-1160, 25);
                 ctx.lineTo(1190, 25);
-                // Wayward Causeway Highway and Ocean Bridge (from Outer Ring Highway at X=1120 to Wayward Island at X=1780)
+                // Scenic East Lighthouse Access Road (from Outer Ring Highway at X=1180 to East Lighthouse at X=1310)
+                ctx.moveTo(1180, 60);
+                ctx.lineTo(1310, 60);
+                // Wayward Causeway Highway, Ocean Bridge, and Island Road (from Outer Ring Highway at X=1120 to Wayward Ruins at X=1900)
                 ctx.moveTo(1120, 540);
-                ctx.lineTo(1780, 540);
+                ctx.lineTo(1900, 540);
             }
 
             // Layer 4A: Outer Black Ink Road Curb Outline
@@ -2991,10 +3013,11 @@
         createTownBuilding(-55, -1060, 14, 12, 14, 0x16a34a, 0xf0fdf4, -0.12);
         createTownBuilding(55, -1060, 14, 12, 14, 0xe81e25, 0xfef2f2, 0.12);
 
-        // Coastal Lighthouse on East Peninsula (1180, 60)
+        // Coastal Lighthouse on East Peninsula Lookout (1320, 60)
+        const lhX = 1320, lhZ = 60;
         const lighthouseGroup = new THREE.Group();
-        const lhY = getTerrainHeight(1180, 60);
-        lighthouseGroup.position.set(1180, lhY, 60);
+        const lhY = getTerrainHeight(lhX, lhZ);
+        lighthouseGroup.position.set(lhX, lhY, lhZ);
         const lhBase = new THREE.Mesh(
             new THREE.CylinderGeometry(5.5, 8.2, 38, 14),
             new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad3 })
@@ -3037,8 +3060,8 @@
         lhBeamPivot.add(lhBeam);
         lighthouseGroup.add(lhBeamPivot);
         scene.add(lighthouseGroup);
-        registerCullableObject(lighthouseGroup, 1180, lhY + 24, 60, 95);
-        worldColliders.push({ x: 1180, z: 60, r: 8.5 });
+        registerCullableObject(lighthouseGroup, lhX, lhY + 24, lhZ, 95);
+        worldColliders.push({ x: lhX, z: lhZ, r: 8.5 });
 
         // South Harbor Seawall Bulkhead along the concrete quay apron (z = 1183.5)
         const harborSeawall = new THREE.Mesh(
@@ -4069,7 +4092,7 @@
             new THREE.BoxGeometry(280, 2.2, 17.5),
             new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35 })
         );
-        bridgeDeck.position.set(1620 - wiX, 7.5 - wiY, 0);
+        bridgeDeck.position.set(1620 - wiX, 6.4 - wiY, 0);
         bridgeDeck.receiveShadow = true;
         causewayGroup.add(bridgeDeck);
 
@@ -4077,7 +4100,7 @@
         const matBridgeRed = new THREE.MeshToonMaterial({ color: 0xdc2626, gradientMap: toonGrad3 });
         [-8.2, 8.2].forEach(rz => {
             const rail = new THREE.Mesh(new THREE.BoxGeometry(280, 1.4, 0.8), matBridgeRed);
-            rail.position.set(1620 - wiX, 8.8 - wiY, rz);
+            rail.position.set(1620 - wiX, 8.2 - wiY, rz);
             causewayGroup.add(rail);
         });
 
@@ -4087,15 +4110,21 @@
             const pGroup = new THREE.Group();
             pGroup.position.set(tx - wiX, 0 - wiY, 0);
 
-            // Left & Right Tower Columns
+            // Left & Right Tower Columns (at Z = 540 - 8.5 and 540 + 8.5)
             [-8.5, 8.5].forEach(tz => {
                 const col = new THREE.Mesh(new THREE.BoxGeometry(3.6, 54, 3.6), matPylonWhite);
                 col.position.set(0, 24, tz);
                 col.castShadow = true;
                 pGroup.add(col);
             });
-            // Crossbars
-            [18, 38, 48].forEach(cy => {
+
+            // Substructure Cross-Beam underneath the bridge deck (Y = 4.5, 3m below the deck at 7.5m)
+            const subBeam = new THREE.Mesh(new THREE.BoxGeometry(3.8, 2.4, 18), matBridgeRed);
+            subBeam.position.set(0, 4.5, 0);
+            pGroup.add(subBeam);
+
+            // High Soaring Overhead Portal Crossbars above the roadway (Y = 28, 42, 50 - 20.5m of overhead clearance!)
+            [28, 42, 50].forEach(cy => {
                 const cbar = new THREE.Mesh(new THREE.BoxGeometry(3.8, 2.4, 18), matBridgeRed);
                 cbar.position.set(0, cy, 0);
                 pGroup.add(cbar);
@@ -4213,8 +4242,11 @@
         scene.add(waywardIslandGroup);
         registerCullableObject(waywardIslandGroup, wiX, wiY + 20, wiZ, 450);
         worldColliders.push({ x: wiX, z: wiZ, r: 28 });
-        worldColliders.push({ x: 1530, z: 540, r: 8 });
-        worldColliders.push({ x: 1710, z: 540, r: 8 });
+        // Tower Column Colliders (flanking the road at Z = 540 ± 8.5, keeping road at Z = 540 completely clear!)
+        worldColliders.push({ x: 1530, z: 540 - 8.5, r: 2.2 });
+        worldColliders.push({ x: 1530, z: 540 + 8.5, r: 2.2 });
+        worldColliders.push({ x: 1710, z: 540 - 8.5, r: 2.2 });
+        worldColliders.push({ x: 1710, z: 540 + 8.5, r: 2.2 });
 
         // Stunt Ramps across the 10X Island
         // Builds a solid, terrain-adaptive wedge ramp that seamlessly matches ground elevation at its entrance
@@ -4824,6 +4856,8 @@
             if (Math.hypot(x + 750, z + 750) < 125) return true; // Dino Ridge Sanctuary
             if (Math.hypot(x + 750, z - 750) < 125) return true; // Sunny Sands Boardwalk
             if (Math.hypot(x - 1960, z - 540) < 120) return true; // Wayward Ruins Plateau
+            if (Math.hypot(x - 1320, z - 60) < 55) return true; // East Lighthouse Lookout Terrace
+            if (x >= 1450 && x <= 1780 && Math.abs(z - 540) < 32) return true; // Wayward Causeway Bridge Corridor
             return false;
         }
 
@@ -10251,6 +10285,8 @@
             mCtx.lineTo(cx, cy + 1140 * mapScale);
             mCtx.moveTo(cx - 1120 * mapScale, cy + 25 * mapScale);
             mCtx.lineTo(cx + 1180 * mapScale, cy + 25 * mapScale);
+            mCtx.moveTo(cx + 1180 * mapScale, cy + 60 * mapScale);
+            mCtx.lineTo(cx + 1320 * mapScale, cy + 60 * mapScale);
             mCtx.stroke();
 
             // Draw Golden Energon Cubes on Minimap (Sparkling Gold Dots)
@@ -10418,6 +10454,21 @@
             mCtx.arc(wix, wiz, 5.5, 0, Math.PI * 2);
             mCtx.fill();
             mCtx.strokeStyle = '#38bdf8';
+            mCtx.lineWidth = 1.2;
+            mCtx.stroke();
+
+            // Draw East Lighthouse Lookout (Red & White Beacon Icon)
+            const lhx = cx + 1320 * mapScale;
+            const lhz = cy + 60 * mapScale;
+            mCtx.fillStyle = '#ffffff';
+            mCtx.beginPath();
+            mCtx.arc(lhx, lhz, 4.8, 0, Math.PI * 2);
+            mCtx.fill();
+            mCtx.fillStyle = '#ef4444';
+            mCtx.beginPath();
+            mCtx.arc(lhx, lhz, 2.4, 0, Math.PI * 2);
+            mCtx.fill();
+            mCtx.strokeStyle = '#facc15';
             mCtx.lineWidth = 1.2;
             mCtx.stroke();
 
