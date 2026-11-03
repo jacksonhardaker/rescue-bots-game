@@ -11022,9 +11022,16 @@
                 source = findSpeakerSource(speakerName);
             }
 
-            let yOffset = 3.3;
+            let yOffset = 3.4;
+            const isBotSpeaker = (source === player || source === buddyBot ||
+                BOT_METADATA[speakerName] ||
+                (typeof visitingAutobots !== 'undefined' && visitingAutobots.some(a => a.id === speakerName || a.name === speakerName)));
+
             if (source === player || source === buddyBot) {
-                yOffset = 4.6;
+                // In Bot/Dino mode, float speech bubble above the bot head & helmet crests (y = 7.2m)
+                yOffset = (player.mode === 'VEHICLE') ? 4.2 : 7.2;
+            } else if (isBotSpeaker) {
+                yOffset = 7.2;
             }
 
             activeSpeech.visible = true;
@@ -16231,7 +16238,12 @@
                             }
                         }
 
-                        const bubbleWorldPos = new THREE.Vector3(wx, wy + activeSpeech.yOffset, wz);
+                        let curYOffset = activeSpeech.yOffset;
+                        if (s === player || s === buddyBot) {
+                            curYOffset = (player.mode === 'VEHICLE') ? 4.2 : 7.2;
+                        }
+
+                        const bubbleWorldPos = new THREE.Vector3(wx, wy + curYOffset, wz);
                         const distToCam = camera.position.distanceTo(bubbleWorldPos);
 
                         bubbleWorldPos.project(camera);
