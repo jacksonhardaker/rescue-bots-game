@@ -2838,75 +2838,119 @@
             c.width = 256; c.height = 256;
             const ctx = c.getContext('2d');
 
-            // Heavy Forest Green Helmet
-            ctx.fillStyle = '#15803d';
+            // Helmet Crown & Frame: Vibrant Electric Lime-Green / Chartreuse (Matches TV Show)
+            ctx.fillStyle = '#cbf827';
             ctx.fillRect(0, 0, 256, 256);
 
-            // Safety Orange Brow Band & Yellow Hazard Triangles
-            ctx.fillStyle = '#ea580c';
-            ctx.fillRect(0, 0, 256, 52);
-            ctx.fillStyle = '#eab308';
-            [-1, 0, 1].forEach(offset => {
-                const hx = 128 + offset * 64;
-                ctx.beginPath();
-                ctx.moveTo(hx - 14, 46); ctx.lineTo(hx + 14, 46); ctx.lineTo(hx, 18);
-                ctx.closePath();
-                ctx.fill();
-            });
-
-            // Dark Visor Socket
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(36, 58, 184, 62);
-
-            // Friendly Sturdy Cyan Visor
-            const eyeGrad = ctx.createLinearGradient(0, 64, 0, 114);
-            eyeGrad.addColorStop(0, '#38bdf8');
-            eyeGrad.addColorStop(1, '#0284c7');
-            ctx.fillStyle = eyeGrad;
-            ctx.fillRect(44, 64, 168, 50);
-
-            // Eye Glints
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(64, 70, 24, 14);
-            ctx.fillRect(144, 70, 24, 14);
-
-            // Distinctive Heavy Robotic Underbite Jaw / Scoop Chin
-            const jawGrad = ctx.createLinearGradient(0, 120, 0, 256);
-            jawGrad.addColorStop(0, '#f8fafc');
-            jawGrad.addColorStop(0.5, '#cbd5e1');
-            jawGrad.addColorStop(1, '#64748b');
-            ctx.fillStyle = jawGrad;
-            ctx.beginPath();
-            ctx.moveTo(34, 120); ctx.lineTo(222, 120);
-            ctx.lineTo(228, 215); ctx.lineTo(190, 250); ctx.lineTo(66, 250); ctx.lineTo(28, 215);
-            ctx.closePath();
-            ctx.fill();
-
-            // Prominent Lower Underbite Lip / Compactor Scoop
-            ctx.fillStyle = '#94a3b8';
-            ctx.beginPath();
-            ctx.moveTo(56, 175); ctx.lineTo(200, 175);
-            ctx.lineTo(188, 235); ctx.lineTo(68, 235);
-            ctx.closePath();
-            ctx.fill();
-
-            // Heavy Underbite Grille Slats
+            // Silver / Light Steel Brow Band
+            const browGrad = ctx.createLinearGradient(0, 18, 0, 74);
+            browGrad.addColorStop(0, '#f1f5f9');
+            browGrad.addColorStop(0.5, '#cbd5e1');
+            browGrad.addColorStop(1, '#94a3b8');
+            ctx.fillStyle = browGrad;
+            ctx.fillRect(20, 24, 216, 48);
             ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 5;
-            [192, 208, 224].forEach(gy => {
+            ctx.strokeRect(20, 24, 216, 48);
+
+            // Center Brow Notch
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(116, 32, 24, 32);
+
+            // Dark Charcoal Eye Visor Socket
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(26, 76, 204, 56);
+
+            // Glowing Warm Amber/Orange Optics (Show-Accurate Salvage Eyes)
+            const eyeGrad = ctx.createLinearGradient(0, 80, 0, 126);
+            eyeGrad.addColorStop(0, '#fef08a');
+            eyeGrad.addColorStop(0.35, '#f59e0b');
+            eyeGrad.addColorStop(1, '#d97706');
+
+            [-1, 1].forEach(side => {
+                const ex = 128 + side * 46;
+                ctx.fillStyle = eyeGrad;
+                ctx.fillRect(ex - 28, 82, 56, 44);
+
+                // Bright cartoon eye glint
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(ex - 12, 88, 14, 14);
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillRect(ex + 4, 96, 8, 8);
+            });
+
+            // Metallic Silver Face Plate & Sculpted Nose Bridge
+            ctx.fillStyle = '#cbd5e1';
+            ctx.beginPath();
+            ctx.moveTo(116, 132); ctx.lineTo(140, 132);
+            ctx.lineTo(134, 154); ctx.lineTo(122, 154);
+            ctx.closePath();
+            ctx.fill();
+
+            // Silver Steel Mouthplate
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(48, 148, 160, 40);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 4;
+            [158, 170, 182].forEach(my => {
                 ctx.beginPath();
-                ctx.moveTo(78, gy); ctx.lineTo(178, gy);
+                ctx.moveTo(68, my); ctx.lineTo(188, my);
                 ctx.stroke();
             });
 
-            // Warm friendly mouth crease above underbite
-            ctx.lineWidth = 7;
+            // Massive Electric Lime-Green Chin Guard / Jaw Frame
+            ctx.fillStyle = '#cbf827';
             ctx.beginPath();
-            ctx.moveTo(86, 158);
-            ctx.quadraticCurveTo(128, 170, 170, 158);
+            ctx.moveTo(24, 178); ctx.lineTo(232, 178);
+            ctx.lineTo(216, 248); ctx.lineTo(40, 248);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 6;
             ctx.stroke();
 
+            // Center Chin Slats
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(104, 196, 48, 44);
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(104, 196, 48, 44);
+            [210, 226].forEach(cy => {
+                ctx.beginPath();
+                ctx.moveTo(112, cy); ctx.lineTo(144, cy);
+                ctx.stroke();
+            });
+
             // Outer Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        // Chest Plate Texture: Electric Lime-Green with Iconic 3-Arrow Universal Recycling Symbol
+        function makeSalvageChestTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Vibrant Electric Lime-Green Background
+            ctx.fillStyle = '#cbf827';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Dark Green Triangular Recycling Arrows (Universal Recycling Symbol ♻)
+            ctx.fillStyle = '#15803d';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = 'bold 142px sans-serif';
+            ctx.fillText('♻', 128, 134);
+
+            // Subtle green border accents
+            ctx.strokeStyle = '#4d7c0f';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(12, 12, 232, 232);
+
+            // Heavy Cartoon Outline
             ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 10;
             ctx.strokeRect(5, 5, 246, 246);
@@ -3007,6 +3051,7 @@
         const texFaceBumblebee = makeBumblebeeFaceTexture();
         const texFaceBlurr = makeBlurrFaceTexture();
         const texFaceSalvage = makeSalvageFaceTexture();
+        const texSalvageChest = makeSalvageChestTexture();
         const texFaceHighTide = makeHighTideFaceTexture();
 
         /***********************************************************************
@@ -7181,10 +7226,13 @@
         const matBlurrCyan = new THREE.MeshToonMaterial({ color: 0x38bdf8, gradientMap: toonGrad3 });
         const matBlurrFace = new THREE.MeshBasicMaterial({ map: texFaceBlurr });
 
-        const matSalvageGreen = new THREE.MeshToonMaterial({ color: 0x15803d, gradientMap: toonGrad4 });
-        const matSalvageOrange = new THREE.MeshToonMaterial({ color: 0xea580c, gradientMap: toonGrad4 });
-        const matSalvageSteel = new THREE.MeshToonMaterial({ color: 0x475569, gradientMap: toonGrad3 });
-        const matSalvageYellow = new THREE.MeshToonMaterial({ color: 0xeab308, gradientMap: toonGrad3 });
+        const matSalvageLime = new THREE.MeshToonMaterial({ color: 0xcbf827, gradientMap: toonGrad4 });
+        const matSalvageBlue = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad4 });
+        const matSalvageOrange = new THREE.MeshToonMaterial({ color: 0xf97316, gradientMap: toonGrad4 });
+        const matSalvageSteel = new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 });
+        const matSalvageLightSteel = new THREE.MeshToonMaterial({ color: 0x94a3b8, gradientMap: toonGrad3 });
+        const matSalvageAqua = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        const matSalvageRecycle = new THREE.MeshBasicMaterial({ map: texSalvageChest });
         const matSalvageFace = new THREE.MeshBasicMaterial({ map: texFaceSalvage });
 
         const matHighTideNavy = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad4 });
@@ -8916,98 +8964,222 @@
             }
 
             else if (botType === 'SALVAGE') {
-                // TV Show Salvage: Heavy Forest Green (#15803d) & Safety Orange (#ea580c) Recycling Truck
-                // Torso: Broad Cab Chest with Orange Bumper & Amber Warning Beacons
-                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.95, 2.45, 2.25), matSalvageGreen);
+                // TV Show Salvage: Electric Lime-Green Cab & Helmet, Royal Blue Shoulders & Hopper, Safety Orange Loader Arms, Charcoal Steel Chassis & Stacked Dual Leg Tires!
+                // 1. Torso: Electric Lime Cab Chest with Split Aqua Windshields & Iconic Green Recycling Symbol
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.95, 2.35, 2.15), matSalvageLime);
                 chest.castShadow = true;
                 parts.torso.add(chest);
 
-                const orangeBumper = new THREE.Mesh(new THREE.BoxGeometry(3.05, 0.72, 0.55), matSalvageOrange);
-                orangeBumper.position.set(0, -0.85, 1.15);
-                parts.torso.add(orangeBumper);
-
-                [-0.88, 0.88].forEach(bx => {
-                    const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.35, 8), matSalvageYellow);
-                    beacon.position.set(bx, 1.35, 0.4);
+                // Two Safety Orange Angled Beacons/Fins on Rear Roof Corners
+                [-0.86, 0.86].forEach(bx => {
+                    const beacon = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.52, 0.65), matSalvageOrange);
+                    beacon.position.set(bx, 1.25, -0.45);
+                    beacon.rotation.x = -0.32;
                     parts.torso.add(beacon);
                 });
 
-                // Head: Green Helmet with Visor Cap & Underbite Scoop Jaw
-                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.35, 1.35, 1.28), matSalvageGreen);
+                // Dual Aqua Windshields
+                [-0.72, 0.72].forEach(wx => {
+                    const win = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.88, 0.14), matCabGlass);
+                    win.position.set(wx, 0.52, 1.10);
+                    win.userData.noOutline = true;
+                    parts.torso.add(win);
+                });
+
+                // Center Lime Windshield Pillar
+                const winPost = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.94, 0.16), matSalvageLime);
+                winPost.position.set(0, 0.52, 1.11);
+                parts.torso.add(winPost);
+
+                // Center Chest Panel with Universal 3-Arrow Green Recycling Symbol ♻
+                const recycleBadge = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.92, 0.16), matSalvageRecycle);
+                recycleBadge.position.set(0, -0.25, 1.12);
+                recycleBadge.userData.noOutline = true;
+                parts.torso.add(recycleBadge);
+
+                // Charcoal Grey Heavy Bumper with 4 Round Blue Headlights & Blue Side Louvers
+                const bumper = new THREE.Mesh(new THREE.BoxGeometry(3.05, 0.78, 0.55), matSalvageSteel);
+                bumper.position.set(0, -0.88, 1.05);
+                parts.torso.add(bumper);
+
+                // 4 Round Cyan/Blue Fog Headlights (2 on left, 2 on right)
+                [-1.05, -0.72, 0.72, 1.05].forEach(lx => {
+                    const light = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.16, 0.16, 0.15, 12).rotateX(Math.PI / 2),
+                        matSalvageAqua
+                    );
+                    light.position.set(lx, -0.72, 1.34);
+                    light.userData.noOutline = true;
+                    parts.torso.add(light);
+                });
+
+                // Royal Blue Cooling Louvers on Lower Flanks
+                [-1.48, 1.48].forEach(lx => {
+                    const louvers = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.48, 0.85), matSalvageBlue);
+                    louvers.position.set(lx, -0.72, 0.45);
+                    parts.torso.add(louvers);
+                });
+
+                // Pelvis: Charcoal Radiator Core with 3 Vertical Slats
+                const pelvis = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.65, 1.45), matSalvageSteel);
+                pelvis.position.set(0, -1.22, 0);
+                parts.torso.add(pelvis);
+
+                [-0.42, 0, 0.42].forEach(px => {
+                    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.52, 0.16), matSalvageLightSteel);
+                    slat.position.set(px, -1.22, 0.75);
+                    parts.torso.add(slat);
+                });
+
+                // 2. Head: Lime Helmet, Silver Brow & Ears, Amber Optics & Lime Chin Guard
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.36, 1.28), matSalvageLime);
                 helm.castShadow = true;
                 parts.head.add(helm);
 
-                const visorCap = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.35, 0.52), matSalvageOrange);
-                visorCap.position.set(0, 0.75, 0.48);
-                parts.head.add(visorCap);
-
-                const underbite = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.58, 0.68), matSalvageSteel);
-                underbite.position.set(0, -0.42, 0.68);
-                parts.head.add(underbite);
-
-                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.95, 1.28), matSalvageFace);
-                faceMesh.position.set(0, 0.05, 0.04);
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.98, 1.29), matSalvageFace);
+                faceMesh.position.set(0, 0.05, 0.05);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
 
-                // Back: Heavy Recycling Hopper Backpack
-                const hopper = new THREE.Mesh(new THREE.BoxGeometry(2.55, 2.25, 1.45), matSalvageOrange);
-                hopper.position.set(0, 0.25, -0.65);
+                // Silver Brow Cap
+                const browCap = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.22, 0.45), matSalvageLightSteel);
+                browCap.position.set(0, 0.58, 0.54);
+                parts.head.add(browCap);
+
+                // Cylindrical Ear Communication Pods
+                [-0.72, 0.72].forEach(ex => {
+                    const ear = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.22, 0.22, 0.18, 12).rotateZ(Math.PI / 2),
+                        matSalvageLightSteel
+                    );
+                    ear.position.set(ex, 0.08, 0.04);
+                    parts.head.add(ear);
+                });
+
+                // Sculpted Lime Chin / Scoop Jaw Guard
+                const chinGuard = new THREE.Mesh(new THREE.BoxGeometry(1.26, 0.42, 0.42), matSalvageLime);
+                chinGuard.position.set(0, -0.46, 0.58);
+                parts.head.add(chinGuard);
+
+                // 3. Back Attachment: Royal Blue Recycling Hopper Backpack with Orange Forklift Loader Arms!
+                const hopper = new THREE.Mesh(new THREE.BoxGeometry(2.85, 2.35, 1.75), matSalvageBlue);
+                hopper.position.set(0, 0.28, -0.85);
                 hopper.castShadow = true;
                 parts.backAttachment.add(hopper);
 
-                // Arms: Green Shoulders, Orange Loaders + Front Heavy Truck Wheels
+                // Curved Hopper Roof Ridges
+                [-0.55, 0, 0.55].forEach(rx => {
+                    const rib = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 1.65), matSalvageBlue);
+                    rib.position.set(rx, 1.48, -0.85);
+                    parts.backAttachment.add(rib);
+                });
+
+                // Articulated Safety Orange Hydraulic Loader Arms (The iconic dumpster lifting arms!)
+                [-1.52, 1.52].forEach(side => {
+                    const armBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.25, 10).rotateZ(Math.PI / 2), matSalvageOrange);
+                    armBase.position.set(side * 1.52, 0.25, -0.65);
+
+                    const upperArm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.55, 0.38), matSalvageOrange);
+                    upperArm.position.set(side * 1.52, 0.72, -0.35);
+                    upperArm.rotation.x = -0.42;
+
+                    const elbow = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.25, 10).rotateZ(Math.PI / 2), matSalvageOrange);
+                    elbow.position.set(side * 1.52, 1.35, -0.05);
+
+                    const reachArm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.35, 1.65), matSalvageOrange);
+                    reachArm.position.set(side * 1.52, 1.25, 0.65);
+                    reachArm.rotation.x = 0.12;
+
+                    // Front Forklift Lifting Prongs
+                    const prong = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.24, 0.72), matSalvageOrange);
+                    prong.position.set(side * 1.52, 1.15, 1.62);
+                    prong.rotation.x = 0.28;
+
+                    parts.backAttachment.add(armBase, upperArm, elbow, reachArm, prong);
+                });
+
+                // 4. Arms: Royal Blue Pauldrons, Steel Biceps & Royal Blue Heavy Gauntlets (Image 1)
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.leftArm : parts.rightArm;
                     const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
 
-                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.28, 1.28), matSalvageGreen);
+                    // Massive Royal Blue Shoulder Pauldrons
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.32, 1.35, 1.35), matSalvageBlue);
                     shoulder.castShadow = true;
                     armG.add(shoulder);
 
-                    const wheel = createWheelAssembly(0.76, 0.52);
-                    wheel.position.set(side * 0.52, -0.25, 0.28);
-                    armG.add(wheel);
-                    parts.wheels.push(wheel);
+                    // Charcoal side exhaust vent
+                    const vent = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.72, 0.85), matSalvageSteel);
+                    vent.position.set(side * 0.68, 0, 0);
+                    armG.add(vent);
 
                     forearmG.position.set(0, -1.15, 0);
                     armG.add(forearmG);
 
-                    const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.82, 0.72), matChrome);
+                    // Steel Bicep Joint
+                    const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.75, 10), matSalvageSteel);
                     bicep.position.set(0, 0.25, 0);
-                    const loader = new THREE.Mesh(new THREE.BoxGeometry(1.02, 1.35, 1.02), matSalvageOrange);
-                    loader.position.set(0, -0.48, 0.08);
-                    loader.castShadow = true;
-                    forearmG.add(bicep, loader);
+
+                    // Heavy Royal Blue Forearm Gauntlet
+                    const gauntlet = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.35, 1.18), matSalvageBlue);
+                    gauntlet.position.set(0, -0.48, 0.05);
+                    gauntlet.castShadow = true;
+
+                    // Charcoal Steel Fist
+                    const fist = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.58, 0.82), matSalvageSteel);
+                    fist.position.set(0, -1.18, 0.05);
+
+                    forearmG.add(bicep, gauntlet, fist);
                 });
 
-                // Legs: Steel Thighs, Green Shins, Steel Boots + Dual Rear Truck Wheels
+                // 5. Legs: STACKED DUAL BLACK TIRES ON THIGHS & SHINS + LIME-GREEN BOOTS (Exact Image 1)
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
 
-                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.35, 1.25), matSalvageSteel);
-                    thigh.position.set(-side * 0.05, -0.48, 0);
-                    legG.add(thigh);
+                    // Charcoal Heavy Structural Leg Frame
+                    const thighFrame = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.35, 1.15), matSalvageSteel);
+                    thighFrame.position.set(-side * 0.05, -0.48, -0.15);
+                    legG.add(thighFrame);
 
-                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.48, 2.35, 1.75), matSalvageGreen);
-                    shin.position.set(-side * 0.08, -1.45, 0.08);
-                    shin.castShadow = true;
-                    legG.add(shin);
+                    const shinFrame = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.35, 1.25), matSalvageSteel);
+                    shinFrame.position.set(-side * 0.08, -1.45, -0.15);
+                    shinFrame.castShadow = true;
+                    legG.add(shinFrame);
 
-                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.56, 1.95), matSalvageSteel);
-                    boot.position.set(-side * 0.08, -2.52, 0.18);
+                    // Bright Electric Lime-Green Boots (Image 1) with Grooved Toecaps
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.58, 1.95), matSalvageLime);
+                    boot.position.set(-side * 0.08, -2.52, 0.22);
                     boot.castShadow = true;
-                    legG.add(boot);
 
+                    const toeGroove = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.45, 0.65), matSalvageLime);
+                    toeGroove.position.set(-side * 0.08, -2.48, 0.95);
+                    legG.add(boot, toeGroove);
+
+                    // Wheel Mount carrying the stacked tires
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
-                    wheelMount.position.set(side * 0.58, 0, -0.05);
+                    wheelMount.position.set(side * 0.45, 0, 0.35);
                     legG.add(wheelMount);
 
-                    [-0.86, -2.14].forEach(wy => {
-                        const w = createWheelAssembly(0.76, 0.52);
-                        w.position.set(0, wy, 0);
-                        wheelMount.add(w);
-                        parts.wheels.push(w);
+                    // 2 Stacked Massive Truck Tires per leg (1 on Thigh, 1 on Shin)
+                    // Exactly as shown in Reference Image 1!
+                    [-0.55, -1.75].forEach(wy => {
+                        const tireAssembly = new THREE.Group();
+                        tireAssembly.position.set(0, wy, 0);
+
+                        const tire = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.72, 0.72, 0.62, 16).rotateZ(Math.PI / 2),
+                            matTire
+                        );
+                        tire.castShadow = true;
+
+                        const hub = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.42, 0.42, 0.66, 12).rotateZ(Math.PI / 2),
+                            matSalvageLightSteel
+                        );
+                        tireAssembly.add(tire, hub);
+
+                        wheelMount.add(tireAssembly);
+                        parts.wheels.push(tireAssembly);
                     });
                 });
             }
@@ -9709,8 +9881,8 @@
                 voicePitch: 0.82,
                 vehName: 'RECYCLING TRUCK',
                 dinoName: null,
-                colorClass: 'text-emerald-400',
-                dotClass: 'bg-emerald-500',
+                colorClass: 'text-lime-300',
+                dotClass: 'bg-lime-400',
                 botActionIcon: 'SCRAP_MAGNET',
                 botActionLabel: 'SCRAP MAGNET',
                 vehActionIcon: 'COMPACTOR_SMASH',
@@ -12618,7 +12790,7 @@
                 name: 'SALVAGE',
                 role: 'Reclamation & Recycling Hero',
                 voicePitch: 0.82,
-                badgeColor: '#15803d',
+                badgeColor: '#84cc16',
                 x: -54,
                 y: 3.0,
                 z: 1140,
