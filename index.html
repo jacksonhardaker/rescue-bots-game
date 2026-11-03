@@ -2764,12 +2764,12 @@
             c.width = 256; c.height = 256;
             const ctx = c.getContext('2d');
 
-            // Electric Cyan & Royal Blue Speedster Faceplate
-            ctx.fillStyle = '#06b6d4';
+            // Royal Purple & Deep Violet Speedster Faceplate
+            ctx.fillStyle = '#7c3aed';
             ctx.fillRect(0, 0, 256, 256);
 
-            // Deep Blue Crown Inset
-            ctx.fillStyle = '#1d4ed8';
+            // Deep Violet Crown Inset
+            ctx.fillStyle = '#581c87';
             ctx.fillRect(36, 0, 184, 48);
 
             // Silver Swept Brow Visor Frame
@@ -3202,6 +3202,10 @@
             if (Math.abs(x - (-60)) <= 13.0 && Math.abs(z - 1480) <= 13.0) {
                 return 1.0;
             }
+            // Sky Array Communications Peak Helipad Deck at (762, -780)
+            if (Math.abs(x - 762) <= 9.2 && Math.abs(z - (-780)) <= 9.2) {
+                return 68.8;
+            }
             // South Harbor Ferry Boarding Bridge Ramp & Pedestrian Side Gangway
             if (x >= 14.5 && x <= 38.0 && z >= 1202.0 && z <= 1220.0) {
                 const t = Math.max(0, Math.min(1, (x - 15.0) / 21.0));
@@ -3285,6 +3289,7 @@
             if (x >= 14.0 && x <= 38.0 && z >= 1202.0 && z <= 1220.0) return true;
             if (x >= 15.0 && x <= 32.0 && z >= 1226.0 && z <= 1238.0) return true;
             if (Math.abs(x - (-60)) <= 13.0 && Math.abs(z - 1480) <= 13.0) return true;
+            if (Math.abs(x - 762) <= 9.2 && Math.abs(z - (-780)) <= 9.2) return true;
             if (ferryController && ferryController.currentPos) {
                 const fdx = x - ferryController.currentPos.x;
                 const fdz = z - ferryController.currentPos.z;
@@ -3296,14 +3301,14 @@
         function getZoneName(x, z) {
             if (Math.hypot(x - (-60), z - 1480) < 48) return "HIGH TIDE OCEAN RIG";
             if (Math.hypot(x - 2020, z - 510) < 55) return "CYBERTRONIAN ANCIENT RUINS";
-            if (Math.hypot(x - 758, z - (-775)) < 55) return "SKY ARRAY SUMMIT LOOKOUT";
-            if (Math.hypot(x - (-95), z - 1145) < 45) return "HARBOR RECLAMATION BERTH";
+            if (Math.hypot(x - 762, z - (-780)) < 55) return "SKY ARRAY SUMMIT LOOKOUT";
+            if (Math.hypot(x - (-54), z - 1140) < 45) return "HARBOR RECLAMATION BERTH";
             if (Math.hypot(x - 1802, z - 306) < 45) return "WAYWARD SCENIC PIER";
             if (ferryController && ferryController.currentPos && Math.hypot(x - ferryController.currentPos.x, z - ferryController.currentPos.z) < 32) return "SOUTH HARBOR FERRY";
             if (Math.hypot(x - 1960, z - 540) < 320) return "WAYWARD ISLAND";
             if (x >= 1480 && x <= 1760 && Math.abs(z - 540) <= 12) return "WAYWARD CAUSEWAY BRIDGE";
             if (Math.hypot(x + 750, z + 750) < 185) return "DINO RIDGE SANCTUARY";
-            if (Math.hypot(x + 750, z - 750) < 185) return "SUNNY SANDS BOARDWALK";
+            if (Math.hypot(x - (-825), z - 825) < 185) return "SUNNY SANDS BOARDWALK";
             if (Math.hypot(x + 110, z - 1150) < 35) return "HARBOR CRANE YARD";
             if (Math.hypot(x + 1250, z - 65) < 55) return "DOC GREENE'S TESTING YARD";
             if (Math.hypot(x, z + 62) < 22) return "HQ LAUNCH CATAPULT";
@@ -5939,10 +5944,10 @@
         worldColliders.push({ x: drX + 12, z: drZ + 48, r: 2.5 });
 
         // =====================================================================
-        // 6. SUNNY SANDS BOARDWALK & AMUSEMENT PIER (-750, 750)
+        // 6. SUNNY SANDS BOARDWALK & AMUSEMENT PIER (-825, 825 - Beside Coastal Highway)
         // =====================================================================
         const boardwalkGroup = new THREE.Group();
-        const bwX = -750, bwZ = 750;
+        const bwX = -825, bwZ = 825;
         const bwY = getTerrainHeight(bwX, bwZ);
         boardwalkGroup.position.set(bwX, bwY, bwZ);
 
@@ -7157,6 +7162,32 @@
         const matSirenBlue = new THREE.MeshBasicMaterial({ color: 0x1d4ed8 });
         const matEmblem = new THREE.MeshBasicMaterial({ map: texEmblem });
         const matHazardMat = new THREE.MeshBasicMaterial({ map: texHazard });
+
+        const matOptimusRed = new THREE.MeshToonMaterial({ color: 0xdc2626, gradientMap: toonGrad4 });
+        const matOptimusBlue = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad4 });
+        const matOptimusGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
+        const matOptimusFace = new THREE.MeshBasicMaterial({ map: texFaceOptimus });
+
+        const matBeeYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad4 });
+        const matBeeBlack = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
+        const matBeeFace = new THREE.MeshBasicMaterial({ map: texFaceBumblebee });
+        const matBeeGlowCyan = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+
+        const matBlurrPurple = new THREE.MeshToonMaterial({ color: 0x7c3aed, gradientMap: toonGrad4 });
+        const matBlurrViolet = new THREE.MeshToonMaterial({ color: 0x581c87, gradientMap: toonGrad4 });
+        const matBlurrCyan = new THREE.MeshToonMaterial({ color: 0x38bdf8, gradientMap: toonGrad3 });
+        const matBlurrFace = new THREE.MeshBasicMaterial({ map: texFaceBlurr });
+
+        const matSalvageGreen = new THREE.MeshToonMaterial({ color: 0x15803d, gradientMap: toonGrad4 });
+        const matSalvageOrange = new THREE.MeshToonMaterial({ color: 0xea580c, gradientMap: toonGrad4 });
+        const matSalvageSteel = new THREE.MeshToonMaterial({ color: 0x475569, gradientMap: toonGrad3 });
+        const matSalvageYellow = new THREE.MeshToonMaterial({ color: 0xeab308, gradientMap: toonGrad3 });
+        const matSalvageFace = new THREE.MeshBasicMaterial({ map: texFaceSalvage });
+
+        const matHighTideNavy = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad4 });
+        const matHighTideWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
+        const matHighTideGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
+        const matHighTideFace = new THREE.MeshBasicMaterial({ map: texFaceHighTide });
 
         function createWheelAssembly(radius = 0.72, width = 0.52) {
             const wg = new THREE.Group();
@@ -8520,18 +8551,595 @@
                 parts.dinoTail.add(pteroTailVane);
             }
 
+            else if (botType === 'OPTIMUS') {
+                // TV Show Optimus Prime: Supreme Commander Heavy Cab-over Semi-Truck
+                // Torso: Heavy Cab Chest
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.88, 2.45, 2.22), matOptimusRed);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                const visorBrow = new THREE.Mesh(new THREE.BoxGeometry(2.78, 0.32, 0.72), matOptimusRed);
+                visorBrow.position.set(0, 0.98, 0.82);
+                parts.torso.add(visorBrow);
+
+                [-0.72, 0.72].forEach(wx => {
+                    const win = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.96, 0.16), matCabGlass);
+                    win.position.set(wx, 0.42, 1.12);
+                    win.userData.noOutline = true;
+                    parts.torso.add(win);
+                });
+
+                [-0.62, 0, 0.62].forEach(lx => {
+                    const light = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.22), matOptimusGold);
+                    light.position.set(lx, 1.24, 0.72);
+                    parts.torso.add(light);
+                });
+
+                const grille = new THREE.Mesh(new THREE.BoxGeometry(1.68, 1.08, 0.18), matGrille);
+                grille.position.set(0, -0.58, 1.12);
+                grille.userData.noOutline = true;
+                parts.torso.add(grille);
+
+                const crest = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.72, 0.14), matEmblem);
+                crest.position.set(0, 0.14, 1.13);
+                crest.userData.noOutline = true;
+                parts.torso.add(crest);
+
+                const pelvis = new THREE.Mesh(new THREE.BoxGeometry(2.28, 0.64, 1.72), matOptimusRed);
+                pelvis.position.set(0, -1.22, 0);
+                parts.torso.add(pelvis);
+
+                [-1.18, 1.18].forEach(tx => {
+                    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.15, 10).rotateZ(Math.PI / 2), matChrome);
+                    tank.position.set(tx, -1.22, 0);
+                    parts.torso.add(tank);
+                });
+
+                // Head: Blue Helmet with Center Crest & Side Antennae
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.35, 1.35, 1.25), matOptimusBlue);
+                helm.castShadow = true;
+                parts.head.add(helm);
+
+                const headFin = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.75, 0.8), matOptimusBlue);
+                headFin.position.set(0, 0.95, 0.05);
+                parts.head.add(headFin);
+
+                [-0.75, 0.75].forEach(ax => {
+                    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.1, 8), matOptimusBlue);
+                    ant.position.set(ax, 0.35, 0);
+                    parts.head.add(ant);
+                });
+
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.98, 1.28), matOptimusFace);
+                faceMesh.position.set(0, -0.05, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Back: Dual Chrome Smokestacks & Fifth Wheel
+                const fifthWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.95, 0.35, 12), matChrome);
+                parts.backAttachment.add(fifthWheel);
+
+                [-1.25, 1.25].forEach(sx => {
+                    const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 2.9, 10), matChrome);
+                    stack.position.set(sx, 1.2, -0.2);
+                    parts.backAttachment.add(stack);
+                });
+
+                // Arms: Red Shoulders, Blue Forearms + Front Wheels
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.25, 1.25), matOptimusRed);
+                    shoulder.castShadow = true;
+                    armG.add(shoulder);
+
+                    const wheel = createWheelAssembly(0.76, 0.52);
+                    wheel.position.set(side * 0.52, -0.25, 0.28);
+                    armG.add(wheel);
+                    parts.wheels.push(wheel);
+
+                    forearmG.position.set(0, -1.15, 0);
+                    armG.add(forearmG);
+
+                    const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.82, 0.72), matChrome);
+                    bicep.position.set(0, 0.25, 0);
+                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.96, 1.25, 0.96), matOptimusBlue);
+                    forearm.position.set(0, -0.48, 0.08);
+                    forearm.castShadow = true;
+                    forearmG.add(bicep, forearm);
+                });
+
+                // Legs: Chrome Thighs, Blue Shins + Dual Tandem Rear Wheels
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.22, 1.35, 1.25), matChrome);
+                    thigh.position.set(-side * 0.05, -0.48, 0);
+                    thigh.castShadow = true;
+                    legG.add(thigh);
+
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.48, 2.35, 1.75), matOptimusBlue);
+                    shin.position.set(-side * 0.08, -1.45, 0.08);
+                    shin.castShadow = true;
+                    legG.add(shin);
+
+                    const kneeCap = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.44, 0.36), matChrome);
+                    kneeCap.position.set(-side * 0.08, -0.85, 0.96);
+                    legG.add(kneeCap);
+
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.56, 1.95), matOptimusBlue);
+                    boot.position.set(-side * 0.08, -2.52, 0.18);
+                    boot.castShadow = true;
+                    legG.add(boot);
+
+                    const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
+                    wheelMount.position.set(side * 0.58, 0, -0.05);
+                    legG.add(wheelMount);
+
+                    [-0.86, -2.14].forEach(wy => {
+                        const w = createWheelAssembly(0.76, 0.52);
+                        w.position.set(0, wy, 0);
+                        wheelMount.add(w);
+                        parts.wheels.push(w);
+                    });
+                });
+            }
+
+            else if (botType === 'BUMBLEBEE') {
+                // TV Show Bumblebee: Yellow Sports Car & Velociraptor Dinobot Mode
+                // Torso: Sports Car Hood Chest with Black Center Racing Stripes
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.65, 2.25, 2.05), matBeeYellow);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.68, 2.28, 2.08), matBeeBlack);
+                parts.torso.add(stripe);
+
+                [-0.85, 0.85].forEach(hx => {
+                    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.32, 0.18), matBeeGlowCyan);
+                    hl.position.set(hx, 0.28, 1.04);
+                    hl.userData.noOutline = true;
+                    parts.torso.add(hl);
+                });
+
+                // Door Wings on Upper Back (Fold in car mode)
+                [-1, 1].forEach(side => {
+                    const wingG = side === -1 ? parts.leftDoorWing : parts.rightDoorWing;
+                    wingG.position.set(side * 1.25, 0.35, -0.92);
+                    const wingMesh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.55, 0.22), matBeeYellow);
+                    wingMesh.position.set(side * 0.35, 0, 0);
+                    wingG.add(wingMesh);
+                    parts.torso.add(wingG);
+                });
+
+                // Head: Yellow Helmet with Horn Crests & Cyan Visor
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.28, 1.25, 1.22), matBeeYellow);
+                helm.castShadow = true;
+                parts.head.add(helm);
+
+                const helmStripe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.28, 1.25), matBeeBlack);
+                parts.head.add(helmStripe);
+
+                [-0.68, 0.68].forEach(side => {
+                    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.68, 6), matBeeYellow);
+                    horn.position.set(side, 0.85, -0.05);
+                    horn.rotation.z = side > 0 ? -0.35 : 0.35;
+                    parts.head.add(horn);
+                });
+
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.95, 1.24), matBeeFace);
+                faceMesh.position.set(0, -0.05, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Arms: Yellow Shoulders & Forearms + Front Wheels
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.22, 1.18), matBeeYellow);
+                    shoulder.castShadow = true;
+                    armG.add(shoulder);
+
+                    const wheel = createWheelAssembly(0.68, 0.44);
+                    wheel.position.set(side * 0.48, -0.22, 0.25);
+                    armG.add(wheel);
+                    parts.wheels.push(wheel);
+
+                    forearmG.position.set(0, -1.15, 0);
+                    armG.add(forearmG);
+
+                    const fore = new THREE.Mesh(new THREE.BoxGeometry(0.88, 1.25, 0.88), matBeeYellow);
+                    fore.position.set(0, -0.42, 0.05);
+                    fore.castShadow = true;
+                    forearmG.add(fore);
+                });
+
+                // Legs: Chrome Thighs, Yellow Shins & Boots + Rear Wheels
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.25, 1.15), matChrome);
+                    thigh.position.set(-side * 0.05, -0.48, 0);
+                    legG.add(thigh);
+
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.25, 1.55), matBeeYellow);
+                    shin.position.set(-side * 0.08, -1.45, 0.05);
+                    shin.castShadow = true;
+                    legG.add(shin);
+
+                    const knee = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.38, 0.28), matBeeBlack);
+                    knee.position.set(-side * 0.08, -0.85, 0.85);
+                    legG.add(knee);
+
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.52, 1.75), matBeeYellow);
+                    boot.position.set(-side * 0.08, -2.48, 0.18);
+                    boot.castShadow = true;
+                    legG.add(boot);
+
+                    const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
+                    wheelMount.position.set(side * 0.55, 0, -0.05);
+                    legG.add(wheelMount);
+
+                    const w = createWheelAssembly(0.68, 0.44);
+                    w.position.set(0, -1.55, 0);
+                    wheelMount.add(w);
+                    parts.wheels.push(w);
+                });
+
+                // Velociraptor Dinosaur Head & Segmented Tail
+                const raptorSkull = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 1.9), matBeeYellow);
+                raptorSkull.position.set(0, 0.35, 0.6);
+                parts.dinoHead.add(raptorSkull);
+
+                const raptorSnout = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.85, 1.1), matBeeYellow);
+                raptorSnout.position.set(0, 0.25, 1.8);
+                parts.dinoHead.add(raptorSnout);
+
+                [-0.72, 0.72].forEach(side => {
+                    const eyePupil = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.16, 10).rotateZ(Math.PI / 2), matBeeGlowCyan);
+                    eyePupil.position.set(side * 1.02, 0.45, 0.6);
+                    eyePupil.userData.noOutline = true;
+                    parts.dinoHead.add(eyePupil);
+                });
+
+                const raptorJaw = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.45, 2.1), matChrome);
+                raptorJaw.position.set(0, -0.22, 1.25);
+                parts.dinoHead.add(raptorJaw);
+
+                let prevTail = parts.dinoTail;
+                for (let s = 0; s < 4; s++) {
+                    const seg = new THREE.Group();
+                    seg.position.set(0, 0, -0.85);
+                    const sz = 1.1 - s * 0.22;
+                    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sz, sz * 0.85, 0.95), matBeeYellow);
+                    mesh.position.set(0, 0, -0.42);
+                    const spine = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.8), matBeeBlack);
+                    spine.position.set(0, sz * 0.5, -0.42);
+                    seg.add(mesh, spine);
+                    prevTail.add(seg);
+                    prevTail = seg;
+                }
+            }
+
+            else if (botType === 'BLURR') {
+                // TV Show Blurr: Royal Purple (#7c3aed) & Deep Violet (#581c87) Hyper-Speedster
+                // Torso: Aerodynamic Wedge Chest
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.55, 2.25, 1.95), matBlurrPurple);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.85, 2.28, 1.98), matBlurrViolet);
+                parts.torso.add(stripe);
+
+                const chevron = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.45, 0.18), matBlurrCyan);
+                chevron.position.set(0, 0.55, 1.02);
+                chevron.userData.noOutline = true;
+                parts.torso.add(chevron);
+
+                [-1.15, 1.15].forEach(sx => {
+                    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.45, 0.95), matBlurrPurple);
+                    fin.position.set(sx, 0.85, -0.8);
+                    fin.rotation.x = -0.25;
+                    parts.torso.add(fin);
+                });
+
+                // Head: Purple Helmet with Swept-Back Center Speed Fin
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.22, 1.25, 1.22), matBlurrPurple);
+                helm.castShadow = true;
+                parts.head.add(helm);
+
+                const speedFin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.25, 1.6), matBlurrViolet);
+                speedFin.position.set(0, 0.95, -0.3);
+                speedFin.rotation.x = -0.45;
+                parts.head.add(speedFin);
+
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.95, 1.24), matBlurrFace);
+                faceMesh.position.set(0, -0.05, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Arms: Purple Pod Shoulders, Violet Forearms + Low-Profile Wheels
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+
+                    const pod = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.18, 1.25), matBlurrPurple);
+                    pod.castShadow = true;
+                    armG.add(pod);
+
+                    const wheel = createWheelAssembly(0.64, 0.42);
+                    wheel.position.set(side * 0.46, -0.22, 0.25);
+                    armG.add(wheel);
+                    parts.wheels.push(wheel);
+
+                    forearmG.position.set(0, -1.15, 0);
+                    armG.add(forearmG);
+
+                    const tube = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.25, 0.85), matBlurrViolet);
+                    tube.position.set(0, -0.45, 0.05);
+                    tube.castShadow = true;
+                    forearmG.add(tube);
+                });
+
+                // Legs: Chrome Thighs, Violet Shins, Purple Boots + Rear Wheels
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.12, 1.25, 1.12), matChrome);
+                    thigh.position.set(-side * 0.05, -0.48, 0);
+                    legG.add(thigh);
+
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.32, 2.25, 1.55), matBlurrViolet);
+                    shin.position.set(-side * 0.08, -1.45, 0.05);
+                    shin.castShadow = true;
+                    legG.add(shin);
+
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.52, 1.75), matBlurrPurple);
+                    boot.position.set(-side * 0.08, -2.48, 0.18);
+                    boot.castShadow = true;
+                    legG.add(boot);
+
+                    const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
+                    wheelMount.position.set(side * 0.55, 0, -0.05);
+                    legG.add(wheelMount);
+
+                    const w = createWheelAssembly(0.64, 0.42);
+                    w.position.set(0, -1.55, 0);
+                    wheelMount.add(w);
+                    parts.wheels.push(w);
+                });
+            }
+
+            else if (botType === 'SALVAGE') {
+                // TV Show Salvage: Heavy Forest Green (#15803d) & Safety Orange (#ea580c) Recycling Truck
+                // Torso: Broad Cab Chest with Orange Bumper & Amber Warning Beacons
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.95, 2.45, 2.25), matSalvageGreen);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                const orangeBumper = new THREE.Mesh(new THREE.BoxGeometry(3.05, 0.72, 0.55), matSalvageOrange);
+                orangeBumper.position.set(0, -0.85, 1.15);
+                parts.torso.add(orangeBumper);
+
+                [-0.88, 0.88].forEach(bx => {
+                    const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.35, 8), matSalvageYellow);
+                    beacon.position.set(bx, 1.35, 0.4);
+                    parts.torso.add(beacon);
+                });
+
+                // Head: Green Helmet with Visor Cap & Underbite Scoop Jaw
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.35, 1.35, 1.28), matSalvageGreen);
+                helm.castShadow = true;
+                parts.head.add(helm);
+
+                const visorCap = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.35, 0.52), matSalvageOrange);
+                visorCap.position.set(0, 0.75, 0.48);
+                parts.head.add(visorCap);
+
+                const underbite = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.58, 0.68), matSalvageSteel);
+                underbite.position.set(0, -0.42, 0.68);
+                parts.head.add(underbite);
+
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.95, 1.28), matSalvageFace);
+                faceMesh.position.set(0, 0.05, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Back: Heavy Recycling Hopper Backpack
+                const hopper = new THREE.Mesh(new THREE.BoxGeometry(2.55, 2.25, 1.45), matSalvageOrange);
+                hopper.position.set(0, 0.25, -0.65);
+                hopper.castShadow = true;
+                parts.backAttachment.add(hopper);
+
+                // Arms: Green Shoulders, Orange Loaders + Front Heavy Truck Wheels
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.28, 1.28), matSalvageGreen);
+                    shoulder.castShadow = true;
+                    armG.add(shoulder);
+
+                    const wheel = createWheelAssembly(0.76, 0.52);
+                    wheel.position.set(side * 0.52, -0.25, 0.28);
+                    armG.add(wheel);
+                    parts.wheels.push(wheel);
+
+                    forearmG.position.set(0, -1.15, 0);
+                    armG.add(forearmG);
+
+                    const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.82, 0.72), matChrome);
+                    bicep.position.set(0, 0.25, 0);
+                    const loader = new THREE.Mesh(new THREE.BoxGeometry(1.02, 1.35, 1.02), matSalvageOrange);
+                    loader.position.set(0, -0.48, 0.08);
+                    loader.castShadow = true;
+                    forearmG.add(bicep, loader);
+                });
+
+                // Legs: Steel Thighs, Green Shins, Steel Boots + Dual Rear Truck Wheels
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.35, 1.25), matSalvageSteel);
+                    thigh.position.set(-side * 0.05, -0.48, 0);
+                    legG.add(thigh);
+
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.48, 2.35, 1.75), matSalvageGreen);
+                    shin.position.set(-side * 0.08, -1.45, 0.08);
+                    shin.castShadow = true;
+                    legG.add(shin);
+
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.56, 1.95), matSalvageSteel);
+                    boot.position.set(-side * 0.08, -2.52, 0.18);
+                    boot.castShadow = true;
+                    legG.add(boot);
+
+                    const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
+                    wheelMount.position.set(side * 0.58, 0, -0.05);
+                    legG.add(wheelMount);
+
+                    [-0.86, -2.14].forEach(wy => {
+                        const w = createWheelAssembly(0.76, 0.52);
+                        w.position.set(0, wy, 0);
+                        wheelMount.add(w);
+                        parts.wheels.push(w);
+                    });
+                });
+            }
+
+            else if (botType === 'HIGHTIDE') {
+                // TV Show High Tide: Deep Navy (#0f172a) & Nautical White (#f8fafc) Oceanic Commander
+                // Torso: Bridge Cabin with Brass Portholes & White Bib
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.85, 2.35, 2.15), matHighTideNavy);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                const whiteBib = new THREE.Mesh(new THREE.BoxGeometry(1.85, 1.65, 0.18), matHighTideWhite);
+                whiteBib.position.set(0, 0.15, 1.1);
+                parts.torso.add(whiteBib);
+
+                [-0.48, 0.48].forEach(px => {
+                    const porthole = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.14, 10).rotateX(Math.PI / 2), matHighTideGold);
+                    porthole.position.set(px, 0.35, 1.18);
+                    parts.torso.add(porthole);
+                });
+
+                // Head: Navy Officer Peaked Cap Helmet with White Crown & Gold Brim
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.32, 1.32, 1.25), matHighTideNavy);
+                helm.castShadow = true;
+                parts.head.add(helm);
+
+                const capCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.88, 0.78, 0.48, 12), matHighTideWhite);
+                capCrown.position.set(0, 0.95, 0.1);
+                parts.head.add(capCrown);
+
+                const capBrim = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.16, 0.58), matHighTideGold);
+                capBrim.position.set(0, 0.75, 0.65);
+                parts.head.add(capBrim);
+
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.95, 1.25), matHighTideFace);
+                faceMesh.position.set(0, -0.05, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Back Attachment: Dual Spinning Gold Rescue Propellers on Stern
+                const propGroup = new THREE.Group();
+                parts.rotors = propGroup;
+                parts.backAttachment.add(propGroup);
+
+                [-1.65, 1.65].forEach(side => {
+                    const pPod = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 2.2, 10).rotateX(Math.PI / 2), matHighTideWhite);
+                    pPod.position.set(side, 0.25, -0.65);
+                    parts.backAttachment.add(pPod);
+
+                    const spinner = new THREE.Group();
+                    spinner.position.set(side, 0.25, -1.85);
+                    for (let b = 0; b < 3; b++) {
+                        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.75, 0.08), matHighTideGold);
+                        blade.rotation.z = (b * Math.PI * 2) / 3;
+                        blade.position.y = 0.35;
+                        spinner.add(blade);
+                    }
+                    propGroup.add(spinner);
+                });
+
+                // Arms: White Officer Sleeves, Gold Cuffs, Navy Gauntlets + Wheels
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.15, 1.22), matHighTideWhite);
+                    shoulder.castShadow = true;
+                    armG.add(shoulder);
+
+                    const wheel = createWheelAssembly(0.68, 0.44);
+                    wheel.position.set(side * 0.48, -0.22, 0.25);
+                    armG.add(wheel);
+                    parts.wheels.push(wheel);
+
+                    forearmG.position.set(0, -1.15, 0);
+                    armG.add(forearmG);
+
+                    const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.28, 0.98), matHighTideGold);
+                    cuff.position.set(0, 0.2, 0);
+                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.32, 0.92), matHighTideNavy);
+                    forearm.position.set(0, -0.45, 0.05);
+                    forearm.castShadow = true;
+                    forearmG.add(cuff, forearm);
+                });
+
+                // Legs: White Thighs, Navy Shins, Nautical Boots with Hydro-Stabilizer Fins + Wheels
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+
+                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.25, 1.15), matHighTideWhite);
+                    thigh.position.set(-side * 0.05, -0.48, 0);
+                    legG.add(thigh);
+
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.38, 2.25, 1.55), matHighTideNavy);
+                    shin.position.set(-side * 0.08, -1.45, 0.05);
+                    shin.castShadow = true;
+                    legG.add(shin);
+
+                    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.15, 0.72), matHighTideWhite);
+                    fin.position.set(side * 0.75, -1.45, -0.35);
+                    legG.add(fin);
+
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.52, 1.85), matHighTideNavy);
+                    boot.position.set(-side * 0.08, -2.48, 0.18);
+                    boot.castShadow = true;
+                    legG.add(boot);
+
+                    const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
+                    wheelMount.position.set(side * 0.55, 0, -0.05);
+                    legG.add(wheelMount);
+
+                    const w = createWheelAssembly(0.68, 0.44);
+                    w.position.set(0, -1.55, 0);
+                    wheelMount.add(w);
+                    parts.wheels.push(w);
+                });
+            }
+
             // Apply Saturday-Morning Cartoon Black Ink Outlines & Panel Creases to the entire Bot Rig!
             applyCartoonInkOutlines(root, 1.06, true);
 
             return parts;
         }
 
-        // Build all 4 Rescue Bot Rigs!
+        // Build all 9 Rescue Bot Rigs!
         const botRigs = {
             BOULDER: buildRescueBotModel('BOULDER'),
             HEATWAVE: buildRescueBotModel('HEATWAVE'),
             CHASE: buildRescueBotModel('CHASE'),
-            BLADES: buildRescueBotModel('BLADES')
+            BLADES: buildRescueBotModel('BLADES'),
+            OPTIMUS: buildRescueBotModel('OPTIMUS'),
+            BUMBLEBEE: buildRescueBotModel('BUMBLEBEE'),
+            BLURR: buildRescueBotModel('BLURR'),
+            SALVAGE: buildRescueBotModel('SALVAGE'),
+            HIGHTIDE: buildRescueBotModel('HIGHTIDE')
         };
 
         // Add all 4 Rigs to the Scene (1 Active Player, 3 Parked at HQ Command Center)
@@ -8558,9 +9166,15 @@
 
             // 1. Torso (Upright in Bot, Low Chassis in Vehicle, Horizontal Dinosaur Core in Dinobot)
             const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : 0) - smashOffset * 0.5;
-            const dinoTorsoY = (rig.botType === 'HEATWAVE' ? 2.35 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.16 : 0);
-            const vehTorsoY = rig.botType === 'BOULDER' ? 1.56 : (rig.botType === 'HEATWAVE' ? 1.78 : (rig.botType === 'CHASE' ? 1.42 : 1.72));
-            const vehTorsoZ = rig.botType === 'BOULDER' ? -0.18 : (rig.botType === 'HEATWAVE' ? 1.15 : (rig.botType === 'CHASE' ? -0.42 : 0.95));
+            const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' ? 2.35 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.16 : 0);
+            const vehTorsoY = (rig.botType === 'BOULDER') ? 1.56
+                : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.78
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? 1.42
+                : (rig.botType === 'HIGHTIDE') ? 1.58 : 1.72;
+            const vehTorsoZ = (rig.botType === 'BOULDER') ? -0.18
+                : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.15
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? -0.42
+                : (rig.botType === 'HIGHTIDE') ? 0.35 : 0.95;
             rig.torso.position.set(
                 0,
                 botTorsoY * (1 - m - d) + vehTorsoY * m + dinoTorsoY * d,
@@ -8581,8 +9195,9 @@
 
             // 2. Head & Cab Assemblies:
             // - Boulder: Head retracts straight down into his chest while his ROPS Bulldozer Operator Cab (`dozerCabMount`) slides up & forward from his collar!
-            // - Heatwave: Retracts straight down into his Full Cab Chest!
-            // - Chase: Tucks down inside his Cabin Roof Chest!
+            // - Heatwave / Optimus / Salvage / High Tide: Retracts straight down into Full Cab Chest!
+            // - Chase / Blurr: Tucks down inside Cabin Roof Chest!
+            // - Bumblebee: Retracts into sports hood in Vehicle mode, and tucks away in Dinobot mode (raptor head deploys)
             if (rig.botType === 'BOULDER') {
                 rig.head.position.set(
                     0,
@@ -8604,16 +9219,16 @@
                     const cabScale = 0.72 * (1 - m - d) + 1.0 * m + 0.22 * d;
                     rig.dozerCabMount.scale.setScalar(Math.max(0.01, cabScale));
                 }
-            } else if (rig.botType === 'HEATWAVE') {
+            } else if (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE' || rig.botType === 'HIGHTIDE') {
                 rig.head.position.set(
                     0,
                     (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.68 * m + 1.95 * d,
                     0.06 * (1 - m - d) + 1.15 * m + 0.15 * d
                 );
                 rig.head.rotation.x = 0;
-                const hwHeadScale = 1.0 * (1 - m - d) + 0.28 * m + 0.22 * d;
+                const hwHeadScale = 1.0 * (1 - m - d) + 0.25 * m + 0.22 * d;
                 rig.head.scale.setScalar(hwHeadScale);
-            } else if (rig.botType === 'CHASE') {
+            } else if (rig.botType === 'CHASE' || rig.botType === 'BLURR') {
                 rig.head.position.set(
                     0,
                     (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.38 * m + 1.95 * d,
@@ -8622,6 +9237,15 @@
                 rig.head.rotation.x = 0;
                 const chaseHeadScale = 1.0 * (1 - m - d) + 0.25 * m + 0.22 * d;
                 rig.head.scale.setScalar(chaseHeadScale);
+            } else if (rig.botType === 'BUMBLEBEE') {
+                rig.head.position.set(
+                    0,
+                    (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.38 * m + 1.95 * d,
+                    0.06 * (1 - m - d) - 0.42 * m + 0.15 * d
+                );
+                rig.head.rotation.x = 0;
+                const beeHeadScale = (1.0 * (1 - m) + 0.25 * m) * (1.0 - d);
+                rig.head.scale.setScalar(Math.max(0.001, beeHeadScale));
             } else {
                 // BLADES: Head sits between the retracted collar cockpit halves in Bot mode, then tucks into the expanding Helicopter Cockpit Nose in Vehicle mode!
                 rig.head.position.set(
@@ -8674,7 +9298,7 @@
                 );
             }
 
-            // 4. Back Attachment (Bulldozer Rear Engine Deck & Exhaust Stacks / Fire Ladder & Water Cannon / Helicopter Rotors)
+            // 4. Back Attachment (Bulldozer Rear Engine Deck & Exhaust Stacks / Fire Ladder & Water Cannon / Helicopter Rotors / Smokestacks)
             if (rig.botType === 'BOULDER') {
                 rig.backAttachment.position.set(
                     0,
@@ -8701,6 +9325,19 @@
                 );
                 rig.backAttachment.rotation.x = -0.35 * (1 - m - d);
                 rig.backAttachment.scale.setScalar(THREE.MathUtils.lerp(1.0, 0.45, d));
+            } else if (rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') {
+                rig.backAttachment.position.set(
+                    0,
+                    3.85 * (1 - m - d) + 1.65 * m + 2.05 * d,
+                    -1.15 * (1 - m - d) - 1.25 * m - 0.45 * d
+                );
+                rig.backAttachment.rotation.x = 0;
+            } else if (rig.botType === 'HIGHTIDE') {
+                rig.backAttachment.position.set(
+                    0,
+                    3.85 * (1 - m - d) + 1.55 * m + 2.05 * d,
+                    -1.15 * (1 - m - d) - 0.85 * m - 0.45 * d
+                );
             } else if (rig.botType === 'BLADES') {
                 rig.backAttachment.position.set(
                     0,
@@ -8708,19 +9345,9 @@
                     -1.1 * (1 - m - d) + 0.1 * m - 0.4 * d
                 );
                 rig.backAttachment.rotation.x = -1.25 * (1 - m);
-                if (rig.rotors) {
-                    const spinRate = m > 0.3 ? 0.032 : 0.004;
-                    rig.rotors.rotation.y = now * spinRate;
-                    const bladeScale = (0.48 * (1 - m) + 1.0 * m) * (1 - d * 0.75);
-                    rig.rotors.scale.set(bladeScale, 1, bladeScale);
-                }
             }
 
             // 5. Left & Right Arms
-            // - Boulder: Arms fold down along the chassis flanks to become Caterpillar Treads
-            // - Heatwave: Arms wrap around the front of the cab (providing front wheels) while forearms & fingers swing inward to form the front bumper!
-            // - Chase: Arms tuck in along the cabin sides to form the White Police Doors & Rear Cruiser Wheels!
-            // - Blades: Arms fold up & tuck tightly along the Helicopter Fuselage sides so his Sponsons/Pontoons & Turbines streamline the cabin!
             const armSwingL = isMoving ? walkSin * 0.65 : 0;
             const armSwingR = isMoving ? -walkSin * 0.65 : 0;
             const dinoArmX = isPtero ? 1.15 : 1.45;
@@ -8729,9 +9356,22 @@
             const dinoArmRotL = isPtero ? Math.PI / 2 : armSwingL * 0.75;
             const dinoArmRotR = isPtero ? Math.PI / 2 : armSwingR * 0.75;
 
-            const vehArmX = rig.botType === 'BOULDER' ? 1.46 : (rig.botType === 'HEATWAVE' ? 1.34 : (rig.botType === 'CHASE' ? 0.88 : 1.16));
-            const vehArmY = rig.botType === 'BOULDER' ? 1.08 : (rig.botType === 'HEATWAVE' ? 1.14 : (rig.botType === 'CHASE' ? 1.02 : 1.48));
-            const vehArmZ = rig.botType === 'BOULDER' ? -0.35 : (rig.botType === 'HEATWAVE' ? 1.46 : (rig.botType === 'CHASE' ? -1.18 : 1.25));
+            const vehArmX = (rig.botType === 'BOULDER') ? 1.46
+                : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.36
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? 0.92
+                : (rig.botType === 'HIGHTIDE') ? 1.25 : 1.16;
+            const vehArmY = (rig.botType === 'BOULDER') ? 1.08
+                : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.14
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? 1.02
+                : (rig.botType === 'HIGHTIDE') ? 1.18 : 1.48;
+            const vehArmZ = (rig.botType === 'BOULDER') ? -0.35
+                : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.42
+                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') ? -1.18
+                : (rig.botType === 'HIGHTIDE') ? 0.65 : 1.25;
+
+            const armScaleDino = (rig.botType === 'BUMBLEBEE') ? (1.0 - d * 0.85) : 1.0;
+            rig.leftArm.scale.setScalar(armScaleDino);
+            rig.rightArm.scale.setScalar(armScaleDino);
 
             rig.leftArm.position.set(
                 -1.78 * (1 - m - d) - vehArmX * m - dinoArmX * d,
@@ -8746,8 +9386,12 @@
             rig.leftArm.rotation.x = (armSwingL - smashOffset * 1.4) * (1 - m - d) + (Math.PI / 2) * m + dinoArmRotL * d;
             rig.rightArm.rotation.x = (armSwingR - smashOffset * 1.4) * (1 - m - d) + (Math.PI / 2) * m + dinoArmRotR * d;
 
+            if (rig.leftDoorWing && rig.rightDoorWing) {
+                rig.leftDoorWing.rotation.z = 0.38 * (1 - m);
+                rig.rightDoorWing.rotation.z = -0.38 * (1 - m);
+            }
+
             if (rig.botType === 'BOULDER') {
-                // Slide Boulder's Caterpillar Tread Mounts downward onto the ground & tuck his forearms inward inside the hull!
                 if (rig.leftArmWheelMount && rig.rightArmWheelMount) {
                     const treadGroundShiftZ = -0.06 * (1 - m) + 0.24 * m;
                     rig.leftArmWheelMount.position.z = treadGroundShiftZ;
@@ -8759,15 +9403,11 @@
                 }
             }
             if (rig.botType === 'HEATWAVE' && rig.leftForearm && rig.rightForearm) {
-                // Bend elbows 90 deg inward across the front of the Cab so Heatwave's fingers interlock as the Front Bumper!
                 rig.leftForearm.rotation.z = (Math.PI / 2) * m;
                 rig.rightForearm.rotation.z = -(Math.PI / 2) * m;
             }
             if (rig.botType === 'CHASE') {
-                // Fold Chase's angled shoulder door-wings flat into the Police Cruiser side doors & shift rear wheels onto the ground!
                 if (rig.leftDoorWing && rig.rightDoorWing) {
-                    rig.leftDoorWing.rotation.z = 0.38 * (1 - m);
-                    rig.rightDoorWing.rotation.z = -0.38 * (1 - m);
                     rig.leftDoorWing.position.y = -0.35 * (1 - m) - 0.85 * m;
                     rig.rightDoorWing.position.y = -0.35 * (1 - m) - 0.85 * m;
                 }
@@ -8779,10 +9419,6 @@
             }
 
             // 6. Left & Right Legs
-            // - Boulder: Legs swing forward & lock together so his Feet form the Bulldozer Bucket!
-            // - Heatwave: Legs fold up behind the Cab to form the Rear Fire Truck Body & provide 2 tandem wheels on each side!
-            // - Chase: Legs swing forward (-PI/2) & press together in front of the cabin to form the Front Police Hood, Fenders, Front Wheels & Headlight/Bullbar Feet!
-            // - Blades: Legs fold backward (+PI/2) & zip together behind the cabin into the unified Helicopter Tail Boom, Vertical Fin & Tail Rotor while Landing Skids shift underneath!
             const dinoLegX = isPtero ? 0.72 : 1.18;
             const dinoLegY = isPtero ? 1.85 : 2.25;
             const dinoLegZ = isPtero ? -1.05 : -1.18;
@@ -8790,7 +9426,6 @@
             const dinoLegRotR = isPtero ? -Math.PI * 0.36 : -armSwingR * 0.75;
 
             if (rig.botType === 'BOULDER') {
-                // In Bot mode: wide heroic stance; In Bulldozer mode: legs swing forward (-PI/2) & slide together (X: ±0.88) so the two blade halves lock seamlessly!
                 const dozerLiftY = (smashOffset * 0.38 + scoopLift * 0.78) * m;
                 rig.leftLeg.position.set(
                     -0.96 * (1 - m - d) - 0.88 * m - dinoLegX * d,
@@ -8806,21 +9441,18 @@
                 rig.leftLeg.rotation.x = (-armSwingL * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - legScoopPitch) * m + dinoLegRotL * d;
                 rig.rightLeg.rotation.x = (-armSwingR * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - legScoopPitch) * m + dinoLegRotR * d;
 
-                // Articulate hydraulic lift cylinder & C-frame push-arm linkage along the shins/treads during Bulldozer Scoop!
                 if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
                     const linkageShiftZ = (-0.18 - scoopLift * 0.28) * m;
                     rig.leftLegWheelMount.position.set(-0.18 * m, (-0.15 - scoopLift * 0.22) * m, linkageShiftZ);
                     rig.rightLegWheelMount.position.set(0.18 * m, (-0.15 - scoopLift * 0.22) * m, linkageShiftZ);
                 }
 
-                // Angle the interlocking bucket-feet in Bulldozer mode & curl upward during Bulldozer Scoop (`scoopCurl` / `smashOffset`)!
                 if (rig.leftFoot && rig.rightFoot) {
                     const bucketTilt = (-0.18 + smashOffset * 0.48 + scoopCurl * 0.72) * m + (scoopCurl * 0.35) * (1 - m - d);
                     rig.leftFoot.rotation.x = bucketTilt;
                     rig.rightFoot.rotation.x = bucketTilt;
                 }
-            } else if (rig.botType === 'HEATWAVE') {
-                // In Fire Engine mode: legs fold up (+PI/2) behind the cab, locking together to form the rear fire truck body with 2 wheels per side!
+            } else if (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') {
                 rig.leftLeg.position.set(
                     -0.88 * (1 - m - d) - 0.88 * m - dinoLegX * d,
                     2.35 * (1 - m - d) + 1.12 * m + dinoLegY * d,
@@ -8834,14 +9466,13 @@
                 rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
                 rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
 
-                // Shift the rear leg wheel mounts downward (+Z in leg space -> -Y in world space when leg is rotated +90°) so all 4 rear tires rest on the ground!
                 if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
                     const wheelGroundShiftZ = -0.05 * (1 - m) + 0.36 * m;
                     rig.leftLegWheelMount.position.z = wheelGroundShiftZ;
                     rig.rightLegWheelMount.position.z = wheelGroundShiftZ;
                 }
-            } else if (rig.botType === 'CHASE') {
-                // In Police Cruiser mode: legs swing forward (-PI/2) and press together to form the sleek front hood, front wheels, headlights & push-bar bumper!
+            } else if (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') {
+                const legPitchVeh = (rig.botType === 'CHASE') ? -(Math.PI / 2) : (Math.PI / 2);
                 rig.leftLeg.position.set(
                     -0.82 * (1 - m - d) - 0.74 * m - dinoLegX * d,
                     2.35 * (1 - m - d) + 0.86 * m + dinoLegY * d,
@@ -8852,15 +9483,27 @@
                     2.35 * (1 - m - d) + 0.86 * m + dinoLegY * d,
                     -0.05 * m + dinoLegZ * d
                 );
-                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) - (Math.PI / 2) * m + dinoLegRotL * d;
-                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) - (Math.PI / 2) * m + dinoLegRotR * d;
+                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + legPitchVeh * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + legPitchVeh * m + dinoLegRotR * d;
 
-                // Shift front shin wheel mounts downward (-Z in leg space -> -Y in world space when leg is rotated -90°) so front tires rest on the ground!
                 if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
-                    const frontWheelZ = 0.05 * (1 - m) - 0.16 * m;
-                    rig.leftLegWheelMount.position.z = frontWheelZ;
-                    rig.rightLegWheelMount.position.z = frontWheelZ;
+                    const wheelZ = 0.05 * (1 - m) + (rig.botType === 'CHASE' ? -0.16 : 0.32) * m;
+                    rig.leftLegWheelMount.position.z = wheelZ;
+                    rig.rightLegWheelMount.position.z = wheelZ;
                 }
+            } else if (rig.botType === 'HIGHTIDE') {
+                rig.leftLeg.position.set(
+                    -0.82 * (1 - m - d) - 0.74 * m - dinoLegX * d,
+                    2.35 * (1 - m - d) + 0.95 * m + dinoLegY * d,
+                    -0.15 * m + dinoLegZ * d
+                );
+                rig.rightLeg.position.set(
+                    0.82 * (1 - m - d) + 0.74 * m + dinoLegX * d,
+                    2.35 * (1 - m - d) + 0.95 * m + dinoLegY * d,
+                    -0.15 * m + dinoLegZ * d
+                );
+                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
             } else {
                 // BLADES: In Helicopter mode, legs fold backward (+PI/2) and press tightly together into a single unified Tail Boom!
                 rig.leftLeg.position.set(
@@ -8876,39 +9519,39 @@
                 rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
                 rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
 
-                // Shift Blades' Landing Skids forward & downward underneath the Helicopter Fuselage during transformation!
                 if (rig.leftSkidMount && rig.rightSkidMount) {
                     rig.leftSkidMount.position.set(-0.56 * (1 - m) - 0.72 * m, -1.55 * (1 - m) + 0.85 * m, 0.25 * (1 - m) + 1.25 * m);
                     rig.rightSkidMount.position.set(0.56 * (1 - m) + 0.72 * m, -1.55 * (1 - m) + 0.85 * m, 0.25 * (1 - m) + 1.25 * m);
                 }
             }
 
-            // 7. Dinobot Anatomy Group (Triceratops, Brachiosaurus, Stegosaurus, Pterosaur)
+            // 7. Dinobot Anatomy Group (Triceratops, Brachiosaurus, Stegosaurus, Pterosaur, Velociraptor)
             if (rig.dinoGroup) {
                 rig.dinoGroup.visible = d > 0.02;
                 const dScale = Math.max(0.001, d);
                 rig.dinoGroup.scale.setScalar(dScale);
 
                 if (rig.botType === 'BOULDER') {
-                    // Triceratops Frill, 3-Horned Head & Tail
                     rig.dinoHead.position.set(0, 2.25 - smashOffset * 0.45, 1.55 + smashOffset * 0.95);
                     rig.dinoHead.rotation.x = smashOffset * 0.38 + (isMoving ? Math.sin(walkCycle * 2) * 0.06 : 0);
                     rig.dinoTail.position.set(0, 2.25, -1.55);
                     rig.dinoTail.rotation.y = isMoving ? walkSin * 0.32 : Math.sin(now * 0.003) * 0.12;
                 } else if (rig.botType === 'HEATWAVE') {
-                    // Brachiosaurus Towering Neck, Crested Head & Sweeping Tail
                     rig.dinoHead.position.set(0, 2.35, 1.15);
                     rig.dinoHead.rotation.x = (isMoving ? Math.sin(walkCycle) * 0.08 : Math.sin(now * 0.0025) * 0.05) + smashOffset * 0.25;
                     rig.dinoTail.position.set(0, 2.2, -1.55);
                     rig.dinoTail.rotation.y = isMoving ? walkSin * 0.35 : Math.sin(now * 0.003) * 0.14;
                 } else if (rig.botType === 'CHASE') {
-                    // Stegosaurus Head & Spiked Thagomizer Tail Whip
                     rig.dinoHead.position.set(0, 2.1, 1.55);
                     rig.dinoHead.rotation.y = isMoving ? walkSin * 0.12 : 0;
                     rig.dinoTail.position.set(0, 2.25, -1.5);
                     rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.42 : Math.sin(now * 0.0035) * 0.16) + smashOffset * 0.95;
+                } else if (rig.botType === 'BUMBLEBEE') {
+                    rig.dinoHead.position.set(0, 2.35, 1.45);
+                    rig.dinoHead.rotation.x = (isMoving ? Math.sin(walkCycle) * 0.12 : 0) + smashOffset * 0.35;
+                    rig.dinoTail.position.set(0, 2.15, -1.55);
+                    rig.dinoTail.rotation.y = isMoving ? walkSin * 0.38 : Math.sin(now * 0.003) * 0.15;
                 } else if (rig.botType === 'BLADES') {
-                    // Pterosaur Crested Beak Head & Flapping Wings
                     rig.dinoHead.position.set(0, 2.35, 1.35);
                     rig.dinoHead.rotation.x = isMoving ? 0.12 : 0;
                     rig.dinoTail.position.set(0, 2.25, -1.45);
@@ -8920,10 +9563,21 @@
                 }
             }
 
-            // Spin Wheels & Flash Emergency Lightbars
+            // Spin Wheels & Propellers & Flash Emergency Lightbars
             rig.wheels.forEach(w => {
                 w.rotation.x += speed * 0.016;
             });
+            if (rig.rotors) {
+                if (rig.botType === 'BLADES') {
+                    const spinRate = m > 0.3 ? 0.032 : 0.004;
+                    rig.rotors.rotation.y = now * spinRate;
+                    const bladeScale = (0.48 * (1 - m) + 1.0 * m) * (1 - d * 0.75);
+                    rig.rotors.scale.set(bladeScale, 1, bladeScale);
+                } else if (rig.botType === 'HIGHTIDE') {
+                    const propSpin = m > 0.3 ? 0.045 : 0.008;
+                    rig.rotors.rotation.z = now * propSpin;
+                }
+            }
             if (rig.tailRotor) {
                 rig.tailRotor.rotation.x = now * 0.04;
             }
@@ -9006,15 +9660,15 @@
                 role: 'Autobot Supreme Commander',
                 voicePitch: 0.72,
                 vehName: 'HEAVY CAB TRUCK',
-                dinoName: 'T-REX PRIMAL',
+                dinoName: null,
                 colorClass: 'text-red-400',
                 dotClass: 'bg-red-600',
                 botActionIcon: 'MATRIX_PULSE',
                 botActionLabel: 'MATRIX PULSE',
                 vehActionIcon: 'CAB_BOOST',
                 vehActionLabel: 'CAB BOOST',
-                dinoActionIcon: 'PRIMAL_ROAR',
-                dinoActionLabel: 'PRIMAL ROAR'
+                dinoActionIcon: 'MATRIX_PULSE',
+                dinoActionLabel: 'MATRIX PULSE'
             },
             BUMBLEBEE: {
                 name: 'BUMBLEBEE',
@@ -9036,45 +9690,45 @@
                 role: 'Hyper-Speed Rescue Specialist',
                 voicePitch: 1.28,
                 vehName: 'CYBER-SPEEDSTER',
-                dinoName: 'HYPER-RAPTOR',
-                colorClass: 'text-cyan-300',
-                dotClass: 'bg-cyan-400',
+                dinoName: null,
+                colorClass: 'text-purple-300',
+                dotClass: 'bg-purple-500',
                 botActionIcon: 'HYPER_BLUR',
                 botActionLabel: 'HYPER BLUR',
                 vehActionIcon: 'SUPERSONIC_DASH',
                 vehActionLabel: 'SUPERSONIC DASH',
-                dinoActionIcon: 'BLITZ_POUNCE',
-                dinoActionLabel: 'BLITZ POUNCE'
+                dinoActionIcon: 'HYPER_BLUR',
+                dinoActionLabel: 'HYPER BLUR'
             },
             SALVAGE: {
                 name: 'SALVAGE',
                 role: 'Reclamation & Recycling Hero',
                 voicePitch: 0.82,
                 vehName: 'RECYCLING TRUCK',
-                dinoName: 'ANKYLOSAURUS',
+                dinoName: null,
                 colorClass: 'text-emerald-400',
                 dotClass: 'bg-emerald-500',
                 botActionIcon: 'SCRAP_MAGNET',
                 botActionLabel: 'SCRAP MAGNET',
                 vehActionIcon: 'COMPACTOR_SMASH',
                 vehActionLabel: 'COMPACTOR SMASH',
-                dinoActionIcon: 'CLUB_TAIL_SLAM',
-                dinoActionLabel: 'CLUB TAIL SLAM'
+                dinoActionIcon: 'SCRAP_MAGNET',
+                dinoActionLabel: 'SCRAP MAGNET'
             },
             HIGHTIDE: {
                 name: 'HIGH TIDE',
                 role: 'Deep-Ocean Rescue Commander',
                 voicePitch: 0.76,
                 vehName: 'OFFSHORE RESCUE VESSEL',
-                dinoName: 'PLESIOSAUR',
+                dinoName: null,
                 colorClass: 'text-blue-400',
                 dotClass: 'bg-blue-600',
                 botActionIcon: 'TIDAL_SURGE',
                 botActionLabel: 'TIDAL SURGE',
                 vehActionIcon: 'HYDRO_TORPEDO',
                 vehActionLabel: 'HYDRO TORPEDO',
-                dinoActionIcon: 'WHIRLPOOL_VORTEX',
-                dinoActionLabel: 'WHIRLPOOL VORTEX'
+                dinoActionIcon: 'TIDAL_SURGE',
+                dinoActionLabel: 'TIDAL SURGE'
             }
         };
 
@@ -9375,10 +10029,160 @@
                     "Wooooohoooo! Even higher than my helicopter ceiling! Best bounce ever!",
                     "Look at me soar! That's anti-gravity!"
                 ]
+            },
+            OPTIMUS: {
+                DEPLOY: [
+                    "Optimus Prime deployed. Autobots, roll to the rescue!",
+                    "Freedom is the right of all sentient beings. Rescue Bots, proceed!"
+                ],
+                TO_VEHICLE: [
+                    "Optimus Prime, transform! Heavy cab truck mode!",
+                    "Cab engine engaged! Leading the convoy!"
+                ],
+                TO_DINO: [
+                    "Optimus Prime, Primal T-Rex mode! ROAR!",
+                    "Primal energon power! Dinobot T-Rex online!"
+                ],
+                TO_BOT: [
+                    "Optimus Prime, robot mode! Stand together, heroes!",
+                    "Back in robot mode! Ready to protect Griffin Rock!"
+                ],
+                RESCUE: [
+                    "Crisis resolved. Excellent teamwork, Autobots!",
+                    "Griffin Rock remains secure under our watchful guard."
+                ],
+                WASH: [
+                    "Optimus Prime: maintenance complete and chassis restored.",
+                    "Clean and operational. Roll out!"
+                ],
+                STUNT: [
+                    "Even a heavy cab can achieve great heights!",
+                    "Autobots know no limits!"
+                ]
+            },
+            BUMBLEBEE: {
+                DEPLOY: [
+                    "Bumblebee here, ready to buzz into action!",
+                    "Hey partner, let's show Griffin Rock what we can do!"
+                ],
+                TO_VEHICLE: [
+                    "Bumblebee, transform! Speedster mode, hitting top gear!",
+                    "Yellow lightning on wheels! Roll to the rescue!"
+                ],
+                TO_DINO: [
+                    "Bumblebee, Raptor Dinobot mode! RAWR!",
+                    "Velociraptor rescan engaged! Watch the talons!"
+                ],
+                TO_BOT: [
+                    "Bumblebee, robot mode! Ready to rescue!",
+                    "Back on two feet! Let's save the day!"
+                ],
+                RESCUE: [
+                    "Woohoo! Another rescue in the books!",
+                    "That's how the Autobots get it done!"
+                ],
+                WASH: [
+                    "Clean as a whistle! Ready to race!",
+                    "Yellow paint job is shining bright!"
+                ],
+                STUNT: [
+                    "Did you see that hangtime?! Awesome!",
+                    "Stunt jump cleared! That was thrilling!"
+                ]
+            },
+            BLURR: {
+                DEPLOY: [
+                    "Blurr is on the track! Fastest bot in the galaxy, let's go-go-go!",
+                    "Need speed?! I'm already there before you even asked!"
+                ],
+                TO_VEHICLE: [
+                    "Blurr, transform! Cyber-speedster hyper-drive!",
+                    "Zero to three hundred, blink and you'll miss me!"
+                ],
+                TO_DINO: [
+                    "Blurr, Hyper-Raptor mode! Blitz pounce!",
+                    "Fastest dinosaur on the planet! Zoooom!"
+                ],
+                TO_BOT: [
+                    "Blurr, robot mode! What's next, what's next, what's next?!",
+                    "Back in bot mode and ready for high-speed action!"
+                ],
+                RESCUE: [
+                    "Emergency resolved at supersonic speed!",
+                    "Fastest rescue in Griffin Rock history!"
+                ],
+                WASH: [
+                    "Quick pit-stop! Wash and wax in two point two seconds flat!",
+                    "Aerodynamic polish complete! Back to top speed!"
+                ],
+                STUNT: [
+                    "Orbital trajectory achieved! Wooooosh!",
+                    "Mach five jump! Try and keep up!"
+                ]
+            },
+            SALVAGE: {
+                DEPLOY: [
+                    "Salvage on duty! One bot's scrap is another bot's treasure!",
+                    "Ready to clear any debris and lend a heavy hand!"
+                ],
+                TO_VEHICLE: [
+                    "Salvage, transform! Recycling truck compactor mode!",
+                    "Heavy hauler rolling out! Keeping the streets clean!"
+                ],
+                TO_DINO: [
+                    "Salvage, Ankylosaurus Dinobot mode! Heavy armor up!",
+                    "Club-tail slam! Rock-solid protection!"
+                ],
+                TO_BOT: [
+                    "Salvage, robot mode! Ready to sort and salvage!",
+                    "Strong hands and a big heart! Let's help!"
+                ],
+                RESCUE: [
+                    "All cleared and recycled safely! Happy to help!",
+                    "Everything is clean, safe, and restored!"
+                ],
+                WASH: [
+                    "A good wash gets all the harbor grime off! Feels great!",
+                    "Cleaned up and ready for heavy hauling!"
+                ],
+                STUNT: [
+                    "Heavy trucks can fly too! Whoopee!",
+                    "Big air for big machinery!"
+                ]
+            },
+            HIGHTIDE: {
+                DEPLOY: [
+                    "High Tide reporting for duty! Ocean command standing by!",
+                    "Attention on deck! Deep-sea rescue specialist ready!"
+                ],
+                TO_VEHICLE: [
+                    "High Tide, transform! Offshore rescue vessel mode!",
+                    "Hydro-thrusters engaged! Cutting through the waves!"
+                ],
+                TO_DINO: [
+                    "High Tide, Plesiosaur Dinobot mode! Tidal surge!",
+                    "Ocean ruler awakened! Navigating the depths!"
+                ],
+                TO_BOT: [
+                    "High Tide, robot mode! Discipline and vigilance!",
+                    "On solid ground, but my heart is with the sea!"
+                ],
+                RESCUE: [
+                    "Mission accomplished with naval precision!",
+                    "The waters and shores are secure once more!"
+                ],
+                WASH: [
+                    "Freshwater rinse complete! Salt spray cleared from hull!",
+                    "Ship-shape and Bristol fashion!"
+                ],
+                STUNT: [
+                    "Launching over the crest! Steady as she goes!",
+                    "Full speed ahead and into the skies!"
+                ]
             }
         };
 
-        const botPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0 };
+        const botPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0 };
 
         function speakBotCatchphrase(botType, eventKey) {
             const botLines = BOT_CATCHPHRASES[botType] && BOT_CATCHPHRASES[botType][eventKey];
@@ -9581,7 +10385,7 @@
 
             const nextTransformLabel = player.mode === 'BOT'
                 ? `TO ${meta.vehName}`
-                : (player.mode === 'VEHICLE' ? `TO ${meta.dinoName}` : 'TO ROBOT');
+                : (player.mode === 'VEHICLE' ? (meta.dinoName ? `TO ${meta.dinoName}` : 'TO ROBOT') : 'TO ROBOT');
             document.getElementById('transform-sub').textContent = nextTransformLabel;
 
             const actionKey = isDino
@@ -9764,6 +10568,7 @@
                 const rig = botRigs[botKey];
                 if (botKey === player.botType) {
                     // Active Bot follows player physics position & heading
+                    rig.root.visible = true;
                     rig.root.position.copy(player.pos);
                     rig.root.rotation.y = player.heading;
                     // Forward pitch tilt for Blades when flying; Terrain pitch & roll slope adaptation for Ground Vehicles
@@ -9780,6 +10585,7 @@
                     applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer);
                 } else if (botKey === buddyBot.botType) {
                     // Buddy Bot follows wingman physics position & heading
+                    rig.root.visible = true;
                     rig.root.position.copy(buddyBot.pos);
                     rig.root.rotation.y = buddyBot.heading;
                     if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
@@ -9794,15 +10600,31 @@
                     }
                     applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer);
                 } else {
-                    // Inactive Bots stay parked in standby at Rescue Bots Headquarters!
+                    // Inactive Bots stay parked in standby at Rescue Bots Headquarters or hidden if secret ally!
                     const slot = HQ_PARKING_SLOTS[botKey];
-                    rig.root.position.set(slot.x, slot.y, slot.z);
-                    rig.root.rotation.y = slot.rotY;
-                    rig.chassis.rotation.x = 0;
-                    rig.chassis.rotation.z = 0;
-                    applyBotRigMorph(rig, slot.morph, 0, 0, 0, 0, now);
+                    if (slot) {
+                        rig.root.visible = true;
+                        rig.root.position.set(slot.x, slot.y, slot.z);
+                        rig.root.rotation.y = slot.rotY;
+                        rig.chassis.rotation.x = 0;
+                        rig.chassis.rotation.z = 0;
+                        applyBotRigMorph(rig, slot.morph, 0, 0, 0, 0, now);
+                    } else {
+                        rig.root.visible = false;
+                        rig.root.position.set(0, -999, 0);
+                    }
                 }
             });
+
+            // Sync World NPC visibility with active player character (hide in world while actively controlled)
+            if (typeof visitingAutobots !== 'undefined') {
+                for (let a = 0; a < visitingAutobots.length; a++) {
+                    const ally = visitingAutobots[a];
+                    if (ally.root) {
+                        ally.root.visible = (player.botType !== ally.id && buddyBot.botType !== ally.id);
+                    }
+                }
+            }
         }
 
         /***********************************************************************
@@ -11653,718 +12475,7 @@
         /***********************************************************************
          * 8A. VISITING AUTOBOT ALLIES (OPTIMUS PRIME, BUMBLEBEE, BLURR, SALVAGE, HIGH TIDE + SERVO)
          ***********************************************************************/
-        // Cel-Shaded Materials for Visiting Autobot Characters
-        const matOptimusRed = new THREE.MeshToonMaterial({ color: 0xdc2626, gradientMap: toonGrad4 });
-        const matOptimusBlue = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad4 });
-        const matOptimusGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
-        const matOptimusFace = new THREE.MeshBasicMaterial({ map: texFaceOptimus });
-
-        const matBeeYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad4 });
-        const matBeeBlack = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
-        const matBeeFace = new THREE.MeshBasicMaterial({ map: texFaceBumblebee });
-        const matBeeGlowCyan = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
-
-        const matBlurrCyan = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad4 });
-        const matBlurrBlue = new THREE.MeshToonMaterial({ color: 0x1e40af, gradientMap: toonGrad4 });
-        const matBlurrLime = new THREE.MeshToonMaterial({ color: 0x84cc16, gradientMap: toonGrad3 });
-        const matBlurrFace = new THREE.MeshBasicMaterial({ map: texFaceBlurr });
-
-        const matSalvageGreen = new THREE.MeshToonMaterial({ color: 0x15803d, gradientMap: toonGrad4 });
-        const matSalvageOrange = new THREE.MeshToonMaterial({ color: 0xea580c, gradientMap: toonGrad4 });
-        const matSalvageSteel = new THREE.MeshToonMaterial({ color: 0x475569, gradientMap: toonGrad3 });
-        const matSalvageYellow = new THREE.MeshToonMaterial({ color: 0xeab308, gradientMap: toonGrad3 });
-        const matSalvageFace = new THREE.MeshBasicMaterial({ map: texFaceSalvage });
-
-        const matHighTideNavy = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad4 });
-        const matHighTideWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
-        const matHighTideGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
-        const matHighTideBlue = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad4 });
-        const matHighTideFace = new THREE.MeshBasicMaterial({ map: texFaceHighTide });
         const matOceanPlatformSteel = new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 });
-
-        function createAllyWheel(radius, width) {
-            const grp = new THREE.Group();
-            const tire = new THREE.Mesh(
-                new THREE.CylinderGeometry(radius, radius, width, 14).rotateZ(Math.PI / 2),
-                matTire
-            );
-            const hub = new THREE.Mesh(
-                new THREE.CylinderGeometry(radius * 0.52, radius * 0.52, width + 0.04, 10).rotateZ(Math.PI / 2),
-                matChrome
-            );
-            grp.add(tire, hub);
-            return grp;
-        }
-
-        // 1. OPTIMUS PRIME (Supreme Commander - Heavy Cab Truck Bot)
-        function buildOptimusPrimeModel() {
-            const root = new THREE.Group();
-            const torso = new THREE.Group();
-            root.add(torso);
-
-            // Red Heroic Torso
-            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.3, 1.8), matOptimusRed);
-            chest.position.y = 3.65;
-            chest.castShadow = true;
-            torso.add(chest);
-
-            // Dual Windshields with Sun Visor
-            const visorCap = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.35, 0.7), matOptimusRed);
-            visorCap.position.set(0, 4.65, 0.75);
-            torso.add(visorCap);
-
-            [-0.7, 0.7].forEach(wx => {
-                const win = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.95, 0.15), matCabGlass);
-                win.position.set(wx, 4.05, 0.92);
-                win.userData.noOutline = true;
-                torso.add(win);
-            });
-
-            // 3 Yellow Roof Marker Lights
-            [-0.6, 0, 0.6].forEach(lx => {
-                const light = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.2), matOptimusGold);
-                light.position.set(lx, 4.86, 0.65);
-                torso.add(light);
-            });
-
-            // Chrome Front Grille & Autobot Shield
-            const grille = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.0, 0.15), matGrille);
-            grille.position.set(0, 2.95, 0.92);
-            grille.userData.noOutline = true;
-            torso.add(grille);
-
-            const crest = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.72, 0.12), matEmblem);
-            crest.position.set(0, 3.75, 0.94);
-            crest.userData.noOutline = true;
-            torso.add(crest);
-
-            // Abdomen / Pelvis Block
-            const pelvis = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.7, 1.6), matOptimusRed);
-            pelvis.position.set(0, 2.2, 0);
-            torso.add(pelvis);
-
-            // Chrome Belt Tanks
-            [-1.15, 1.15].forEach(tx => {
-                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.2, 10).rotateZ(Math.PI / 2), matChrome);
-                tank.position.set(tx, 2.2, 0);
-                torso.add(tank);
-            });
-
-            // Articulated Head (swivels to face player)
-            const head = new THREE.Group();
-            head.position.set(0, 4.95, 0);
-            root.add(head);
-
-            const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.35, 1.35, 1.25), matOptimusBlue);
-            helmet.position.y = 0.55;
-            head.add(helmet);
-
-            // Forehead Fin Crest
-            const headFin = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.75, 0.8), matOptimusBlue);
-            headFin.position.set(0, 1.45, 0.05);
-            head.add(headFin);
-
-            // Side Antennae / Ear Fins
-            [-0.75, 0.75].forEach(ax => {
-                const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.1, 8), matOptimusBlue);
-                antenna.position.set(ax, 0.85, 0);
-                head.add(antenna);
-            });
-
-            // Faceplate Mask with Optimus Face Texture
-            const facePlate = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 1.05), matOptimusFace);
-            facePlate.position.set(0, 0.52, 0.64);
-            facePlate.userData.noOutline = true;
-            head.add(facePlate);
-
-            // Shoulder Smokestacks & Arms
-            [-1.9, 1.9].forEach(side => {
-                const armGroup = new THREE.Group();
-                armGroup.position.set(side, 3.9, 0);
-
-                const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.1, 1.2), matOptimusRed);
-                armGroup.add(shoulder);
-
-                // Chrome Smokestack
-                const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 2.6, 10), matChrome);
-                stack.position.set(side > 0 ? 0.35 : -0.35, 1.2, -0.2);
-                armGroup.add(stack);
-
-                // Blue Bicep & Forearm
-                const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.7), matChrome);
-                bicep.position.set(0, -0.85, 0);
-                const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.25, 0.85), matOptimusBlue);
-                forearm.position.set(0, -1.75, 0.1);
-                armGroup.add(bicep, forearm);
-
-                torso.add(armGroup);
-            });
-
-            // Heavy Blue Legs & Boots
-            [-0.72, 0.72].forEach(side => {
-                const leg = new THREE.Group();
-                leg.position.set(side, 0, 0);
-
-                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.78, 1.25, 0.78), matChrome);
-                thigh.position.set(0, 1.45, 0);
-
-                const shin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.55, 1.15), matOptimusBlue);
-                shin.position.set(0, 0.65, 0.05);
-
-                const kneeCap = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.42, 0.35), matChrome);
-                kneeCap.position.set(0, 1.2, 0.6);
-
-                const foot = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.6, 1.7), matOptimusBlue);
-                foot.position.set(0, 0.25, 0.3);
-
-                // Dual Calf Wheels
-                const w1 = createAllyWheel(0.55, 0.38);
-                w1.position.set(side > 0 ? 0.6 : -0.6, 0.8, -0.35);
-                const w2 = createAllyWheel(0.55, 0.38);
-                w2.position.set(side > 0 ? 0.6 : -0.6, 0.8, 0.35);
-
-                leg.add(thigh, shin, kneeCap, foot, w1, w2);
-                root.add(leg);
-            });
-
-            return { root, torso, head };
-        }
-
-        // 2. BUMBLEBEE (Autobot Scout with BOT MODE + VELOCIRAPTOR DINOBOT MODE)
-        function buildBumblebeeModel() {
-            const root = new THREE.Group();
-
-            // ==================== A. BOT MODE RIG ====================
-            const botRig = new THREE.Group();
-            root.add(botRig);
-
-            const botTorso = new THREE.Group();
-            botRig.add(botTorso);
-
-            // Yellow Sports Car Hood Chest
-            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.9, 1.6), matBeeYellow);
-            chest.position.y = 2.85;
-            chest.castShadow = true;
-            botTorso.add(chest);
-
-            // Black Center Racing Stripes
-            const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.92, 1.64), matBeeBlack);
-            stripe.position.y = 2.85;
-            botTorso.add(stripe);
-
-            // Dual Headlights
-            [-0.78, 0.78].forEach(hx => {
-                const hl = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.28, 0.15), matBeeGlowCyan);
-                hl.position.set(hx, 3.1, 0.82);
-                hl.userData.noOutline = true;
-                botTorso.add(hl);
-            });
-
-            // Flared Sports Car Door Wings on Upper Back
-            [-1.25, 1.25].forEach(dx => {
-                const wing = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.6, 0.25), matBeeYellow);
-                wing.position.set(dx, 3.1, -0.85);
-                wing.rotation.y = dx > 0 ? -0.35 : 0.35;
-                wing.rotation.z = dx > 0 ? -0.22 : 0.22;
-                botTorso.add(wing);
-            });
-
-            // Bot Head (Swivels)
-            const botHead = new THREE.Group();
-            botHead.position.set(0, 3.95, 0);
-            botRig.add(botHead);
-
-            const bHelmet = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.1), matBeeYellow);
-            bHelmet.position.y = 0.45;
-            botHead.add(bHelmet);
-
-            const bStripe = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.22, 1.12), matBeeBlack);
-            bStripe.position.y = 0.45;
-            botHead.add(bStripe);
-
-            // Curved Horn Antenna Crests
-            [-0.65, 0.65].forEach(side => {
-                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.65, 6), matBeeYellow);
-                horn.position.set(side, 1.15, -0.05);
-                horn.rotation.z = side > 0 ? -0.35 : 0.35;
-                botHead.add(horn);
-            });
-
-            const bFace = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.95), matBeeFace);
-            bFace.position.set(0, 0.42, 0.56);
-            bFace.userData.noOutline = true;
-            botHead.add(bFace);
-
-            // Bot Arms
-            [-1.5, 1.5].forEach(side => {
-                const arm = new THREE.Group();
-                arm.position.set(side, 3.0, 0);
-                const sWheel = createAllyWheel(0.42, 0.32);
-                sWheel.position.set(side > 0 ? 0.25 : -0.25, 0, 0);
-                const foreArm = new THREE.Mesh(new THREE.BoxGeometry(0.68, 1.15, 0.68), matBeeYellow);
-                foreArm.position.set(0, -0.9, 0.1);
-                arm.add(sWheel, foreArm);
-                botTorso.add(arm);
-            });
-
-            // Bot Legs
-            [-0.6, 0.6].forEach(side => {
-                const leg = new THREE.Group();
-                leg.position.set(side, 0, 0);
-                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.05, 0.62), matChrome);
-                thigh.position.set(0, 1.25, 0);
-                const shin = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.35, 0.95), matBeeYellow);
-                shin.position.set(0, 0.55, 0.05);
-                const knee = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.35, 0.25), matBeeBlack);
-                knee.position.set(0, 1.0, 0.52);
-                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.45, 1.35), matBeeYellow);
-                foot.position.set(0, 0.22, 0.25);
-                leg.add(thigh, shin, knee, foot);
-                botRig.add(leg);
-            });
-
-            // ==================== B. VELOCIRAPTOR DINOBOT MODE RIG ====================
-            // (Accurate to cartoon screenshot: articulated raptor skull, sharp teeth, sickle talons, tail)
-            const raptorRig = new THREE.Group();
-            raptorRig.visible = false;
-            root.add(raptorRig);
-
-            const raptorTorso = new THREE.Group();
-            raptorTorso.position.set(0, 1.8, 0);
-            raptorRig.add(raptorTorso);
-
-            // Muscular Raptor Body
-            const rBody = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.7, 2.8), matBeeYellow);
-            rBody.castShadow = true;
-            raptorTorso.add(rBody);
-
-            const rSpine = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 2.6), matBeeBlack);
-            rSpine.position.set(0, 0.95, 0);
-            raptorTorso.add(rSpine);
-
-            // Curved Raptor Neck & Articulated Head
-            const raptorNeck = new THREE.Group();
-            raptorNeck.position.set(0, 0.6, 1.3);
-            raptorTorso.add(raptorNeck);
-
-            const nSeg = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.4, 1.2), matBeeYellow);
-            nSeg.position.set(0, 0.5, 0.3);
-            nSeg.rotation.x = 0.35;
-            raptorNeck.add(nSeg);
-
-            const raptorHead = new THREE.Group();
-            raptorHead.position.set(0, 1.2, 0.8);
-            raptorNeck.add(raptorHead);
-
-            // Upper Raptor Skull
-            const skull = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 1.9), matBeeYellow);
-            skull.position.set(0, 0.2, 0.6);
-            raptorHead.add(skull);
-
-            // Raptor Snout Taper
-            const snout = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.85, 1.1), matBeeYellow);
-            snout.position.set(0, 0.1, 1.8);
-            raptorHead.add(snout);
-
-            // Glowing Cyan Raptor Eyes
-            [-0.72, 0.72].forEach(side => {
-                const eyeSocket = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 10).rotateZ(Math.PI / 2), matBeeBlack);
-                eyeSocket.position.set(side, 0.35, 0.6);
-                const eyePupil = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.16, 10).rotateZ(Math.PI / 2), matBeeGlowCyan);
-                eyePupil.position.set(side * 1.02, 0.35, 0.6);
-                eyePupil.userData.noOutline = true;
-                raptorHead.add(eyeSocket, eyePupil);
-            });
-
-            // Raptor Ear Horn Crests
-            [-0.65, 0.65].forEach(side => {
-                const hornCrest = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.45, 0.9), matBeeYellow);
-                hornCrest.position.set(side, 0.75, -0.15);
-                hornCrest.rotation.x = -0.35;
-                raptorHead.add(hornCrest);
-            });
-
-            // Articulated Lower Jaw with White Teeth
-            const raptorJaw = new THREE.Group();
-            raptorJaw.position.set(0, -0.35, 0.4);
-            raptorHead.add(raptorJaw);
-
-            const jawBone = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.45, 2.1), matChrome);
-            jawBone.position.set(0, -0.1, 0.95);
-            raptorJaw.add(jawBone);
-
-            // Sharp White Predatory Teeth Rows
-            [-0.52, 0.52].forEach(side => {
-                for (let t = 0; t < 4; t++) {
-                    const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.24, 4), matChrome);
-                    tooth.position.set(side, 0.18, 0.3 + t * 0.45);
-                    tooth.rotation.x = Math.PI;
-                    raptorJaw.add(tooth);
-                }
-            });
-
-            // Small Articulated Raptor Arms
-            const raptorLeftArm = new THREE.Group();
-            raptorLeftArm.position.set(-1.0, -0.2, 0.9);
-            const rArmMeshL = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.8, 0.32), matBeeYellow);
-            rArmMeshL.position.y = -0.35;
-            const rClawL = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 4), matChrome);
-            rClawL.position.set(0, -0.75, 0.15);
-            rClawL.rotation.x = 0.7;
-            raptorLeftArm.add(rArmMeshL, rClawL);
-
-            const raptorRightArm = new THREE.Group();
-            raptorRightArm.position.set(1.0, -0.2, 0.9);
-            const rArmMeshR = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.8, 0.32), matBeeYellow);
-            rArmMeshR.position.y = -0.35;
-            const rClawR = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 4), matChrome);
-            rClawR.position.set(0, -0.75, 0.15);
-            rClawR.rotation.x = 0.7;
-            raptorRightArm.add(rArmMeshR, rClawR);
-
-            raptorTorso.add(raptorLeftArm, raptorRightArm);
-
-            // Digitigrade Raptor Legs with Curved Sickle Claws!
-            [-0.95, 0.95].forEach(side => {
-                const leg = new THREE.Group();
-                leg.position.set(side, 0, -0.2);
-
-                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.45, 1.25), matBeeYellow);
-                thigh.position.set(0, -0.1, 0);
-                thigh.rotation.x = 0.35;
-
-                const knee = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.45, 0.4), matBeeBlack);
-                knee.position.set(0, -0.75, 0.5);
-
-                const hock = new THREE.Mesh(new THREE.BoxGeometry(0.65, 1.35, 0.65), matChrome);
-                hock.position.set(0, -1.15, -0.15);
-                hock.rotation.x = -0.45;
-
-                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.4, 1.3), matChrome);
-                foot.position.set(0, -1.75, 0.35);
-
-                const sickleTalon = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.65, 4), matChrome);
-                sickleTalon.position.set(side > 0 ? -0.32 : 0.32, -1.5, 0.8);
-                sickleTalon.rotation.x = 1.1;
-
-                leg.add(thigh, knee, hock, foot, sickleTalon);
-                raptorTorso.add(leg);
-            });
-
-            // Articulated Segmented Raptor Tail
-            const raptorTail = new THREE.Group();
-            raptorTail.position.set(0, 0.3, -1.4);
-            raptorTorso.add(raptorTail);
-
-            let prevSeg = raptorTail;
-            for (let s = 0; s < 4; s++) {
-                const segGroup = new THREE.Group();
-                segGroup.position.set(0, 0, -0.85);
-                const sz = 1.1 - s * 0.22;
-                const mesh = new THREE.Mesh(new THREE.BoxGeometry(sz, sz * 0.85, 0.95), matBeeYellow);
-                mesh.position.set(0, 0, -0.42);
-                const spinePlate = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.8), matBeeBlack);
-                spinePlate.position.set(0, sz * 0.5, -0.42);
-                segGroup.add(mesh, spinePlate);
-                prevSeg.add(segGroup);
-                prevSeg = segGroup;
-            }
-
-            return {
-                root,
-                botRig,
-                botTorso,
-                botHead,
-                raptorRig,
-                raptorTorso,
-                raptorHead,
-                raptorJaw,
-                raptorTail,
-                raptorLeftArm,
-                raptorRightArm
-            };
-        }
-
-        // 3. BLURR (Hyper-Speed Race Car Bot)
-        function buildBlurrModel() {
-            const root = new THREE.Group();
-            const torso = new THREE.Group();
-            root.add(torso);
-
-            // Aerodynamic Cyan & Royal Blue Wedge Chest
-            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.85, 1.5), matBlurrCyan);
-            chest.position.y = 2.95;
-            chest.castShadow = true;
-            torso.add(chest);
-
-            const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.88, 1.54), matBlurrBlue);
-            stripe.position.y = 2.95;
-            torso.add(stripe);
-
-            const chevron = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.15), matBlurrLime);
-            chevron.position.set(0, 3.4, 0.8);
-            chevron.userData.noOutline = true;
-            torso.add(chevron);
-
-            // Dual Raised Rear Racing Wing Spoilers
-            [-1.15, 1.15].forEach(sx => {
-                const fin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.45, 0.95), matBlurrCyan);
-                fin.position.set(sx, 3.7, -0.8);
-                fin.rotation.x = -0.25;
-                torso.add(fin);
-            });
-
-            // Head with Iconic Swept-Back Center Fin
-            const head = new THREE.Group();
-            head.position.set(0, 4.05, 0);
-            root.add(head);
-
-            const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.15, 1.15), matBlurrCyan);
-            helmet.position.y = 0.48;
-            head.add(helmet);
-
-            const speedFin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.25, 1.6), matBlurrBlue);
-            speedFin.position.set(0, 1.15, -0.3);
-            speedFin.rotation.x = -0.45;
-            head.add(speedFin);
-
-            const face = new THREE.Mesh(new THREE.PlaneGeometry(0.92, 0.92), matBlurrFace);
-            face.position.set(0, 0.46, 0.59);
-            face.userData.noOutline = true;
-            head.add(face);
-
-            // Arms with Aerodynamic Shoulders
-            [-1.4, 1.4].forEach(side => {
-                const arm = new THREE.Group();
-                arm.position.set(side, 3.2, 0);
-
-                const pod = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.85, 1.1), matBlurrCyan);
-                const armTube = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.2, 0.55), matBlurrBlue);
-                armTube.position.set(0, -0.85, 0);
-                arm.add(pod, armTube);
-                torso.add(arm);
-            });
-
-            // Streamlined Speedster Legs with Low-Profile Racing Wheels
-            [-0.58, 0.58].forEach(side => {
-                const leg = new THREE.Group();
-                leg.position.set(side, 0, 0);
-
-                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.15, 0.62), matChrome);
-                thigh.position.set(0, 1.35, 0);
-
-                const shin = new THREE.Mesh(new THREE.BoxGeometry(0.82, 1.45, 0.92), matBlurrBlue);
-                shin.position.set(0, 0.65, 0.05);
-
-                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.42, 1.4), matBlurrCyan);
-                foot.position.set(0, 0.22, 0.35);
-
-                const raceWheel = createAllyWheel(0.48, 0.26);
-                raceWheel.position.set(side > 0 ? 0.52 : -0.52, 0.75, -0.2);
-
-                leg.add(thigh, shin, foot, raceWheel);
-                root.add(leg);
-            });
-
-            return { root, torso, head };
-        }
-
-        // 4. SALVAGE (Heavy Recycling & Reclamation Truck Bot)
-        function buildSalvageModel() {
-            const root = new THREE.Group();
-            const torso = new THREE.Group();
-            root.add(torso);
-
-            // Broad Forest Green & Safety Orange Recycling Cab Chest
-            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.7, 2.2, 1.9), matSalvageGreen);
-            chest.position.y = 3.25;
-            chest.castShadow = true;
-            torso.add(chest);
-
-            const orangeBumper = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.75, 0.5), matSalvageOrange);
-            orangeBumper.position.set(0, 2.45, 0.95);
-            torso.add(orangeBumper);
-
-            // Dual Amber Cab Warning Beacons
-            [-0.85, 0.85].forEach(bx => {
-                const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.35, 8), matSalvageYellow);
-                beacon.position.set(bx, 4.45, 0.4);
-                torso.add(beacon);
-            });
-
-            // Heavy Recycling Hopper Backpack
-            const hopper = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.2, 1.4), matSalvageOrange);
-            hopper.position.set(0, 3.4, -1.2);
-            hopper.castShadow = true;
-            torso.add(hopper);
-
-            // Head with Massive Silver Underbite Jaw
-            const head = new THREE.Group();
-            head.position.set(0, 4.45, 0);
-            root.add(head);
-
-            const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.25, 1.25), matSalvageGreen);
-            helmet.position.y = 0.52;
-            head.add(helmet);
-
-            const visorCap = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.35, 0.5), matSalvageOrange);
-            visorCap.position.set(0, 1.05, 0.45);
-            head.add(visorCap);
-
-            // Massive Protruding Underbite Scoop Jaw
-            const underbite = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.55, 0.65), matSalvageSteel);
-            underbite.position.set(0, 0.22, 0.65);
-            head.add(underbite);
-
-            const face = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), matSalvageFace);
-            face.position.set(0, 0.52, 0.64);
-            face.userData.noOutline = true;
-            head.add(face);
-
-            // Loader Arms
-            [-1.75, 1.75].forEach(side => {
-                const arm = new THREE.Group();
-                arm.position.set(side, 3.4, 0);
-
-                const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.05, 1.15), matSalvageGreen);
-                const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.8, 0.68), matChrome);
-                bicep.position.set(0, -0.75, 0);
-                const loader = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.35, 0.9), matSalvageOrange);
-                loader.position.set(0, -1.65, 0.1);
-
-                arm.add(shoulder, bicep, loader);
-                torso.add(arm);
-            });
-
-            // Heavy Industrial Legs & Dual Truck Tires
-            [-0.72, 0.72].forEach(side => {
-                const leg = new THREE.Group();
-                leg.position.set(side, 0, 0);
-
-                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.25, 0.8), matSalvageSteel);
-                thigh.position.set(0, 1.35, 0);
-
-                const shin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.55, 1.15), matSalvageGreen);
-                shin.position.set(0, 0.65, 0.05);
-
-                const foot = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.55, 1.65), matSalvageSteel);
-                foot.position.set(0, 0.25, 0.3);
-
-                const w1 = createAllyWheel(0.55, 0.38);
-                w1.position.set(side > 0 ? 0.62 : -0.62, 0.8, -0.25);
-
-                leg.add(thigh, shin, foot, w1);
-                root.add(leg);
-            });
-
-            return { root, torso, head };
-        }
-
-        // 5. HIGH TIDE (Oceanic Rescue Commander) & COMPANION ROBOT PUP SERVO
-        function buildHighTideModel() {
-            const root = new THREE.Group();
-            const torso = new THREE.Group();
-            root.add(torso);
-
-            // Navy & Nautical White Bridge Chest
-            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.15, 1.8), matHighTideNavy);
-            chest.position.y = 3.45;
-            chest.castShadow = true;
-            torso.add(chest);
-
-            const whiteBib = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.5, 0.15), matHighTideWhite);
-            whiteBib.position.set(0, 3.45, 0.92);
-            torso.add(whiteBib);
-
-            // Brass-Rimmed Circular Bridge Portholes
-            [-0.45, 0.45].forEach(px => {
-                const porthole = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.12, 10).rotateX(Math.PI / 2), matHighTideGold);
-                porthole.position.set(px, 3.65, 1.0);
-                const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.14, 10).rotateX(Math.PI / 2), matCabGlass);
-                glass.position.set(px, 3.65, 1.0);
-                glass.userData.noOutline = true;
-                torso.add(porthole, glass);
-            });
-
-            // Shoulder Hydro-Ballast Pods with Dual Gold Rescue Propellers on the Back
-            const propellers = [];
-            [-1.75, 1.75].forEach(side => {
-                const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 2.4, 12).rotateX(Math.PI / 2), matHighTideWhite);
-                pod.position.set(side, 3.75, -0.4);
-                torso.add(pod);
-
-                const propGroup = new THREE.Group();
-                propGroup.position.set(side, 3.75, -1.65);
-                for (let b = 0; b < 3; b++) {
-                    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.08), matHighTideGold);
-                    blade.rotation.z = (b * Math.PI * 2) / 3;
-                    blade.position.y = 0.32;
-                    propGroup.add(blade);
-                }
-                torso.add(propGroup);
-                propellers.push(propGroup);
-            });
-
-            // Naval Officer Peaked Cap Helmet (Deep Navy + White Crown + Anchor Badge)
-            const head = new THREE.Group();
-            head.position.set(0, 4.65, 0);
-            root.add(head);
-
-            const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.25, 1.25), matHighTideNavy);
-            helmet.position.y = 0.52;
-            head.add(helmet);
-
-            const capCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.75, 0.45, 12), matHighTideWhite);
-            capCrown.position.set(0, 1.15, 0.1);
-            head.add(capCrown);
-
-            const capBrim = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.15, 0.55), matHighTideGold);
-            capBrim.position.set(0, 0.95, 0.65);
-            head.add(capBrim);
-
-            const face = new THREE.Mesh(new THREE.PlaneGeometry(0.96, 0.96), matHighTideFace);
-            face.position.set(0, 0.48, 0.64);
-            face.userData.noOutline = true;
-            head.add(face);
-
-            // Officer Sleeves & Deep-Dive Rescue Gauntlets
-            [-1.75, 1.75].forEach(side => {
-                const arm = new THREE.Group();
-                arm.position.set(side, 3.35, 0);
-
-                const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.95, 1.05), matHighTideWhite);
-                const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.25, 1.08), matHighTideGold);
-                cuff.position.y = -0.55;
-                const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.35, 0.85), matHighTideNavy);
-                forearm.position.set(0, -1.35, 0.05);
-
-                arm.add(shoulder, cuff, forearm);
-                torso.add(arm);
-            });
-
-            // Nautical Boots with Hydro-Stabilizer Fins
-            [-0.68, 0.68].forEach(side => {
-                const leg = new THREE.Group();
-                leg.position.set(side, 0, 0);
-
-                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.25, 0.72), matHighTideWhite);
-                thigh.position.set(0, 1.45, 0);
-
-                const shin = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.55, 1.05), matHighTideNavy);
-                shin.position.set(0, 0.65, 0.05);
-
-                const boot = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.52, 1.65), matHighTideNavy);
-                boot.position.set(0, 0.25, 0.3);
-
-                const fin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.95, 0.65), matHighTideWhite);
-                fin.position.set(side > 0 ? 0.58 : -0.58, 0.65, -0.35);
-
-                leg.add(thigh, shin, boot, fin);
-                root.add(leg);
-            });
-
-            return { root, torso, head, propellers };
-        }
 
         // SERVO (High Tide's Faithful Cyber-Dog Companion)
         function buildServoPupModel() {
@@ -12450,9 +12561,9 @@
                 role: 'Autobot Supreme Commander',
                 voicePitch: 0.72,
                 badgeColor: '#dc2626',
-                x: 758,
-                y: 68.0,
-                z: -775,
+                x: 762,
+                y: 68.8,
+                z: -780,
                 rotY: -2.35,
                 dialogues: [
                     "Greetings, Rescue Bots. Griffin Rock is safe in your capable hands. Freedom is the right of all sentient beings.",
@@ -12481,7 +12592,7 @@
                 name: 'BLURR',
                 role: 'Hyper-Speed Rescue Specialist',
                 voicePitch: 1.28,
-                badgeColor: '#06b6d4',
+                badgeColor: '#8b5cf6',
                 x: -1180,
                 y: 5.2,
                 z: 84,
@@ -12498,10 +12609,10 @@
                 role: 'Reclamation & Recycling Hero',
                 voicePitch: 0.82,
                 badgeColor: '#15803d',
-                x: -95,
+                x: -54,
                 y: 3.0,
-                z: 1145,
-                rotY: 0.25,
+                z: 1140,
+                rotY: 0.35,
                 dialogues: [
                     "One bot's scrap is another bot's treasure! I'm helping keep Griffin Rock's harbors and waterways spotless.",
                     "Always remember: reuse, recycle, and rescue! Everything can be repaired with a little care and a good wrench.",
@@ -12529,8 +12640,8 @@
         const visitingAutobots = [];
 
         function toggleBumblebeeMorph(toRaptor = null) {
-            const bee = visitingAutobots.find(a => a.id === 'BUMBLEBEE');
-            if (!bee) return;
+            const bee = visitingAutobots.find(a => a.id === BUMBLEBEE);
+            if (!bee || !bee.charRig) return;
             const nextState = (toRaptor !== null) ? toRaptor : !bee.isRaptor;
             if (bee.isRaptor === nextState) return;
 
@@ -12542,8 +12653,7 @@
             spawnBurstParticles(bee.x, bee.y + 2.8, bee.z, 0xfacc15, 28, 1.8);
             spawnSparkleGlints(bee.x, bee.y + 2.4, bee.z, 20);
 
-            if (bee.botRig) bee.botRig.visible = !bee.isRaptor;
-            if (bee.raptorRig) bee.raptorRig.visible = bee.isRaptor;
+            applyBotRigMorph(bee.charRig, 0, bee.isRaptor ? 1.0 : 0, 0, 0, 0, 0);
 
             if (bee.isRaptor) {
                 showToast("🦖 DINOBOT RAPTOR MODE!", "Bumblebee shifted to Velociraptor Form!");
@@ -12589,47 +12699,26 @@
                 grp.position.set(cfg.x, cfg.y, cfg.z);
                 grp.rotation.y = cfg.rotY;
 
-                let charModel = null;
+                const charRig = buildRescueBotModel(cfg.id);
+                applyBotRigMorph(charRig, 0, 0, 0, 0, 0, 0);
+                grp.add(charRig.root);
+
                 let servoModel = null;
                 let holoGlobe = null;
 
                 if (cfg.id === 'OPTIMUS') {
-                    charModel = buildOptimusPrimeModel();
-                    applyCartoonInkOutlines(charModel.root, 1.045, true);
-                    grp.add(charModel.root);
-
-                    // Cybertronian Summit Telemetry Plinth with Spinning Holographic Sphere
-                    const plinth = new THREE.Mesh(
-                        new THREE.CylinderGeometry(4.2, 4.8, 1.2, 8),
-                        new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 })
-                    );
-                    plinth.position.y = -0.55;
-                    const runeRing = new THREE.Mesh(
-                        new THREE.TorusGeometry(3.6, 0.12, 8, 24),
-                        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
-                    );
-                    runeRing.rotation.x = Math.PI / 2;
-                    runeRing.position.y = 0.08;
-                    runeRing.userData.noOutline = true;
-
-                    // Holographic Earth / Griffin Rock Projector
+                    // Holographic Earth / Griffin Rock Projector directly on helipad surface
                     const holoProjector = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 0.4, 12), matChrome);
-                    holoProjector.position.set(0, 0.22, 2.8);
+                    holoProjector.position.set(0, 0.2, 2.8);
                     holoGlobe = new THREE.Mesh(
                         new THREE.SphereGeometry(0.75, 12, 12),
                         new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.65 })
                     );
                     holoGlobe.position.set(0, 1.45, 2.8);
                     holoGlobe.userData.noOutline = true;
-                    plinth.add(runeRing, holoProjector, holoGlobe);
-                    grp.add(plinth);
+                    grp.add(holoProjector, holoGlobe);
 
                 } else if (cfg.id === 'BUMBLEBEE') {
-                    charModel = buildBumblebeeModel();
-                    applyCartoonInkOutlines(charModel.botRig, 1.05, true);
-                    applyCartoonInkOutlines(charModel.raptorRig, 1.05, true);
-                    grp.add(charModel.root);
-
                     // Wayward Island Ancient Cybertronian Ruins Dais
                     const dais = new THREE.Mesh(
                         new THREE.CylinderGeometry(4.0, 4.5, 0.9, 10),
@@ -12650,10 +12739,6 @@
                     grp.add(dais);
 
                 } else if (cfg.id === 'BLURR') {
-                    charModel = buildBlurrModel();
-                    applyCartoonInkOutlines(charModel.root, 1.05, true);
-                    grp.add(charModel.root);
-
                     // Testing Yard Speed Strip Staging Pad & Telemetry Radar Tower
                     const speedPad = new THREE.Mesh(
                         new THREE.BoxGeometry(6.5, 0.35, 9.5),
@@ -12674,40 +12759,9 @@
                     grp.add(speedPad);
 
                 } else if (cfg.id === 'SALVAGE') {
-                    charModel = buildSalvageModel();
-                    applyCartoonInkOutlines(charModel.root, 1.045, true);
-                    grp.add(charModel.root);
-
-                    // Harbor Reclamation Berth Props: Stacked Containers & Scrap Hoppers
-                    const berthProps = new THREE.Group();
-                    const container1 = new THREE.Mesh(
-                        new THREE.BoxGeometry(3.6, 2.8, 7.5),
-                        new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad3 })
-                    );
-                    container1.position.set(4.2, 1.4, -0.5);
-                    container1.castShadow = true;
-
-                    const container2 = new THREE.Mesh(
-                        new THREE.BoxGeometry(3.4, 2.6, 6.8),
-                        new THREE.MeshToonMaterial({ color: 0x15803d, gradientMap: toonGrad3 })
-                    );
-                    container2.position.set(-4.5, 1.3, 1.2);
-                    container2.castShadow = true;
-
-                    const scrapBin = new THREE.Mesh(
-                        new THREE.BoxGeometry(2.4, 1.6, 2.4),
-                        new THREE.MeshToonMaterial({ color: 0x78716c, gradientMap: toonGrad3 })
-                    );
-                    scrapBin.position.set(3.8, 0.8, 4.2);
-
-                    berthProps.add(container1, container2, scrapBin);
-                    grp.add(berthProps);
+                    // Stands in open harbor storage yard
 
                 } else if (cfg.id === 'HIGHTIDE') {
-                    charModel = buildHighTideModel();
-                    applyCartoonInkOutlines(charModel.root, 1.045, true);
-                    grp.add(charModel.root);
-
                     // Faithful Companion Pup Servo
                     servoModel = buildServoPupModel();
                     applyCartoonInkOutlines(servoModel.root, 1.06, true);
@@ -12772,19 +12826,8 @@
                     rotY: cfg.rotY,
                     dialogues: cfg.dialogues,
                     root: grp,
-                    torso: charModel ? (charModel.torso || charModel.botTorso) : null,
-                    head: charModel ? (charModel.head || charModel.botHead) : null,
-                    baseTorsoY: charModel ? ((charModel.torso || charModel.botTorso).position.y) : 0,
-                    phase: Math.random() * Math.PI * 2,
-                    botRig: charModel ? charModel.botRig : null,
-                    raptorRig: charModel ? charModel.raptorRig : null,
-                    raptorHead: charModel ? charModel.raptorHead : null,
-                    raptorJaw: charModel ? charModel.raptorJaw : null,
-                    raptorTail: charModel ? charModel.raptorTail : null,
-                    raptorLeftArm: charModel ? charModel.raptorLeftArm : null,
-                    raptorRightArm: charModel ? charModel.raptorRightArm : null,
+                    charRig,
                     isRaptor: false,
-                    propellers: charModel ? charModel.propellers : null,
                     servo: servoModel,
                     holoGlobe,
                     lastSpeechTime: 0
@@ -12798,19 +12841,21 @@
 
             for (let i = 0; i < visitingAutobots.length; i++) {
                 const ally = visitingAutobots[i];
+                if (!ally.root.visible) continue;
 
-                // 1. Idle Breathing Animation
-                const breath = Math.sin(nowSec * 2.5 + ally.phase) * 0.04;
-                if (ally.torso) {
-                    ally.torso.position.y = ally.baseTorsoY + breath;
+                // 1. Idle Breathing Animation / Morph Update
+                if (ally.id === 'BUMBLEBEE' && ally.isRaptor) {
+                    applyBotRigMorph(ally.charRig, 0, 1.0, 0, 0, 0, now);
+                } else if (ally.charRig && ally.charRig.torso) {
+                    const breath = Math.sin(nowSec * 2.5 + (i * 1.3)) * 0.04;
+                    ally.charRig.torso.position.y = 3.65 + breath;
                 }
 
                 // 2. Head Tracking towards Player (< 35m)
                 const dx = player.pos.x - ally.x;
                 const dz = player.pos.z - ally.z;
                 const dist = Math.hypot(dx, dz);
-
-                const activeHead = ally.isRaptor ? ally.raptorHead : ally.head;
+                const activeHead = ally.charRig ? ally.charRig.head : null;
                 if (activeHead && dist < 35.0) {
                     const targetAngle = Math.atan2(dx, dz) - ally.rotY;
                     const clampedAngle = THREE.MathUtils.clamp(targetAngle, -1.2, 1.2);
@@ -12825,23 +12870,9 @@
                         ally.holoGlobe.rotation.y += dt * 0.75;
                         ally.holoGlobe.rotation.x = Math.sin(nowSec * 1.5) * 0.15;
                     }
-                } else if (ally.id === 'BUMBLEBEE') {
-                    if (ally.isRaptor) {
-                        if (ally.raptorTail) {
-                            ally.raptorTail.rotation.y = Math.sin(nowSec * 4.5) * 0.28;
-                            ally.raptorTail.rotation.z = Math.sin(nowSec * 3.0) * 0.12;
-                        }
-                        if (ally.raptorJaw) {
-                            ally.raptorJaw.rotation.x = Math.max(0, Math.sin(nowSec * 2.2)) * 0.22;
-                        }
-                        if (ally.raptorLeftArm && ally.raptorRightArm) {
-                            ally.raptorLeftArm.rotation.x = -0.3 + Math.sin(nowSec * 4.5) * 0.16;
-                            ally.raptorRightArm.rotation.x = -0.3 - Math.sin(nowSec * 4.5) * 0.16;
-                        }
-                    }
                 } else if (ally.id === 'HIGHTIDE') {
-                    if (ally.propellers) {
-                        ally.propellers.forEach(p => {
+                    if (ally.charRig && ally.charRig.propellers) {
+                        ally.charRig.propellers.forEach(p => {
                             p.rotation.z += dt * 3.5;
                         });
                     }
@@ -14044,10 +14075,15 @@
 
         // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot)
         function triggerTransform() {
+            const hasDino = BOT_METADATA[player.botType] && BOT_METADATA[player.botType].dinoName;
             if (player.mode === 'BOT') {
                 setPlayerMode('VEHICLE');
             } else if (player.mode === 'VEHICLE') {
-                setPlayerMode('DINO');
+                if (hasDino) {
+                    setPlayerMode('DINO');
+                } else {
+                    setPlayerMode('BOT');
+                }
             } else {
                 setPlayerMode('BOT');
             }
@@ -14328,13 +14364,19 @@
             showToast("EMERGENCY DISPATCH!", "8 New Island Emergencies Active!");
         });
 
-        // Keyboard Shortcuts (1-4 Switch Bot, WASD Move, Space Cycle Transform, E/Shift Special, Q/C Ascend/Descend)
+        // Keyboard Shortcuts (1-4 Switch Bot, 6-0 Secret Ally Switch, WASD Move, Space Cycle Transform, E/Shift Special, Q/C Ascend/Descend)
         window.addEventListener('keydown', e => {
             input.keys[e.code] = true;
-            if (e.code === 'Digit1') switchRescueBot('BOULDER');
-            if (e.code === 'Digit2') switchRescueBot('HEATWAVE');
-            if (e.code === 'Digit3') switchRescueBot('CHASE');
-            if (e.code === 'Digit4') switchRescueBot('BLADES');
+            if (e.code === 'Digit1' || e.code === 'Numpad1') switchRescueBot('BOULDER');
+            if (e.code === 'Digit2' || e.code === 'Numpad2') switchRescueBot('HEATWAVE');
+            if (e.code === 'Digit3' || e.code === 'Numpad3') switchRescueBot('CHASE');
+            if (e.code === 'Digit4' || e.code === 'Numpad4') switchRescueBot('BLADES');
+            // Secret cheat codes: 6, 7, 8, 9, 0 deploy visiting Autobot allies!
+            if (e.code === 'Digit6' || e.code === 'Numpad6') switchRescueBot('OPTIMUS');
+            if (e.code === 'Digit7' || e.code === 'Numpad7') switchRescueBot('BUMBLEBEE');
+            if (e.code === 'Digit8' || e.code === 'Numpad8') switchRescueBot('BLURR');
+            if (e.code === 'Digit9' || e.code === 'Numpad9') switchRescueBot('SALVAGE');
+            if (e.code === 'Digit0' || e.code === 'Numpad0') switchRescueBot('HIGHTIDE');
             if (e.code === 'Space' && !e.repeat) {
                 e.preventDefault();
                 triggerTransform();
@@ -14581,8 +14623,8 @@
             mCtx.stroke();
 
             // Draw Sunny Sands Boardwalk Ferris Wheel (Red/Yellow Icon)
-            const bwx = cx + (-750) * mapScale;
-            const bwz = cy + 750 * mapScale;
+            const bwx = cx + bwX * mapScale;
+            const bwz = cy + bwZ * mapScale;
             mCtx.fillStyle = '#ef4444';
             mCtx.beginPath();
             mCtx.arc(bwx, bwz, 5.0, 0, Math.PI * 2);
