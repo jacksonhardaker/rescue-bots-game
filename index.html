@@ -81,16 +81,30 @@
             color: #ffffff !important;
         }
         .bot-card {
-            transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .bot-card.active-bot {
-            transform: translateX(4px) scale(1.04);
-            box-shadow: 0 0 18px rgba(250, 204, 21, 0.55);
+            transform: translateX(3px) scale(1.02);
+            box-shadow: 0 0 14px rgba(250, 204, 21, 0.6);
             border-color: #facc15 !important;
         }
         .bot-card.buddy-bot {
-            box-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
             border-color: #38bdf8 !important;
+        }
+        .custom-bot-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-bot-scroll::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.35);
+            border-radius: 9999px;
+        }
+        .custom-bot-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 9999px;
+        }
+        .custom-bot-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.55);
         }
         .mono-font {
             font-family: 'JetBrains Mono', monospace;
@@ -693,12 +707,12 @@
         </div>
     </header>
 
-    <!-- Bottom Left: 4-Bot HQ Team Switcher Column + Follow-Along Buddy Bot Picker -->
-    <div id="bot-roster" class="fixed bottom-6 left-5 sm:bottom-9 sm:left-8 z-20 pointer-events-auto hud-glass rounded-2xl p-2 flex flex-col gap-2 border border-white/20">
-        <button id="btn-buddy-cycle" class="tactile-btn px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600/90 to-sky-800/90 border border-cyan-300/60 flex items-center justify-between gap-2 text-left w-full" style="height: 32px; min-height: 32px; max-height: 32px;" title="Cycle AI Wingman Partner Bot (Key: B)">
-            <span class="text-[10px] sm:text-[11px] font-extrabold tracking-wide text-cyan-100 uppercase flex items-center gap-1.5 truncate">
-                <span class="w-3.5 h-3.5 flex items-center justify-center shrink-0 text-cyan-200" style="width: 14px; height: 14px;">
-                    <svg viewBox="0 0 24 24" width="14" height="14" style="width: 14px; height: 14px; display: block;" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Bottom Left: Compact Rescue Bots Roster + Follow-Along Buddy Bot Picker -->
+    <div id="bot-roster" class="fixed bottom-4 left-3 sm:bottom-6 sm:left-5 z-20 pointer-events-auto hud-glass rounded-2xl p-1.5 sm:p-2 flex flex-col gap-1 border border-white/20 w-44 sm:w-48 max-h-[64vh] sm:max-h-[72vh] shadow-2xl backdrop-blur-md">
+        <button id="btn-buddy-cycle" class="tactile-btn px-2 py-1 rounded-lg bg-gradient-to-r from-cyan-600/90 to-sky-800/90 border border-cyan-300/60 flex items-center justify-between gap-1.5 text-left w-full h-7 min-h-[28px] max-h-[28px] shrink-0" title="Cycle AI Wingman Partner Bot (Key: B)">
+            <span class="text-[9px] sm:text-[10px] font-extrabold tracking-wide text-cyan-100 uppercase flex items-center gap-1 truncate">
+                <span class="w-3 h-3 flex items-center justify-center shrink-0 text-cyan-200">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M16 11l2 2a2.8 2.8 0 004 0 2.8 2.8 0 000-4l-3-3a3 3 0 00-4.2 0L12 9"/>
                         <path d="M8 13l-2-2a2.8 2.8 0 00-4 0 2.8 2.8 0 000 4l3 3a3 3 0 004.2 0L12 15"/>
                         <path d="M9 11l6 6M11 9l2 2"/>
@@ -706,132 +720,200 @@
                 </span>
                 <span id="buddy-readout" class="truncate">BUDDY: HEATWAVE</span>
             </span>
-            <span class="text-[9px] bg-slate-950/70 text-cyan-300 px-1.5 py-0.5 rounded font-bold shrink-0">SWAP</span>
+            <span class="text-[8px] bg-slate-950/70 text-cyan-300 px-1 py-0.5 rounded font-bold shrink-0">SWAP</span>
         </button>
-        <button data-bot="BOULDER" class="bot-card active-bot px-3 py-2 rounded-xl bg-gradient-to-b from-lime-600/90 to-emerald-800/90 border-2 border-lime-300/50 flex items-center justify-between gap-2.5 text-left w-full">
-            <div class="flex items-center gap-2.5">
-                <span class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="2" y="19" width="19" height="9" rx="4.5" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
-                        <circle cx="6" cy="23.5" r="2" fill="#64748b"/>
-                        <circle cx="11.5" cy="23.5" r="2" fill="#64748b"/>
-                        <circle cx="17" cy="23.5" r="2" fill="#64748b"/>
-                        <path d="M4 19L7 11H17L19 19H4Z" fill="#22c55e" stroke="#15803d" stroke-width="1.5"/>
-                        <rect x="11" y="7" width="7" height="6" rx="1.5" fill="#16a34a" stroke="#15803d" stroke-width="1.2"/>
-                        <rect x="13" y="9" width="4" height="3" rx="0.5" fill="#38bdf8"/>
-                        <rect x="8" y="7" width="2" height="4" rx="0.5" fill="#475569"/>
-                        <path d="M17 17L22 20V25L17 22Z" fill="#15803d"/>
-                        <path d="M22 13L24 13L28 27H23L21 16" fill="#22c55e" stroke="#16a34a" stroke-width="1.5"/>
-                        <path d="M24 13L29 27H26L22 13H24Z" fill="#4ade80"/>
-                        <rect x="23" y="19" width="5" height="2" transform="rotate(-15 23 19)" fill="#facc15"/>
-                    </svg>
-                </span>
-                <div class="leading-tight">
-                    <div class="text-xs sm:text-sm font-extrabold text-white">BOULDER</div>
-                    <div class="text-[9px] sm:text-[10px] text-lime-200 font-semibold">Dozer • Triceratops</div>
+
+        <div id="bot-cards-container" class="flex flex-col gap-1 overflow-y-auto pr-0.5 custom-bot-scroll">
+            <!-- 1. BOULDER -->
+            <button data-bot="BOULDER" class="bot-card active-bot px-2 py-1 rounded-xl bg-gradient-to-b from-lime-600/90 to-emerald-800/90 border-2 border-lime-300/50 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="19" width="19" height="9" rx="4.5" fill="#1e293b" stroke="#0f172a" stroke-width="1.5"/>
+                            <circle cx="6" cy="23.5" r="2" fill="#64748b"/>
+                            <circle cx="11.5" cy="23.5" r="2" fill="#64748b"/>
+                            <circle cx="17" cy="23.5" r="2" fill="#64748b"/>
+                            <path d="M4 19L7 11H17L19 19H4Z" fill="#22c55e" stroke="#15803d" stroke-width="1.5"/>
+                            <rect x="11" y="7" width="7" height="6" rx="1.5" fill="#16a34a" stroke="#15803d" stroke-width="1.2"/>
+                            <rect x="13" y="9" width="4" height="3" rx="0.5" fill="#38bdf8"/>
+                            <path d="M22 13L24 13L28 27H23L21 16" fill="#22c55e" stroke="#16a34a" stroke-width="1.5"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">BOULDER</div>
+                        <div class="text-[8px] sm:text-[9px] text-lime-200 font-semibold truncate mt-0.5">Dozer • Triceratops</div>
+                    </div>
                 </div>
-            </div>
-            <span data-buddy-badge="BOULDER" class="hidden text-[8px] sm:text-[9px] font-extrabold bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-1">
-                <span class="w-2.5 h-2.5 flex items-center justify-center" style="width: 10px; height: 10px;">
-                    <svg viewBox="0 0 24 24" width="10" height="10" style="width: 10px; height: 10px; display: block;" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 11l2 2a2.8 2.8 0 004 0 2.8 2.8 0 000-4l-3-3a3 3 0 00-4.2 0L12 9"/>
-                        <path d="M8 13l-2-2a2.8 2.8 0 00-4 0 2.8 2.8 0 000 4l3 3a3 3 0 004.2 0L12 15"/>
-                        <path d="M9 11l6 6M11 9l2 2"/>
-                    </svg>
-                </span>
-                <span>BUDDY</span>
-            </span>
-        </button>
-        <button data-bot="HEATWAVE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-red-600/90 to-rose-900/90 border-2 border-red-300/40 flex items-center justify-between gap-2.5 text-left w-full">
-            <div class="flex items-center gap-2.5">
-                <span class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="3" y="13" width="26" height="12" rx="2.5" fill="#ef4444" stroke="#991b1b" stroke-width="1.5"/>
-                        <rect x="4" y="8" width="16" height="5" rx="1" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"/>
-                        <path d="M7 8V13M11 8V13M15 8V13M19 8V13" stroke="#64748b" stroke-width="1"/>
-                        <rect x="21" y="15" width="6" height="5" rx="1" fill="#38bdf8"/>
-                        <rect x="14" y="15" width="5" height="5" rx="1" fill="#f8fafc" opacity="0.9"/>
-                        <circle cx="8" cy="25" r="3.2" fill="#1e293b" stroke="#e2e8f0" stroke-width="1.5"/>
-                        <circle cx="23" cy="25" r="3.2" fill="#1e293b" stroke="#e2e8f0" stroke-width="1.5"/>
-                        <rect x="23" y="11" width="3" height="2" rx="1" fill="#fbbf24"/>
-                        <path d="M3 18H12V21H3V18Z" fill="#f8fafc" opacity="0.4"/>
-                    </svg>
-                </span>
-                <div class="leading-tight">
-                    <div class="text-xs sm:text-sm font-extrabold text-white">HEATWAVE</div>
-                    <div class="text-[9px] sm:text-[10px] text-rose-200 font-semibold">Fire • Brachiosaur</div>
+                <span data-buddy-badge="BOULDER" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
+            </button>
+
+            <!-- 2. HEATWAVE -->
+            <button data-bot="HEATWAVE" class="bot-card px-2 py-1 rounded-xl bg-gradient-to-b from-red-600/90 to-rose-900/90 border-2 border-red-300/40 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="3" y="13" width="26" height="12" rx="2.5" fill="#ef4444" stroke="#991b1b" stroke-width="1.2"/>
+                            <rect x="4" y="8" width="16" height="5" rx="1" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"/>
+                            <rect x="21" y="15" width="6" height="5" rx="1" fill="#38bdf8"/>
+                            <circle cx="8" cy="25" r="3" fill="#1e293b" stroke="#e2e8f0" stroke-width="1.2"/>
+                            <circle cx="23" cy="25" r="3" fill="#1e293b" stroke="#e2e8f0" stroke-width="1.2"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">HEATWAVE</div>
+                        <div class="text-[8px] sm:text-[9px] text-rose-200 font-semibold truncate mt-0.5">Fire • Brachiosaur</div>
+                    </div>
                 </div>
-            </div>
-            <span data-buddy-badge="HEATWAVE" class="hidden text-[8px] sm:text-[9px] font-extrabold bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-1">
-                <span class="w-2.5 h-2.5 flex items-center justify-center" style="width: 10px; height: 10px;">
-                    <svg viewBox="0 0 24 24" width="10" height="10" style="width: 10px; height: 10px; display: block;" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 11l2 2a2.8 2.8 0 004 0 2.8 2.8 0 000-4l-3-3a3 3 0 00-4.2 0L12 9"/>
-                        <path d="M8 13l-2-2a2.8 2.8 0 00-4 0 2.8 2.8 0 000 4l3 3a3 3 0 004.2 0L12 15"/>
-                        <path d="M9 11l6 6M11 9l2 2"/>
-                    </svg>
-                </span>
-                <span>BUDDY</span>
-            </span>
-        </button>
-        <button data-bot="CHASE" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-blue-600/90 to-indigo-900/90 border-2 border-blue-300/40 flex items-center justify-between gap-2.5 text-left w-full">
-            <div class="flex items-center gap-2.5">
-                <span class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M3 20L6 14C7 12 9 11 11 11H21C23 11 25 12 26 14L29 20V24H3V20Z" fill="#0284c7" stroke="#0369a1" stroke-width="1.5"/>
-                        <path d="M10 13L8 18H24L22 13H10Z" fill="#38bdf8"/>
-                        <rect x="4" y="18" width="24" height="4" fill="#f8fafc"/>
-                        <circle cx="8" cy="24" r="3" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.5"/>
-                        <circle cx="24" cy="24" r="3" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.5"/>
-                        <rect x="14" y="9" width="2" height="2" fill="#ef4444"/>
-                        <rect x="16" y="9" width="2" height="2" fill="#38bdf8"/>
-                    </svg>
-                </span>
-                <div class="leading-tight">
-                    <div class="text-xs sm:text-sm font-extrabold text-white">CHASE</div>
-                    <div class="text-[9px] sm:text-[10px] text-sky-200 font-semibold">Police • Stegosaur</div>
+                <span data-buddy-badge="HEATWAVE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
+            </button>
+
+            <!-- 3. CHASE -->
+            <button data-bot="CHASE" class="bot-card px-2 py-1 rounded-xl bg-gradient-to-b from-blue-600/90 to-indigo-900/90 border-2 border-blue-300/40 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 20L6 14C7 12 9 11 11 11H21C23 11 25 12 26 14L29 20V24H3V20Z" fill="#0284c7" stroke="#0369a1" stroke-width="1.2"/>
+                            <path d="M10 13L8 18H24L22 13H10Z" fill="#38bdf8"/>
+                            <rect x="4" y="18" width="24" height="4" fill="#f8fafc"/>
+                            <circle cx="8" cy="24" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+                            <circle cx="24" cy="24" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">CHASE</div>
+                        <div class="text-[8px] sm:text-[9px] text-sky-200 font-semibold truncate mt-0.5">Police • Stegosaur</div>
+                    </div>
                 </div>
-            </div>
-            <span data-buddy-badge="CHASE" class="hidden text-[8px] sm:text-[9px] font-extrabold bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-1">
-                <span class="w-2.5 h-2.5 flex items-center justify-center" style="width: 10px; height: 10px;">
-                    <svg viewBox="0 0 24 24" width="10" height="10" style="width: 10px; height: 10px; display: block;" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 11l2 2a2.8 2.8 0 004 0 2.8 2.8 0 000-4l-3-3a3 3 0 00-4.2 0L12 9"/>
-                        <path d="M8 13l-2-2a2.8 2.8 0 00-4 0 2.8 2.8 0 000 4l3 3a3 3 0 004.2 0L12 15"/>
-                        <path d="M9 11l6 6M11 9l2 2"/>
-                    </svg>
-                </span>
-                <span>BUDDY</span>
-            </span>
-        </button>
-        <button data-bot="BLADES" class="bot-card px-3 py-2 rounded-xl bg-gradient-to-b from-orange-500/90 to-amber-700/90 border-2 border-orange-200/40 flex items-center justify-between gap-2.5 text-left w-full">
-            <div class="flex items-center gap-2.5">
-                <span class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0">
-                    <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M2 7H30" stroke="#f8fafc" stroke-width="2" stroke-linecap="round"/>
-                        <circle cx="16" cy="7" r="1.5" fill="#f59e0b"/>
-                        <path d="M16 7V10" stroke="#64748b" stroke-width="2"/>
-                        <path d="M8 13C8 10.8 9.8 9 12 9H20C22.2 9 24 10.8 24 13V18C24 20.2 22.2 22 20 22H12C9.8 22 8 20.2 8 18V13Z" fill="#f97316" stroke="#c2410c" stroke-width="1.5"/>
-                        <path d="M16 11H22C23.1 11 24 11.9 24 13V16H16V11Z" fill="#38bdf8"/>
-                        <path d="M8 15H1V17H8V15Z" fill="#f8fafc"/>
-                        <path d="M1 13V19" stroke="#f97316" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M8 26H24M11 22V26M21 22V26" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
-                    </svg>
-                </span>
-                <div class="leading-tight">
-                    <div class="text-xs sm:text-sm font-extrabold text-white">BLADES</div>
-                    <div class="text-[9px] sm:text-[10px] text-amber-100 font-semibold">Copter • Pterosaur</div>
+                <span data-buddy-badge="CHASE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
+            </button>
+
+            <!-- 4. BLADES -->
+            <button data-bot="BLADES" class="bot-card px-2 py-1 rounded-xl bg-gradient-to-b from-orange-500/90 to-amber-700/90 border-2 border-orange-200/40 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 7H30" stroke="#f8fafc" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="16" cy="7" r="1.5" fill="#f59e0b"/>
+                            <path d="M8 13C8 10.8 9.8 9 12 9H20C22.2 9 24 10.8 24 13V18C24 20.2 22.2 22 20 22H12C9.8 22 8 20.2 8 18V13Z" fill="#f97316" stroke="#c2410c" stroke-width="1.2"/>
+                            <path d="M16 11H22C23.1 11 24 11.9 24 13V16H16V11Z" fill="#38bdf8"/>
+                            <path d="M8 26H24" stroke="#e2e8f0" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">BLADES</div>
+                        <div class="text-[8px] sm:text-[9px] text-amber-100 font-semibold truncate mt-0.5">Copter • Pterosaur</div>
+                    </div>
                 </div>
-            </div>
-            <span data-buddy-badge="BLADES" class="hidden text-[8px] sm:text-[9px] font-extrabold bg-cyan-400 text-slate-950 px-1.5 py-0.5 rounded-full uppercase flex items-center gap-1">
-                <span class="w-2.5 h-2.5 flex items-center justify-center" style="width: 10px; height: 10px;">
-                    <svg viewBox="0 0 24 24" width="10" height="10" style="width: 10px; height: 10px; display: block;" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 11l2 2a2.8 2.8 0 004 0 2.8 2.8 0 000-4l-3-3a3 3 0 00-4.2 0L12 9"/>
-                        <path d="M8 13l-2-2a2.8 2.8 0 00-4 0 2.8 2.8 0 000 4l3 3a3 3 0 004.2 0L12 15"/>
-                        <path d="M9 11l6 6M11 9l2 2"/>
-                    </svg>
-                </span>
-                <span>BUDDY</span>
-            </span>
-        </button>
+                <span data-buddy-badge="BLADES" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
+            </button>
+
+            <!-- 5. OPTIMUS PRIME (Unlocked via Griffin Rock Discovery) -->
+            <button data-bot="OPTIMUS" class="bot-card hidden px-2 py-1 rounded-xl bg-gradient-to-b from-blue-700/90 via-red-600/90 to-blue-950/90 border-2 border-red-400/50 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="5" y="10" width="22" height="14" rx="2" fill="#ef4444" stroke="#991b1b" stroke-width="1.2"/>
+                            <rect x="7" y="12" width="7" height="5" rx="1" fill="#38bdf8"/>
+                            <rect x="18" y="12" width="7" height="5" rx="1" fill="#38bdf8"/>
+                            <rect x="11" y="18" width="10" height="5" fill="#cbd5e1" stroke="#475569" stroke-width="1"/>
+                            <rect x="3" y="6" width="2" height="10" fill="#cbd5e1"/>
+                            <rect x="27" y="6" width="2" height="10" fill="#cbd5e1"/>
+                            <circle cx="9" cy="25" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+                            <circle cx="23" cy="25" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">OPTIMUS</div>
+                        <div class="text-[8px] sm:text-[9px] text-blue-200 font-semibold truncate mt-0.5">Semi • Leader</div>
+                    </div>
+                </div>
+                <span data-buddy-badge="OPTIMUS" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
+            </button>
+
+            <!-- 6. BUMBLEBEE (Unlocked via Griffin Rock Discovery) -->
+            <button data-bot="BUMBLEBEE" class="bot-card hidden px-2 py-1 rounded-xl bg-gradient-to-b from-amber-500/90 to-yellow-700/90 border-2 border-yellow-300/60 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 21L7 13C8 11 10 10 12 10H20C22 10 24 11 25 13L28 21V25H4V21Z" fill="#facc15" stroke="#ca8a04" stroke-width="1.2"/>
+                            <rect x="14" y="10" width="4" height="15" fill="#0f172a"/>
+                            <path d="M10 12L8 18H13L13 12H10Z" fill="#38bdf8"/>
+                            <path d="M22 12L24 18H19L19 12H22Z" fill="#38bdf8"/>
+                            <circle cx="8" cy="25" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+                            <circle cx="24" cy="25" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">BUMBLEBEE</div>
+                        <div class="text-[8px] sm:text-[9px] text-yellow-100 font-semibold truncate mt-0.5">Sports • Raptor</div>
+                    </div>
+                </div>
+                <span data-buddy-badge="BUMBLEBEE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
+            </button>
+
+            <!-- 7. BLURR (Unlocked via Griffin Rock Discovery) -->
+            <button data-bot="BLURR" class="bot-card hidden px-2 py-1 rounded-xl bg-gradient-to-b from-purple-600/90 to-violet-950/90 border-2 border-purple-300/50 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 23L7 14H25L30 23V26H2V23Z" fill="#7c3aed" stroke="#581c87" stroke-width="1.2"/>
+                            <path d="M11 15L16 11L21 15V22H11V15Z" fill="#38bdf8"/>
+                            <rect x="14" y="11" width="4" height="15" fill="#f8fafc"/>
+                            <rect x="6" y="9" width="20" height="2" fill="#0f172a"/>
+                            <circle cx="7" cy="25" r="2.8" fill="#0f172a" stroke="#22c55e" stroke-width="1.4"/>
+                            <circle cx="25" cy="25" r="2.8" fill="#0f172a" stroke="#22c55e" stroke-width="1.4"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">BLURR</div>
+                        <div class="text-[8px] sm:text-[9px] text-purple-200 font-semibold truncate mt-0.5">Speedster • Hypercar</div>
+                    </div>
+                </div>
+                <span data-buddy-badge="BLURR" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
+            </button>
+
+            <!-- 8. SALVAGE (Unlocked via Griffin Rock Discovery) -->
+            <button data-bot="SALVAGE" class="bot-card hidden px-2 py-1 rounded-xl bg-gradient-to-b from-lime-600/90 via-blue-700/90 to-slate-900/90 border-2 border-lime-300/60 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="10" width="24" height="15" rx="2" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="1.2"/>
+                            <rect x="6" y="8" width="20" height="10" rx="1.5" fill="#cbf827" stroke="#84cc16" stroke-width="1.2"/>
+                            <rect x="9" y="10" width="6" height="5" rx="1" fill="#38bdf8"/>
+                            <rect x="17" y="10" width="6" height="5" rx="1" fill="#38bdf8"/>
+                            <text x="16" y="21" font-size="7" font-weight="bold" fill="#15803d" text-anchor="middle">♻</text>
+                            <circle cx="8" cy="25" r="3" fill="#0f172a" stroke="#94a3b8" stroke-width="1.2"/>
+                            <circle cx="24" cy="25" r="3" fill="#0f172a" stroke="#94a3b8" stroke-width="1.2"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">SALVAGE</div>
+                        <div class="text-[8px] sm:text-[9px] text-lime-200 font-semibold truncate mt-0.5">Recycle • Heavy Cab</div>
+                    </div>
+                </div>
+                <span data-buddy-badge="SALVAGE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
+            </button>
+
+            <!-- 9. HIGH TIDE (Unlocked via Griffin Rock Discovery) -->
+            <button data-bot="HIGHTIDE" class="bot-card hidden px-2 py-1 rounded-xl bg-gradient-to-b from-slate-800/90 via-blue-900/90 to-cyan-950/90 border-2 border-cyan-400/50 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 17C4 17 8 13 16 13C24 13 28 17 28 17L27 22H5L4 17Z" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+                            <rect x="13" y="8" width="6" height="6" rx="1" fill="#f8fafc"/>
+                            <rect x="15" y="4" width="2" height="4" fill="#38bdf8"/>
+                            <circle cx="16" cy="11" r="1.5" fill="#0284c7"/>
+                            <path d="M2 19L5 24H27L30 19" stroke="#38bdf8" stroke-width="1.2" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">HIGH TIDE</div>
+                        <div class="text-[8px] sm:text-[9px] text-cyan-200 font-semibold truncate mt-0.5">Sub • Patrol Rig</div>
+                    </div>
+                </div>
+                <span data-buddy-badge="HIGHTIDE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
+            </button>
+        </div>
     </div>
 
     <!-- Bottom Center: Active Bot Telemetry, Speed, Altitude & Controls Hint -->
@@ -11184,6 +11266,9 @@
                 document.getElementById('jump-label').textContent = isVeh ? 'SONAR' : 'JUMP';
             }
 
+            // Update visibility of newly discovered ally bot selector buttons
+            updateBotRosterUI();
+
             // Highlight active bot card in Bottom-Left Roster
             document.querySelectorAll('.bot-card').forEach(btn => {
                 const bType = btn.dataset.bot;
@@ -11215,12 +11300,46 @@
             }
         }
 
+        // Returns currently playable bots (4 OG Bots + Any Discovered Visiting Allies)
+        function getUnlockedPlayableBots() {
+            const base = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES'];
+            const allies = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies : [];
+            const validAllies = ['OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE'].filter(id => allies.includes(id));
+            return [...base, ...validAllies];
+        }
+
+        // Dynamically toggle visibility of bot selector buttons based on discovery
+        function updateBotRosterUI() {
+            const unlocked = getUnlockedPlayableBots();
+            document.querySelectorAll('.bot-card').forEach(btn => {
+                const bType = btn.dataset.bot;
+                if (unlocked.includes(bType)) {
+                    btn.classList.remove('hidden');
+                } else {
+                    btn.classList.add('hidden');
+                }
+            });
+        }
+
         function cycleBuddyBot() {
-            const allBots = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES'];
+            const allBots = getUnlockedPlayableBots();
             const candidateBots = allBots.filter(b => b !== player.botType);
+            if (candidateBots.length === 0) return;
             const currentIdx = candidateBots.indexOf(buddyBot.botType);
             const nextBot = candidateBots[(currentIdx + 1) % candidateBots.length];
             setBuddyBot(nextBot);
+        }
+
+        function unlockAndSwitchBot(botType) {
+            if (!Array.isArray(progression.discoveredAllies)) {
+                progression.discoveredAllies = [];
+            }
+            if (!progression.discoveredAllies.includes(botType)) {
+                progression.discoveredAllies.push(botType);
+                saveProgression();
+                updateBotRosterUI();
+            }
+            switchRescueBot(botType);
         }
 
         function setBuddyBot(botType) {
@@ -13426,12 +13545,14 @@
             progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 50;
             saveProgression();
             syncProgressionHUD();
+            updateBotRosterUI();
+            syncHUDToActiveBot();
 
             sfx.playRankUp();
             spawnBurstParticles(ally.x, ally.y + 4.0, ally.z, 0xfacc15, 34, 2.2);
             spawnSparkleGlints(ally.x, ally.y + 2.5, ally.z, 26);
 
-            showToast(`⭐ ALLY DISCOVERED: ${ally.name}!`, `+50 Energon & +10 Hero Pts! (${progression.discoveredAllies.length}/5 Allies Found)`);
+            showToast(`⭐ ${ally.name.toUpperCase()} UNLOCKED!`, `Added to Rescue Roster! (+50 Energon)`);
             triggerNPCSpeech(ally.name, ally.role, ally.dialogues[0], ally.root, true);
 
             if (ally.id === 'BUMBLEBEE') {
@@ -15123,12 +15244,12 @@
             if (e.code === 'Digit2' || e.code === 'Numpad2') switchRescueBot('HEATWAVE');
             if (e.code === 'Digit3' || e.code === 'Numpad3') switchRescueBot('CHASE');
             if (e.code === 'Digit4' || e.code === 'Numpad4') switchRescueBot('BLADES');
-            // Secret cheat codes: 6, 7, 8, 9, 0 deploy visiting Autobot allies!
-            if (e.code === 'Digit6' || e.code === 'Numpad6') switchRescueBot('OPTIMUS');
-            if (e.code === 'Digit7' || e.code === 'Numpad7') switchRescueBot('BUMBLEBEE');
-            if (e.code === 'Digit8' || e.code === 'Numpad8') switchRescueBot('BLURR');
-            if (e.code === 'Digit9' || e.code === 'Numpad9') switchRescueBot('SALVAGE');
-            if (e.code === 'Digit0' || e.code === 'Numpad0') switchRescueBot('HIGHTIDE');
+            // Secret cheat codes: 6, 7, 8, 9, 0 unlock & deploy visiting Autobot allies!
+            if (e.code === 'Digit6' || e.code === 'Numpad6') unlockAndSwitchBot('OPTIMUS');
+            if (e.code === 'Digit7' || e.code === 'Numpad7') unlockAndSwitchBot('BUMBLEBEE');
+            if (e.code === 'Digit8' || e.code === 'Numpad8') unlockAndSwitchBot('BLURR');
+            if (e.code === 'Digit9' || e.code === 'Numpad9') unlockAndSwitchBot('SALVAGE');
+            if (e.code === 'Digit0' || e.code === 'Numpad0') unlockAndSwitchBot('HIGHTIDE');
             if (e.code === 'Space' && !e.repeat) {
                 e.preventDefault();
                 triggerTransform();
