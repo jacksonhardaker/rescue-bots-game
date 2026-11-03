@@ -556,19 +556,25 @@
                         </span>
                     </div>
                     <!-- Open World Exploration & Relic Collection Tracking -->
-                    <div id="exploration-stats-row" class="flex items-center justify-between gap-2 pt-0.5 text-[9.5px] sm:text-[10px] font-bold text-sky-200">
+                    <div id="exploration-stats-row" class="flex items-center justify-between gap-1.5 sm:gap-2 pt-0.5 text-[9px] sm:text-[10px] font-bold text-sky-200">
                         <span class="flex items-center gap-1">
-                            <svg viewBox="0 0 24 24" style="width:12px;height:12px;display:inline-block;" class="shrink-0" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" style="width:11px;height:11px;display:inline-block;" class="shrink-0" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <circle cx="12" cy="10" r="3"/>
                                 <path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"/>
                             </svg>
                             <span>Sites: <span id="stat-total-landmarks" class="text-white">0</span>/16</span>
                         </span>
                         <span class="flex items-center gap-1">
-                            <svg viewBox="0 0 24 24" style="width:12px;height:12px;display:inline-block;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round">
+                            <svg viewBox="0 0 24 24" style="width:11px;height:11px;display:inline-block;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/>
                             </svg>
                             <span>Relics: <span id="stat-total-crests" class="text-amber-300">0</span>/10</span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg viewBox="0 0 24 24" style="width:11px;height:11px;display:inline-block;" class="shrink-0" fill="#a855f7" stroke="#c084fc" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2L4 7v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V7l-8-5z"/>
+                            </svg>
+                            <span>Allies: <span id="stat-total-allies" class="text-purple-300">0</span>/5</span>
                         </span>
                     </div>
                     <div class="flex items-center justify-between gap-2 pt-0.5 text-[10px] sm:text-[11px] font-extrabold">
@@ -2585,6 +2591,406 @@
             return new THREE.CanvasTexture(c);
         }
 
+        // Canonical TV Show Cartoon Face Textures for Visiting Autobot Allies
+        function makeOptimusFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Deep Metallic Blue Helmet Faceplate Backing
+            ctx.fillStyle = '#1d4ed8';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Silver Forehead Crest & Central Fin
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.moveTo(108, 0); ctx.lineTo(148, 0);
+            ctx.lineTo(140, 56); ctx.lineTo(116, 56);
+            ctx.closePath();
+            ctx.fill();
+
+            // Dark Brow Frame
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(36, 52, 184, 18);
+
+            // Iconic Glowing Cyan Optics / Visor
+            const eyeGrad = ctx.createLinearGradient(0, 68, 0, 112);
+            eyeGrad.addColorStop(0, '#67e8f9');
+            eyeGrad.addColorStop(1, '#06b6d4');
+            ctx.fillStyle = eyeGrad;
+            // Dual angled optics
+            ctx.beginPath();
+            ctx.moveTo(46, 72); ctx.lineTo(114, 72);
+            ctx.lineTo(108, 106); ctx.lineTo(52, 106);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(142, 72); ctx.lineTo(210, 72);
+            ctx.lineTo(204, 106); ctx.lineTo(148, 106);
+            ctx.closePath();
+            ctx.fill();
+
+            // Bright White Optical Glints
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(58, 76, 18, 10);
+            ctx.fillRect(154, 76, 18, 10);
+
+            // Iconic Silver Battle Mask / Faceplate
+            const maskGrad = ctx.createLinearGradient(0, 116, 0, 256);
+            maskGrad.addColorStop(0, '#f8fafc');
+            maskGrad.addColorStop(0.5, '#cbd5e1');
+            maskGrad.addColorStop(1, '#94a3b8');
+            ctx.fillStyle = maskGrad;
+            ctx.beginPath();
+            ctx.moveTo(38, 118);
+            ctx.lineTo(218, 118);
+            ctx.lineTo(198, 240);
+            ctx.lineTo(128, 252);
+            ctx.lineTo(58, 240);
+            ctx.closePath();
+            ctx.fill();
+
+            // Central Vertical Mask Ridge
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(128, 118);
+            ctx.lineTo(128, 250);
+            ctx.stroke();
+
+            // Sloped Cheek Vent Grooves
+            ctx.lineWidth = 4;
+            [145, 175, 205].forEach(y => {
+                ctx.beginPath();
+                ctx.moveTo(76, y); ctx.lineTo(112, y + 8);
+                ctx.moveTo(180, y); ctx.lineTo(144, y + 8);
+                ctx.stroke();
+            });
+
+            // Outer Dark Cartoon Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeBumblebeeFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Vibrant Bumblebee Yellow Helmet Face Backing
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Center Black Racing Stripe down Helmet Crown
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(110, 0, 36, 68);
+
+            // Silver Forehead Crest Band
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(40, 56, 176, 14);
+
+            // Silver Face Core
+            const faceGrad = ctx.createLinearGradient(0, 70, 0, 240);
+            faceGrad.addColorStop(0, '#f1f5f9');
+            faceGrad.addColorStop(1, '#cbd5e1');
+            ctx.fillStyle = faceGrad;
+            ctx.beginPath();
+            ctx.moveTo(42, 70); ctx.lineTo(214, 70);
+            ctx.lineTo(192, 236); ctx.lineTo(128, 248); ctx.lineTo(64, 236);
+            ctx.closePath();
+            ctx.fill();
+
+            // Expressive Large Cyan Optics (Circular Rings with Glints)
+            [-1, 1].forEach(side => {
+                const ox = 128 + side * 44;
+                const oy = 112;
+                // Dark eye socket
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(ox, oy, 28, 0, Math.PI * 2);
+                ctx.fill();
+                // Cyan pupil iris
+                const eyeGrad = ctx.createRadialGradient(ox - 4, oy - 4, 2, ox, oy, 24);
+                eyeGrad.addColorStop(0, '#a5f3fc');
+                eyeGrad.addColorStop(0.6, '#06b6d4');
+                eyeGrad.addColorStop(1, '#0891b2');
+                ctx.fillStyle = eyeGrad;
+                ctx.beginPath();
+                ctx.arc(ox, oy, 24, 0, Math.PI * 2);
+                ctx.fill();
+                // Dual white highlight glints
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(ox - 7, oy - 7, 7, 0, Math.PI * 2);
+                ctx.arc(ox + 7, oy + 7, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Friendly Confident Smile
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(88, 186);
+            ctx.quadraticCurveTo(128, 214, 168, 186);
+            ctx.stroke();
+
+            // Smile corner dimples
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(84, 182); ctx.lineTo(90, 192);
+            ctx.moveTo(172, 182); ctx.lineTo(166, 192);
+            ctx.stroke();
+
+            // Chin Plate Seam
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(106, 226); ctx.lineTo(150, 226);
+            ctx.stroke();
+
+            // Outer Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeBlurrFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Electric Cyan & Royal Blue Speedster Faceplate
+            ctx.fillStyle = '#06b6d4';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Deep Blue Crown Inset
+            ctx.fillStyle = '#1d4ed8';
+            ctx.fillRect(36, 0, 184, 48);
+
+            // Silver Swept Brow Visor Frame
+            ctx.fillStyle = '#e2e8f0';
+            ctx.beginPath();
+            ctx.moveTo(24, 48); ctx.lineTo(232, 48);
+            ctx.lineTo(216, 68); ctx.lineTo(40, 68);
+            ctx.closePath();
+            ctx.fill();
+
+            // Ultra-Fast Angled Cyan Visor Optics
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(30, 68, 196, 60);
+
+            const visGrad = ctx.createLinearGradient(0, 72, 0, 124);
+            visGrad.addColorStop(0, '#67e8f9');
+            visGrad.addColorStop(0.5, '#22d3ee');
+            visGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = visGrad;
+            ctx.beginPath();
+            ctx.moveTo(38, 76); ctx.lineTo(218, 76);
+            ctx.lineTo(206, 120); ctx.lineTo(50, 120);
+            ctx.closePath();
+            ctx.fill();
+
+            // Diagonal Speed Glare Lines
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.beginPath();
+            ctx.moveTo(80, 76); ctx.lineTo(110, 76); ctx.lineTo(85, 120); ctx.lineTo(55, 120);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(170, 76); ctx.lineTo(195, 76); ctx.lineTo(170, 120); ctx.lineTo(145, 120);
+            ctx.closePath();
+            ctx.fill();
+
+            // Silver Athletic Lower Face
+            const lowerGrad = ctx.createLinearGradient(0, 128, 0, 250);
+            lowerGrad.addColorStop(0, '#f8fafc');
+            lowerGrad.addColorStop(1, '#94a3b8');
+            ctx.fillStyle = lowerGrad;
+            ctx.beginPath();
+            ctx.moveTo(48, 128); ctx.lineTo(208, 128);
+            ctx.lineTo(184, 238); ctx.lineTo(128, 250); ctx.lineTo(72, 238);
+            ctx.closePath();
+            ctx.fill();
+
+            // High-Speed Determined Grin
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(84, 184);
+            ctx.quadraticCurveTo(128, 206, 172, 178);
+            ctx.stroke();
+
+            // Outer Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeSalvageFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Heavy Forest Green Helmet
+            ctx.fillStyle = '#15803d';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Safety Orange Brow Band & Yellow Hazard Triangles
+            ctx.fillStyle = '#ea580c';
+            ctx.fillRect(0, 0, 256, 52);
+            ctx.fillStyle = '#eab308';
+            [-1, 0, 1].forEach(offset => {
+                const hx = 128 + offset * 64;
+                ctx.beginPath();
+                ctx.moveTo(hx - 14, 46); ctx.lineTo(hx + 14, 46); ctx.lineTo(hx, 18);
+                ctx.closePath();
+                ctx.fill();
+            });
+
+            // Dark Visor Socket
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(36, 58, 184, 62);
+
+            // Friendly Sturdy Cyan Visor
+            const eyeGrad = ctx.createLinearGradient(0, 64, 0, 114);
+            eyeGrad.addColorStop(0, '#38bdf8');
+            eyeGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = eyeGrad;
+            ctx.fillRect(44, 64, 168, 50);
+
+            // Eye Glints
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(64, 70, 24, 14);
+            ctx.fillRect(144, 70, 24, 14);
+
+            // Distinctive Heavy Robotic Underbite Jaw / Scoop Chin
+            const jawGrad = ctx.createLinearGradient(0, 120, 0, 256);
+            jawGrad.addColorStop(0, '#f8fafc');
+            jawGrad.addColorStop(0.5, '#cbd5e1');
+            jawGrad.addColorStop(1, '#64748b');
+            ctx.fillStyle = jawGrad;
+            ctx.beginPath();
+            ctx.moveTo(34, 120); ctx.lineTo(222, 120);
+            ctx.lineTo(228, 215); ctx.lineTo(190, 250); ctx.lineTo(66, 250); ctx.lineTo(28, 215);
+            ctx.closePath();
+            ctx.fill();
+
+            // Prominent Lower Underbite Lip / Compactor Scoop
+            ctx.fillStyle = '#94a3b8';
+            ctx.beginPath();
+            ctx.moveTo(56, 175); ctx.lineTo(200, 175);
+            ctx.lineTo(188, 235); ctx.lineTo(68, 235);
+            ctx.closePath();
+            ctx.fill();
+
+            // Heavy Underbite Grille Slats
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 5;
+            [192, 208, 224].forEach(gy => {
+                ctx.beginPath();
+                ctx.moveTo(78, gy); ctx.lineTo(178, gy);
+                ctx.stroke();
+            });
+
+            // Warm friendly mouth crease above underbite
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.moveTo(86, 158);
+            ctx.quadraticCurveTo(128, 170, 170, 158);
+            ctx.stroke();
+
+            // Outer Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeHighTideFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Deep Navy Maritime Officer Helmet
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Crisp White Captains Cap Brow Crown
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, 256, 48);
+
+            // Gold Anchor / Autobot Command Emblem on Cap Brow
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.arc(128, 26, 14, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(128, 26, 7, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Gold Commander Visor Brim
+            ctx.fillStyle = '#d97706';
+            ctx.fillRect(24, 46, 208, 12);
+
+            // Stern Cyan Ocular Sensors
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(38, 58, 180, 56);
+
+            const eyeGrad = ctx.createLinearGradient(0, 64, 0, 108);
+            eyeGrad.addColorStop(0, '#67e8f9');
+            eyeGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = eyeGrad;
+            // Stern angled oculars
+            ctx.beginPath();
+            ctx.moveTo(48, 68); ctx.lineTo(112, 74); ctx.lineTo(108, 104); ctx.lineTo(52, 100);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(208, 68); ctx.lineTo(144, 74); ctx.lineTo(148, 104); ctx.lineTo(204, 100);
+            ctx.closePath();
+            ctx.fill();
+
+            // High-Glint Optical Flares
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(60, 74, 16, 10);
+            ctx.fillRect(158, 74, 16, 10);
+
+            // Sturdy Maritime Silver Acoustic Vocoder Beard-Plate
+            const beardGrad = ctx.createLinearGradient(0, 114, 0, 256);
+            beardGrad.addColorStop(0, '#f8fafc');
+            beardGrad.addColorStop(0.6, '#cbd5e1');
+            beardGrad.addColorStop(1, '#64748b');
+            ctx.fillStyle = beardGrad;
+            ctx.beginPath();
+            ctx.moveTo(46, 114); ctx.lineTo(210, 114);
+            ctx.lineTo(194, 238); ctx.lineTo(128, 254); ctx.lineTo(62, 238);
+            ctx.closePath();
+            ctx.fill();
+
+            // Acoustic Vocoder Slats / Beard Vents
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 4;
+            [138, 156, 174, 192, 210].forEach(vy => {
+                ctx.beginPath();
+                ctx.moveTo(88, vy); ctx.lineTo(168, vy);
+                ctx.stroke();
+            });
+
+            // Outer Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
         const texHazard = makeHazardStripeTexture();
         const texGrille = makeGrilleTexture();
         const texEmblem = makeRescueEmblemTexture();
@@ -2596,6 +3002,12 @@
         const texFaceHeatwave = makeHeatwaveFaceTexture();
         const texFaceChase = makeChaseFaceTexture();
         const texFaceBlades = makeBladesFaceTexture();
+
+        const texFaceOptimus = makeOptimusFaceTexture();
+        const texFaceBumblebee = makeBumblebeeFaceTexture();
+        const texFaceBlurr = makeBlurrFaceTexture();
+        const texFaceSalvage = makeSalvageFaceTexture();
+        const texFaceHighTide = makeHighTideFaceTexture();
 
         /***********************************************************************
          * 3. EXPANDED 10X GRIFFIN ROCK ISLAND TERRAIN & MULTI-RING HIGHWAY
@@ -2786,6 +3198,10 @@
             if (Math.abs(x) <= 16.5 && z >= 1180 && z <= 1278) {
                 return 3.4;
             }
+            // High Tide Offshore Marine Training Rig in South Harbor Bay (X: -60, Z: 1480)
+            if (Math.abs(x - (-60)) <= 13.0 && Math.abs(z - 1480) <= 13.0) {
+                return 1.0;
+            }
             // South Harbor Ferry Boarding Bridge Ramp & Pedestrian Side Gangway
             if (x >= 14.5 && x <= 38.0 && z >= 1202.0 && z <= 1220.0) {
                 const t = Math.max(0, Math.min(1, (x - 15.0) / 21.0));
@@ -2868,6 +3284,7 @@
             if (Math.abs(x) <= 16.5 && z >= 1180 && z <= 1278) return true;
             if (x >= 14.0 && x <= 38.0 && z >= 1202.0 && z <= 1220.0) return true;
             if (x >= 15.0 && x <= 32.0 && z >= 1226.0 && z <= 1238.0) return true;
+            if (Math.abs(x - (-60)) <= 13.0 && Math.abs(z - 1480) <= 13.0) return true;
             if (ferryController && ferryController.currentPos) {
                 const fdx = x - ferryController.currentPos.x;
                 const fdz = z - ferryController.currentPos.z;
@@ -2877,6 +3294,10 @@
         }
 
         function getZoneName(x, z) {
+            if (Math.hypot(x - (-60), z - 1480) < 48) return "HIGH TIDE OCEAN RIG";
+            if (Math.hypot(x - 2020, z - 510) < 55) return "CYBERTRONIAN ANCIENT RUINS";
+            if (Math.hypot(x - 758, z - (-775)) < 55) return "SKY ARRAY SUMMIT LOOKOUT";
+            if (Math.hypot(x - (-95), z - 1145) < 45) return "HARBOR RECLAMATION BERTH";
             if (Math.hypot(x - 1802, z - 306) < 45) return "WAYWARD SCENIC PIER";
             if (ferryController && ferryController.currentPos && Math.hypot(x - ferryController.currentPos.x, z - ferryController.currentPos.z) < 32) return "SOUTH HARBOR FERRY";
             if (Math.hypot(x - 1960, z - 540) < 320) return "WAYWARD ISLAND";
@@ -8579,6 +9000,81 @@
                 vehActionLabel: 'RESCUE WINCH',
                 dinoActionIcon: 'WING_GALE',
                 dinoActionLabel: 'WING GALE'
+            },
+            OPTIMUS: {
+                name: 'OPTIMUS PRIME',
+                role: 'Autobot Supreme Commander',
+                voicePitch: 0.72,
+                vehName: 'HEAVY CAB TRUCK',
+                dinoName: 'T-REX PRIMAL',
+                colorClass: 'text-red-400',
+                dotClass: 'bg-red-600',
+                botActionIcon: 'MATRIX_PULSE',
+                botActionLabel: 'MATRIX PULSE',
+                vehActionIcon: 'CAB_BOOST',
+                vehActionLabel: 'CAB BOOST',
+                dinoActionIcon: 'PRIMAL_ROAR',
+                dinoActionLabel: 'PRIMAL ROAR'
+            },
+            BUMBLEBEE: {
+                name: 'BUMBLEBEE',
+                role: 'Autobot Scout & Dinobot Ally',
+                voicePitch: 1.14,
+                vehName: 'SPORTS SPEEDSTER',
+                dinoName: 'VELOCIRAPTOR',
+                colorClass: 'text-yellow-300',
+                dotClass: 'bg-yellow-400',
+                botActionIcon: 'STINGER_PULSE',
+                botActionLabel: 'STINGER PULSE',
+                vehActionIcon: 'NITRO_TURBO',
+                vehActionLabel: 'NITRO TURBO',
+                dinoActionIcon: 'RAPTOR_LEAP',
+                dinoActionLabel: 'RAPTOR LEAP'
+            },
+            BLURR: {
+                name: 'BLURR',
+                role: 'Hyper-Speed Rescue Specialist',
+                voicePitch: 1.28,
+                vehName: 'CYBER-SPEEDSTER',
+                dinoName: 'HYPER-RAPTOR',
+                colorClass: 'text-cyan-300',
+                dotClass: 'bg-cyan-400',
+                botActionIcon: 'HYPER_BLUR',
+                botActionLabel: 'HYPER BLUR',
+                vehActionIcon: 'SUPERSONIC_DASH',
+                vehActionLabel: 'SUPERSONIC DASH',
+                dinoActionIcon: 'BLITZ_POUNCE',
+                dinoActionLabel: 'BLITZ POUNCE'
+            },
+            SALVAGE: {
+                name: 'SALVAGE',
+                role: 'Reclamation & Recycling Hero',
+                voicePitch: 0.82,
+                vehName: 'RECYCLING TRUCK',
+                dinoName: 'ANKYLOSAURUS',
+                colorClass: 'text-emerald-400',
+                dotClass: 'bg-emerald-500',
+                botActionIcon: 'SCRAP_MAGNET',
+                botActionLabel: 'SCRAP MAGNET',
+                vehActionIcon: 'COMPACTOR_SMASH',
+                vehActionLabel: 'COMPACTOR SMASH',
+                dinoActionIcon: 'CLUB_TAIL_SLAM',
+                dinoActionLabel: 'CLUB TAIL SLAM'
+            },
+            HIGHTIDE: {
+                name: 'HIGH TIDE',
+                role: 'Deep-Ocean Rescue Commander',
+                voicePitch: 0.76,
+                vehName: 'OFFSHORE RESCUE VESSEL',
+                dinoName: 'PLESIOSAUR',
+                colorClass: 'text-blue-400',
+                dotClass: 'bg-blue-600',
+                botActionIcon: 'TIDAL_SURGE',
+                botActionLabel: 'TIDAL SURGE',
+                vehActionIcon: 'HYDRO_TORPEDO',
+                vehActionLabel: 'HYDRO TORPEDO',
+                dinoActionIcon: 'WHIRLPOOL_VORTEX',
+                dinoActionLabel: 'WHIRLPOOL VORTEX'
             }
         };
 
@@ -9383,6 +9879,7 @@
             totalStuntsCompleted: 0,
             discoveredLandmarks: [],
             collectedCrests: [],
+            discoveredAllies: [],
             autoSpawnEmergencies: true,
             buddyBotType: 'HEATWAVE',
             weatherMode: 'SUNNY'
@@ -9408,7 +9905,8 @@
         function getHeroPoints(prog = progression) {
             const landmarkPts = (Array.isArray(prog.discoveredLandmarks) ? prog.discoveredLandmarks.length * 2 : 0);
             const crestPts = (Array.isArray(prog.collectedCrests) ? prog.collectedCrests.length * 5 : 0);
-            return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts;
+            const allyPts = (Array.isArray(prog.discoveredAllies) ? prog.discoveredAllies.length * 10 : 0);
+            return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts;
         }
 
         function getRescueStarRank(prog = progression) {
@@ -9455,6 +9953,9 @@
                         }
                         if (Array.isArray(parsed.collectedCrests)) {
                             progression.collectedCrests = parsed.collectedCrests.filter(x => typeof x === 'string' || typeof x === 'number');
+                        }
+                        if (Array.isArray(parsed.discoveredAllies)) {
+                            progression.discoveredAllies = parsed.discoveredAllies.filter(x => typeof x === 'string');
                         }
                         if (typeof parsed.autoSpawnEmergencies === 'boolean') {
                             progression.autoSpawnEmergencies = parsed.autoSpawnEmergencies;
@@ -9516,11 +10017,17 @@
             const totalEnEl = document.getElementById('stat-total-energon');
             const totalLandmarksEl = document.getElementById('stat-total-landmarks');
             const totalCrestsEl = document.getElementById('stat-total-crests');
+            const totalAlliesEl = document.getElementById('stat-total-allies');
             if (totalEmEl) totalEmEl.textContent = String(progression.totalEmergenciesResolved);
             if (totalCitEl) totalCitEl.textContent = String(progression.totalCitizensRescued);
             if (totalEnEl) totalEnEl.textContent = String(progression.totalEnergonCubes);
             if (totalLandmarksEl) totalLandmarksEl.textContent = String(Array.isArray(progression.discoveredLandmarks) ? progression.discoveredLandmarks.length : 0);
             if (totalCrestsEl) totalCrestsEl.textContent = String(Array.isArray(progression.collectedCrests) ? progression.collectedCrests.length : 0);
+            if (totalAlliesEl) {
+                const count = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies.length : 0;
+                totalAlliesEl.textContent = String(count);
+                totalAlliesEl.className = count === 5 ? 'text-emerald-400 font-extrabold' : 'text-purple-300 font-bold';
+            }
 
             const rankInfo = getRescueStarRank(progression);
             const rankBadgeEl = document.getElementById('stat-rank-badge');
@@ -9552,6 +10059,8 @@
                         <span class="flex items-center gap-1">${SVG_ICONS.PEOPLE} <span>Citizens: ${progression.totalCitizensRescued}</span></span>
                         <span class="text-slate-500">•</span>
                         <span class="flex items-center gap-1">${SVG_ICONS.BOLT} <span>Energon: ${progression.totalEnergonCubes}</span></span>
+                        <span class="text-slate-500">•</span>
+                        <span class="flex items-center gap-1">${SVG_ICONS.STAR} <span>Allies: ${Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies.length : 0}/5</span></span>
                     </div>
                 `;
             }
@@ -9616,7 +10125,14 @@
             'CRANE': '🏗️',
             'TESTING YARD': '🧪',
             'BOUNCE': '🦘',
-            'TARGET': '🎯'
+            'TARGET': '🎯',
+            'OPTIMUS PRIME': '🚛',
+            'OPTIMUS': '🚛',
+            'BUMBLEBEE': '🏎️',
+            'BLURR': '🏎️💨',
+            'SALVAGE': '🚛♻️',
+            'HIGH TIDE': '🚢⚓',
+            'SERVO': '🤖🐶'
         };
 
         function getSpeakerAvatar(name, role) {
@@ -9645,6 +10161,14 @@
             for (let i = 0; i < humanNPCs.length; i++) {
                 if (humanNPCs[i].name && humanNPCs[i].name.toUpperCase() === upper) {
                     return humanNPCs[i];
+                }
+            }
+            if (typeof visitingAutobots !== 'undefined' && visitingAutobots) {
+                for (let k = 0; k < visitingAutobots.length; k++) {
+                    const ally = visitingAutobots[k];
+                    if (ally.name && (ally.name.toUpperCase() === upper || upper.includes(ally.id))) {
+                        return ally.root || ally;
+                    }
                 }
             }
             for (let b = 0; b < beacons.length; b++) {
@@ -11126,12 +11650,1238 @@
             }
         }
 
+        /***********************************************************************
+         * 8A. VISITING AUTOBOT ALLIES (OPTIMUS PRIME, BUMBLEBEE, BLURR, SALVAGE, HIGH TIDE + SERVO)
+         ***********************************************************************/
+        // Cel-Shaded Materials for Visiting Autobot Characters
+        const matOptimusRed = new THREE.MeshToonMaterial({ color: 0xdc2626, gradientMap: toonGrad4 });
+        const matOptimusBlue = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad4 });
+        const matOptimusGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
+        const matOptimusFace = new THREE.MeshBasicMaterial({ map: texFaceOptimus });
+
+        const matBeeYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad4 });
+        const matBeeBlack = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
+        const matBeeFace = new THREE.MeshBasicMaterial({ map: texFaceBumblebee });
+        const matBeeGlowCyan = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+
+        const matBlurrCyan = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad4 });
+        const matBlurrBlue = new THREE.MeshToonMaterial({ color: 0x1e40af, gradientMap: toonGrad4 });
+        const matBlurrLime = new THREE.MeshToonMaterial({ color: 0x84cc16, gradientMap: toonGrad3 });
+        const matBlurrFace = new THREE.MeshBasicMaterial({ map: texFaceBlurr });
+
+        const matSalvageGreen = new THREE.MeshToonMaterial({ color: 0x15803d, gradientMap: toonGrad4 });
+        const matSalvageOrange = new THREE.MeshToonMaterial({ color: 0xea580c, gradientMap: toonGrad4 });
+        const matSalvageSteel = new THREE.MeshToonMaterial({ color: 0x475569, gradientMap: toonGrad3 });
+        const matSalvageYellow = new THREE.MeshToonMaterial({ color: 0xeab308, gradientMap: toonGrad3 });
+        const matSalvageFace = new THREE.MeshBasicMaterial({ map: texFaceSalvage });
+
+        const matHighTideNavy = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad4 });
+        const matHighTideWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
+        const matHighTideGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
+        const matHighTideBlue = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad4 });
+        const matHighTideFace = new THREE.MeshBasicMaterial({ map: texFaceHighTide });
+        const matOceanPlatformSteel = new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 });
+
+        function createAllyWheel(radius, width) {
+            const grp = new THREE.Group();
+            const tire = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius, radius, width, 14).rotateZ(Math.PI / 2),
+                matTire
+            );
+            const hub = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius * 0.52, radius * 0.52, width + 0.04, 10).rotateZ(Math.PI / 2),
+                matChrome
+            );
+            grp.add(tire, hub);
+            return grp;
+        }
+
+        // 1. OPTIMUS PRIME (Supreme Commander - Heavy Cab Truck Bot)
+        function buildOptimusPrimeModel() {
+            const root = new THREE.Group();
+            const torso = new THREE.Group();
+            root.add(torso);
+
+            // Red Heroic Torso
+            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.3, 1.8), matOptimusRed);
+            chest.position.y = 3.65;
+            chest.castShadow = true;
+            torso.add(chest);
+
+            // Dual Windshields with Sun Visor
+            const visorCap = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.35, 0.7), matOptimusRed);
+            visorCap.position.set(0, 4.65, 0.75);
+            torso.add(visorCap);
+
+            [-0.7, 0.7].forEach(wx => {
+                const win = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.95, 0.15), matCabGlass);
+                win.position.set(wx, 4.05, 0.92);
+                win.userData.noOutline = true;
+                torso.add(win);
+            });
+
+            // 3 Yellow Roof Marker Lights
+            [-0.6, 0, 0.6].forEach(lx => {
+                const light = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.16, 0.2), matOptimusGold);
+                light.position.set(lx, 4.86, 0.65);
+                torso.add(light);
+            });
+
+            // Chrome Front Grille & Autobot Shield
+            const grille = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.0, 0.15), matGrille);
+            grille.position.set(0, 2.95, 0.92);
+            grille.userData.noOutline = true;
+            torso.add(grille);
+
+            const crest = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.72, 0.12), matEmblem);
+            crest.position.set(0, 3.75, 0.94);
+            crest.userData.noOutline = true;
+            torso.add(crest);
+
+            // Abdomen / Pelvis Block
+            const pelvis = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.7, 1.6), matOptimusRed);
+            pelvis.position.set(0, 2.2, 0);
+            torso.add(pelvis);
+
+            // Chrome Belt Tanks
+            [-1.15, 1.15].forEach(tx => {
+                const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 1.2, 10).rotateZ(Math.PI / 2), matChrome);
+                tank.position.set(tx, 2.2, 0);
+                torso.add(tank);
+            });
+
+            // Articulated Head (swivels to face player)
+            const head = new THREE.Group();
+            head.position.set(0, 4.95, 0);
+            root.add(head);
+
+            const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.35, 1.35, 1.25), matOptimusBlue);
+            helmet.position.y = 0.55;
+            head.add(helmet);
+
+            // Forehead Fin Crest
+            const headFin = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.75, 0.8), matOptimusBlue);
+            headFin.position.set(0, 1.45, 0.05);
+            head.add(headFin);
+
+            // Side Antennae / Ear Fins
+            [-0.75, 0.75].forEach(ax => {
+                const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.1, 8), matOptimusBlue);
+                antenna.position.set(ax, 0.85, 0);
+                head.add(antenna);
+            });
+
+            // Faceplate Mask with Optimus Face Texture
+            const facePlate = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 1.05), matOptimusFace);
+            facePlate.position.set(0, 0.52, 0.64);
+            facePlate.userData.noOutline = true;
+            head.add(facePlate);
+
+            // Shoulder Smokestacks & Arms
+            [-1.9, 1.9].forEach(side => {
+                const armGroup = new THREE.Group();
+                armGroup.position.set(side, 3.9, 0);
+
+                const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.1, 1.2), matOptimusRed);
+                armGroup.add(shoulder);
+
+                // Chrome Smokestack
+                const stack = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 2.6, 10), matChrome);
+                stack.position.set(side > 0 ? 0.35 : -0.35, 1.2, -0.2);
+                armGroup.add(stack);
+
+                // Blue Bicep & Forearm
+                const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.7), matChrome);
+                bicep.position.set(0, -0.85, 0);
+                const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.25, 0.85), matOptimusBlue);
+                forearm.position.set(0, -1.75, 0.1);
+                armGroup.add(bicep, forearm);
+
+                torso.add(armGroup);
+            });
+
+            // Heavy Blue Legs & Boots
+            [-0.72, 0.72].forEach(side => {
+                const leg = new THREE.Group();
+                leg.position.set(side, 0, 0);
+
+                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.78, 1.25, 0.78), matChrome);
+                thigh.position.set(0, 1.45, 0);
+
+                const shin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.55, 1.15), matOptimusBlue);
+                shin.position.set(0, 0.65, 0.05);
+
+                const kneeCap = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.42, 0.35), matChrome);
+                kneeCap.position.set(0, 1.2, 0.6);
+
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.6, 1.7), matOptimusBlue);
+                foot.position.set(0, 0.25, 0.3);
+
+                // Dual Calf Wheels
+                const w1 = createAllyWheel(0.55, 0.38);
+                w1.position.set(side > 0 ? 0.6 : -0.6, 0.8, -0.35);
+                const w2 = createAllyWheel(0.55, 0.38);
+                w2.position.set(side > 0 ? 0.6 : -0.6, 0.8, 0.35);
+
+                leg.add(thigh, shin, kneeCap, foot, w1, w2);
+                root.add(leg);
+            });
+
+            return { root, torso, head };
+        }
+
+        // 2. BUMBLEBEE (Autobot Scout with BOT MODE + VELOCIRAPTOR DINOBOT MODE)
+        function buildBumblebeeModel() {
+            const root = new THREE.Group();
+
+            // ==================== A. BOT MODE RIG ====================
+            const botRig = new THREE.Group();
+            root.add(botRig);
+
+            const botTorso = new THREE.Group();
+            botRig.add(botTorso);
+
+            // Yellow Sports Car Hood Chest
+            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.9, 1.6), matBeeYellow);
+            chest.position.y = 2.85;
+            chest.castShadow = true;
+            botTorso.add(chest);
+
+            // Black Center Racing Stripes
+            const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.92, 1.64), matBeeBlack);
+            stripe.position.y = 2.85;
+            botTorso.add(stripe);
+
+            // Dual Headlights
+            [-0.78, 0.78].forEach(hx => {
+                const hl = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.28, 0.15), matBeeGlowCyan);
+                hl.position.set(hx, 3.1, 0.82);
+                hl.userData.noOutline = true;
+                botTorso.add(hl);
+            });
+
+            // Flared Sports Car Door Wings on Upper Back
+            [-1.25, 1.25].forEach(dx => {
+                const wing = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.6, 0.25), matBeeYellow);
+                wing.position.set(dx, 3.1, -0.85);
+                wing.rotation.y = dx > 0 ? -0.35 : 0.35;
+                wing.rotation.z = dx > 0 ? -0.22 : 0.22;
+                botTorso.add(wing);
+            });
+
+            // Bot Head (Swivels)
+            const botHead = new THREE.Group();
+            botHead.position.set(0, 3.95, 0);
+            botRig.add(botHead);
+
+            const bHelmet = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 1.1), matBeeYellow);
+            bHelmet.position.y = 0.45;
+            botHead.add(bHelmet);
+
+            const bStripe = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.22, 1.12), matBeeBlack);
+            bStripe.position.y = 0.45;
+            botHead.add(bStripe);
+
+            // Curved Horn Antenna Crests
+            [-0.65, 0.65].forEach(side => {
+                const horn = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.65, 6), matBeeYellow);
+                horn.position.set(side, 1.15, -0.05);
+                horn.rotation.z = side > 0 ? -0.35 : 0.35;
+                botHead.add(horn);
+            });
+
+            const bFace = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.95), matBeeFace);
+            bFace.position.set(0, 0.42, 0.56);
+            bFace.userData.noOutline = true;
+            botHead.add(bFace);
+
+            // Bot Arms
+            [-1.5, 1.5].forEach(side => {
+                const arm = new THREE.Group();
+                arm.position.set(side, 3.0, 0);
+                const sWheel = createAllyWheel(0.42, 0.32);
+                sWheel.position.set(side > 0 ? 0.25 : -0.25, 0, 0);
+                const foreArm = new THREE.Mesh(new THREE.BoxGeometry(0.68, 1.15, 0.68), matBeeYellow);
+                foreArm.position.set(0, -0.9, 0.1);
+                arm.add(sWheel, foreArm);
+                botTorso.add(arm);
+            });
+
+            // Bot Legs
+            [-0.6, 0.6].forEach(side => {
+                const leg = new THREE.Group();
+                leg.position.set(side, 0, 0);
+                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.05, 0.62), matChrome);
+                thigh.position.set(0, 1.25, 0);
+                const shin = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.35, 0.95), matBeeYellow);
+                shin.position.set(0, 0.55, 0.05);
+                const knee = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.35, 0.25), matBeeBlack);
+                knee.position.set(0, 1.0, 0.52);
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.45, 1.35), matBeeYellow);
+                foot.position.set(0, 0.22, 0.25);
+                leg.add(thigh, shin, knee, foot);
+                botRig.add(leg);
+            });
+
+            // ==================== B. VELOCIRAPTOR DINOBOT MODE RIG ====================
+            // (Accurate to cartoon screenshot: articulated raptor skull, sharp teeth, sickle talons, tail)
+            const raptorRig = new THREE.Group();
+            raptorRig.visible = false;
+            root.add(raptorRig);
+
+            const raptorTorso = new THREE.Group();
+            raptorTorso.position.set(0, 1.8, 0);
+            raptorRig.add(raptorTorso);
+
+            // Muscular Raptor Body
+            const rBody = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.7, 2.8), matBeeYellow);
+            rBody.castShadow = true;
+            raptorTorso.add(rBody);
+
+            const rSpine = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 2.6), matBeeBlack);
+            rSpine.position.set(0, 0.95, 0);
+            raptorTorso.add(rSpine);
+
+            // Curved Raptor Neck & Articulated Head
+            const raptorNeck = new THREE.Group();
+            raptorNeck.position.set(0, 0.6, 1.3);
+            raptorTorso.add(raptorNeck);
+
+            const nSeg = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.4, 1.2), matBeeYellow);
+            nSeg.position.set(0, 0.5, 0.3);
+            nSeg.rotation.x = 0.35;
+            raptorNeck.add(nSeg);
+
+            const raptorHead = new THREE.Group();
+            raptorHead.position.set(0, 1.2, 0.8);
+            raptorNeck.add(raptorHead);
+
+            // Upper Raptor Skull
+            const skull = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 1.9), matBeeYellow);
+            skull.position.set(0, 0.2, 0.6);
+            raptorHead.add(skull);
+
+            // Raptor Snout Taper
+            const snout = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.85, 1.1), matBeeYellow);
+            snout.position.set(0, 0.1, 1.8);
+            raptorHead.add(snout);
+
+            // Glowing Cyan Raptor Eyes
+            [-0.72, 0.72].forEach(side => {
+                const eyeSocket = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 10).rotateZ(Math.PI / 2), matBeeBlack);
+                eyeSocket.position.set(side, 0.35, 0.6);
+                const eyePupil = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.16, 10).rotateZ(Math.PI / 2), matBeeGlowCyan);
+                eyePupil.position.set(side * 1.02, 0.35, 0.6);
+                eyePupil.userData.noOutline = true;
+                raptorHead.add(eyeSocket, eyePupil);
+            });
+
+            // Raptor Ear Horn Crests
+            [-0.65, 0.65].forEach(side => {
+                const hornCrest = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.45, 0.9), matBeeYellow);
+                hornCrest.position.set(side, 0.75, -0.15);
+                hornCrest.rotation.x = -0.35;
+                raptorHead.add(hornCrest);
+            });
+
+            // Articulated Lower Jaw with White Teeth
+            const raptorJaw = new THREE.Group();
+            raptorJaw.position.set(0, -0.35, 0.4);
+            raptorHead.add(raptorJaw);
+
+            const jawBone = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.45, 2.1), matChrome);
+            jawBone.position.set(0, -0.1, 0.95);
+            raptorJaw.add(jawBone);
+
+            // Sharp White Predatory Teeth Rows
+            [-0.52, 0.52].forEach(side => {
+                for (let t = 0; t < 4; t++) {
+                    const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.24, 4), matChrome);
+                    tooth.position.set(side, 0.18, 0.3 + t * 0.45);
+                    tooth.rotation.x = Math.PI;
+                    raptorJaw.add(tooth);
+                }
+            });
+
+            // Small Articulated Raptor Arms
+            const raptorLeftArm = new THREE.Group();
+            raptorLeftArm.position.set(-1.0, -0.2, 0.9);
+            const rArmMeshL = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.8, 0.32), matBeeYellow);
+            rArmMeshL.position.y = -0.35;
+            const rClawL = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 4), matChrome);
+            rClawL.position.set(0, -0.75, 0.15);
+            rClawL.rotation.x = 0.7;
+            raptorLeftArm.add(rArmMeshL, rClawL);
+
+            const raptorRightArm = new THREE.Group();
+            raptorRightArm.position.set(1.0, -0.2, 0.9);
+            const rArmMeshR = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.8, 0.32), matBeeYellow);
+            rArmMeshR.position.y = -0.35;
+            const rClawR = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 4), matChrome);
+            rClawR.position.set(0, -0.75, 0.15);
+            rClawR.rotation.x = 0.7;
+            raptorRightArm.add(rArmMeshR, rClawR);
+
+            raptorTorso.add(raptorLeftArm, raptorRightArm);
+
+            // Digitigrade Raptor Legs with Curved Sickle Claws!
+            [-0.95, 0.95].forEach(side => {
+                const leg = new THREE.Group();
+                leg.position.set(side, 0, -0.2);
+
+                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.45, 1.25), matBeeYellow);
+                thigh.position.set(0, -0.1, 0);
+                thigh.rotation.x = 0.35;
+
+                const knee = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.45, 0.4), matBeeBlack);
+                knee.position.set(0, -0.75, 0.5);
+
+                const hock = new THREE.Mesh(new THREE.BoxGeometry(0.65, 1.35, 0.65), matChrome);
+                hock.position.set(0, -1.15, -0.15);
+                hock.rotation.x = -0.45;
+
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.4, 1.3), matChrome);
+                foot.position.set(0, -1.75, 0.35);
+
+                const sickleTalon = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.65, 4), matChrome);
+                sickleTalon.position.set(side > 0 ? -0.32 : 0.32, -1.5, 0.8);
+                sickleTalon.rotation.x = 1.1;
+
+                leg.add(thigh, knee, hock, foot, sickleTalon);
+                raptorTorso.add(leg);
+            });
+
+            // Articulated Segmented Raptor Tail
+            const raptorTail = new THREE.Group();
+            raptorTail.position.set(0, 0.3, -1.4);
+            raptorTorso.add(raptorTail);
+
+            let prevSeg = raptorTail;
+            for (let s = 0; s < 4; s++) {
+                const segGroup = new THREE.Group();
+                segGroup.position.set(0, 0, -0.85);
+                const sz = 1.1 - s * 0.22;
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(sz, sz * 0.85, 0.95), matBeeYellow);
+                mesh.position.set(0, 0, -0.42);
+                const spinePlate = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.8), matBeeBlack);
+                spinePlate.position.set(0, sz * 0.5, -0.42);
+                segGroup.add(mesh, spinePlate);
+                prevSeg.add(segGroup);
+                prevSeg = segGroup;
+            }
+
+            return {
+                root,
+                botRig,
+                botTorso,
+                botHead,
+                raptorRig,
+                raptorTorso,
+                raptorHead,
+                raptorJaw,
+                raptorTail,
+                raptorLeftArm,
+                raptorRightArm
+            };
+        }
+
+        // 3. BLURR (Hyper-Speed Race Car Bot)
+        function buildBlurrModel() {
+            const root = new THREE.Group();
+            const torso = new THREE.Group();
+            root.add(torso);
+
+            // Aerodynamic Cyan & Royal Blue Wedge Chest
+            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.85, 1.5), matBlurrCyan);
+            chest.position.y = 2.95;
+            chest.castShadow = true;
+            torso.add(chest);
+
+            const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.88, 1.54), matBlurrBlue);
+            stripe.position.y = 2.95;
+            torso.add(stripe);
+
+            const chevron = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.15), matBlurrLime);
+            chevron.position.set(0, 3.4, 0.8);
+            chevron.userData.noOutline = true;
+            torso.add(chevron);
+
+            // Dual Raised Rear Racing Wing Spoilers
+            [-1.15, 1.15].forEach(sx => {
+                const fin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.45, 0.95), matBlurrCyan);
+                fin.position.set(sx, 3.7, -0.8);
+                fin.rotation.x = -0.25;
+                torso.add(fin);
+            });
+
+            // Head with Iconic Swept-Back Center Fin
+            const head = new THREE.Group();
+            head.position.set(0, 4.05, 0);
+            root.add(head);
+
+            const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.15, 1.15), matBlurrCyan);
+            helmet.position.y = 0.48;
+            head.add(helmet);
+
+            const speedFin = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.25, 1.6), matBlurrBlue);
+            speedFin.position.set(0, 1.15, -0.3);
+            speedFin.rotation.x = -0.45;
+            head.add(speedFin);
+
+            const face = new THREE.Mesh(new THREE.PlaneGeometry(0.92, 0.92), matBlurrFace);
+            face.position.set(0, 0.46, 0.59);
+            face.userData.noOutline = true;
+            head.add(face);
+
+            // Arms with Aerodynamic Shoulders
+            [-1.4, 1.4].forEach(side => {
+                const arm = new THREE.Group();
+                arm.position.set(side, 3.2, 0);
+
+                const pod = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.85, 1.1), matBlurrCyan);
+                const armTube = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.2, 0.55), matBlurrBlue);
+                armTube.position.set(0, -0.85, 0);
+                arm.add(pod, armTube);
+                torso.add(arm);
+            });
+
+            // Streamlined Speedster Legs with Low-Profile Racing Wheels
+            [-0.58, 0.58].forEach(side => {
+                const leg = new THREE.Group();
+                leg.position.set(side, 0, 0);
+
+                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.15, 0.62), matChrome);
+                thigh.position.set(0, 1.35, 0);
+
+                const shin = new THREE.Mesh(new THREE.BoxGeometry(0.82, 1.45, 0.92), matBlurrBlue);
+                shin.position.set(0, 0.65, 0.05);
+
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.42, 1.4), matBlurrCyan);
+                foot.position.set(0, 0.22, 0.35);
+
+                const raceWheel = createAllyWheel(0.48, 0.26);
+                raceWheel.position.set(side > 0 ? 0.52 : -0.52, 0.75, -0.2);
+
+                leg.add(thigh, shin, foot, raceWheel);
+                root.add(leg);
+            });
+
+            return { root, torso, head };
+        }
+
+        // 4. SALVAGE (Heavy Recycling & Reclamation Truck Bot)
+        function buildSalvageModel() {
+            const root = new THREE.Group();
+            const torso = new THREE.Group();
+            root.add(torso);
+
+            // Broad Forest Green & Safety Orange Recycling Cab Chest
+            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.7, 2.2, 1.9), matSalvageGreen);
+            chest.position.y = 3.25;
+            chest.castShadow = true;
+            torso.add(chest);
+
+            const orangeBumper = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.75, 0.5), matSalvageOrange);
+            orangeBumper.position.set(0, 2.45, 0.95);
+            torso.add(orangeBumper);
+
+            // Dual Amber Cab Warning Beacons
+            [-0.85, 0.85].forEach(bx => {
+                const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.35, 8), matSalvageYellow);
+                beacon.position.set(bx, 4.45, 0.4);
+                torso.add(beacon);
+            });
+
+            // Heavy Recycling Hopper Backpack
+            const hopper = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.2, 1.4), matSalvageOrange);
+            hopper.position.set(0, 3.4, -1.2);
+            hopper.castShadow = true;
+            torso.add(hopper);
+
+            // Head with Massive Silver Underbite Jaw
+            const head = new THREE.Group();
+            head.position.set(0, 4.45, 0);
+            root.add(head);
+
+            const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.25, 1.25), matSalvageGreen);
+            helmet.position.y = 0.52;
+            head.add(helmet);
+
+            const visorCap = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.35, 0.5), matSalvageOrange);
+            visorCap.position.set(0, 1.05, 0.45);
+            head.add(visorCap);
+
+            // Massive Protruding Underbite Scoop Jaw
+            const underbite = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.55, 0.65), matSalvageSteel);
+            underbite.position.set(0, 0.22, 0.65);
+            head.add(underbite);
+
+            const face = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.0), matSalvageFace);
+            face.position.set(0, 0.52, 0.64);
+            face.userData.noOutline = true;
+            head.add(face);
+
+            // Loader Arms
+            [-1.75, 1.75].forEach(side => {
+                const arm = new THREE.Group();
+                arm.position.set(side, 3.4, 0);
+
+                const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.05, 1.15), matSalvageGreen);
+                const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.8, 0.68), matChrome);
+                bicep.position.set(0, -0.75, 0);
+                const loader = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.35, 0.9), matSalvageOrange);
+                loader.position.set(0, -1.65, 0.1);
+
+                arm.add(shoulder, bicep, loader);
+                torso.add(arm);
+            });
+
+            // Heavy Industrial Legs & Dual Truck Tires
+            [-0.72, 0.72].forEach(side => {
+                const leg = new THREE.Group();
+                leg.position.set(side, 0, 0);
+
+                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.25, 0.8), matSalvageSteel);
+                thigh.position.set(0, 1.35, 0);
+
+                const shin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.55, 1.15), matSalvageGreen);
+                shin.position.set(0, 0.65, 0.05);
+
+                const foot = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.55, 1.65), matSalvageSteel);
+                foot.position.set(0, 0.25, 0.3);
+
+                const w1 = createAllyWheel(0.55, 0.38);
+                w1.position.set(side > 0 ? 0.62 : -0.62, 0.8, -0.25);
+
+                leg.add(thigh, shin, foot, w1);
+                root.add(leg);
+            });
+
+            return { root, torso, head };
+        }
+
+        // 5. HIGH TIDE (Oceanic Rescue Commander) & COMPANION ROBOT PUP SERVO
+        function buildHighTideModel() {
+            const root = new THREE.Group();
+            const torso = new THREE.Group();
+            root.add(torso);
+
+            // Navy & Nautical White Bridge Chest
+            const chest = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.15, 1.8), matHighTideNavy);
+            chest.position.y = 3.45;
+            chest.castShadow = true;
+            torso.add(chest);
+
+            const whiteBib = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.5, 0.15), matHighTideWhite);
+            whiteBib.position.set(0, 3.45, 0.92);
+            torso.add(whiteBib);
+
+            // Brass-Rimmed Circular Bridge Portholes
+            [-0.45, 0.45].forEach(px => {
+                const porthole = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.12, 10).rotateX(Math.PI / 2), matHighTideGold);
+                porthole.position.set(px, 3.65, 1.0);
+                const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.14, 10).rotateX(Math.PI / 2), matCabGlass);
+                glass.position.set(px, 3.65, 1.0);
+                glass.userData.noOutline = true;
+                torso.add(porthole, glass);
+            });
+
+            // Shoulder Hydro-Ballast Pods with Dual Gold Rescue Propellers on the Back
+            const propellers = [];
+            [-1.75, 1.75].forEach(side => {
+                const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 2.4, 12).rotateX(Math.PI / 2), matHighTideWhite);
+                pod.position.set(side, 3.75, -0.4);
+                torso.add(pod);
+
+                const propGroup = new THREE.Group();
+                propGroup.position.set(side, 3.75, -1.65);
+                for (let b = 0; b < 3; b++) {
+                    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.08), matHighTideGold);
+                    blade.rotation.z = (b * Math.PI * 2) / 3;
+                    blade.position.y = 0.32;
+                    propGroup.add(blade);
+                }
+                torso.add(propGroup);
+                propellers.push(propGroup);
+            });
+
+            // Naval Officer Peaked Cap Helmet (Deep Navy + White Crown + Anchor Badge)
+            const head = new THREE.Group();
+            head.position.set(0, 4.65, 0);
+            root.add(head);
+
+            const helmet = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.25, 1.25), matHighTideNavy);
+            helmet.position.y = 0.52;
+            head.add(helmet);
+
+            const capCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.75, 0.45, 12), matHighTideWhite);
+            capCrown.position.set(0, 1.15, 0.1);
+            head.add(capCrown);
+
+            const capBrim = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.15, 0.55), matHighTideGold);
+            capBrim.position.set(0, 0.95, 0.65);
+            head.add(capBrim);
+
+            const face = new THREE.Mesh(new THREE.PlaneGeometry(0.96, 0.96), matHighTideFace);
+            face.position.set(0, 0.48, 0.64);
+            face.userData.noOutline = true;
+            head.add(face);
+
+            // Officer Sleeves & Deep-Dive Rescue Gauntlets
+            [-1.75, 1.75].forEach(side => {
+                const arm = new THREE.Group();
+                arm.position.set(side, 3.35, 0);
+
+                const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.95, 1.05), matHighTideWhite);
+                const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.25, 1.08), matHighTideGold);
+                cuff.position.y = -0.55;
+                const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.35, 0.85), matHighTideNavy);
+                forearm.position.set(0, -1.35, 0.05);
+
+                arm.add(shoulder, cuff, forearm);
+                torso.add(arm);
+            });
+
+            // Nautical Boots with Hydro-Stabilizer Fins
+            [-0.68, 0.68].forEach(side => {
+                const leg = new THREE.Group();
+                leg.position.set(side, 0, 0);
+
+                const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.25, 0.72), matHighTideWhite);
+                thigh.position.set(0, 1.45, 0);
+
+                const shin = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.55, 1.05), matHighTideNavy);
+                shin.position.set(0, 0.65, 0.05);
+
+                const boot = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.52, 1.65), matHighTideNavy);
+                boot.position.set(0, 0.25, 0.3);
+
+                const fin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.95, 0.65), matHighTideWhite);
+                fin.position.set(side > 0 ? 0.58 : -0.58, 0.65, -0.35);
+
+                leg.add(thigh, shin, boot, fin);
+                root.add(leg);
+            });
+
+            return { root, torso, head, propellers };
+        }
+
+        // SERVO (High Tide's Faithful Cyber-Dog Companion)
+        function buildServoPupModel() {
+            const root = new THREE.Group();
+
+            // Pup Body
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 1.45, 10).rotateX(Math.PI / 2), matHighTideWhite);
+            body.position.y = 0.85;
+            body.castShadow = true;
+            root.add(body);
+
+            // Blue Saddle Back
+            const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.25, 0.95), matHighTideNavy);
+            saddle.position.set(0, 1.38, 0);
+            root.add(saddle);
+
+            // Articulated Head
+            const head = new THREE.Group();
+            head.position.set(0, 1.25, 0.85);
+            root.add(head);
+
+            const skull = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.85, 0.85), matHighTideWhite);
+            skull.position.y = 0.35;
+            head.add(skull);
+
+            const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.42, 0.55), matHighTideWhite);
+            muzzle.position.set(0, 0.22, 0.58);
+            const nose = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.16, 0.12), matHighTideNavy);
+            nose.position.set(0, 0.35, 0.86);
+            head.add(muzzle, nose);
+
+            // Glowing Cyan Cyber Eye Visor
+            const eyeVisor = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.22, 0.12), matBeeGlowCyan);
+            eyeVisor.position.set(0, 0.48, 0.44);
+            eyeVisor.userData.noOutline = true;
+            head.add(eyeVisor);
+
+            // Floppy Navy Blue Cyber-Ears
+            const leftEar = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.65, 0.35), matHighTideNavy);
+            leftEar.position.set(-0.48, 0.45, -0.05);
+            leftEar.rotation.z = 0.3;
+            const rightEar = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.65, 0.35), matHighTideNavy);
+            rightEar.position.set(0.48, 0.45, -0.05);
+            rightEar.rotation.z = -0.3;
+            head.add(leftEar, rightEar);
+
+            // Golden Rescue Collar
+            const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.18, 10).rotateX(Math.PI / 2), matHighTideGold);
+            collar.position.set(0, 1.05, 0.65);
+            root.add(collar);
+
+            // 4 Cyber-Paws
+            [[-0.45, 0.45], [0.45, 0.45], [-0.45, -0.45], [0.45, -0.45]].forEach(([px, pz]) => {
+                const leg = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.65, 0.32), matHighTideNavy);
+                leg.position.set(px, 0.35, pz);
+                const paw = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.45), matChrome);
+                paw.position.set(px, 0.11, pz + 0.08);
+                root.add(leg, paw);
+            });
+
+            // Wagging Antenna Tail
+            const tail = new THREE.Group();
+            tail.position.set(0, 1.05, -0.75);
+            const tailStem = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.65, 8), matChrome);
+            tailStem.position.set(0, 0.25, -0.2);
+            tailStem.rotation.x = -0.75;
+            const tailBulb = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), matBeeGlowCyan);
+            tailBulb.position.set(0, 0.48, -0.42);
+            tailBulb.userData.noOutline = true;
+            tail.add(tailStem, tailBulb);
+            root.add(tail);
+
+            return { root, head, leftEar, rightEar, tail };
+        }
+
+        // =====================================================================
+        // VISITING AUTOBOTS REGISTRY & ENVIRONMENT INTEGRATION
+        // =====================================================================
+        const VISITING_AUTOBOTS_CONFIG = [
+            {
+                id: 'OPTIMUS',
+                name: 'OPTIMUS PRIME',
+                role: 'Autobot Supreme Commander',
+                voicePitch: 0.72,
+                badgeColor: '#dc2626',
+                x: 758,
+                y: 68.0,
+                z: -775,
+                rotY: -2.35,
+                dialogues: [
+                    "Greetings, Rescue Bots. Griffin Rock is safe in your capable hands. Freedom is the right of all sentient beings.",
+                    "Chief Burns and the Burns family have proven that teamwork between humans and Autobots is the key to true heroism.",
+                    "Stand tall, heroes. You embody the finest ideals of the Autobot Rescue Force. Roll to the rescue!"
+                ]
+            },
+            {
+                id: 'BUMBLEBEE',
+                name: 'BUMBLEBEE',
+                role: 'Autobot Scout & Dinobot Ally',
+                voicePitch: 1.14,
+                badgeColor: '#facc15',
+                x: 2020,
+                y: 18.62,
+                z: 510,
+                rotY: 1.8,
+                dialogues: [
+                    "Hey, partner! Awesome to see you! Check out my new Dinobot Raptor mode! Rescue Bots, ROAR!",
+                    "Griffin Rock is an amazing island. Don't worry, if you ever need high-speed backup on a rescue, I'm right here!",
+                    "Blades helped me tune my raptor roar! Remember: true heroes never back down! Let's save the day!"
+                ]
+            },
+            {
+                id: 'BLURR',
+                name: 'BLURR',
+                role: 'Hyper-Speed Rescue Specialist',
+                voicePitch: 1.28,
+                badgeColor: '#06b6d4',
+                x: -1180,
+                y: 5.2,
+                z: 84,
+                rotY: 1.57,
+                dialogues: [
+                    "Whoa-whoa-whoa! Did you see that radar speed trap?! Two hundred and fifty miles an hour and I wasn't even in top gear!",
+                    "Doc Greene said this speed strip has the lowest friction coefficient on the entire East Coast! You wanna race?!",
+                    "Emergency at the other side of Griffin Rock?! Just say the word, I'll be there before the sirens finish warming up!"
+                ]
+            },
+            {
+                id: 'SALVAGE',
+                name: 'SALVAGE',
+                role: 'Reclamation & Recycling Hero',
+                voicePitch: 0.82,
+                badgeColor: '#15803d',
+                x: -95,
+                y: 3.0,
+                z: 1145,
+                rotY: 0.25,
+                dialogues: [
+                    "One bot's scrap is another bot's treasure! I'm helping keep Griffin Rock's harbors and waterways spotless.",
+                    "Always remember: reuse, recycle, and rescue! Everything can be repaired with a little care and a good wrench.",
+                    "You're doing great out there, Rescue Bot. Every piece of debris cleared makes this island safer for everyone!"
+                ]
+            },
+            {
+                id: 'HIGHTIDE',
+                name: 'HIGH TIDE',
+                role: 'Deep-Ocean Rescue Commander',
+                voicePitch: 0.76,
+                badgeColor: '#1d4ed8',
+                x: -60,
+                y: 1.0,
+                z: 1480,
+                rotY: -1.2,
+                dialogues: [
+                    "Attention on deck, Rescue Bots! The ocean forgives no mistakes. Discipline and swift response save lives at sea!",
+                    "Servo and I run offshore deep-water patrol. If a tidal surge or marine storm hits South Harbor, we're ready!",
+                    "You've proven your mettle on land, bots. Keep that same steadfast resolve, and Griffin Rock will always stand strong!"
+                ]
+            }
+        ];
+
+        const visitingAutobots = [];
+
+        function toggleBumblebeeMorph(toRaptor = null) {
+            const bee = visitingAutobots.find(a => a.id === 'BUMBLEBEE');
+            if (!bee) return;
+            const nextState = (toRaptor !== null) ? toRaptor : !bee.isRaptor;
+            if (bee.isRaptor === nextState) return;
+
+            bee.isRaptor = nextState;
+            sfx.playTransform(!nextState);
+            if (nextState) {
+                sfx.playBabyDinoRoar();
+            }
+            spawnBurstParticles(bee.x, bee.y + 2.8, bee.z, 0xfacc15, 28, 1.8);
+            spawnSparkleGlints(bee.x, bee.y + 2.4, bee.z, 20);
+
+            if (bee.botRig) bee.botRig.visible = !bee.isRaptor;
+            if (bee.raptorRig) bee.raptorRig.visible = bee.isRaptor;
+
+            if (bee.isRaptor) {
+                showToast("🦖 DINOBOT RAPTOR MODE!", "Bumblebee shifted to Velociraptor Form!");
+                triggerNPCSpeech("Bumblebee", "Dinobot Raptor Ally", "RAWR! Check out my Raptor Mode! Ready to pounce on any hazard across Griffin Rock!", bee.root, true);
+            } else {
+                showToast("🏎️ AUTOBOT BOT MODE!", "Bumblebee transformed into Heroic Bot Form!");
+                triggerNPCSpeech("Bumblebee", "Autobot Scout", "Back in Bot Mode and ready to roll! Teamwork saves the day!", bee.root, true);
+            }
+        }
+
+        function discoverVisitingAutobot(ally) {
+            if (!Array.isArray(progression.discoveredAllies)) {
+                progression.discoveredAllies = [];
+            }
+            if (progression.discoveredAllies.includes(ally.id)) return;
+
+            progression.discoveredAllies.push(ally.id);
+            progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 50;
+            saveProgression();
+            syncProgressionHUD();
+
+            sfx.playRankUp();
+            spawnBurstParticles(ally.x, ally.y + 4.0, ally.z, 0xfacc15, 34, 2.2);
+            spawnSparkleGlints(ally.x, ally.y + 2.5, ally.z, 26);
+
+            showToast(`⭐ ALLY DISCOVERED: ${ally.name}!`, `+50 Energon & +10 Hero Pts! (${progression.discoveredAllies.length}/5 Allies Found)`);
+            triggerNPCSpeech(ally.name, ally.role, ally.dialogues[0], ally.root, true);
+
+            if (ally.id === 'BUMBLEBEE') {
+                setTimeout(() => {
+                    toggleBumblebeeMorph(true);
+                }, 1400);
+            }
+        }
+
+        function initVisitingAutobots() {
+            if (!Array.isArray(progression.discoveredAllies)) {
+                progression.discoveredAllies = [];
+            }
+
+            VISITING_AUTOBOTS_CONFIG.forEach(cfg => {
+                const grp = new THREE.Group();
+                grp.position.set(cfg.x, cfg.y, cfg.z);
+                grp.rotation.y = cfg.rotY;
+
+                let charModel = null;
+                let servoModel = null;
+                let holoGlobe = null;
+
+                if (cfg.id === 'OPTIMUS') {
+                    charModel = buildOptimusPrimeModel();
+                    applyCartoonInkOutlines(charModel.root, 1.045, true);
+                    grp.add(charModel.root);
+
+                    // Cybertronian Summit Telemetry Plinth with Spinning Holographic Sphere
+                    const plinth = new THREE.Mesh(
+                        new THREE.CylinderGeometry(4.2, 4.8, 1.2, 8),
+                        new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 })
+                    );
+                    plinth.position.y = -0.55;
+                    const runeRing = new THREE.Mesh(
+                        new THREE.TorusGeometry(3.6, 0.12, 8, 24),
+                        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+                    );
+                    runeRing.rotation.x = Math.PI / 2;
+                    runeRing.position.y = 0.08;
+                    runeRing.userData.noOutline = true;
+
+                    // Holographic Earth / Griffin Rock Projector
+                    const holoProjector = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 0.4, 12), matChrome);
+                    holoProjector.position.set(0, 0.22, 2.8);
+                    holoGlobe = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.75, 12, 12),
+                        new THREE.MeshBasicMaterial({ color: 0x38bdf8, wireframe: true, transparent: true, opacity: 0.65 })
+                    );
+                    holoGlobe.position.set(0, 1.45, 2.8);
+                    holoGlobe.userData.noOutline = true;
+                    plinth.add(runeRing, holoProjector, holoGlobe);
+                    grp.add(plinth);
+
+                } else if (cfg.id === 'BUMBLEBEE') {
+                    charModel = buildBumblebeeModel();
+                    applyCartoonInkOutlines(charModel.botRig, 1.05, true);
+                    applyCartoonInkOutlines(charModel.raptorRig, 1.05, true);
+                    grp.add(charModel.root);
+
+                    // Wayward Island Ancient Cybertronian Ruins Dais
+                    const dais = new THREE.Mesh(
+                        new THREE.CylinderGeometry(4.0, 4.5, 0.9, 10),
+                        new THREE.MeshToonMaterial({ color: 0x475569, gradientMap: toonGrad3 })
+                    );
+                    dais.position.y = -0.45;
+                    const energonPillars = new THREE.Group();
+                    [-2.6, 2.6].forEach(px => {
+                        const crystal = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.45, 2.2, 5),
+                            new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85 })
+                        );
+                        crystal.position.set(px, 1.1, 0);
+                        crystal.userData.noOutline = true;
+                        energonPillars.add(crystal);
+                    });
+                    dais.add(energonPillars);
+                    grp.add(dais);
+
+                } else if (cfg.id === 'BLURR') {
+                    charModel = buildBlurrModel();
+                    applyCartoonInkOutlines(charModel.root, 1.05, true);
+                    grp.add(charModel.root);
+
+                    // Testing Yard Speed Strip Staging Pad & Telemetry Radar Tower
+                    const speedPad = new THREE.Mesh(
+                        new THREE.BoxGeometry(6.5, 0.35, 9.5),
+                        new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 })
+                    );
+                    speedPad.position.y = -0.15;
+                    const startLine = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.05, 0.6), matVisorGold);
+                    startLine.position.set(0, 0.2, 3.8);
+                    startLine.userData.noOutline = true;
+
+                    // Telemetry Tower with Warning Lights
+                    const tower = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5.5, 0.5), matChrome);
+                    tower.position.set(3.4, 2.6, -1.5);
+                    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), matBeeGlowCyan);
+                    beacon.position.set(3.4, 5.5, -1.5);
+                    beacon.userData.noOutline = true;
+                    speedPad.add(startLine, tower, beacon);
+                    grp.add(speedPad);
+
+                } else if (cfg.id === 'SALVAGE') {
+                    charModel = buildSalvageModel();
+                    applyCartoonInkOutlines(charModel.root, 1.045, true);
+                    grp.add(charModel.root);
+
+                    // Harbor Reclamation Berth Props: Stacked Containers & Scrap Hoppers
+                    const berthProps = new THREE.Group();
+                    const container1 = new THREE.Mesh(
+                        new THREE.BoxGeometry(3.6, 2.8, 7.5),
+                        new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad3 })
+                    );
+                    container1.position.set(4.2, 1.4, -0.5);
+                    container1.castShadow = true;
+
+                    const container2 = new THREE.Mesh(
+                        new THREE.BoxGeometry(3.4, 2.6, 6.8),
+                        new THREE.MeshToonMaterial({ color: 0x15803d, gradientMap: toonGrad3 })
+                    );
+                    container2.position.set(-4.5, 1.3, 1.2);
+                    container2.castShadow = true;
+
+                    const scrapBin = new THREE.Mesh(
+                        new THREE.BoxGeometry(2.4, 1.6, 2.4),
+                        new THREE.MeshToonMaterial({ color: 0x78716c, gradientMap: toonGrad3 })
+                    );
+                    scrapBin.position.set(3.8, 0.8, 4.2);
+
+                    berthProps.add(container1, container2, scrapBin);
+                    grp.add(berthProps);
+
+                } else if (cfg.id === 'HIGHTIDE') {
+                    charModel = buildHighTideModel();
+                    applyCartoonInkOutlines(charModel.root, 1.045, true);
+                    grp.add(charModel.root);
+
+                    // Faithful Companion Pup Servo
+                    servoModel = buildServoPupModel();
+                    applyCartoonInkOutlines(servoModel.root, 1.06, true);
+                    servoModel.root.position.set(3.2, 0, 1.2);
+                    grp.add(servoModel.root);
+
+                    // Offshore Marine Rig Training Platform in South Harbor Bay
+                    // 24m x 24m floating platform with helipad, safety rails, lifebuoys & marine beacons
+                    const platform = new THREE.Group();
+                    platform.position.y = -0.55;
+
+                    const deck = new THREE.Mesh(new THREE.BoxGeometry(24, 1.2, 24), matOceanPlatformSteel);
+                    deck.castShadow = true;
+                    platform.add(deck);
+
+                    // Helipad Target Marking on Rig
+                    const heliPadMesh = new THREE.Mesh(
+                        new THREE.BoxGeometry(14, 0.08, 14),
+                        new THREE.MeshBasicMaterial({ map: texHelipad })
+                    );
+                    heliPadMesh.position.y = 0.62;
+                    heliPadMesh.userData.noOutline = true;
+                    platform.add(heliPadMesh);
+
+                    // Yellow Perimeter Safety Rails & Marine Light Pylons
+                    const railMat = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
+                    [[-11.5, -11.5], [11.5, -11.5], [-11.5, 11.5], [11.5, 11.5]].forEach(([cx, cz], idx) => {
+                        const pylon = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 3.2, 8), matChrome);
+                        pylon.position.set(cx, 1.6, cz);
+                        const beaconMat = new THREE.MeshBasicMaterial({ color: idx % 2 === 0 ? 0x22c55e : 0xef4444 });
+                        const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 8), beaconMat);
+                        beacon.position.set(cx, 3.4, cz);
+                        beacon.userData.noOutline = true;
+                        platform.add(pylon, beacon);
+                    });
+
+                    // Perimeter Handrail Tubes
+                    [[-11.6, 0, 0, 23.2], [11.6, 0, 0, 23.2], [0, 0, -11.6, 23.2], [0, 0, 11.6, 23.2]].forEach(([rx, ry, rz, len], idx) => {
+                        const railTube = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.12, 0.12, len, 8).rotateZ(idx >= 2 ? Math.PI / 2 : 0).rotateX(idx < 2 ? Math.PI / 2 : 0),
+                            railMat
+                        );
+                        railTube.position.set(rx, 1.8, rz);
+                        platform.add(railTube);
+                    });
+
+                    grp.add(platform);
+                }
+
+                scene.add(grp);
+                registerCullableObject(grp, cfg.x, cfg.y, cfg.z, 36);
+
+                visitingAutobots.push({
+                    id: cfg.id,
+                    name: cfg.name,
+                    role: cfg.role,
+                    voicePitch: cfg.voicePitch,
+                    badgeColor: cfg.badgeColor,
+                    x: cfg.x,
+                    y: cfg.y,
+                    z: cfg.z,
+                    rotY: cfg.rotY,
+                    dialogues: cfg.dialogues,
+                    root: grp,
+                    torso: charModel ? (charModel.torso || charModel.botTorso) : null,
+                    head: charModel ? (charModel.head || charModel.botHead) : null,
+                    baseTorsoY: charModel ? ((charModel.torso || charModel.botTorso).position.y) : 0,
+                    phase: Math.random() * Math.PI * 2,
+                    botRig: charModel ? charModel.botRig : null,
+                    raptorRig: charModel ? charModel.raptorRig : null,
+                    raptorHead: charModel ? charModel.raptorHead : null,
+                    raptorJaw: charModel ? charModel.raptorJaw : null,
+                    raptorTail: charModel ? charModel.raptorTail : null,
+                    raptorLeftArm: charModel ? charModel.raptorLeftArm : null,
+                    raptorRightArm: charModel ? charModel.raptorRightArm : null,
+                    isRaptor: false,
+                    propellers: charModel ? charModel.propellers : null,
+                    servo: servoModel,
+                    holoGlobe,
+                    lastSpeechTime: 0
+                });
+            });
+        }
+
+        function updateVisitingAutobots(dt, now) {
+            const nowSec = now * 0.001;
+            if (!visitingAutobots || visitingAutobots.length === 0) return;
+
+            for (let i = 0; i < visitingAutobots.length; i++) {
+                const ally = visitingAutobots[i];
+
+                // 1. Idle Breathing Animation
+                const breath = Math.sin(nowSec * 2.5 + ally.phase) * 0.04;
+                if (ally.torso) {
+                    ally.torso.position.y = ally.baseTorsoY + breath;
+                }
+
+                // 2. Head Tracking towards Player (< 35m)
+                const dx = player.pos.x - ally.x;
+                const dz = player.pos.z - ally.z;
+                const dist = Math.hypot(dx, dz);
+
+                const activeHead = ally.isRaptor ? ally.raptorHead : ally.head;
+                if (activeHead && dist < 35.0) {
+                    const targetAngle = Math.atan2(dx, dz) - ally.rotY;
+                    const clampedAngle = THREE.MathUtils.clamp(targetAngle, -1.2, 1.2);
+                    activeHead.rotation.y = THREE.MathUtils.lerp(activeHead.rotation.y, clampedAngle, dt * 4.0);
+                } else if (activeHead) {
+                    activeHead.rotation.y = THREE.MathUtils.lerp(activeHead.rotation.y, 0, dt * 2.0);
+                }
+
+                // 3. Character Specific Idles
+                if (ally.id === 'OPTIMUS') {
+                    if (ally.holoGlobe) {
+                        ally.holoGlobe.rotation.y += dt * 0.75;
+                        ally.holoGlobe.rotation.x = Math.sin(nowSec * 1.5) * 0.15;
+                    }
+                } else if (ally.id === 'BUMBLEBEE') {
+                    if (ally.isRaptor) {
+                        if (ally.raptorTail) {
+                            ally.raptorTail.rotation.y = Math.sin(nowSec * 4.5) * 0.28;
+                            ally.raptorTail.rotation.z = Math.sin(nowSec * 3.0) * 0.12;
+                        }
+                        if (ally.raptorJaw) {
+                            ally.raptorJaw.rotation.x = Math.max(0, Math.sin(nowSec * 2.2)) * 0.22;
+                        }
+                        if (ally.raptorLeftArm && ally.raptorRightArm) {
+                            ally.raptorLeftArm.rotation.x = -0.3 + Math.sin(nowSec * 4.5) * 0.16;
+                            ally.raptorRightArm.rotation.x = -0.3 - Math.sin(nowSec * 4.5) * 0.16;
+                        }
+                    }
+                } else if (ally.id === 'HIGHTIDE') {
+                    if (ally.propellers) {
+                        ally.propellers.forEach(p => {
+                            p.rotation.z += dt * 3.5;
+                        });
+                    }
+                    if (ally.servo) {
+                        if (ally.servo.tail) {
+                            ally.servo.tail.rotation.y = Math.sin(nowSec * 12.0) * 0.45;
+                        }
+                        if (ally.servo.leftEar && ally.servo.rightEar) {
+                            const bounce = Math.sin(nowSec * 6.0) * 0.18;
+                            ally.servo.leftEar.rotation.z = 0.3 + bounce;
+                            ally.servo.rightEar.rotation.z = -0.3 - bounce;
+                        }
+                        if (ally.servo.head && dist < 25.0) {
+                            const sdx = player.pos.x - (ally.x + 3.2);
+                            const sdz = player.pos.z - (ally.z + 1.2);
+                            ally.servo.head.rotation.y = Math.atan2(sdx, sdz) - ally.rotY;
+                        }
+                    }
+                }
+
+                // 4. Proximity Discovery & Voiced Dialogue
+                const isDiscovered = Array.isArray(progression.discoveredAllies) && progression.discoveredAllies.includes(ally.id);
+                if (!isDiscovered && dist < 16.0) {
+                    discoverVisitingAutobot(ally);
+                } else if (isDiscovered && dist < 10.0 && (nowSec - ally.lastSpeechTime > 14.0)) {
+                    ally.lastSpeechTime = nowSec;
+                    const randomDialogue = ally.dialogues[Math.floor(Math.random() * ally.dialogues.length)];
+                    triggerNPCSpeech(ally.name, ally.role, randomDialogue, ally.root, false);
+                }
+            }
+        }
+
         loadProgression();
         buildHazardSites();
         buildEnergonCubes();
         initGoldenCrests();
         initInteractiveRoadProps();
         initEmergentRescues();
+        initVisitingAutobots();
+
         const savedWeatherIdx = WEATHER_MODES.findIndex(m => m.id === progression.weatherMode);
         applyWeatherMode(savedWeatherIdx !== -1 ? savedWeatherIdx : 0, false);
 
@@ -12607,6 +14357,12 @@
             if (e.code === 'KeyT' && !e.repeat) {
                 applyWeatherMode(currentWeatherIdx + 1, true);
             }
+            if (e.code === 'KeyR' && !e.repeat) {
+                const bee = (typeof visitingAutobots !== 'undefined') ? visitingAutobots.find(a => a.id === 'BUMBLEBEE') : null;
+                if (bee && Math.hypot(player.pos.x - bee.x, player.pos.z - bee.z) < 32) {
+                    toggleBumblebeeMorph();
+                }
+            }
         });
         window.addEventListener('keyup', e => {
             input.keys[e.code] = false;
@@ -12858,6 +14614,33 @@
             mCtx.strokeStyle = '#facc15';
             mCtx.lineWidth = 1.2;
             mCtx.stroke();
+
+            // Draw Discovered & Hidden Visiting Autobots on Minimap (Autobot Shield Stars)
+            if (typeof visitingAutobots !== 'undefined') {
+                for (let i = 0; i < visitingAutobots.length; i++) {
+                    const ally = visitingAutobots[i];
+                    const isDiscovered = Array.isArray(progression.discoveredAllies) && progression.discoveredAllies.includes(ally.id);
+                    const ax = cx + ally.x * mapScale;
+                    const az = cy + ally.z * mapScale;
+
+                    if (isDiscovered) {
+                        mCtx.fillStyle = ally.badgeColor || '#a855f7';
+                        mCtx.beginPath();
+                        mCtx.arc(ax, az, 4.2, 0, Math.PI * 2);
+                        mCtx.fill();
+                        mCtx.strokeStyle = '#ffffff';
+                        mCtx.lineWidth = 1.2;
+                        mCtx.stroke();
+                    } else {
+                        // Mystery glowing star for undiscovered allies
+                        const pulse = 0.45 + Math.sin(performance.now() * 0.005 + i) * 0.35;
+                        mCtx.fillStyle = `rgba(168, 85, 247, ${pulse})`;
+                        mCtx.beginPath();
+                        mCtx.arc(ax, az, 3.2, 0, Math.PI * 2);
+                        mCtx.fill();
+                    }
+                }
+            }
 
             // Draw Active Long-Distance Waypoint on Minimap
             if (player.hasWaypoint) {
@@ -14354,6 +16137,7 @@
             updateGoldenCrests(dt, now);
             updateInteractiveRoadProps(dt);
             updateEmergentRescues(dt, now);
+            updateVisitingAutobots(dt, now);
             updateLandmarkDiscovery(player.pos.x, player.pos.z);
             updateAllBotTransforms(dt, now);
             updateLivingWorldNPCs(dt, now);
