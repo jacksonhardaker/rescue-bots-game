@@ -111,8 +111,36 @@
 
         /* STANDALONE PRODUCTION CSS (Replaces external Tailwind CDN with zero runtime overhead) */
         .flex { display: flex; }
+        .flex-1 { flex: 1 1 0%; }
         .flex-col { flex-direction: column; }
         .flex-wrap { flex-wrap: wrap; }
+
+        /* Griffin Rock Emergency Progress Pips */
+        .mission-pip {
+            height: 9px;
+            flex: 1 1 0%;
+            min-width: 0;
+            border-radius: 9999px;
+            transition: all 0.35s ease;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25);
+        }
+        .mission-pip-fire {
+            background: linear-gradient(180deg, #fb923c 0%, #ea580c 100%);
+            border-color: rgba(254, 215, 170, 0.7);
+            box-shadow: 0 0 6px rgba(249, 115, 22, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+        }
+        .mission-pip-hazard {
+            background: linear-gradient(180deg, #fb7185 0%, #e11d48 100%);
+            border-color: rgba(254, 205, 211, 0.7);
+            box-shadow: 0 0 6px rgba(244, 63, 94, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+        }
+        .mission-pip-resolved {
+            background: linear-gradient(180deg, #a3e635 0%, #16a34a 100%);
+            border-color: #ffffff;
+            box-shadow: 0 0 10px rgba(163, 230, 53, 0.9), inset 0 1px 2px #ffffff;
+        }
         .items-center { align-items: center; }
         .items-start { align-items: flex-start; }
         .items-end { align-items: flex-end; }
@@ -497,8 +525,8 @@
                     <div class="flex items-center justify-between">
                         <span class="text-xs sm:text-sm font-bold text-white" id="mission-status-text">Emergencies Resolved: 0 / 8</span>
                     </div>
-                    <!-- 8 Emergency Pip Indicators -->
-                    <div class="flex items-center gap-1 mt-0.5" id="beacon-pips"></div>
+                    <!-- 8 Emergency Pip Indicators (Spans full width of HUD card) -->
+                    <div class="flex items-center gap-1.5 mt-1 w-full" id="beacon-pips"></div>
                     <div id="nearest-hazard-hint" class="text-[10px] sm:text-[11px] text-amber-300 truncate mt-0.5">
                         Nearest: Scanning Island...
                     </div>
@@ -2755,8 +2783,17 @@
                 return THREE.MathUtils.lerp(7.5, getTerrainHeight(x, z), blendT);
             }
             // South Harbor Pier Dock Deck
-            if (Math.abs(x) <= 16.0 && z >= 1180 && z <= 1278) {
+            if (Math.abs(x) <= 16.5 && z >= 1180 && z <= 1278) {
                 return 3.4;
+            }
+            // South Harbor Ferry Boarding Bridge Ramp & Pedestrian Side Gangway
+            if (x >= 14.5 && x <= 38.0 && z >= 1202.0 && z <= 1220.0) {
+                const t = Math.max(0, Math.min(1, (x - 15.0) / 21.0));
+                return THREE.MathUtils.lerp(3.4, 4.8, t);
+            }
+            if (x >= 15.0 && x <= 32.0 && z >= 1226.0 && z <= 1238.0) {
+                const t = Math.max(0, Math.min(1, (x - 15.0) / 15.0));
+                return THREE.MathUtils.lerp(3.4, 4.8, t);
             }
             // Wayward Island Scenic Pier Deck over ocean channel
             const wPierAlong = (x - 1802) * -0.559 + (z - 306) * -0.829;
@@ -2768,14 +2805,23 @@
                 }
                 return 2.2;
             }
-            // Docked or Sailing Ferry Boat Deck
+            // Docked or Sailing Ferry Boat Deck (rotates precisely with boat heading)
             if (ferryController && ferryController.currentPos) {
                 const fdx = x - ferryController.currentPos.x;
                 const fdz = z - ferryController.currentPos.z;
-                if (Math.abs(fdx) <= 7.5 && Math.abs(fdz) <= 20.0) {
+                const cosR = Math.cos(-ferryController.currentRotY);
+                const sinR = Math.sin(-ferryController.currentRotY);
+                const lx = fdx * cosR - fdz * sinR;
+                const lz = fdx * sinR + fdz * cosR;
+                if (Math.abs(lx) <= 7.8 && Math.abs(lz) <= 20.5) {
                     return ferryController.currentPos.y + 5.0;
                 }
-            } else if (Math.abs(x - 36) <= 7.5 && z >= 1210 && z <= 1254) {
+                // Stern Boarding Ramp (unfolded when docked)
+                if (ferryController.state === 'DOCKED' && Math.abs(lx) <= 5.8 && lz >= -25.5 && lz < -18.0) {
+                    const rampT = (lz - (-25.5)) / 7.5;
+                    return ferryController.currentPos.y + THREE.MathUtils.lerp(3.8, 5.0, rampT);
+                }
+            } else if (Math.abs(x - 36) <= 7.8 && z >= 1210 && z <= 1254) {
                 return 5.0;
             }
             // Stunt Ramp Surfaces (allows vehicles & bots to smoothly drive and run up the ramp incline)
@@ -2818,6 +2864,15 @@
             const pierAlong = (x - 1802) * -0.559 + (z - 306) * -0.829;
             const pierAcross = (x - 1802) * 0.829 + (z - 306) * -0.559;
             if (pierAlong >= -32 && pierAlong <= 35 && Math.abs(pierAcross) <= (pierAlong > 21 ? 18.0 : 9.0)) return true;
+            // South Harbor Pier Deck, Boarding Bridge, and Ferry Deck
+            if (Math.abs(x) <= 16.5 && z >= 1180 && z <= 1278) return true;
+            if (x >= 14.0 && x <= 38.0 && z >= 1202.0 && z <= 1220.0) return true;
+            if (x >= 15.0 && x <= 32.0 && z >= 1226.0 && z <= 1238.0) return true;
+            if (ferryController && ferryController.currentPos) {
+                const fdx = x - ferryController.currentPos.x;
+                const fdz = z - ferryController.currentPos.z;
+                if (Math.hypot(fdx, fdz) <= 22.0) return true;
+            }
             return false;
         }
 
@@ -4640,23 +4695,26 @@
             state: 'DOCKED', // 'DOCKED', 'BOARDING', 'CRUISING', 'DOCKING'
             timeInState: 0,
             cruiseTime: 0,
+            boardingCooldown: 0,
             dockPos: new THREE.Vector3(36, -0.2, 1232),
             dockRotY: 0,
             currentPos: new THREE.Vector3(36, -0.2, 1232),
             prevPos: new THREE.Vector3(36, -0.2, 1232),
             currentRotY: 0,
+            prevRotY: 0,
             rampMesh: null,
-            rampAngle: 0,
+            rampAngle: 0.42,
             lastCommentTime: 0,
             waypoints: [
-                { x: 36, z: 1232 },
-                { x: 36, z: 1290 },
-                { x: 90, z: 1370 },
-                { x: 210, z: 1410 },
-                { x: 340, z: 1350 },
-                { x: 250, z: 1270 },
-                { x: 90, z: 1240 },
-                { x: 36, z: 1232 }
+                { x: 36, z: 1232 }, // Mooring slip
+                { x: 36, z: 1310 }, // Reverse out of harbor slip into open deep water
+                { x: -30, z: 1410 }, // South-west bay open water
+                { x: -120, z: 1510 }, // Outer bay west reach
+                { x: -80, z: 1610 }, // Outer bay scenic turn
+                { x: 40, z: 1580 }, // Bay center crossing
+                { x: 110, z: 1460 }, // East bay curve (clear of shoreline by >100m)
+                { x: 70, z: 1330 }, // Aligning with harbor channel
+                { x: 36, z: 1232 } // Safe docking return
             ]
         };
 
@@ -4665,12 +4723,15 @@
 
         const matFerryRed = new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 });
         const matFerryWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 });
+        const matFerryDeck = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35 });
 
+        // Red Main Hull (Y: -0.4 to 4.8)
         const ferryHull = new THREE.Mesh(new THREE.BoxGeometry(16, 5.2, 42), matFerryRed);
         ferryHull.position.y = 2.2;
         ferryHull.castShadow = true;
         harborFerryGroup.add(ferryHull);
 
+        // Hydrodynamic Bow Wedge
         const ferryBow = new THREE.Mesh(
             new THREE.ConeGeometry(11.2, 14, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4),
             matFerryRed
@@ -4679,14 +4740,16 @@
         ferryBow.position.set(0, 2.2, 27.5);
         harborFerryGroup.add(ferryBow);
 
+        // Dark Non-Slip Car Deck (Top surface at Y = 5.05)
         const ferryCarDeck = new THREE.Mesh(
             new THREE.BoxGeometry(12.4, 0.5, 36),
-            new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35 })
+            matFerryDeck
         );
         ferryCarDeck.position.set(0, 4.8, 0);
         ferryCarDeck.receiveShadow = true;
         harborFerryGroup.add(ferryCarDeck);
 
+        // Center Yellow Parking & Driving Lane Stripes
         for (let lz = -14; lz <= 14; lz += 4.5) {
             const stripe = new THREE.Mesh(
                 new THREE.PlaneGeometry(0.7, 2.5).rotateX(-Math.PI / 2),
@@ -4696,56 +4759,116 @@
             harborFerryGroup.add(stripe);
         }
 
+        // Port & Starboard Safety Bulwarks / Railings
         [-5.8, 5.8].forEach(rx => {
             const rail = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.4, 35), matHazardYellow);
             rail.position.set(rx, 5.7, 0);
             harborFerryGroup.add(rail);
         });
 
-        const ferryBridge = new THREE.Mesh(new THREE.BoxGeometry(12.2, 3.8, 10), matFerryWhite);
-        ferryBridge.position.set(0, 10.2, 2.0);
+        // -------------------------------------------------------------
+        // TIER 1: Solid Lower Superstructure Bulkhead Towers & Drive-Through Archway
+        // Firmly anchors the upper bridge down onto the car deck with ZERO air gaps!
+        // -------------------------------------------------------------
+        [-5.0, 5.0].forEach(tx => {
+            const tower = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.8, 20), matFerryWhite);
+            tower.position.set(tx, 6.7, 0);
+            tower.castShadow = true;
+            harborFerryGroup.add(tower);
+
+            // Circular porthole cabin windows
+            [-6, 0, 6].forEach(wz => {
+                const porthole = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.65, 0.65, 0.35, 12).rotateZ(Math.PI / 2),
+                    matGlass
+                );
+                porthole.position.set(tx > 0 ? tx + 1.15 : tx - 1.15, 6.8, wz);
+                harborFerryGroup.add(porthole);
+            });
+        });
+
+        // Upper Observation Deck Floor Platform (Y: 8.65, Top surface at 8.9)
+        const upperDeck = new THREE.Mesh(new THREE.BoxGeometry(12.6, 0.5, 22), matFerryDeck);
+        upperDeck.position.set(0, 8.65, 0);
+        upperDeck.receiveShadow = true;
+        harborFerryGroup.add(upperDeck);
+
+        // Upper deck perimeter safety handrails
+        [-6.0, 6.0].forEach(rx => {
+            const uRail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.1, 21.6), matFerryWhite);
+            uRail.position.set(rx, 9.45, 0);
+            harborFerryGroup.add(uRail);
+        });
+
+        // -------------------------------------------------------------
+        // TIER 2: Navigation Bridge / Wheelhouse (Seated flush on Upper Deck at Y = 8.9)
+        // -------------------------------------------------------------
+        const ferryBridge = new THREE.Mesh(new THREE.BoxGeometry(10.8, 3.2, 8.6), matFerryWhite);
+        ferryBridge.position.set(0, 10.5, 3.5);
         ferryBridge.castShadow = true;
         harborFerryGroup.add(ferryBridge);
 
-        const ferryGlass = new THREE.Mesh(new THREE.BoxGeometry(12.4, 1.8, 8.2), matGlass);
-        ferryGlass.position.set(0, 10.5, 2.5);
+        // Panoramic Cyan Windshield
+        const ferryGlass = new THREE.Mesh(new THREE.BoxGeometry(11.0, 1.6, 6.8), matGlass);
+        ferryGlass.position.set(0, 10.9, 4.2);
         harborFerryGroup.add(ferryGlass);
 
-        [-3.0, 3.0].forEach(stackX => {
-            const funnel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.5, 5.5, 10), matCraneYellow);
-            funnel.position.set(stackX, 13.8, -7);
-            harborFerryGroup.add(funnel);
-        });
+        // Bridge Roof Cap
+        const bridgeRoof = new THREE.Mesh(new THREE.BoxGeometry(11.4, 0.4, 9.0), matFerryWhite);
+        bridgeRoof.position.set(0, 12.2, 3.5);
+        harborFerryGroup.add(bridgeRoof);
 
+        // -------------------------------------------------------------
+        // TIER 3: Helipad on Roof & Funnels on Upper Deck
+        // -------------------------------------------------------------
         const helipadDisc = new THREE.Mesh(
             new THREE.CylinderGeometry(4.2, 4.2, 0.25, 24),
             new THREE.MeshBasicMaterial({ color: 0x0284c7 })
         );
-        helipadDisc.position.set(0, 12.2, 2.0);
+        helipadDisc.position.set(0, 12.52, 3.5);
         harborFerryGroup.add(helipadDisc);
 
         const helipadRing = new THREE.Mesh(
             new THREE.RingGeometry(3.4, 3.9, 24).rotateX(-Math.PI / 2),
             new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
         );
-        helipadRing.position.set(0, 12.35, 2.0);
+        helipadRing.position.set(0, 12.67, 3.5);
         harborFerryGroup.add(helipadRing);
 
         const hBar1 = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 3.2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-        hBar1.position.set(-1.0, 12.36, 2.0);
+        hBar1.position.set(-1.0, 12.68, 3.5);
         harborFerryGroup.add(hBar1);
         const hBar2 = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 3.2).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-        hBar2.position.set(1.0, 12.36, 2.0);
+        hBar2.position.set(1.0, 12.68, 3.5);
         harborFerryGroup.add(hBar2);
         const hCross = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.7).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-        hCross.position.set(0, 12.36, 2.0);
+        hCross.position.set(0, 12.68, 3.5);
         harborFerryGroup.add(hCross);
 
+        // Funnel Pedestal / Engine Casing sitting solidly on upper deck
+        const funnelBase = new THREE.Mesh(new THREE.BoxGeometry(8.6, 1.2, 4.5), matFerryWhite);
+        funnelBase.position.set(0, 9.5, -5.2);
+        funnelBase.castShadow = true;
+        harborFerryGroup.add(funnelBase);
+
+        // Twin Rescue Yellow Funnels resting flush on the pedestal
+        [-2.8, 2.8].forEach(stackX => {
+            const funnel = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.4, 4.5, 12), matCraneYellow);
+            funnel.position.set(stackX, 12.2, -5.2);
+            funnel.castShadow = true;
+            harborFerryGroup.add(funnel);
+
+            const funnelRim = new THREE.Mesh(new THREE.CylinderGeometry(1.28, 1.28, 0.45, 12), matDarkSteel);
+            funnelRim.position.set(stackX, 14.5, -5.2);
+            harborFerryGroup.add(funnelRim);
+        });
+
+        // Articulated Stern Tailgate Boarding Ramp
         const ferryRampPivot = new THREE.Group();
         ferryRampPivot.position.set(0, 4.8, -18);
         const rampSlab = new THREE.Mesh(
-            new THREE.BoxGeometry(10.5, 0.45, 9.5),
-            new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.35 })
+            new THREE.BoxGeometry(10.8, 0.45, 9.5),
+            matFerryDeck
         );
         rampSlab.position.set(0, 0, -4.75);
         rampSlab.receiveShadow = true;
@@ -4754,17 +4877,94 @@
         ferryController.rampMesh = ferryRampPivot;
 
         // Fixed Pier Boarding Bridge connecting South Harbor Pier Deck to Ferry Mooring Slip
-        const pierBridge = new THREE.Mesh(
-            new THREE.BoxGeometry(11.2, 0.8, 16.5),
+        const boardingBridgeGroup = new THREE.Group();
+
+        // Main Boarding Ramp connecting Pier (X: 16, Y: 3.4, Z: 1204..1218) to Ferry Stern Ramp (X: 36, Y: 4.8, Z: 1206..1218)
+        const rampLengthX = 22.0;
+        const rampWidthZ = 14.0;
+        const bridgeRamp = new THREE.Mesh(
+            new THREE.BoxGeometry(rampLengthX, 0.75, rampWidthZ),
+            new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.35 })
+        );
+        bridgeRamp.position.set(26.0, 4.1, 1211.0);
+        bridgeRamp.rotation.z = -0.068; // exact slope from y=3.4 at x=15 to y=4.8 at x=36
+        bridgeRamp.receiveShadow = true;
+        boardingBridgeGroup.add(bridgeRamp);
+
+        // Warning Chevron hazard stripes along bridge entrance
+        const hazardStripe1 = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 13.5).rotateX(-Math.PI / 2), matHazardYellow);
+        hazardStripe1.position.set(16.2, 3.82, 1211.0);
+        boardingBridgeGroup.add(hazardStripe1);
+
+        const hazardStripe2 = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 13.5).rotateX(-Math.PI / 2), matHazardYellow);
+        hazardStripe2.position.set(35.5, 5.22, 1211.0);
+        boardingBridgeGroup.add(hazardStripe2);
+
+        // Heavy-Duty Safety Guardrails along both sides of the bridge ramp
+        [-6.6, 6.6].forEach(rz => {
+            const guardRail = new THREE.Mesh(new THREE.BoxGeometry(rampLengthX, 1.2, 0.45), matHazardYellow);
+            guardRail.position.set(26.0, 5.0, 1211.0 + rz);
+            guardRail.rotation.z = -0.068;
+            boardingBridgeGroup.add(guardRail);
+        });
+
+        // Marine Concrete Pilings supporting the boarding bridge
+        [19.0, 26.0, 33.0].forEach(px => {
+            [-5.5, 5.5].forEach(pz => {
+                const pile = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 1.1, 12, 8), matPiling);
+                pile.position.set(px, -2.0, 1211.0 + pz);
+                boardingBridgeGroup.add(pile);
+            });
+        });
+
+        // Direct Pedestrian Side Gangway connecting Pier Deck to Ferry Starboard Side (Z: 1228..1236, X: 16..30)
+        const sideGangway = new THREE.Mesh(
+            new THREE.BoxGeometry(14.0, 0.65, 8.0),
             new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.35 })
         );
-        pierBridge.position.set(24, 2.2, 1210);
-        pierBridge.rotation.y = 0.55;
-        scene.add(pierBridge);
+        sideGangway.position.set(23.0, 4.1, 1232.0);
+        sideGangway.rotation.z = -0.08;
+        sideGangway.receiveShadow = true;
+        boardingBridgeGroup.add(sideGangway);
+
+        [-3.6, 3.6].forEach(sgz => {
+            const sRail = new THREE.Mesh(new THREE.BoxGeometry(14.0, 1.2, 0.35), matHazardYellow);
+            sRail.position.set(23.0, 4.9, 1232.0 + sgz);
+            sRail.rotation.z = -0.08;
+            boardingBridgeGroup.add(sRail);
+        });
+
+        // Overhead "FERRY BOARDING" Welcome Arch at the entrance of the bridge on the pier
+        const archGroup = new THREE.Group();
+        archGroup.position.set(16.5, 3.4, 1211.0);
+        [-6.5, 6.5].forEach(az => {
+            const post = new THREE.Mesh(new THREE.BoxGeometry(0.7, 7.5, 0.7), matCraneYellow);
+            post.position.set(0, 3.75, az);
+            archGroup.add(post);
+
+            const amberBeacon = new THREE.Mesh(new THREE.SphereGeometry(0.45, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfacc15 }));
+            amberBeacon.position.set(0, 7.8, az);
+            archGroup.add(amberBeacon);
+        });
+        const crossBeam = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.2, 13.7), matCraneYellow);
+        crossBeam.position.set(0, 7.5, 0);
+        archGroup.add(crossBeam);
+
+        const signPlate = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.0, 9.5), matFerryRed);
+        signPlate.position.set(0, 7.5, 0);
+        archGroup.add(signPlate);
+
+        boardingBridgeGroup.add(archGroup);
+
+        applyCartoonInkOutlines(boardingBridgeGroup, 1.03, true);
+        scene.add(boardingBridgeGroup);
+        registerCullableObject(boardingBridgeGroup, 26, 4, 1220, 35);
 
         applyCartoonInkOutlines(harborFerryGroup, 1.035, true);
+        harborFerryGroup.traverse(child => {
+            child.frustumCulled = false;
+        });
         scene.add(harborFerryGroup);
-        registerCullableObject(harborFerryGroup, 36, 6, 1232, 45);
 
         // =====================================================================
         // 1D. DOC GREENE'S ANTI-GRAVITY TESTING YARD (X: -1250, Z: 65)
@@ -9685,12 +9885,14 @@
             });
             beacons.length = 0;
 
-            // Initialize 8 HUD Pip indicators
+            // Initialize 8 HUD Pip indicators spanning full width
             const pipsContainer = document.getElementById('beacon-pips');
             pipsContainer.innerHTML = '';
             for (let i = 0; i < EMERGENCY_SITES.length; i++) {
+                const site = EMERGENCY_SITES[i];
                 const pip = document.createElement('div');
-                pip.className = "h-2.5 flex-1 rounded-full bg-rose-500/80 border border-white/20 transition-all duration-300";
+                const isFire = site.type === 'FIRE';
+                pip.className = `mission-pip ${isFire ? 'mission-pip-fire' : 'mission-pip-hazard'}`;
                 pipsContainer.appendChild(pip);
             }
 
@@ -10127,10 +10329,10 @@
             beacons.forEach((b, idx) => {
                 if (!pips[idx]) return;
                 if (b.restored) {
-                    pips[idx].className = "h-2.5 flex-1 rounded-full bg-lime-400 border border-white/40 shadow-[0_0_8px_#a3e635] transition-all duration-300";
+                    pips[idx].className = "mission-pip mission-pip-resolved";
                 } else {
-                    const colorCls = b.type === 'FIRE' ? 'bg-orange-500/85' : 'bg-rose-500/85';
-                    pips[idx].className = `h-2.5 flex-1 rounded-full ${colorCls} border border-white/20 transition-all duration-300`;
+                    const isFire = b.type === 'FIRE';
+                    pips[idx].className = `mission-pip ${isFire ? 'mission-pip-fire' : 'mission-pip-hazard'}`;
                 }
             });
 
@@ -13299,6 +13501,8 @@
             const dt = Math.min(0.05, (now - lastTime) / 1000);
             lastTime = now;
 
+            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+
             frameCount++;
             fpsTimer += dt;
             if (fpsTimer >= 0.5) {
@@ -13329,9 +13533,6 @@
             for (let i = 0; i < windTurbineRotors.length; i++) {
                 windTurbineRotors[i].rotation.z += dt * (1.8 + i * 0.25);
             }
-            harborFerryGroup.position.y = -0.2 + Math.sin(now * 0.0022) * 0.25;
-            harborFerryGroup.rotation.z = Math.sin(now * 0.0018) * 0.03;
-            harborFerryGroup.rotation.x = Math.cos(now * 0.0014) * 0.012;
             volcanoLavaPool.rotation.y += dt * 0.25;
             volcanoLavaPool.scale.setScalar(1.0 + Math.sin(now * 0.005) * 0.04);
             for (let i = 0; i < volcanoSmokePuffs.length; i++) {
@@ -13606,32 +13807,48 @@
             if (typeof ferryController !== 'undefined' && ferryController) {
                 ferryController.timeInState += dt;
                 ferryController.prevPos.copy(ferryController.currentPos);
+                ferryController.prevRotY = ferryController.currentRotY;
 
                 if (ferryController.state === 'DOCKED') {
+                    if (ferryController.boardingCooldown > 0) {
+                        ferryController.boardingCooldown -= dt;
+                    }
                     ferryController.rampAngle = THREE.MathUtils.lerp(ferryController.rampAngle, 0.42, dt * 2.5);
-                    const dFerryX = Math.abs(player.pos.x - ferryController.currentPos.x);
-                    const dFerryZ = Math.abs(player.pos.z - ferryController.currentPos.z);
-                    const onCarDeck = dFerryX < 6.2 && dFerryZ < 18.5 && player.pos.y >= ferryController.currentPos.y + 4.0 && player.pos.y <= ferryController.currentPos.y + 8.5;
+
+                    // Transform player into boat local coordinates
+                    const fdx = player.pos.x - ferryController.currentPos.x;
+                    const fdz = player.pos.z - ferryController.currentPos.z;
+                    const cosR = Math.cos(-ferryController.currentRotY);
+                    const sinR = Math.sin(-ferryController.currentRotY);
+                    const lx = fdx * cosR - fdz * sinR;
+                    const lz = fdx * sinR + fdz * cosR;
+
+                    const onCarDeck = Math.abs(lx) <= 6.2 && Math.abs(lz) <= 18.5 && player.pos.y >= ferryController.currentPos.y + 3.0 && player.pos.y <= ferryController.currentPos.y + 9.0;
 
                     if (onCarDeck) {
-                        if (!player.onFerry) {
-                            player.onFerry = true;
-                            sfx.playDockClank();
-                            showToast("🚢 S.S. GRIFFIN ROCK", "Welcome aboard the Rescue Ferry!");
-                            speakBotCatchphrase(player.botType, 'FERRY');
-                            triggerNPCSpeech("Captain Shaw", "Harbor Master", "Welcome aboard the Rescue Ferry! All aboard for the South Harbor cruise!", { x: 36, y: 5.5, z: 1232 }, true);
+                        if (ferryController.boardingCooldown <= 0) {
+                            if (!player.onFerry) {
+                                player.onFerry = true;
+                                sfx.playDockClank();
+                                showToast("🚢 S.S. GRIFFIN ROCK", "Welcome aboard the Rescue Ferry!");
+                                speakBotCatchphrase(player.botType, 'FERRY');
+                                triggerNPCSpeech("Captain Shaw", "Harbor Master", "Welcome aboard the Rescue Ferry! All aboard for the South Harbor cruise!", { x: 36, y: 5.5, z: 1232 }, true);
+                            }
+                            if (ferryController.timeInState > 3.0) {
+                                ferryController.state = 'CRUISING';
+                                ferryController.timeInState = 0;
+                                ferryController.cruiseTime = 0;
+                                sfx.playShipHorn();
+                                showToast("🚢 CAST OFF!", "Ferry sailing across South Harbor Bay!");
+                            }
                         }
-                        if (ferryController.timeInState > 2.2) {
-                            ferryController.state = 'CRUISING';
-                            ferryController.timeInState = 0;
-                            ferryController.cruiseTime = 0;
-                            sfx.playShipHorn();
-                            showToast("🚢 CAST OFF!", "Ferry sailing across South Harbor Bay!");
-                        }
+                    } else if (player.onFerry && (lz < -18.5 || Math.abs(lx) > 7.0 || player.pos.x < 24.0)) {
+                        // Player walked off the ramp/gangway back onto pier
+                        player.onFerry = false;
                     }
                 } else if (ferryController.state === 'CRUISING') {
                     ferryController.rampAngle = THREE.MathUtils.lerp(ferryController.rampAngle, -0.65, dt * 2.5);
-                    ferryController.cruiseTime += dt * 0.040; // ~25s for the harbor bay circuit
+                    ferryController.cruiseTime += dt * 0.035; // ~28s scenic harbor bay cruise
 
                     const wps = ferryController.waypoints;
                     const totalLegs = wps.length - 1;
@@ -13647,19 +13864,55 @@
 
                     ferryController.currentPos.x = curX;
                     ferryController.currentPos.z = curZ;
-                    ferryController.currentRotY = THREE.MathUtils.lerp(ferryController.currentRotY, targetHeading, dt * 2.2);
+
+                    // Smooth angular heading interpolation
+                    let angleDiff = (targetHeading - ferryController.currentRotY) % (Math.PI * 2);
+                    if (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                    if (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                    ferryController.currentRotY += angleDiff * Math.min(1.0, dt * 2.4);
+
+                    // Captain Shaw scenic cruise commentary
+                    if (now - ferryController.lastCommentTime > 8500) {
+                        ferryController.lastCommentTime = now;
+                        const quotes = [
+                            "Enjoy the fresh ocean sea spray, Rescue Bots! The bay is beautiful today.",
+                            "Look at the scenic shoreline cliffs of Griffin Rock! What a view!",
+                            "Smooth sailing across deep bay waters! Steady as she goes!"
+                        ];
+                        const q = quotes[Math.floor(Math.random() * quotes.length)];
+                        triggerNPCSpeech("Captain Shaw", "Harbor Master", q, { x: ferryController.currentPos.x, y: 5.5, z: ferryController.currentPos.z }, true);
+                    }
 
                     if (ferryController.cruiseTime >= 1.0) {
                         ferryController.state = 'DOCKED';
                         ferryController.timeInState = 0;
+                        ferryController.boardingCooldown = 8.0; // 8s cooldown before next boarding/departure
+                        ferryController.rampAngle = 0.42;
                         ferryController.currentPos.copy(ferryController.dockPos);
                         ferryController.currentRotY = ferryController.dockRotY;
+
+                        // Forcibly offload player and buddy bot safely onto South Harbor Pier deck
+                        if (player.onFerry) {
+                            player.onFerry = false;
+                            player.pos.set(8.0, 3.4, 1211.0);
+                            player.heading = -Math.PI / 2; // Facing west toward mainland
+                            player.speed = 0;
+                            player.hasWaypoint = false;
+                            if (typeof waypointGroup !== 'undefined') waypointGroup.visible = false;
+                        }
+
+                        if (buddyBot.botType) {
+                            buddyBot.onFerry = false;
+                            buddyBot.pos.set(8.0, 3.4, 1216.0);
+                            buddyBot.heading = -Math.PI / 2;
+                        }
+
                         sfx.playDockClank();
-                        showToast("🚢 HARBOR SLIP", "Ferry docked safely at South Harbor pier!");
-                        triggerNPCSpeech("Captain Shaw", "Harbor Master", "We have arrived back at South Harbor! Safe travels, Rescue Bots!", { x: 36, y: 5.5, z: 1232 }, true);
+                        showToast("🚢 ALL ASHORE!", "Disembarked safely onto South Harbor Pier!");
+                        triggerNPCSpeech("Captain Shaw", "Harbor Master", "All ashore at South Harbor! Safe travels across Griffin Rock, Rescue Bots!", { x: 36, y: 5.5, z: 1232 }, true);
                     }
 
-                    // Periodic water wake particles behind the ferry
+                    // Periodic water wake particles behind the stern
                     if (Math.random() < 0.35) {
                         const sternX = ferryController.currentPos.x - Math.sin(ferryController.currentRotY) * 20;
                         const sternZ = ferryController.currentPos.z - Math.cos(ferryController.currentRotY) * 20;
@@ -13667,7 +13920,7 @@
                     }
                 }
 
-                // Wave bobbing & rocking motion
+                // Natural wave bobbing & rocking motion
                 const ferryWaveY = -0.2 + Math.sin(now * 0.0028) * 0.28;
                 const ferryRoll = Math.sin(now * 0.0022) * 0.025;
                 const ferryPitch = Math.cos(now * 0.0019) * 0.018;
@@ -13679,25 +13932,92 @@
                     ferryController.rampMesh.rotation.x = ferryController.rampAngle;
                 }
 
-                // Carry player & buddy bot with ferry displacement
-                const fDeltaX = ferryController.currentPos.x - ferryController.prevPos.x;
-                const fDeltaZ = ferryController.currentPos.z - ferryController.prevPos.z;
+                // Rotational and translational displacement for riding bots
+                const fDeltaRot = ferryController.currentRotY - ferryController.prevRotY;
+                const cosDR = Math.cos(fDeltaRot);
+                const sinDR = Math.sin(fDeltaRot);
 
-                const curDistToFerry = Math.hypot(player.pos.x - ferryController.currentPos.x, player.pos.z - ferryController.currentPos.z);
                 if (player.onFerry) {
-                    if (curDistToFerry < 22 && !isFlyingCopter) {
-                        player.pos.x += fDeltaX;
-                        player.pos.z += fDeltaZ;
-                    } else if (curDistToFerry >= 24) {
+                    if (isFlyingCopter && player.pos.y > 15) {
                         player.onFerry = false;
+                    } else {
+                        // 1. Rotate player position around previous ferry center by fDeltaRot
+                        const relX = player.pos.x - ferryController.prevPos.x;
+                        const relZ = player.pos.z - ferryController.prevPos.z;
+                        const rotX = relX * cosDR - relZ * sinDR;
+                        const rotZ = relX * sinDR + relZ * cosDR;
+
+                        // 2. Translate with ferry displacement
+                        player.pos.x = ferryController.currentPos.x + rotX;
+                        player.pos.z = ferryController.currentPos.z + rotZ;
+                        player.heading += fDeltaRot;
+                        player.pos.y = ferryController.currentPos.y + 5.0;
+
+                        // 3. Contain player securely within car deck railings during cruising
+                        if (ferryController.state === 'CRUISING') {
+                            const fdx = player.pos.x - ferryController.currentPos.x;
+                            const fdz = player.pos.z - ferryController.currentPos.z;
+                            const cosR = Math.cos(-ferryController.currentRotY);
+                            const sinR = Math.sin(-ferryController.currentRotY);
+                            let lx = fdx * cosR - fdz * sinR;
+                            let lz = fdx * sinR + fdz * cosR;
+
+                            const maxLx = 5.6;
+                            const maxLz = 17.5;
+                            if (Math.abs(lx) > maxLx || Math.abs(lz) > maxLz) {
+                                lx = Math.max(-maxLx, Math.min(maxLx, lx));
+                                lz = Math.max(-maxLz, Math.min(maxLz, lz));
+                                const worldSin = Math.sin(ferryController.currentRotY);
+                                const worldCos = Math.cos(ferryController.currentRotY);
+                                player.pos.x = ferryController.currentPos.x + (lx * worldCos + lz * worldSin);
+                                player.pos.z = ferryController.currentPos.z + (-lx * worldSin + lz * worldCos);
+                            }
+                        }
                     }
                 }
 
+                // Keep buddy bot smoothly riding along beside the player on the deck
                 if (buddyBot.botType) {
-                    const bDistToFerry = Math.hypot(buddyBot.pos.x - ferryController.currentPos.x, buddyBot.pos.z - ferryController.currentPos.z);
-                    if (bDistToFerry < 22 && !buddyBot.flightAlt) {
-                        buddyBot.pos.x += fDeltaX;
-                        buddyBot.pos.z += fDeltaZ;
+                    if (player.onFerry && !buddyBot.flightAlt) {
+                        buddyBot.onFerry = true;
+                        const bDistToFerry = Math.hypot(buddyBot.pos.x - ferryController.currentPos.x, buddyBot.pos.z - ferryController.currentPos.z);
+                        if (bDistToFerry > 22) {
+                            // Position buddy bot on car deck behind player
+                            buddyBot.pos.x = player.pos.x - Math.cos(ferryController.currentRotY) * 2.5;
+                            buddyBot.pos.z = player.pos.z + Math.sin(ferryController.currentRotY) * 2.5;
+                            buddyBot.pos.y = ferryController.currentPos.y + 5.0;
+                        } else {
+                            const bRelX = buddyBot.pos.x - ferryController.prevPos.x;
+                            const bRelZ = buddyBot.pos.z - ferryController.prevPos.z;
+                            const bRotX = bRelX * cosDR - bRelZ * sinDR;
+                            const bRotZ = bRelX * sinDR + bRelZ * cosDR;
+                            buddyBot.pos.x = ferryController.currentPos.x + bRotX;
+                            buddyBot.pos.z = ferryController.currentPos.z + bRotZ;
+                            buddyBot.heading += fDeltaRot;
+                            buddyBot.pos.y = ferryController.currentPos.y + 5.0;
+
+                            if (ferryController.state === 'CRUISING') {
+                                const bFdx = buddyBot.pos.x - ferryController.currentPos.x;
+                                const bFdz = buddyBot.pos.z - ferryController.currentPos.z;
+                                const cosR = Math.cos(-ferryController.currentRotY);
+                                const sinR = Math.sin(-ferryController.currentRotY);
+                                let bLx = bFdx * cosR - bFdz * sinR;
+                                let bLz = bFdx * sinR + bFdz * cosR;
+
+                                const maxLx = 5.4;
+                                const maxLz = 17.0;
+                                if (Math.abs(bLx) > maxLx || Math.abs(bLz) > maxLz) {
+                                    bLx = Math.max(-maxLx, Math.min(maxLx, bLx));
+                                    bLz = Math.max(-maxLz, Math.min(maxLz, bLz));
+                                    const worldSin = Math.sin(ferryController.currentRotY);
+                                    const worldCos = Math.cos(ferryController.currentRotY);
+                                    buddyBot.pos.x = ferryController.currentPos.x + (bLx * worldCos + bLz * worldSin);
+                                    buddyBot.pos.z = ferryController.currentPos.z + (-bLx * worldSin + bLz * worldCos);
+                                }
+                            }
+                        }
+                    } else if (!player.onFerry) {
+                        buddyBot.onFerry = false;
                     }
                 }
             }
