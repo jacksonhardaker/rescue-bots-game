@@ -2156,59 +2156,299 @@
             return new THREE.CanvasTexture(c);
         }
 
-        // Expressive Cartoon Visor & Faceplate Texture for the 4 Rescue Bots
-        function makeCartoonVisorTexture(visorColor = '#38bdf8', mouthPlateColor = '#e2e8f0', hasSmile = true) {
+        // TV Show Accurate Cartoon Visor & Faceplate Textures for the 4 Rescue Bots
+        function makeBoulderFaceTexture() {
             const c = document.createElement('canvas');
-            c.width = 128; c.height = 128;
+            c.width = 256; c.height = 256;
             const ctx = c.getContext('2d');
 
-            // Lower Faceplate / Chin
-            ctx.fillStyle = mouthPlateColor;
-            ctx.fillRect(0, 0, 128, 128);
+            // Silver-gray metallic faceplate base
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(0, 0, 256, 256);
 
-            // Upper Glowing Cartoon Optic Visor Band
+            // Chartreuse / Lime Green Upper Forehead Band
+            ctx.fillStyle = '#76d31b';
+            ctx.fillRect(0, 0, 256, 42);
+            ctx.fillStyle = '#15803d';
+            ctx.fillRect(0, 40, 256, 6);
+
+            // Dark Charcoal Eye Visor Socket Recess
             ctx.fillStyle = '#0f172a';
-            ctx.fillRect(6, 12, 116, 60);
-            ctx.fillStyle = visorColor;
-            ctx.fillRect(12, 18, 104, 48);
-
-            // Friendly Expressive Cartoon Eye Pupils / Glints
-            ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(40, 40, 11, 0, Math.PI * 2);
-            ctx.arc(88, 40, 11, 0, Math.PI * 2);
+            if (ctx.roundRect) ctx.roundRect(18, 54, 220, 84, 16); else ctx.rect(18, 54, 220, 84);
             ctx.fill();
 
-            // Heroic Brow Line
+            // Friendly Rounded Cyan-Blue Cartoon Optics (Matching TV Show)
+            ctx.fillStyle = '#0284c7';
+            ctx.beginPath();
+            ctx.arc(80, 96, 32, 0, Math.PI * 2);
+            ctx.arc(176, 96, 32, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(80, 96, 26, 0, Math.PI * 2);
+            ctx.arc(176, 96, 26, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Cartoon White Glint Reflections
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(72, 86, 10, 0, Math.PI * 2);
+            ctx.arc(168, 86, 10, 0, Math.PI * 2);
+            ctx.arc(90, 106, 4, 0, Math.PI * 2);
+            ctx.arc(186, 106, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Friendly Warm Cartoon Smile
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 9;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(68, 178);
+            ctx.quadraticCurveTo(128, 206, 188, 178);
+            ctx.stroke();
+
+            // Smile Corner Creases
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(64, 172); ctx.lineTo(70, 184);
+            ctx.moveTo(192, 172); ctx.lineTo(186, 184);
+            ctx.stroke();
+
+            // Rounded Chin Guard Plate Line
+            ctx.fillStyle = '#94a3b8';
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(84, 224, 88, 28, 8); else ctx.rect(84, 224, 88, 28);
+            ctx.fill();
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Outer Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeHeatwaveFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Silver metallic faceplate
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Dark Crimson Helmet Under-Brim Shadow
+            ctx.fillStyle = '#991b1b';
+            ctx.fillRect(0, 0, 256, 46);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 44, 256, 8);
+
+            // Angled Dark Slate Visor Frame
             ctx.fillStyle = '#0f172a';
             ctx.beginPath();
-            ctx.moveTo(8, 16);
-            ctx.lineTo(64, 26);
-            ctx.lineTo(120, 16);
-            ctx.lineTo(120, 10);
-            ctx.lineTo(8, 10);
+            ctx.moveTo(14, 52);
+            ctx.lineTo(242, 52);
+            ctx.lineTo(230, 134);
+            ctx.lineTo(128, 142);
+            ctx.lineTo(26, 134);
             ctx.closePath();
             ctx.fill();
 
-            // Mouth / Faceplate Grille Lines
+            // Glowing Cartoon Cyan-Blue Visor! (Accurate to Cartoon Source Image)
+            const grad = ctx.createLinearGradient(0, 58, 0, 132);
+            grad.addColorStop(0, '#22d3ee');
+            grad.addColorStop(0.5, '#06b6d4');
+            grad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(22, 60);
+            ctx.lineTo(234, 60);
+            ctx.lineTo(224, 126);
+            ctx.lineTo(128, 134);
+            ctx.lineTo(32, 126);
+            ctx.closePath();
+            ctx.fill();
+
+            // Sharp Diagonal White Toon Visor Reflections
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+            ctx.beginPath();
+            ctx.moveTo(56, 60); ctx.lineTo(88, 60);
+            ctx.lineTo(64, 128); ctx.lineTo(36, 128);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(102, 60); ctx.lineTo(118, 60);
+            ctx.lineTo(96, 132); ctx.lineTo(82, 132);
+            ctx.closePath();
+            ctx.fill();
+
+            // Heroic Mouthplate with 3 Distinct Horizontal Vent Slots (Matching Cartoon)
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(64, 160, 128, 62);
             ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 6;
-            if (hasSmile) {
-                ctx.beginPath();
-                ctx.moveTo(34, 92);
-                ctx.quadraticCurveTo(64, 108, 94, 92);
-                ctx.stroke();
-            } else {
-                // Heatwave / Chase heroic breather vents
-                ctx.strokeRect(32, 84, 64, 26);
-                ctx.beginPath();
-                ctx.moveTo(52, 84); ctx.lineTo(52, 110);
-                ctx.moveTo(76, 84); ctx.lineTo(76, 110);
-                ctx.stroke();
-            }
+            ctx.strokeRect(64, 160, 128, 62);
 
+            ctx.fillStyle = '#0f172a';
+            [170, 185, 200].forEach(vy => {
+                ctx.beginPath();
+                if (ctx.roundRect) ctx.roundRect(76, vy, 104, 8, 4); else ctx.rect(76, vy, 104, 8);
+                ctx.fill();
+            });
+
+            // Heroic Chin Guard
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(96, 230); ctx.lineTo(160, 230);
+            ctx.stroke();
+
+            // Outer Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeChaseFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Crisp White-Silver Police Faceplate
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Police Blue Helmet Brow Band & Gold Trim
+            ctx.fillStyle = '#1e3a8a';
+            ctx.fillRect(0, 0, 256, 42);
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(0, 40, 256, 6);
+
+            // Dark Charcoal Visor Housing
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(22, 54, 212, 78, 10); else ctx.rect(22, 54, 212, 78);
+            ctx.fill();
+
+            // Police Blue / Cyan Visor Bar
+            const grad = ctx.createLinearGradient(0, 60, 0, 124);
+            grad.addColorStop(0, '#60a5fa');
+            grad.addColorStop(0.4, '#38bdf8');
+            grad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(30, 62, 196, 62, 8); else ctx.rect(30, 62, 196, 62);
+            ctx.fill();
+
+            // White Toon Glints
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.beginPath();
+            ctx.moveTo(60, 62); ctx.lineTo(95, 62);
+            ctx.lineTo(72, 124); ctx.lineTo(42, 124);
+            ctx.closePath();
+            ctx.fill();
+
+            // Disciplined Serious Police Mouth Line
+            ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 8;
-            ctx.strokeRect(4, 4, 120, 120);
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(76, 186); ctx.lineTo(180, 186);
+            ctx.stroke();
+
+            // Subdued Chin Cleft & Officer Jaw Seams
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(128, 196); ctx.lineTo(128, 228);
+            ctx.moveTo(88, 230); ctx.lineTo(168, 230);
+            ctx.stroke();
+
+            // Outer Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeBladesFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Light Silver Metallic Faceplate
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Orange Flight Helmet Brow Band
+            ctx.fillStyle = '#ea580c';
+            ctx.fillRect(0, 0, 256, 42);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 40, 256, 6);
+
+            // Dark Goggle Frame
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(16, 52, 224, 88, 22); else ctx.rect(16, 52, 224, 88);
+            ctx.fill();
+
+            // Neon Cyan-Green Aviator Visor Goggles! (Accurate to Cartoon Source Image)
+            const grad = ctx.createLinearGradient(0, 58, 0, 134);
+            grad.addColorStop(0, '#34d399');
+            grad.addColorStop(0.5, '#2dd4bf');
+            grad.addColorStop(1, '#0d9488');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(24, 60, 208, 72, 16); else ctx.rect(24, 60, 208, 72);
+            ctx.fill();
+
+            // Dual Bright White Aviator Glints
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.beginPath();
+            ctx.moveTo(56, 60); ctx.lineTo(90, 60);
+            ctx.lineTo(66, 132); ctx.lineTo(38, 132);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(150, 60); ctx.lineTo(184, 60);
+            ctx.lineTo(160, 132); ctx.lineTo(132, 132);
+            ctx.closePath();
+            ctx.fill();
+
+            // Eager Youthful Friendly Smile
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 9;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(74, 182);
+            ctx.quadraticCurveTo(128, 212, 182, 182);
+            ctx.stroke();
+
+            // Smile dimples / creases
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(70, 176); ctx.lineTo(76, 188);
+            ctx.moveTo(186, 176); ctx.lineTo(180, 188);
+            ctx.stroke();
+
+            // Clean Youthful Chin Plate
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(102, 226); ctx.lineTo(154, 226);
+            ctx.stroke();
+
+            // Outer Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
             return new THREE.CanvasTexture(c);
         }
 
@@ -2253,10 +2493,10 @@
         const texWindshieldCyan = makeCartoonWindshieldTexture('#38bdf8');
         const texWindshieldDark = makeCartoonWindshieldTexture('#1e3a8a');
 
-        const texFaceBoulder = makeCartoonVisorTexture('#38bdf8', '#fde047', true);
-        const texFaceHeatwave = makeCartoonVisorTexture('#fde047', '#cbd5e1', false);
-        const texFaceChase = makeCartoonVisorTexture('#38bdf8', '#f8fafc', false);
-        const texFaceBlades = makeCartoonVisorTexture('#38bdf8', '#ffffff', true);
+        const texFaceBoulder = makeBoulderFaceTexture();
+        const texFaceHeatwave = makeHeatwaveFaceTexture();
+        const texFaceChase = makeChaseFaceTexture();
+        const texFaceBlades = makeBladesFaceTexture();
 
         /***********************************************************************
          * 3. EXPANDED 10X GRIFFIN ROCK ISLAND TERRAIN & MULTI-RING HIGHWAY
@@ -6296,19 +6536,45 @@
                     parts.frontAttachment.add(noseLight);
                 });
 
-                // 5. Clean Expressive Robot Head (`parts.head` - Retracts straight down into chest in Bulldozer Mode!)
-                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.44, 1.26, 1.32), matGreen);
+                // 5. Clean Expressive Robot Head (`parts.head` - TV Show Accurate with Triple Silver Crown)
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.48, 1.28, 1.34), matGreen);
                 helm.castShadow = true;
                 parts.head.add(helm);
-                const brim = new THREE.Mesh(new THREE.BoxGeometry(1.58, 0.26, 1.48), matYellow);
-                brim.position.set(0, 0.54, 0.14);
+
+                // Triple-Crested Silver Rock-Splitter Crown on Top of Helmet (Matching Cartoon)
+                const centerCrest = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.42, 0.96), matChrome);
+                centerCrest.position.set(0, 0.78, 0);
+                parts.head.add(centerCrest);
+                [-0.38, 0.38].forEach(cx => {
+                    const sideCrest = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.82), matChrome);
+                    sideCrest.position.set(cx, 0.71, 0);
+                    parts.head.add(sideCrest);
+                });
+
+                // Yellow Construction Brow Rim
+                const brim = new THREE.Mesh(new THREE.BoxGeometry(1.58, 0.22, 0.52), matYellow);
+                brim.position.set(0, 0.46, 0.48);
                 parts.head.add(brim);
-                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.96, 1.36), matFace);
+
+                // Cylindrical Construction Ear Mufflers / Side Bumpers
+                [-0.80, 0.80].forEach(ex => {
+                    const earMuffler = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.28, 0.28, 0.22, 12).rotateZ(Math.PI / 2),
+                        matYellow
+                    );
+                    earMuffler.position.set(ex, 0.04, 0.08);
+                    parts.head.add(earMuffler);
+                });
+
+                // Expressive Cartoon Face Mesh
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.96, 1.38), matFace);
                 faceMesh.position.set(0, -0.04, 0.04);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
-                const chinGuard = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.26, 1.38), matChrome);
-                chinGuard.position.set(0, -0.54, 0.05);
+
+                // Heavy Silver Chin Guard
+                const chinGuard = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.28, 0.52), matChrome);
+                chinGuard.position.set(0, -0.54, 0.48);
                 parts.head.add(chinGuard);
 
                 // 6. Chunky Cartoon Arms with Sliding Caterpillar Tread Mounts (`leftArmWheelMount` / `rightArmWheelMount`)
@@ -6576,14 +6842,42 @@
                 parts.torso.add(lb.group);
                 parts.lightbar = lb;
 
-                // Commander Helmet Head with Gold Fire-Shield Crest & Amber Visor (Retracts Down Inside the Cab!)
-                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.28, 1.32), matRed);
+                // Commander Helmet Head with Firefighter Front Brim, Shield Badge & Cyan Visor (Matching Cartoon)
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.38, 1.28, 1.34), matRed);
                 helm.castShadow = true;
                 parts.head.add(helm);
-                const crest = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.54, 1.5), matGold);
-                crest.position.set(0, 0.66, 0.05);
+
+                // Protruding Firefighter Front Brim (Angles forward over his brow)
+                const frontBrim = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.16, 0.62), matCrimson);
+                frontBrim.position.set(0, 0.44, 0.54);
+                frontBrim.rotation.x = -0.15;
+                parts.head.add(frontBrim);
+
+                // Rear Neck Guard Brim
+                const rearBrim = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.14, 0.48), matCrimson);
+                rearBrim.position.set(0, 0.18, -0.58);
+                parts.head.add(rearBrim);
+
+                // Central Firefighter Helmet Spine Crest
+                const crest = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.46, 1.48), matRed);
+                crest.position.set(0, 0.72, 0.04);
                 parts.head.add(crest);
-                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.96, 1.38), matFace);
+
+                // Gold Firefighter Shield Emblem on Front of Crest
+                const shieldBadge = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.42, 0.16), matGold);
+                shieldBadge.position.set(0, 0.64, 0.74);
+                shieldBadge.rotation.x = -0.18;
+                parts.head.add(shieldBadge);
+
+                // Side Protective Cheek Flaps (Frame his jaw)
+                [-0.68, 0.68].forEach(sx => {
+                    const cheekGuard = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.68, 0.52), matCrimson);
+                    cheekGuard.position.set(sx, -0.12, 0.32);
+                    parts.head.add(cheekGuard);
+                });
+
+                // Expressive Cartoon Face Mesh
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.94, 1.38), matFace);
                 faceMesh.position.set(0, -0.04, 0.04);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
@@ -6829,14 +7123,48 @@
                 parts.torso.add(lb.group);
                 parts.lightbar = lb;
 
-                // 2. Police Officer Helmet & Cartoon Cyan Optics (Retracts into Cabin in Vehicle Mode)
-                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.22, 1.18, 1.22), matBlue);
+                // 2. Police Officer Helmet & Cartoon Cyan Optics with Gold Star Badge & Audio Ear Pods (Matching Cartoon)
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.24, 1.20, 1.24), matBlue);
                 helm.castShadow = true;
                 parts.head.add(helm);
-                const capVisor = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.22, 1.38), matGold);
-                capVisor.position.set(0, 0.42, 0.12);
+
+                // Gold Police Star Shield Badge Centered on Forehead
+                const policeBadge = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.38, 0.14), matGold);
+                policeBadge.position.set(0, 0.46, 0.64);
+                parts.head.add(policeBadge);
+
+                // Dark Police Cap Visor Brim
+                const capVisor = new THREE.Mesh(new THREE.BoxGeometry(1.30, 0.16, 0.46), matBlack);
+                capVisor.position.set(0, 0.38, 0.54);
+                capVisor.rotation.x = -0.12;
                 parts.head.add(capVisor);
-                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.9, 1.28), matFace);
+
+                // Cylindrical Ear Communications Pods on Left & Right
+                [-0.65, 0.65].forEach(ex => {
+                    const earOuter = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.26, 0.26, 0.16, 12).rotateZ(Math.PI / 2),
+                        matWhite
+                    );
+                    earOuter.position.set(ex, 0.05, 0.04);
+                    parts.head.add(earOuter);
+
+                    const earCore = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.16, 0.16, 0.22, 12).rotateZ(Math.PI / 2),
+                        matBlue
+                    );
+                    earCore.position.set(ex, 0.05, 0.04);
+                    parts.head.add(earCore);
+                });
+
+                // White Side Jaw / Cheek Panels
+                [-0.58, 0.58].forEach(jx => {
+                    const jawPanel = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.64, 0.44), matWhite);
+                    jawPanel.position.set(jx, -0.12, 0.34);
+                    parts.head.add(jawPanel);
+                });
+
+                // Expressive Cartoon Face Mesh
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.10, 0.90, 1.28), matFace);
                 faceMesh.position.set(0, -0.04, 0.04);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
@@ -7125,14 +7453,52 @@
                     shellG.add(noseLight);
                 });
 
-                // 2. Flight Helmet Head with Aviator Visor (Sits between the open Cockpit Collar Halves in Bot mode -> Enclosed inside the Expanded Cockpit in Helicopter mode!)
-                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.26, 1.2, 1.26), matOrange);
+                // 2. Flight Helmet Head with Twin Orange Ear-Fins, Aviator Visor & Headset Pods (Matching Cartoon)
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.26, 1.20, 1.26), matWhite);
                 helm.castShadow = true;
                 parts.head.add(helm);
-                const earPods = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.5, 0.6), matWhite);
-                earPods.position.set(0, 0.05, 0);
-                parts.head.add(earPods);
-                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.92, 1.32), matFace);
+
+                // Signature Pointed Orange Flight Ear-Fins (Angled Upward & Outward Matching Cartoon)
+                [-0.62, 0.62].forEach(fx => {
+                    const earFin = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.20, 0.88, 4),
+                        matOrange
+                    );
+                    earFin.position.set(fx, 0.76, 0.06);
+                    earFin.rotation.z = fx > 0 ? -0.28 : 0.28;
+                    earFin.rotation.y = Math.PI / 4;
+                    parts.head.add(earFin);
+                });
+
+                // Central White Flight Helmet Crest
+                const flightCrest = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.28, 0.95), matWhite);
+                flightCrest.position.set(0, 0.68, 0.05);
+                parts.head.add(flightCrest);
+
+                // Orange Brow Trim
+                const browTrim = new THREE.Mesh(new THREE.BoxGeometry(1.30, 0.16, 0.42), matOrange);
+                browTrim.position.set(0, 0.42, 0.50);
+                parts.head.add(browTrim);
+
+                // Cylindrical Aviator Headset Ear Cushions
+                [-0.66, 0.66].forEach(ex => {
+                    const headsetPod = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.26, 0.26, 0.20, 12).rotateZ(Math.PI / 2),
+                        matOrange
+                    );
+                    headsetPod.position.set(ex, 0.04, 0.04);
+                    parts.head.add(headsetPod);
+
+                    const headsetInner = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.16, 0.16, 0.24, 12).rotateZ(Math.PI / 2),
+                        matWhite
+                    );
+                    headsetInner.position.set(ex, 0.04, 0.04);
+                    parts.head.add(headsetInner);
+                });
+
+                // Expressive Cartoon Face Mesh (With Neon Cyan-Green Visor)
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.14, 0.92, 1.32), matFace);
                 faceMesh.position.set(0, -0.02, 0.04);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
