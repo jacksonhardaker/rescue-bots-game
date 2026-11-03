@@ -1680,10 +1680,11 @@
         }
 
         const ramps = [];
+        let ferryController = null;
 
         function getSurfaceHeight(x, z) {
             // Wayward Island Suspension Causeway Bridge (X: 1480 .. 1760, Z: 540)
-            if (x >= 1480 && x <= 1760 && Math.abs(z - 540) <= 9.0) {
+            if (x >= 1480 && x <= 1760 && Math.abs(z - 540) <= 10.5) {
                 if (x <= 1735) return 7.5;
                 const blendT = (x - 1735) / 25;
                 return THREE.MathUtils.lerp(7.5, getTerrainHeight(x, z), blendT);
@@ -1693,7 +1694,7 @@
                 return 3.4;
             }
             // Docked or Sailing Ferry Boat Deck
-            if (typeof ferryController !== 'undefined' && ferryController && ferryController.currentPos) {
+            if (ferryController && ferryController.currentPos) {
                 const fdx = x - ferryController.currentPos.x;
                 const fdz = z - ferryController.currentPos.z;
                 if (Math.abs(fdx) <= 7.5 && Math.abs(fdz) <= 20.0) {
@@ -1739,7 +1740,7 @@
         }
 
         function getZoneName(x, z) {
-            if (typeof ferryController !== 'undefined' && ferryController && ferryController.currentPos && Math.hypot(x - ferryController.currentPos.x, z - ferryController.currentPos.z) < 32) return "SOUTH HARBOR FERRY";
+            if (ferryController && ferryController.currentPos && Math.hypot(x - ferryController.currentPos.x, z - ferryController.currentPos.z) < 32) return "SOUTH HARBOR FERRY";
             if (Math.hypot(x - 1960, z - 540) < 320) return "WAYWARD ISLAND";
             if (x >= 1480 && x <= 1760 && Math.abs(z - 540) <= 12) return "WAYWARD CAUSEWAY BRIDGE";
             if (Math.hypot(x + 750, z + 750) < 185) return "DINO RIDGE SANCTUARY";
@@ -1808,7 +1809,7 @@
          * 5. HIGH-FIDELITY CARTOON TERRAIN, VECTOR ROAD NETWORK & 3D GROUND DETAILS
          ***********************************************************************/
         function createHighResTerrainTexture() {
-            const TEX_SIZE = 2048;
+            const TEX_SIZE = 4096;
             const c = document.createElement('canvas');
             c.width = TEX_SIZE;
             c.height = TEX_SIZE;
@@ -2098,6 +2099,227 @@
         );
         terrainMesh.receiveShadow = true;
         scene.add(terrainMesh);
+
+        /***********************************************************************
+         * 5B. HIGH-FIDELITY 3D VECTOR ROAD RIBBON NETWORK (Razor-Sharp Texture & Geometry)
+         ***********************************************************************/
+        function makeProceduralRoadTexture() {
+            const c = document.createElement('canvas');
+            c.width = 512;
+            c.height = 512;
+            const ctx = c.getContext('2d');
+
+            // 1. Dark Charcoal-Slate Asphalt Base (#334155)
+            ctx.fillStyle = '#334155';
+            ctx.fillRect(0, 0, 512, 512);
+
+            // Subtle cartoon asphalt aggregate flecks
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+            for (let i = 0; i < 300; i++) {
+                ctx.fillRect((i * 137.5) % 512, (i * 269.3) % 512, 2, 2);
+            }
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.1)';
+            for (let i = 0; i < 300; i++) {
+                ctx.fillRect((i * 211.7) % 512, (i * 173.1) % 512, 2, 2);
+            }
+
+            // 2. Concrete Sidewalk Curbs on Left and Right Shoulders
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(0, 0, 46, 512);
+            ctx.fillRect(466, 0, 46, 512);
+
+            // Curb bevel shading
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(38, 0, 8, 512);
+            ctx.fillRect(466, 0, 8, 512);
+
+            // Outer cartoon black ink border
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, 10, 512);
+            ctx.fillRect(502, 0, 10, 512);
+
+            // Inner curb ink crease line
+            ctx.fillRect(44, 0, 4, 512);
+            ctx.fillRect(464, 0, 4, 512);
+
+            // Concrete curb joint expansion seams every 64 pixels along V
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+            for (let y = 0; y < 512; y += 64) {
+                ctx.fillRect(0, y, 46, 2);
+                ctx.fillRect(466, y, 46, 2);
+            }
+
+            // 3. Crisp Bold Yellow Dashed Highway Centerline (Cartoon Saturday-Morning Look)
+            // Centered at 256. Dash length: 224px, Gap: 288px (repeats every 12 meters in world space)
+            ctx.fillStyle = '#b45309'; // Warm shadow/outline around yellow dash
+            ctx.fillRect(244, 14, 24, 228);
+            ctx.fillStyle = '#facc15'; // Vibrant cartoon yellow core
+            ctx.fillRect(246, 16, 20, 224);
+
+            const tex = new THREE.CanvasTexture(c);
+            tex.wrapS = THREE.ClampToEdgeWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+            tex.minFilter = THREE.LinearMipmapLinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+            tex.generateMipmaps = true;
+            tex.needsUpdate = true;
+            return tex;
+        }
+
+        const sharedRoadTexture = makeProceduralRoadTexture();
+
+        function createRoadRibbon(points, width = 18.2, isLoop = false, polyOffsetFactor = -1.0, polyOffsetUnits = -4.0) {
+            const N = points.length;
+            const segments = isLoop ? N : N - 1;
+            const numVerts = N * 3;
+            const positions = new Float32Array(numVerts * 3);
+            const uvs = new Float32Array(numVerts * 2);
+            const indices = [];
+
+            const halfW = width * 0.5;
+            let accumDist = 0;
+
+            for (let i = 0; i < N; i++) {
+                const curr = points[i];
+                let next, prev;
+                if (isLoop) {
+                    next = points[(i + 1) % N];
+                    prev = points[(i - 1 + N) % N];
+                } else {
+                    next = points[Math.min(i + 1, N - 1)];
+                    prev = points[Math.max(0, i - 1)];
+                }
+
+                const dx = next.x - prev.x;
+                const dz = next.z - prev.z;
+                const len = Math.hypot(dx, dz) || 1.0;
+                const tx = dx / len;
+                const tz = dz / len;
+
+                // Perpendicular vector pointing rightwards
+                const nx = -tz;
+                const nz = tx;
+
+                if (i > 0) {
+                    const stepDist = Math.hypot(curr.x - points[i - 1].x, curr.z - points[i - 1].z);
+                    accumDist += stepDist;
+                }
+
+                const v = accumDist / 12.0; // 12-meter repeat period
+
+                const lx = curr.x - nx * halfW;
+                const lz = curr.z - nz * halfW;
+                const cx = curr.x;
+                const cz = curr.z;
+                const rx = curr.x + nx * halfW;
+                const rz = curr.z + nz * halfW;
+
+                const ly = getSurfaceHeight(lx, lz) + 0.12;
+                const cy = getSurfaceHeight(cx, cz) + 0.15; // 3cm road crown prevents concave terrain punch-through
+                const ry = getSurfaceHeight(rx, rz) + 0.12;
+
+                const baseIdx = i * 3;
+
+                // Left vertex (U = 0.0)
+                positions[baseIdx * 3] = lx;
+                positions[baseIdx * 3 + 1] = ly;
+                positions[baseIdx * 3 + 2] = lz;
+                uvs[baseIdx * 2] = 0.0;
+                uvs[baseIdx * 2 + 1] = v;
+
+                // Center vertex (U = 0.5)
+                positions[(baseIdx + 1) * 3] = cx;
+                positions[(baseIdx + 1) * 3 + 1] = cy;
+                positions[(baseIdx + 1) * 3 + 2] = cz;
+                uvs[(baseIdx + 1) * 2] = 0.5;
+                uvs[(baseIdx + 1) * 2 + 1] = v;
+
+                // Right vertex (U = 1.0)
+                positions[(baseIdx + 2) * 3] = rx;
+                positions[(baseIdx + 2) * 3 + 1] = ry;
+                positions[(baseIdx + 2) * 3 + 2] = rz;
+                uvs[(baseIdx + 2) * 2] = 1.0;
+                uvs[(baseIdx + 2) * 2 + 1] = v;
+            }
+
+            for (let i = 0; i < segments; i++) {
+                const nextI = (i + 1) % N;
+                const cL = i * 3 + 0;
+                const cC = i * 3 + 1;
+                const cR = i * 3 + 2;
+                const nL = nextI * 3 + 0;
+                const nC = nextI * 3 + 1;
+                const nR = nextI * 3 + 2;
+
+                // Left quad
+                indices.push(cL, cC, nC);
+                indices.push(cL, nC, nL);
+
+                // Right quad
+                indices.push(cC, cR, nR);
+                indices.push(cC, nR, nC);
+            }
+
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+            geo.setIndex(indices);
+            geo.computeVertexNormals();
+
+            const roadMat = new THREE.MeshToonMaterial({
+                map: sharedRoadTexture,
+                gradientMap: toonGrad3,
+                polygonOffset: true,
+                polygonOffsetFactor: polyOffsetFactor,
+                polygonOffsetUnits: polyOffsetUnits,
+                side: THREE.DoubleSide
+            });
+
+            const mesh = new THREE.Mesh(geo, roadMat);
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        // 1. Grand North-South Highway (North Observatory outpost at Z = -1160 to South Harbor at Z = 1160)
+        const ptsNS = [];
+        for (let z = -1160; z <= 1160; z += 6) ptsNS.push({ x: 0, z: z });
+        scene.add(createRoadRibbon(ptsNS, 18.2, false, -1.0, -4.0));
+
+        // 2. Grand East-West Highway (West Tech Village at X = -1160 to East Coast at X = 1190)
+        const ptsEW = [];
+        for (let x = -1160; x <= 1190; x += 6) ptsEW.push({ x: x, z: 25 });
+        scene.add(createRoadRibbon(ptsEW, 18.2, false, -1.05, -4.5));
+
+        // 3. Wayward Island Causeway Highway, Suspension Bridge Deck & Ancient Ruins Road
+        const ptsWayward = [];
+        for (let x = 1120; x <= 1940; x += 6) ptsWayward.push({ x: x, z: 540 });
+        scene.add(createRoadRibbon(ptsWayward, 18.2, false, -1.1, -5.0));
+
+        // 4. Scenic East Lighthouse Access Road
+        const ptsLighthouse = [];
+        for (let x = 1180; x <= 1315; x += 4) ptsLighthouse.push({ x: x, z: 60 });
+        scene.add(createRoadRibbon(ptsLighthouse, 14.0, false, -1.15, -5.5));
+
+        // 5. Inner Highway Ring Loop
+        const ptsInnerRing = [];
+        const innerRingSteps = 320;
+        for (let i = 0; i < innerRingSteps; i++) {
+            const theta = (i / innerRingSteps) * Math.PI * 2;
+            const r = getInnerRoadRadius(theta);
+            ptsInnerRing.push({ x: Math.cos(theta) * r, z: Math.sin(theta) * r });
+        }
+        scene.add(createRoadRibbon(ptsInnerRing, 18.2, true, -1.2, -6.0));
+
+        // 6. Outer Highway Ring Loop
+        const ptsOuterRing = [];
+        const outerRingSteps = 480;
+        for (let i = 0; i < outerRingSteps; i++) {
+            const theta = (i / outerRingSteps) * Math.PI * 2;
+            const r = getOuterRoadRadius(theta);
+            ptsOuterRing.push({ x: Math.cos(theta) * r, z: Math.sin(theta) * r });
+        }
+        scene.add(createRoadRibbon(ptsOuterRing, 18.2, true, -1.25, -6.5));
 
         // Cel-Shaded Cartoon Ocean Water Plane + Animated White Foam Ripples (Scaled for 10X World)
         const waterMesh = new THREE.Mesh(
@@ -3309,7 +3531,7 @@
         // =====================================================================
         // 1C. RIDEABLE SOUTH HARBOR RESCUE FERRY BOAT
         // =====================================================================
-        const ferryController = {
+        ferryController = {
             state: 'DOCKED', // 'DOCKED', 'BOARDING', 'CRUISING', 'DOCKING'
             timeInState: 0,
             cruiseTime: 0,
@@ -7515,11 +7737,16 @@
                     // Active Bot follows player physics position & heading
                     rig.root.position.copy(player.pos);
                     rig.root.rotation.y = player.heading;
-                    // Subtle forward pitch tilt when Blades is flying in Helicopter or Pterosaur mode
+                    // Forward pitch tilt for Blades when flying; Terrain pitch & roll slope adaptation for Ground Vehicles
                     if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                         rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (player.speed / 65) * 0.28, dt * 6);
+                        rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, 0, dt * 6);
+                    } else if (player.mode === 'VEHICLE' || player.mode === 'DINO') {
+                        rig.chassis.rotation.x = -player.pitch;
+                        rig.chassis.rotation.z = player.roll;
                     } else {
-                        rig.chassis.rotation.x = 0;
+                        rig.chassis.rotation.x = -player.pitch * 0.35;
+                        rig.chassis.rotation.z = player.roll * 0.35;
                     }
                     applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer);
                 } else if (botKey === buddyBot.botType) {
@@ -7528,8 +7755,13 @@
                     rig.root.rotation.y = buddyBot.heading;
                     if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                         rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (buddyBot.speed / 65) * 0.28, dt * 6);
+                        rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, 0, dt * 6);
+                    } else if (player.mode === 'VEHICLE' || player.mode === 'DINO') {
+                        rig.chassis.rotation.x = -buddyBot.pitch;
+                        rig.chassis.rotation.z = buddyBot.roll;
                     } else {
-                        rig.chassis.rotation.x = 0;
+                        rig.chassis.rotation.x = -buddyBot.pitch * 0.35;
+                        rig.chassis.rotation.z = buddyBot.roll * 0.35;
                     }
                     applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer);
                 } else {
@@ -7538,6 +7770,7 @@
                     rig.root.position.set(slot.x, slot.y, slot.z);
                     rig.root.rotation.y = slot.rotY;
                     rig.chassis.rotation.x = 0;
+                    rig.chassis.rotation.z = 0;
                     applyBotRigMorph(rig, slot.morph, 0, 0, 0, 0, now);
                 }
             });
@@ -9373,8 +9606,21 @@
                     v.heading = v.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
                 }
 
+                // Smooth terrain suspension and pitch alignment for civilian traffic
+                const vFrontX = v.x + Math.sin(v.heading) * 2.0;
+                const vFrontZ = v.z + Math.cos(v.heading) * 2.0;
+                const vRearX = v.x - Math.sin(v.heading) * 2.0;
+                const vRearZ = v.z - Math.cos(v.heading) * 2.0;
+                const vFrontY = Math.max(0.5, getSurfaceHeight(vFrontX, vFrontZ));
+                const vRearY = Math.max(0.5, getSurfaceHeight(vRearX, vRearZ));
+                const vTargetY = (vFrontY + vRearY) * 0.5;
+                v.y = THREE.MathUtils.lerp(v.y || vTargetY, vTargetY, Math.min(1.0, dt * 18.0));
+                const vTargetPitch = Math.max(-0.6, Math.min(0.6, Math.atan2(vFrontY - vRearY, 4.0)));
+                v.pitch = THREE.MathUtils.lerp(v.pitch || 0, vTargetPitch, Math.min(1.0, dt * 14.0));
+
                 v.root.position.set(v.x, v.y, v.z);
                 v.root.rotation.y = v.heading;
+                v.root.rotation.x = -v.pitch;
 
                 // Spin wheels when moving
                 if (effSpeed > 0.1) {
@@ -9445,12 +9691,30 @@
                 buddyBot.pos.z += Math.cos(buddyBot.heading) * buddyBot.speed * dt;
             }
 
-            const groundY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z));
+            // Sample terrain for buddy bot smooth suspension & pitch/roll
+            const bSinH = Math.sin(buddyBot.heading);
+            const bCosH = Math.cos(buddyBot.heading);
+            const bFx = buddyBot.pos.x + bSinH * 2.2;
+            const bFz = buddyBot.pos.z + bCosH * 2.2;
+            const bRx = buddyBot.pos.x - bSinH * 2.2;
+            const bRz = buddyBot.pos.z - bCosH * 2.2;
+            const bFrontY = Math.max(0.0, getSurfaceHeight(bFx, bFz));
+            const bRearY = Math.max(0.0, getSurfaceHeight(bRx, bRz));
+            const bLeftY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x - bCosH * 1.3, buddyBot.pos.z + bSinH * 1.3));
+            const bRightY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x + bCosH * 1.3, buddyBot.pos.z - bSinH * 1.3));
+            const bCenterY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z));
+            const bTargetGroundY = Math.max((bFrontY + bRearY) * 0.5, bCenterY);
+
+            const bTargetPitch = Math.max(-0.7, Math.min(0.7, Math.atan2(bFrontY - bRearY, 4.4)));
+            const bTargetRoll = Math.max(-0.45, Math.min(0.45, Math.atan2(bRightY - bLeftY, 2.6)));
+            buddyBot.pitch = THREE.MathUtils.lerp(buddyBot.pitch || 0, bTargetPitch, Math.min(1.0, dt * 14.0));
+            buddyBot.roll = THREE.MathUtils.lerp(buddyBot.roll || 0, bTargetRoll, Math.min(1.0, dt * 14.0));
+
             if (isFlying) {
                 const targetAlt = Math.max(14, player.flightAlt + Math.sin(now * 0.003) * 1.5);
-                buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, groundY + targetAlt, Math.min(1, dt * 4.5));
+                buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, bCenterY + targetAlt, Math.min(1.0, dt * 4.5));
             } else {
-                buddyBot.pos.y = groundY;
+                buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, bTargetGroundY, Math.min(1.0, dt * 20.0));
             }
 
             if (Math.abs(buddyBot.speed) > 0.4) {
@@ -10780,9 +11044,66 @@
                 }
             }
 
+            // Sample terrain footprint for vehicle suspension & pitch/roll slope conform
+            const isVehicleOrDino = player.mode === 'VEHICLE' || player.mode === 'DINO';
+            const halfWheelbase = isVehicleOrDino ? 2.3 : 0.8;
+            const halfTrack = isVehicleOrDino ? 1.35 : 0.7;
+            const noseReach = isVehicleOrDino ? 3.2 : 1.2;
+
+            const sinH = Math.sin(player.heading);
+            const cosH = Math.cos(player.heading);
+
+            // Front & Rear contact points
+            const fx = player.pos.x + sinH * halfWheelbase;
+            const fz = player.pos.z + cosH * halfWheelbase;
+            const rx = player.pos.x - sinH * halfWheelbase;
+            const rz = player.pos.z - cosH * halfWheelbase;
+
+            // Anticipatory front nose point (prevents bumper clipping into incoming hills)
+            const nx = player.pos.x + sinH * noseReach;
+            const nz = player.pos.z + cosH * noseReach;
+
+            // Left & Right side points
+            const lx = player.pos.x - cosH * halfTrack;
+            const lz = player.pos.z + sinH * halfTrack;
+            const rxSide = player.pos.x + cosH * halfTrack;
+            const rzSide = player.pos.z - sinH * halfTrack;
+
+            const frontY = Math.max(-0.5, getSurfaceHeight(fx, fz));
+            const rearY = Math.max(-0.5, getSurfaceHeight(rx, rz));
+            const noseY = Math.max(-0.5, getSurfaceHeight(nx, nz));
+            const leftY = Math.max(-0.5, getSurfaceHeight(lx, lz));
+            const rightY = Math.max(-0.5, getSurfaceHeight(rxSide, rzSide));
+            const centerGroundY = Math.max(-0.5, getSurfaceHeight(player.pos.x, player.pos.z));
+
+            // Target ground height under the chassis
+            let targetGroundY = Math.max((frontY + rearY) * 0.5, centerGroundY);
+            if (isVehicleOrDino && player.speed > 1.0 && noseY > frontY) {
+                // Moving forward towards an uphill slope: gently elevate front suspension to prevent bumper clipping
+                const leadClimbY = (noseY + rearY) * 0.5 - 0.15;
+                targetGroundY = Math.max(targetGroundY, leadClimbY);
+            }
+
+            // Target pitch & roll angles
+            let targetPitch = 0;
+            let targetRoll = 0;
+            if (isVehicleOrDino) {
+                targetPitch = Math.atan2(frontY - rearY, halfWheelbase * 2.0);
+                targetRoll = Math.atan2(rightY - leftY, halfTrack * 2.0);
+                targetPitch = Math.max(-0.7, Math.min(0.7, targetPitch));
+                targetRoll = Math.max(-0.45, Math.min(0.45, targetRoll));
+            } else {
+                targetPitch = Math.atan2(frontY - rearY, 3.2) * 0.35;
+                targetRoll = Math.atan2(rightY - leftY, 2.2) * 0.35;
+            }
+
+            // Buttery-smooth suspension damping for pitch and roll
+            const pitchDampSpeed = isVehicleOrDino ? 16.0 : 10.0;
+            player.pitch = THREE.MathUtils.lerp(player.pitch || 0, targetPitch, Math.min(1.0, dt * pitchDampSpeed));
+            player.roll = THREE.MathUtils.lerp(player.roll || 0, targetRoll, Math.min(1.0, dt * pitchDampSpeed));
+
             // Ground Collision against Buildings & Trees (Slide smoothly around obstacles during Tap-to-Move)
-            const groundY = Math.max(-0.5, getSurfaceHeight(player.pos.x, player.pos.z));
-            const currentClearance = player.pos.y - groundY;
+            const currentClearance = player.pos.y - targetGroundY;
 
             if (!player.inCrane && currentClearance < 12) {
                 const playerRadius = 2.4;
@@ -10814,11 +11135,11 @@
             } else if (isFlyingCopter) {
                 if (input.keys['KeyQ']) player.flightAlt = Math.min(95, player.flightAlt + 28 * dt);
                 if (input.keys['KeyC']) player.flightAlt = Math.max(2, player.flightAlt - 28 * dt);
-                const targetHoverY = groundY + player.flightAlt + Math.sin(now * 0.004) * 0.45;
+                const targetHoverY = centerGroundY + player.flightAlt + Math.sin(now * 0.004) * 0.45;
                 player.pos.y = THREE.MathUtils.lerp(player.pos.y, targetHoverY, Math.min(1, dt * 5.5));
                 player.vy = 0;
                 player.grounded = false;
-                document.getElementById('altitude-readout').textContent = `ALT: ${String(Math.round(player.pos.y - groundY)).padStart(2, '0')}m`;
+                document.getElementById('altitude-readout').textContent = `ALT: ${String(Math.round(player.pos.y - centerGroundY)).padStart(2, '0')}m`;
             } else {
                 // Standard Ground & Jump Gravity
                 ramps.forEach(r => {
@@ -10834,16 +11155,18 @@
                     }
                 });
 
-                if (!player.grounded || player.pos.y > groundY + 0.05) {
+                if (!player.grounded || player.pos.y > targetGroundY + 0.35) {
                     player.vy -= 44 * dt;
                     player.pos.y += player.vy * dt;
-                    if (player.pos.y <= groundY) {
-                        player.pos.y = groundY;
+                    if (player.pos.y <= targetGroundY) {
+                        player.pos.y = targetGroundY;
                         player.vy = 0;
                         player.grounded = true;
                     }
                 } else {
-                    player.pos.y = groundY;
+                    // Gradual level adjustment as car drives up a hill or over a bump
+                    const suspensionFollowSpeed = player.pos.y < targetGroundY ? 24.0 : 18.0;
+                    player.pos.y = THREE.MathUtils.lerp(player.pos.y, targetGroundY, Math.min(1.0, dt * suspensionFollowSpeed));
                     player.vy = 0;
                     player.grounded = true;
                 }
@@ -10961,11 +11284,11 @@
             sunLight.position.set(snapX + 160, player.pos.y + 260, snapZ + 130);
             sunLight.target.updateMatrixWorld();
 
-            // Update Headlight Spotlights & Sonar Ring for Player & Buddy Bot
+            // Update Headlight Spotlights & Sonar Ring for Player & Buddy Bot (Aligned with vehicle terrain pitch)
             headlight.position.set(player.pos.x, player.pos.y + 3.5, player.pos.z);
             headlight.target.position.set(
                 player.pos.x + Math.sin(player.heading) * 22,
-                player.pos.y + 0.5,
+                player.pos.y + 0.5 - Math.sin(player.pitch || 0) * 22,
                 player.pos.z + Math.cos(player.heading) * 22
             );
 
@@ -10973,7 +11296,7 @@
                 buddyHeadlight.position.set(buddyBot.pos.x, buddyBot.pos.y + 3.2, buddyBot.pos.z);
                 buddyHeadlight.target.position.set(
                     buddyBot.pos.x + Math.sin(buddyBot.heading) * 20,
-                    buddyBot.pos.y + 0.5,
+                    buddyBot.pos.y + 0.5 - Math.sin(buddyBot.pitch || 0) * 20,
                     buddyBot.pos.z + Math.cos(buddyBot.heading) * 20
                 );
             }
