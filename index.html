@@ -3349,6 +3349,9 @@
         scene.fog = new THREE.FogExp2(0x4cc9f0, 0.00042);
 
         const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.6, 2200);
+        // Start facing the Rescue Bot heroically in front of Rescue Bots HQ
+        camera.position.set(0, 14.5, 8.5);
+        camera.lookAt(0, 8.2, -15);
 
         const hemiLight = new THREE.HemisphereLight(0xffffff, 0x4d7c0f, 0.72);
         scene.add(hemiLight);
@@ -13775,7 +13778,7 @@
          ***********************************************************************/
         const input = {
             keys: {},
-            camYaw: Math.PI,
+            camYaw: 0, // Starts facing the bot heroically, shifts behind on movement
             camPitch: 0.48,
             camZoomMode: 0, // 0 = Wide Kid-Friendly View, 1 = Extra Far Bird's-Eye View, 2 = Hero Close View
             autoCam: true
@@ -14285,7 +14288,7 @@
             player.hasWaypoint = false;
             waypointGroup.visible = false;
             player.flightAlt = player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO') ? 16 : 0;
-            input.camYaw = Math.PI;
+            input.camYaw = 0; // Greet player facing the bot heroically in front of HQ
             closeUtilityMenu();
             showToast("COMMAND CENTER WARP", "Arrived at Rescue Bots Firehouse HQ!");
         });
@@ -15277,12 +15280,19 @@
             }
 
             // Wider, Further-Back Third-Person Camera for 3-Year-Old Visibility & Easy Far-Tapping
-            if (input.autoCam && Math.abs(player.speed) > 1.0) {
+            // Camera starts facing the bot heroically in front; as soon as movement begins, smoothly orbits behind!
+            const isMoving = Math.abs(player.speed) > 0.4 || player.hasWaypoint ||
+                (input.keys['KeyW'] || input.keys['KeyS'] || input.keys['ArrowUp'] || input.keys['ArrowDown'] ||
+                 input.keys['KeyA'] || input.keys['KeyD'] || input.keys['ArrowLeft'] || input.keys['ArrowRight']);
+            if (input.autoCam && isMoving) {
                 const targetYaw = player.heading + Math.PI;
                 let diff = targetYaw - input.camYaw;
                 while (diff < -Math.PI) diff += Math.PI * 2;
                 while (diff > Math.PI) diff -= Math.PI * 2;
-                input.camYaw += diff * dt * 1.85;
+                if (Math.abs(Math.abs(diff) - Math.PI) < 0.05) {
+                    diff = Math.PI - 0.05;
+                }
+                input.camYaw += diff * Math.min(1.0, dt * 2.2);
             }
 
             // Camera Distance & Pitch per View Mode (Default Mode 0 is significantly pulled back & elevated)
@@ -15298,19 +15308,28 @@
                 activePitch = 0.36;
             }
 
-            const camHeight = Math.sin(activePitch) * baseDist;
-            const camHoriz = Math.cos(activePitch) * baseDist;
+            // Facing Factor: 1.0 when facing the bot directly from front, 0.0 when behind
+            const frontFactor = Math.max(0, Math.cos(input.camYaw - player.heading));
+            const activeDist = baseDist * (1.0 - frontFactor * 0.28);
+            const dynamicPitch = activePitch * (1.0 - frontFactor * 0.38);
+
+            const camHeight = Math.sin(dynamicPitch) * activeDist;
+            const camHoriz = Math.cos(dynamicPitch) * activeDist;
 
             const idealCamX = player.pos.x + Math.sin(input.camYaw) * camHoriz;
             const idealCamZ = player.pos.z + Math.cos(input.camYaw) * camHoriz;
             const minGroundCamY = getSurfaceHeight(idealCamX, idealCamZ) + 4.5;
-            const idealCamY = Math.max(minGroundCamY, player.pos.y + camHeight + 4.5);
+            const idealCamY = Math.max(minGroundCamY, player.pos.y + camHeight + 4.5 * (1.0 - frontFactor * 0.55));
 
             camera.position.lerp(new THREE.Vector3(idealCamX, idealCamY, idealCamZ), Math.min(1, dt * 8));
-            // Look slightly ahead of the character so more of the forward world is visible
-            const lookAheadX = player.pos.x + Math.sin(player.heading) * 4.5;
-            const lookAheadZ = player.pos.z + Math.cos(player.heading) * 4.5;
-            camera.lookAt(lookAheadX, player.pos.y + 3.0, lookAheadZ);
+
+            // While facing the bot from front, center directly on the bot's chest.
+            // As the camera shifts behind the bot, smoothly transition the look target ahead of the bot.
+            const rearAlignment = Math.max(0, -Math.cos(input.camYaw - player.heading));
+            const lookAheadDist = rearAlignment * 4.5;
+            const lookAheadX = player.pos.x + Math.sin(player.heading) * lookAheadDist;
+            const lookAheadZ = player.pos.z + Math.cos(player.heading) * lookAheadDist;
+            camera.lookAt(lookAheadX, player.pos.y + 3.2, lookAheadZ);
 
             const kmh = Math.round(Math.abs(player.speed) * 2.2);
             document.getElementById('speed-readout').textContent = `${String(kmh).padStart(2, '0')} KM/H`;
