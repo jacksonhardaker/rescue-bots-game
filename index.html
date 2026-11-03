@@ -527,6 +527,22 @@
                             <span>Energon: <span id="stat-total-energon" class="text-amber-300">0</span></span>
                         </span>
                     </div>
+                    <!-- Open World Exploration & Relic Collection Tracking -->
+                    <div id="exploration-stats-row" class="flex items-center justify-between gap-2 pt-0.5 text-[9.5px] sm:text-[10px] font-bold text-sky-200">
+                        <span class="flex items-center gap-1">
+                            <svg viewBox="0 0 24 24" style="width:12px;height:12px;display:inline-block;" class="shrink-0" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="10" r="3"/>
+                                <path d="M12 2a8 8 0 00-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 00-8-8z"/>
+                            </svg>
+                            <span>Sites: <span id="stat-total-landmarks" class="text-white">0</span>/16</span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg viewBox="0 0 24 24" style="width:12px;height:12px;display:inline-block;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/>
+                            </svg>
+                            <span>Relics: <span id="stat-total-crests" class="text-amber-300">0</span>/10</span>
+                        </span>
+                    </div>
                     <div class="flex items-center justify-between gap-2 pt-0.5 text-[10px] sm:text-[11px] font-extrabold">
                         <span id="stat-rank-badge" class="text-amber-300 tracking-wide flex items-center gap-1">
                             <span id="stat-rank-stars" class="flex items-center gap-0.5">
@@ -1504,6 +1520,61 @@
                 gain.connect(this.ctx.destination);
                 osc.start(now);
                 osc.stop(now + 1.3);
+            }
+            playConeKnock() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(320 + Math.random() * 80, now);
+                osc.frequency.exponentialRampToValueAtTime(120, now + 0.12);
+                gain.gain.setValueAtTime(0.18, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            }
+            playRelicFound() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // High sparkling ascending golden arpeggio (C6, E6, G6, C7)
+                [1046.5, 1318.5, 1567.98, 2093.0].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+                    gain.gain.setValueAtTime(0.15, now + idx * 0.09);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.55);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.09);
+                    osc.stop(now + idx * 0.09 + 0.6);
+                });
+            }
+            playDiscoveryChime() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Celebratory resonant brass/fanfare chime
+                [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                    gain.gain.setValueAtTime(0.18, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.7);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.75);
+                });
             }
             playDinerDing() {
                 if (!this.enabled) return;
@@ -2687,6 +2758,16 @@
             if (Math.abs(x) <= 16.0 && z >= 1180 && z <= 1278) {
                 return 3.4;
             }
+            // Wayward Island Scenic Pier Deck over ocean channel
+            const wPierAlong = (x - 1802) * -0.559 + (z - 306) * -0.829;
+            const wPierAcross = (x - 1802) * 0.829 + (z - 306) * -0.559;
+            if (wPierAlong >= -32 && wPierAlong <= 35 && Math.abs(wPierAcross) <= (wPierAlong > 21 ? 18.0 : 9.0)) {
+                if (wPierAlong <= -22) {
+                    const blend = (wPierAlong - (-32)) / 10;
+                    return THREE.MathUtils.lerp(getTerrainHeight(x, z), 2.2, blend);
+                }
+                return 2.2;
+            }
             // Docked or Sailing Ferry Boat Deck
             if (ferryController && ferryController.currentPos) {
                 const fdx = x - ferryController.currentPos.x;
@@ -2730,10 +2811,18 @@
             if (Math.abs(z - 60) < 12.0 && x >= 1180 && x <= 1320) return true;
             // Wayward Causeway Highway, Suspension Bridge and Island Road (X: 1120 .. 1960, Z: 540)
             if (Math.abs(z - 540) < 12.5 && x >= 1120 && x <= 1960) return true;
+            // Wayward Island Coastal Trail Loop
+            const dWaywardCenter = Math.hypot(x - 1960, z - 540);
+            if (dWaywardCenter >= 175 && dWaywardCenter <= 245) return true;
+            // Wayward Island Scenic Pier Deck over ocean channel
+            const pierAlong = (x - 1802) * -0.559 + (z - 306) * -0.829;
+            const pierAcross = (x - 1802) * 0.829 + (z - 306) * -0.559;
+            if (pierAlong >= -32 && pierAlong <= 35 && Math.abs(pierAcross) <= (pierAlong > 21 ? 18.0 : 9.0)) return true;
             return false;
         }
 
         function getZoneName(x, z) {
+            if (Math.hypot(x - 1802, z - 306) < 45) return "WAYWARD SCENIC PIER";
             if (ferryController && ferryController.currentPos && Math.hypot(x - ferryController.currentPos.x, z - ferryController.currentPos.z) < 32) return "SOUTH HARBOR FERRY";
             if (Math.hypot(x - 1960, z - 540) < 320) return "WAYWARD ISLAND";
             if (x >= 1480 && x <= 1760 && Math.abs(z - 540) <= 12) return "WAYWARD CAUSEWAY BRIDGE";
@@ -3289,6 +3378,17 @@
         const ptsWayward = [];
         for (let x = 1120; x <= 1940; x += 6) ptsWayward.push({ x: x, z: 540 });
         scene.add(createRoadRibbon(ptsWayward, 18.2, false, -1.1, -5.0));
+
+        // 3b. Wayward Island Scenic Coastal Trail Loop (Beaches, Sea Grotto, Pier & Ruins)
+        const ptsWaywardLoop = [];
+        const wCenterX = 1960, wCenterZ = 540;
+        for (let a = Math.PI; a >= -Math.PI; a -= 0.1) {
+            const rOffset = Math.sin(a * 2) * 22 + Math.cos(a * 3) * 16;
+            const rx = wCenterX + Math.cos(a) * (205 + rOffset);
+            const rz = wCenterZ + Math.sin(a) * (205 + rOffset);
+            ptsWaywardLoop.push({ x: rx, z: rz });
+        }
+        scene.add(createRoadRibbon(ptsWaywardLoop, 14.5, true, -1.05, -4.5));
 
         // 4. Scenic East Lighthouse Access Road
         const ptsLighthouse = [];
@@ -4208,12 +4308,12 @@
         createTownBuilding(-95, -72, 14, 11, 14, 0xe81e25, 0xffffff, 0.05);  // Municipal Garage (South-West Plaza)
         createTownBuilding(52, 115, 15, 14, 15, 0x9333ea, 0xfaf5ff, -0.2);   // Town Hall & Clock Tower (Far North Head)
 
-        // 2. South Harbor Port District (around 0, 1140)
-        // Positioned along the deep quayside apron, completely clear of the Outer Ring Highway curve and harbor roads
-        createTownBuilding(-65, 1110, 16, 12, 14, 0x0284c7, 0xf8fafc, 0.08);
-        createTownBuilding(65, 1110, 16, 13, 14, 0xe81e25, 0xfef08a, -0.08);
-        createTownBuilding(-65, 1160, 16, 11, 14, 0xf97316, 0xffffff, 0.15);
-        createTownBuilding(65, 1160, 16, 14, 14, 0x16a34a, 0xf0fdf4, -0.15);
+        // 2. South Harbor Port District
+        // Set back generously on north inland gateway and south seaward waterfront plazas, >43m clear of all roads
+        createTownBuilding(-62, 1072, 16, 12, 14, 0x0284c7, 0xf8fafc, 0.08);  // North-West Harbor Logistics Office
+        createTownBuilding(62, 1072, 16, 13, 14, 0xe81e25, 0xfef08a, -0.08);  // North-East Harbor Fishery & Cafe
+        createTownBuilding(-62, 1162, 16, 11, 14, 0xf97316, 0xffffff, 0.15);  // South-West Harbor Customs House
+        createTownBuilding(62, 1162, 16, 14, 14, 0x16a34a, 0xf0fdf4, -0.15);  // South-East Ferry Terminal & Harbor Master
 
         // 3. West Tech & Industrial Village (around -1120, 25)
         // Set back along north and south tech village plazas, clear of East-West Highway & Outer Ring
@@ -4266,14 +4366,24 @@
 
         applyCartoonInkOutlines(lighthouseGroup, 1.045, false);
 
+        const matLhBeam = new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.28, side: THREE.DoubleSide });
         const lhBeam = new THREE.Mesh(
-            new THREE.ConeGeometry(14, 90, 14, 1, true),
-            new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.26, side: THREE.DoubleSide })
+            new THREE.ConeGeometry(16, 130, 16, 1, true),
+            matLhBeam
         );
         lhBeam.rotation.z = Math.PI / 2;
-        lhBeam.position.set(44, 41.0, 0);
+        lhBeam.position.set(62, 41.0, 0);
+
+        const lhBeamOpposite = new THREE.Mesh(
+            new THREE.ConeGeometry(16, 130, 16, 1, true),
+            matLhBeam
+        );
+        lhBeamOpposite.rotation.z = -Math.PI / 2;
+        lhBeamOpposite.position.set(-62, 41.0, 0);
+
         const lhBeamPivot = new THREE.Group();
         lhBeamPivot.add(lhBeam);
+        lhBeamPivot.add(lhBeamOpposite);
         lighthouseGroup.add(lhBeamPivot);
         scene.add(lighthouseGroup);
         registerCullableObject(lighthouseGroup, lhX, lhY + 24, lhZ, 95);
@@ -4374,12 +4484,12 @@
         // INTERACTIVE HIGH-FLYING MAGNETIC GANTRY CRANE (At X: -110, Z: 1150)
         // =====================================================================
         const craneInteractive = {
-            craneX: -110,
-            craneZ: 1150,
-            padX: -110,
-            padZ: 1125,
-            dropX: -110,
-            dropZ: 1175,
+            craneX: -105,
+            craneZ: 1162,
+            padX: -105,
+            padZ: 1142,
+            dropX: -105,
+            dropZ: 1176,
             state: 'IDLE', // 'IDLE', 'LOCKING', 'HOISTING', 'SWINGING', 'RELEASING', 'RESETTING'
             timer: 0,
             cooldown: 0,
@@ -4491,12 +4601,13 @@
         }
 
         // 1B. Stacked Colorful Shipping Containers in South Harbor Yard
+        // Grouped neatly in dedicated west and east port cargo staging berths, completely clear of roads
         const containerMats = [matContainerRed, matContainerBlue, matContainerGreen, matContainerOrange, matCraneYellow];
         [
-            { x: -86, z: 1125, rotY: 0.05 },
-            { x: 86, z: 1125, rotY: -0.05 },
-            { x: -88, z: 1152, rotY: 0.12 },
-            { x: 88, z: 1152, rotY: -0.12 }
+            { x: -102, z: 1150, rotY: 0.05 },
+            { x: 102, z: 1150, rotY: -0.05 },
+            { x: -130, z: 1150, rotY: 0.12 },
+            { x: 130, z: 1150, rotY: -0.12 }
         ].forEach((yard, yIdx) => {
             const yardGroup = new THREE.Group();
             const yy = Math.max(0.5, getTerrainHeight(yard.x, yard.z));
@@ -5454,6 +5565,104 @@
 
         waywardIslandGroup.add(shipGroup);
 
+        // E. Hidden Cybertronian Sea Grotto (local: 80, -180 => World: 2040, 360)
+        const grottoGroup = new THREE.Group();
+        grottoGroup.position.set(80, -4, -180);
+        const matGrottoRock = new THREE.MeshToonMaterial({ color: 0x475569, gradientMap: toonGrad3 });
+        const archLeft = new THREE.Mesh(new THREE.BoxGeometry(8, 24, 16), matGrottoRock);
+        archLeft.position.set(-14, 12, 0);
+        grottoGroup.add(archLeft);
+        const archRight = new THREE.Mesh(new THREE.BoxGeometry(8, 24, 16), matGrottoRock);
+        archRight.position.set(14, 12, 0);
+        grottoGroup.add(archRight);
+        const archTop = new THREE.Mesh(new THREE.BoxGeometry(36, 8, 16), matGrottoRock);
+        archTop.position.set(0, 24, 0);
+        grottoGroup.add(archTop);
+
+        // Grotto Interior Chamber floor
+        const caveFloor = new THREE.Mesh(new THREE.CylinderGeometry(24, 24, 1.2, 16), matGrottoRock);
+        caveFloor.position.set(0, 0.6, -18);
+        grottoGroup.add(caveFloor);
+
+        // Glowing Purple & Cyan Crystal Clusters inside Grotto
+        const matPurpleCrystal = new THREE.MeshBasicMaterial({ color: 0xc084fc });
+        const matCyanCrystal = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        for (let c = 0; c < 7; c++) {
+            const cAng = (c / 7) * Math.PI * 2;
+            const crMat = c % 2 === 0 ? matPurpleCrystal : matCyanCrystal;
+            const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(2.4 + (c % 3) * 0.8, 0), crMat);
+            crystal.position.set(Math.cos(cAng) * 16, 2.5 + (c % 3), -18 + Math.sin(cAng) * 16);
+            crystal.scale.set(0.6, 2.2, 0.6);
+            grottoGroup.add(crystal);
+        }
+        waywardIslandGroup.add(grottoGroup);
+
+        // F. Wayward Island Scenic Pier & Ferry Overlook (World: 1802, 2.2, 306)
+        // Extends gracefully from the sandy beach road out over the ocean water channel!
+        const waywardPierGroup = new THREE.Group();
+        const pierCenterX = 1802, pierCenterZ = 306;
+        const pierRotY = -2.548;
+        waywardPierGroup.position.set(pierCenterX, 0, pierCenterZ);
+        waywardPierGroup.rotation.y = pierRotY;
+
+        const matPierWood = new THREE.MeshToonMaterial({ color: 0xb45309, gradientMap: toonGrad3 });
+        const matPierDark = new THREE.MeshToonMaterial({ color: 0x78350f, gradientMap: toonGrad3 });
+        const matPierLantern = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+
+        // Main Straight Pier Boardwalk Deck (extends 64m from shore to deep water)
+        const waywardPierDeck = new THREE.Mesh(new THREE.BoxGeometry(16, 1.6, 64), matPierWood);
+        waywardPierDeck.position.set(0, 2.2, 0);
+        waywardPierDeck.receiveShadow = true;
+        waywardPierGroup.add(waywardPierDeck);
+
+        // Seaward T-Dock Scenic Overlook Platform (wide lookout platform over open sea)
+        const tDockDeck = new THREE.Mesh(new THREE.BoxGeometry(34, 1.6, 14), matPierWood);
+        tDockDeck.position.set(0, 2.2, 28);
+        tDockDeck.receiveShadow = true;
+        waywardPierGroup.add(tDockDeck);
+
+        // Wooden Safety Railings along both sides of the boardwalk
+        [-8.2, 8.2].forEach(rx => {
+            const topRail = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.4, 56), matPierDark);
+            topRail.position.set(rx, 3.6, -2);
+            waywardPierGroup.add(topRail);
+        });
+
+        // Pilings driven deep down through water into ocean seabed
+        for (let pz = -26; pz <= 30; pz += 9.5) {
+            [-7.2, 7.2].forEach(px => {
+                const pile = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.8, 16, 8), matPierDark);
+                pile.position.set(px, -4.5, pz);
+                waywardPierGroup.add(pile);
+            });
+        }
+        // Extra pilings under outer T-dock wings
+        [-15.5, 15.5].forEach(px => {
+            [-5, 5].forEach(pzOff => {
+                const pile = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.8, 16, 8), matPierDark);
+                pile.position.set(px, -4.5, 28 + pzOff);
+                waywardPierGroup.add(pile);
+            });
+        });
+
+        // Mooring Cleats & Warm Nautical Lantern Posts along the pier
+        for (let pz = -22; pz <= 26; pz += 16) {
+            [-8.2, 8.2].forEach(px => {
+                const post = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.0, 0.4), matPierDark);
+                post.position.set(px, 3.2, pz);
+                waywardPierGroup.add(post);
+
+                const lantern = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.85, 0.65), matPierLantern);
+                lantern.position.set(px, 4.4, pz);
+                lantern.userData.noOutline = true;
+                waywardPierGroup.add(lantern);
+            });
+        }
+
+        applyCartoonInkOutlines(waywardPierGroup, 1.025, true);
+        scene.add(waywardPierGroup);
+        registerCullableObject(waywardPierGroup, pierCenterX, 2.2, pierCenterZ, 70);
+
         applyCartoonInkOutlines(waywardIslandGroup, 1.035, true);
         scene.add(waywardIslandGroup);
         registerCullableObject(waywardIslandGroup, wiX, wiY + 20, wiZ, 450);
@@ -5889,6 +6098,9 @@
             volcanoEmberSystem.group.visible = (w.id === 'VOLCANO');
             auroraMesh.visible = (w.id === 'NIGHT');
             starField.group.visible = (w.id === 'NIGHT');
+            if (typeof matLhBeam !== 'undefined') {
+                matLhBeam.opacity = (w.id === 'NIGHT' || w.id === 'VOLCANO') ? 0.68 : 0.28;
+            }
 
             const timeIcon = document.getElementById('time-icon');
             const timeLabel = document.getElementById('time-label');
@@ -8969,6 +9181,8 @@
             totalCitizensRescued: 0,
             totalEnergonCubes: 0,
             totalStuntsCompleted: 0,
+            discoveredLandmarks: [],
+            collectedCrests: [],
             autoSpawnEmergencies: true,
             buddyBotType: 'HEATWAVE',
             weatherMode: 'SUNNY'
@@ -8992,7 +9206,9 @@
         }
 
         function getHeroPoints(prog = progression) {
-            return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0);
+            const landmarkPts = (Array.isArray(prog.discoveredLandmarks) ? prog.discoveredLandmarks.length * 2 : 0);
+            const crestPts = (Array.isArray(prog.collectedCrests) ? prog.collectedCrests.length * 5 : 0);
+            return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts;
         }
 
         function getRescueStarRank(prog = progression) {
@@ -9033,6 +9249,12 @@
                         }
                         if (Number.isFinite(parsed.totalStuntsCompleted) && parsed.totalStuntsCompleted >= 0) {
                             progression.totalStuntsCompleted = Math.floor(parsed.totalStuntsCompleted);
+                        }
+                        if (Array.isArray(parsed.discoveredLandmarks)) {
+                            progression.discoveredLandmarks = parsed.discoveredLandmarks.filter(x => typeof x === 'string');
+                        }
+                        if (Array.isArray(parsed.collectedCrests)) {
+                            progression.collectedCrests = parsed.collectedCrests.filter(x => typeof x === 'string' || typeof x === 'number');
                         }
                         if (typeof parsed.autoSpawnEmergencies === 'boolean') {
                             progression.autoSpawnEmergencies = parsed.autoSpawnEmergencies;
@@ -9092,9 +9314,13 @@
             const totalEmEl = document.getElementById('stat-total-emergencies');
             const totalCitEl = document.getElementById('stat-total-citizens');
             const totalEnEl = document.getElementById('stat-total-energon');
+            const totalLandmarksEl = document.getElementById('stat-total-landmarks');
+            const totalCrestsEl = document.getElementById('stat-total-crests');
             if (totalEmEl) totalEmEl.textContent = String(progression.totalEmergenciesResolved);
             if (totalCitEl) totalCitEl.textContent = String(progression.totalCitizensRescued);
             if (totalEnEl) totalEnEl.textContent = String(progression.totalEnergonCubes);
+            if (totalLandmarksEl) totalLandmarksEl.textContent = String(Array.isArray(progression.discoveredLandmarks) ? progression.discoveredLandmarks.length : 0);
+            if (totalCrestsEl) totalCrestsEl.textContent = String(Array.isArray(progression.collectedCrests) ? progression.collectedCrests.length : 0);
 
             const rankInfo = getRescueStarRank(progression);
             const rankBadgeEl = document.getElementById('stat-rank-badge');
@@ -10189,9 +10415,521 @@
             }
         }
 
+        // =====================================================================
+        // OPEN WORLD ENHANCEMENT: 16-LANDMARK DISCOVERY LOG SYSTEM
+        // =====================================================================
+        const DISCOVERY_LANDMARKS = [
+            { id: "firehouse_hq", name: "Firehouse HQ", x: 0, z: -45, r: 65 },
+            { id: "griffin_lighthouse", name: "Griffin Rock Lighthouse", x: 1250, z: 60, r: 65 },
+            { id: "ocean_causeway", name: "Causeway Bridge Landing", x: 1120, z: 540, r: 75 },
+            { id: "wayward_ruins", name: "Wayward Alien Ruins", x: 1960, z: 540, r: 75 },
+            { id: "wayward_grotto", name: "Wayward Sea Grotto", x: 2040, z: 360, r: 60 },
+            { id: "wayward_pier", name: "Wayward Scenic Pier", x: 1802, z: 306, r: 65 },
+            { id: "high_quarry", name: "High Rock Quarry", x: -750, z: -750, r: 75 },
+            { id: "sky_observatory", name: "Mountain Observatory Peak", x: 0, z: -1080, r: 70 },
+            { id: "wind_farm", name: "Wind Turbine Ridge", x: 762, z: -780, r: 75 },
+            { id: "south_harbor", name: "Griffin Rock Harbor Docks", x: 0, z: 1140, r: 75 },
+            { id: "west_tech_plaza", name: "West Tech Outpost", x: -1080, z: 30, r: 70 },
+            { id: "downtown_clocktower", name: "Civic Center Clocktower", x: -140, z: 120, r: 60 },
+            { id: "mt_griffin_peak", name: "Mount Griffin Volcano Apex", x: -650, z: 650, r: 80 },
+            { id: "pine_campground", name: "Pine Valley Campsite", x: -350, z: -350, r: 65 },
+            { id: "coastal_beach", name: "Sandy Cove Beach", x: 450, z: -450, r: 65 },
+            { id: "ferry_terminal", name: "Ferry Slip Terminal", x: 0, z: 1230, r: 65 }
+        ];
+
+        let landmarkCheckCooldown = 0;
+        function updateLandmarkDiscovery(px, pz) {
+            landmarkCheckCooldown++;
+            if (landmarkCheckCooldown % 15 !== 0) return;
+            if (!Array.isArray(progression.discoveredLandmarks)) {
+                progression.discoveredLandmarks = [];
+            }
+            for (let i = 0; i < DISCOVERY_LANDMARKS.length; i++) {
+                const lm = DISCOVERY_LANDMARKS[i];
+                if (!progression.discoveredLandmarks.includes(lm.id)) {
+                    const dist = Math.hypot(px - lm.x, pz - lm.z);
+                    if (dist <= lm.r) {
+                        progression.discoveredLandmarks.push(lm.id);
+                        sfx.playDiscoveryChime();
+                        spawnBurstParticles(player.pos.x, player.pos.y + 3.0, player.pos.z, 0x38bdf8, 20, 1.4);
+                        showToast(
+                            "🗺️ LANDMARK DISCOVERED!",
+                            `${lm.name} (${progression.discoveredLandmarks.length}/${DISCOVERY_LANDMARKS.length}) +2 Hero Pts`
+                        );
+                        saveProgression();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // =====================================================================
+        // OPEN WORLD ENHANCEMENT: 10 HIDDEN GOLDEN AUTOBOT CRESTS (RELICS)
+        // =====================================================================
+        const GOLDEN_CREST_DEFS = [
+            { id: "crest_hq_roof", name: "HQ Helipad Crest", x: 0, y: 17.5, z: -45 },
+            { id: "crest_lighthouse", name: "Lighthouse Lantern Crest", x: 1250, y: 44.5, z: 60 },
+            { id: "crest_observatory", name: "Observatory Dome Crest", x: 0, y: 42.0, z: -1080 },
+            { id: "crest_bridge_tower", name: "Causeway Bridge Tower Crest", x: 1530, y: 36.0, z: 540 },
+            { id: "crest_wayward_grotto", name: "Sea Grotto Crystal Crest", x: 2040, y: 3.5, z: 360 },
+            { id: "crest_wayward_ruins", name: "Ancient Temple Relic", x: 1960, y: 18.0, z: 540 },
+            { id: "crest_quarry_crane", name: "High Quarry Crane Apex", x: -750, y: 28.0, z: -750 },
+            { id: "crest_harbor_pier", name: "Harbor Ferry Pier Crest", x: 0, y: 7.5, z: 1230 },
+            { id: "crest_wind_ridge", name: "Wind Turbine Plateau Crest", x: 760, y: 32.0, z: -780 },
+            { id: "crest_volcano_rim", name: "Mount Griffin Rim Crest", x: -650, y: 48.0, z: 650 }
+        ];
+
+        const goldenCrests = [];
+        function createGoldenCrestMesh() {
+            const grp = new THREE.Group();
+            const matGold = new THREE.MeshStandardMaterial({
+                color: 0xffd700,
+                metalness: 0.88,
+                roughness: 0.22,
+                emissive: 0x785600,
+                emissiveIntensity: 0.35
+            });
+            const matSilverTrim = new THREE.MeshStandardMaterial({
+                color: 0xf1f5f9,
+                metalness: 0.92,
+                roughness: 0.15
+            });
+
+            const shield = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.8, 0.45), matGold);
+            shield.castShadow = true;
+            grp.add(shield);
+
+            const tip = new THREE.Mesh(new THREE.ConeGeometry(1.2, 1.4, 4), matGold);
+            tip.rotation.y = Math.PI / 4;
+            tip.rotation.x = Math.PI;
+            tip.position.y = -1.6;
+            grp.add(tip);
+
+            [-0.26, 0.26].forEach(zPos => {
+                const emblemCenter = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.18), matSilverTrim);
+                emblemCenter.position.set(0, 0.2, zPos);
+                grp.add(emblemCenter);
+
+                const emblemBrow = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.35, 0.18), matSilverTrim);
+                emblemBrow.position.set(0, 0.9, zPos);
+                grp.add(emblemBrow);
+
+                const emblemNose = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.6, 0.18), matSilverTrim);
+                emblemNose.position.set(0, -0.4, zPos);
+                grp.add(emblemNose);
+            });
+
+            const halo = new THREE.Mesh(
+                new THREE.TorusGeometry(2.2, 0.12, 8, 24),
+                new THREE.MeshBasicMaterial({ color: 0xffe066, transparent: true, opacity: 0.75 })
+            );
+            halo.rotation.x = Math.PI / 2;
+            grp.add(halo);
+
+            return grp;
+        }
+
+        function initGoldenCrests() {
+            if (!Array.isArray(progression.collectedCrests)) {
+                progression.collectedCrests = [];
+            }
+            GOLDEN_CREST_DEFS.forEach(def => {
+                const mesh = createGoldenCrestMesh();
+                mesh.position.set(def.x, def.y, def.z);
+                const isCollected = progression.collectedCrests.includes(def.id);
+                mesh.visible = !isCollected;
+                scene.add(mesh);
+                registerCullableObject(mesh, def.x, def.y, def.z, 22);
+                goldenCrests.push({
+                    def,
+                    mesh,
+                    collected: isCollected,
+                    baseY: def.y,
+                    phase: Math.random() * Math.PI * 2
+                });
+            });
+        }
+
+        function updateGoldenCrests(dt, now) {
+            const nowSec = now * 0.001;
+            for (let i = 0; i < goldenCrests.length; i++) {
+                const c = goldenCrests[i];
+                if (c.collected || !c.mesh.visible) continue;
+
+                c.mesh.rotation.y += dt * 1.8;
+                c.mesh.position.y = c.baseY + Math.sin(nowSec * 2.8 + c.phase) * 0.45;
+
+                const dx = player.pos.x - c.def.x;
+                const dy = (player.pos.y + 2.0) - c.mesh.position.y;
+                const dz = player.pos.z - c.def.z;
+                const dist3D = Math.hypot(dx, dy, dz);
+
+                if (dist3D < 6.5) {
+                    c.collected = true;
+                    c.mesh.visible = false;
+                    if (!progression.collectedCrests.includes(c.def.id)) {
+                        progression.collectedCrests.push(c.def.id);
+                    }
+                    sfx.playRelicFound();
+                    spawnBurstParticles(c.def.x, c.mesh.position.y, c.def.z, 0xffd700, 28, 1.8);
+                    showToast(
+                        "⭐ GOLDEN AUTOBOT RELIC!",
+                        `${c.def.name} (${progression.collectedCrests.length}/${GOLDEN_CREST_DEFS.length}) +5 Hero Pts`
+                    );
+                    saveProgression();
+                }
+            }
+        }
+
+        // =====================================================================
+        // OPEN WORLD ENHANCEMENT: INTERACTIVE ROAD BREAKABLES & PHYSICS PROPS
+        // =====================================================================
+        const interactiveRoadProps = [];
+
+        function createTrafficConeMesh() {
+            const grp = new THREE.Group();
+            const matBase = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
+            const matCone = new THREE.MeshToonMaterial({ color: 0xff6b00, gradientMap: toonGrad3 });
+            const matWhiteStripe = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+            const base = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.16, 1.2), matBase);
+            base.position.y = 0.08;
+            grp.add(base);
+
+            const cone = new THREE.Mesh(new THREE.ConeGeometry(0.44, 1.5, 12), matCone);
+            cone.position.y = 0.83;
+            grp.add(cone);
+
+            const band = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.33, 0.36, 12), matWhiteStripe);
+            band.position.y = 0.78;
+            grp.add(band);
+
+            return grp;
+        }
+
+        function createBarricadeMesh() {
+            const grp = new THREE.Group();
+            const matLegs = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad3 });
+            const matBoard = new THREE.MeshToonMaterial({ color: 0xffa500, gradientMap: toonGrad3 });
+            const matBlackStripe = new THREE.MeshBasicMaterial({ color: 0x0f172a });
+
+            [-1.3, 1.3].forEach(lx => {
+                const legL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.6, 0.14), matLegs);
+                legL.rotation.z = 0.18;
+                legL.position.set(lx - 0.12, 0.8, 0);
+                grp.add(legL);
+
+                const legR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.6, 0.14), matLegs);
+                legR.rotation.z = -0.18;
+                legR.position.set(lx + 0.12, 0.8, 0);
+                grp.add(legR);
+            });
+
+            const board = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.55, 0.14), matBoard);
+            board.position.set(0, 1.15, 0);
+            grp.add(board);
+
+            [-1.0, -0.4, 0.2, 0.8].forEach(sx => {
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.58, 0.16), matBlackStripe);
+                stripe.rotation.z = -0.45;
+                stripe.position.set(sx, 1.15, 0);
+                grp.add(stripe);
+            });
+
+            const amberLight = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.18, 0.22, 0.28, 10),
+                new THREE.MeshBasicMaterial({ color: 0xffaa00 })
+            );
+            amberLight.position.set(0, 1.58, 0);
+            grp.add(amberLight);
+
+            return grp;
+        }
+
+        function initInteractiveRoadProps() {
+            const coneSpawns = [
+                { x: 1125, z: 536 }, { x: 1135, z: 536 }, { x: 1145, z: 536 },
+                { x: 1125, z: 544 }, { x: 1135, z: 544 }, { x: 1145, z: 544 },
+                { x: 1780, z: 536 }, { x: 1790, z: 536 }, { x: 1800, z: 536 },
+                { x: 1780, z: 544 }, { x: 1790, z: 544 }, { x: 1800, z: 544 },
+                { x: 160, z: 100 }, { x: 170, z: 105 }, { x: 180, z: 110 },
+                { x: -350, z: 95 }, { x: -360, z: 100 }, { x: -370, z: 105 }
+            ];
+
+            coneSpawns.forEach(p => {
+                const mesh = createTrafficConeMesh();
+                const groundY = getSurfaceHeight(p.x, p.z);
+                mesh.position.set(p.x, groundY, p.z);
+                scene.add(mesh);
+                registerCullableObject(mesh, p.x, groundY, p.z, 14);
+                interactiveRoadProps.push({
+                    mesh,
+                    origX: p.x, origY: groundY, origZ: p.z,
+                    x: p.x, y: groundY, z: p.z,
+                    vx: 0, vy: 0, vz: 0,
+                    rxv: 0, ryv: 0, rzv: 0,
+                    isCone: true,
+                    knocked: false,
+                    radius: 1.2
+                });
+            });
+
+            const barricadeSpawns = [
+                { x: 1120, z: 540, rotY: 0 },
+                { x: 1810, z: 540, rotY: 0 },
+                { x: 150, z: 95, rotY: 0.4 },
+                { x: 195, z: 125, rotY: -0.3 },
+                { x: -340, z: 90, rotY: 1.2 },
+                { x: -380, z: 110, rotY: 1.1 },
+                { x: 620, z: 270, rotY: 0.8 },
+                { x: 660, z: 270, rotY: 0.8 }
+            ];
+
+            barricadeSpawns.forEach(p => {
+                const mesh = createBarricadeMesh();
+                const groundY = getSurfaceHeight(p.x, p.z);
+                mesh.position.set(p.x, groundY, p.z);
+                mesh.rotation.y = p.rotY || 0;
+                scene.add(mesh);
+                registerCullableObject(mesh, p.x, groundY, p.z, 18);
+                interactiveRoadProps.push({
+                    mesh,
+                    origX: p.x, origY: groundY, origZ: p.z,
+                    x: p.x, y: groundY, z: p.z,
+                    vx: 0, vy: 0, vz: 0,
+                    rxv: 0, ryv: 0, rzv: 0,
+                    isCone: false,
+                    knocked: false,
+                    radius: 2.2
+                });
+            });
+        }
+
+        function updateInteractiveRoadProps(dt) {
+            const playerSpeed = Math.abs(player.speed);
+            const playerHeading = player.heading;
+
+            for (let i = 0; i < interactiveRoadProps.length; i++) {
+                const prop = interactiveRoadProps[i];
+
+                const dx = player.pos.x - prop.x;
+                const dz = player.pos.z - prop.z;
+                const dist2D = Math.hypot(dx, dz);
+                const hitThreshold = prop.radius + (player.mode === 'VEHICLE' ? 2.8 : 2.2);
+
+                if (dist2D < hitThreshold && playerSpeed > 1.2) {
+                    const launchSpeed = Math.max(7.0, playerSpeed * 1.35);
+                    prop.vx = Math.sin(playerHeading) * launchSpeed + (Math.random() - 0.5) * 6;
+                    prop.vz = Math.cos(playerHeading) * launchSpeed + (Math.random() - 0.5) * 6;
+                    prop.vy = 4.5 + Math.random() * 4.0;
+                    prop.rxv = (Math.random() - 0.5) * 16;
+                    prop.rzv = (Math.random() - 0.5) * 16;
+                    prop.ryv = (Math.random() - 0.5) * 12;
+
+                    if (!prop.knocked) {
+                        prop.knocked = true;
+                        sfx.playConeKnock();
+                        spawnBurstParticles(prop.x, prop.y + 0.6, prop.z, prop.isCone ? 0xff6b00 : 0xffa500, 7, 0.8);
+                    }
+                }
+
+                if (prop.knocked) {
+                    prop.vy -= 24.0 * dt;
+                    prop.x += prop.vx * dt;
+                    prop.y += prop.vy * dt;
+                    prop.z += prop.vz * dt;
+
+                    prop.mesh.rotation.x += prop.rxv * dt;
+                    prop.mesh.rotation.y += prop.ryv * dt;
+                    prop.mesh.rotation.z += prop.rzv * dt;
+
+                    const groundY = getSurfaceHeight(prop.x, prop.z);
+                    if (prop.y < groundY) {
+                        prop.y = groundY;
+                        prop.vy = -prop.vy * 0.35;
+                        prop.vx *= 0.82;
+                        prop.vz *= 0.82;
+                        prop.rxv *= 0.75;
+                        prop.rzv *= 0.75;
+                        prop.ryv *= 0.75;
+
+                        if (Math.abs(prop.vy) < 0.6) {
+                            prop.vy = 0;
+                        }
+                    }
+
+                    prop.mesh.position.set(prop.x, prop.y, prop.z);
+                }
+            }
+        }
+
+        // =====================================================================
+        // OPEN WORLD ENHANCEMENT: EMERGENT ROADSIDE INCIDENTS & RESCUES
+        // =====================================================================
+        const emergentRescues = [];
+
+        function initEmergentRescues() {
+            // 1. Overheated Delivery Van on Mountain Pass shoulder
+            const vanGrp = new THREE.Group();
+            const matVanBody = new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad3 });
+            const matVanWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 });
+            const vanBody = new THREE.Mesh(new THREE.BoxGeometry(4.2, 3.2, 7.8), matVanBody);
+            vanBody.position.y = 2.0;
+            vanGrp.add(vanBody);
+            const vanCab = new THREE.Mesh(new THREE.BoxGeometry(4.0, 2.4, 3.2), matVanWhite);
+            vanCab.position.set(0, 1.8, 3.5);
+            vanGrp.add(vanCab);
+            const vanY = getSurfaceHeight(180, 120);
+            vanGrp.position.set(180, vanY, 120);
+            vanGrp.rotation.y = 0.6;
+            scene.add(vanGrp);
+            registerCullableObject(vanGrp, 180, vanY, 120, 26);
+
+            emergentRescues.push({
+                id: "emergent_van",
+                name: "Overheated Mountain Van",
+                x: 180, z: 120, y: vanY,
+                radius: 18.0,
+                type: "VAN",
+                solved: false,
+                grp: vanGrp
+            });
+
+            // 2. Causeway Rockslide
+            const rockGrp = new THREE.Group();
+            [-2.4, 0, 2.6].forEach((rx, idx) => {
+                const rock = new THREE.Mesh(
+                    new THREE.DodecahedronGeometry(2.2 + idx * 0.4, 0),
+                    matBoulder
+                );
+                rock.position.set(rx, 1.8, (idx - 1) * 1.5);
+                rock.castShadow = true;
+                applyCartoonInkOutlines(rock, 1.05, true);
+                rockGrp.add(rock);
+            });
+            const rockY = getSurfaceHeight(640, 270);
+            rockGrp.position.set(640, rockY, 270);
+            scene.add(rockGrp);
+            registerCullableObject(rockGrp, 640, rockY, 270, 28);
+
+            emergentRescues.push({
+                id: "emergent_rocks",
+                name: "Causeway Highway Rockslide",
+                x: 640, z: 270, y: rockY,
+                radius: 18.0,
+                type: "ROCKS",
+                solved: false,
+                grp: rockGrp
+            });
+
+            // 3. Griffin Harbor Slipway Oil Slick
+            const oilGrp = new THREE.Group();
+            const slick = new THREE.Mesh(
+                new THREE.CircleGeometry(6.5, 24).rotateX(-Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0x4f46e5, transparent: true, opacity: 0.72, side: THREE.DoubleSide })
+            );
+            slick.position.y = 0.12;
+            oilGrp.add(slick);
+            const oilY = getSurfaceHeight(-370, 120);
+            oilGrp.position.set(-370, oilY, 120);
+            scene.add(oilGrp);
+            registerCullableObject(oilGrp, -370, oilY, 120, 22);
+
+            emergentRescues.push({
+                id: "emergent_oil",
+                name: "Harbor Slipway Oil Slick",
+                x: -370, z: 120, y: oilY,
+                radius: 16.0,
+                type: "OIL",
+                solved: false,
+                grp: oilGrp
+            });
+
+            // 4. Mount Griffin Cliff Hiker
+            const hikerGrp = new THREE.Group();
+            const hikerRig = createHumanNPCMesh({
+                name: "Stranded Hiker",
+                shirtColor: 0xf97316,
+                pantsColor: 0x1e293b,
+                hairColor: 0x78350f,
+                indicatorColor: 0xff3b30
+            });
+            hikerGrp.add(hikerRig.root);
+            const hikerY = getTerrainHeight(-250, 310) + 1.2;
+            hikerGrp.position.set(-250, hikerY, 310);
+            scene.add(hikerGrp);
+            registerCullableObject(hikerGrp, -250, hikerY, 310, 20);
+
+            emergentRescues.push({
+                id: "emergent_hiker",
+                name: "Mount Griffin Stranded Hiker",
+                x: -250, z: 310, y: hikerY,
+                radius: 16.0,
+                type: "HIKER",
+                solved: false,
+                grp: hikerGrp,
+                rig: hikerRig
+            });
+        }
+
+        let emergentCheckCooldown = 0;
+        function updateEmergentRescues(dt, now) {
+            emergentCheckCooldown++;
+            const nowSec = now * 0.001;
+
+            for (let i = 0; i < emergentRescues.length; i++) {
+                const ev = emergentRescues[i];
+                if (ev.solved) continue;
+
+                if (ev.type === 'VAN') {
+                    if (emergentCheckCooldown % 20 === 0) {
+                        spawnBurstParticles(ev.x, ev.y + 2.8, ev.z + 3.2, 0xffffff, 4, 0.4);
+                    }
+                } else if (ev.type === 'HIKER' && ev.rig) {
+                    const waveAng = Math.sin(nowSec * 5.5) * 0.65;
+                    if (ev.rig.leftArmPivot) ev.rig.leftArmPivot.rotation.z = 2.2 + waveAng;
+                    if (ev.rig.rightArmPivot) ev.rig.rightArmPivot.rotation.z = -2.2 - waveAng;
+                }
+
+                const dist2D = Math.hypot(player.pos.x - ev.x, player.pos.z - ev.z);
+                const isClose = dist2D <= ev.radius;
+
+                if (isClose) {
+                    const actionTriggered = player.activeActionDuration > 0 || Math.abs(player.speed) > 2.0;
+                    if (actionTriggered) {
+                        ev.solved = true;
+                        progression.totalEmergenciesResolved++;
+                        if (ev.type === 'HIKER') progression.totalCitizensRescued++;
+
+                        sfx.playRankUp();
+                        spawnBurstParticles(ev.x, ev.y + 2.5, ev.z, 0x22c55e, 26, 1.6);
+                        spawnSoapSudsParticles(ev.x, ev.y + 1.5, ev.z, 14);
+
+                        if (ev.type === 'VAN') {
+                            showToast("VAN RESCUED!", "Radiator cooled & driver assisted safely! (+3 Hero Pts)");
+                        } else if (ev.type === 'ROCKS') {
+                            showToast("ROCKSLIDE CLEARED!", "Causeway highway reopened for island traffic! (+3 Hero Pts)");
+                            scene.remove(ev.grp);
+                        } else if (ev.type === 'OIL') {
+                            showToast("OIL SLICK NEUTRALIZED!", "Griffin Harbor slipway made safe! (+3 Hero Pts)");
+                            scene.remove(ev.grp);
+                        } else if (ev.type === 'HIKER') {
+                            showToast("HIKER AIRLIFTED!", "Mountain hiker safely brought down to trail! (+3 Hero Pts)");
+                            spawnSparkleGlints(ev.x, ev.y + 1.5, ev.z, 18);
+                        }
+
+                        saveProgression();
+                    }
+                }
+            }
+        }
+
         loadProgression();
         buildHazardSites();
         buildEnergonCubes();
+        initGoldenCrests();
+        initInteractiveRoadProps();
+        initEmergentRescues();
         const savedWeatherIdx = WEATHER_MODES.findIndex(m => m.id === progression.weatherMode);
         applyWeatherMode(savedWeatherIdx !== -1 ? savedWeatherIdx : 0, false);
 
@@ -10520,6 +11258,7 @@
                 const meshData = createCivilianVehicleMesh(vType, color);
                 scene.add(meshData.root);
                 const dir = i % 2 === 0 ? 1 : -1;
+                const laneOffset = dir > 0 ? 6.0 : -6.0;
                 vehicleNPCs.push({
                     isVehicle: true,
                     name: driverNames[i % driverNames.length],
@@ -10527,7 +11266,8 @@
                     routeType: 'INNER_RING',
                     theta: (i / 10) * Math.PI * 2,
                     dir,
-                    laneOffset: dir > 0 ? 6.0 : -6.0,
+                    laneOffset,
+                    baseLaneOffset: laneOffset,
                     speed: 24 + (i % 4) * 3.5,
                     x: 0, y: 4, z: 0,
                     heading: 0,
@@ -10548,6 +11288,7 @@
                 const meshData = createCivilianVehicleMesh(vType, color);
                 scene.add(meshData.root);
                 const dir = i % 2 === 0 ? 1 : -1;
+                const laneOffset = dir > 0 ? 6.5 : -6.5;
                 vehicleNPCs.push({
                     isVehicle: true,
                     name: driverNames[(i + 4) % driverNames.length],
@@ -10555,7 +11296,8 @@
                     routeType: 'OUTER_RING',
                     theta: (i / 12) * Math.PI * 2,
                     dir,
-                    laneOffset: dir > 0 ? 6.5 : -6.5,
+                    laneOffset,
+                    baseLaneOffset: laneOffset,
                     speed: 32 + (i % 4) * 4.0,
                     x: 0, y: 4, z: 0,
                     heading: 0,
@@ -10584,6 +11326,7 @@
                     progress: -950 + (i % 3) * 850,
                     dir: i % 2 === 0 ? 1 : -1,
                     laneOffset: 5.8,
+                    baseLaneOffset: 5.8,
                     speed: 28 + (i % 3) * 4.5,
                     x: 0, y: 4, z: 0,
                     heading: 0,
@@ -10705,9 +11448,31 @@
                 const v = vehicleNPCs[i];
                 const distToPlayer = Math.hypot(player.pos.x - v.x, player.pos.z - v.z);
 
-                // Polite yield: slow down & stop if the Rescue Bot is right near the vehicle
-                const speedFactor = distToPlayer < 15.0 ? 0.0 : (distToPlayer < 26.0 ? 0.45 : 1.0);
+                // Dynamic Siren Response & Polite Shoulder Pull-Over
+                const isSirenOn = !!(player.sirenActive || player.boostTimer > 0);
+                const inSirenRange = isSirenOn && distToPlayer < 95.0;
+
+                // When siren sounds, vehicles steer toward the outer road shoulder
+                const baseOffset = v.baseLaneOffset || v.laneOffset;
+                const shoulderOffset = baseOffset > 0 ? baseOffset + 3.2 : baseOffset - 3.2;
+                const targetOffset = inSirenRange ? shoulderOffset : baseOffset;
+                v.laneOffset = THREE.MathUtils.lerp(v.laneOffset, targetOffset, Math.min(1.0, dt * 2.5));
+
+                // Slow down and halt if siren is active nearby
+                let speedFactor = 1.0;
+                if (inSirenRange) {
+                    speedFactor = distToPlayer < 70.0 ? 0.0 : 0.35;
+                } else {
+                    speedFactor = distToPlayer < 15.0 ? 0.0 : (distToPlayer < 26.0 ? 0.45 : 1.0);
+                }
                 const effSpeed = v.speed * speedFactor;
+
+                // Flash hazard taillights when yielding for emergency sirens
+                if (inSirenRange && v.taillights) {
+                    v.taillights.visible = Math.floor(now / 220) % 2 === 0;
+                } else if (v.taillights) {
+                    v.taillights.visible = true;
+                }
 
                 if (distToPlayer < 16.5 && Math.abs(player.speed) < 25) {
                     speakClosestDisasterForNPC(v, false);
@@ -13266,6 +14031,10 @@
             updatePhysics(dt, now);
             updateBuddyBotAI(dt, now);
             updateEnergonCubes(dt, now);
+            updateGoldenCrests(dt, now);
+            updateInteractiveRoadProps(dt);
+            updateEmergentRescues(dt, now);
+            updateLandmarkDiscovery(player.pos.x, player.pos.z);
             updateAllBotTransforms(dt, now);
             updateLivingWorldNPCs(dt, now);
             updateViewportCulling();
