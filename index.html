@@ -4115,7 +4115,7 @@
             ctx.fillStyle = helmGrad;
             ctx.fillRect(0, 0, 256, 256);
 
-            // Sky-Blue Aerodynamic Helmet Forehead Arch
+            // Sky-Blue Aerodynamic Helmet Forehead Arch & Tiara
             const archGrad = ctx.createLinearGradient(0, 0, 0, 64);
             archGrad.addColorStop(0, '#38bdf8');
             archGrad.addColorStop(1, '#0284c7');
@@ -4131,6 +4131,16 @@
             ctx.lineWidth = 3;
             ctx.stroke();
 
+            // Central Forehead Crest Jewel
+            ctx.fillStyle = '#67e8f9';
+            ctx.beginPath();
+            ctx.arc(128, 38, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(126, 36, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
             // Recessed Visor Housing
             ctx.fillStyle = '#020617';
             ctx.beginPath();
@@ -4139,7 +4149,7 @@
             ctx.closePath();
             ctx.fill();
 
-            // Glowing Cyan / Sky-Blue Visor Optics
+            // Glowing Cyan / Sky-Blue Visor Optics with Cat-Eye Angle
             const visorGrad = ctx.createLinearGradient(0, 64, 0, 130);
             visorGrad.addColorStop(0, '#67e8f9');
             visorGrad.addColorStop(0.5, '#38bdf8');
@@ -4151,7 +4161,14 @@
             ctx.closePath();
             ctx.fill();
 
-            // Visor Highlights & Optic Slits
+            // Almond Cat-Eye Visor Highlights & Eyelash Accents
+            ctx.strokeStyle = '#020617';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(48, 69); ctx.lineTo(112, 72);
+            ctx.moveTo(208, 69); ctx.lineTo(144, 72);
+            ctx.stroke();
+
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
             ctx.ellipse(88, 86, 18, 5, -0.15, 0, Math.PI * 2);
@@ -4160,32 +4177,49 @@
             ctx.ellipse(168, 86, 18, 5, 0.15, 0, Math.PI * 2);
             ctx.fill();
 
-            // Feminine Silver Sculpted Faceplate & Cheeks
+            // Feminine Silver Sculpted Faceplate & Cheeks (Tapered Jawline)
             const faceGrad = ctx.createLinearGradient(0, 128, 0, 256);
             faceGrad.addColorStop(0, '#ffffff');
             faceGrad.addColorStop(0.4, '#e2e8f0');
             faceGrad.addColorStop(1, '#94a3b8');
             ctx.fillStyle = faceGrad;
             ctx.beginPath();
-            ctx.moveTo(68, 126); ctx.lineTo(188, 126);
-            ctx.lineTo(180, 186); ctx.lineTo(152, 236); ctx.lineTo(128, 248); ctx.lineTo(104, 236); ctx.lineTo(76, 186);
+            ctx.moveTo(76, 126); ctx.lineTo(180, 126);
+            ctx.lineTo(172, 182); ctx.lineTo(144, 232); ctx.lineTo(128, 246); ctx.lineTo(112, 232); ctx.lineTo(84, 182);
             ctx.closePath();
             ctx.fill();
 
-            // Slender Nose Bridge & Cheek Contours
-            ctx.strokeStyle = '#64748b';
-            ctx.lineWidth = 2.5;
+            // Cheek Shading / Contours
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.45)';
             ctx.beginPath();
-            ctx.moveTo(128, 134); ctx.lineTo(128, 172);
-            ctx.lineTo(124, 182); ctx.lineTo(132, 182);
+            ctx.moveTo(78, 138); ctx.lineTo(98, 178); ctx.lineTo(84, 182);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(178, 138); ctx.lineTo(158, 178); ctx.lineTo(172, 182);
+            ctx.closePath();
+            ctx.fill();
+
+            // Slender Nose Bridge
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2.0;
+            ctx.beginPath();
+            ctx.moveTo(128, 134); ctx.lineTo(128, 170);
+            ctx.lineTo(123, 178); ctx.lineTo(133, 178);
             ctx.stroke();
 
-            // Confident Spy Smirk / Mouth
-            ctx.strokeStyle = '#334155';
-            ctx.lineWidth = 3.5;
+            // Feminine Metallic Lips & Confident Spy Smirk
+            ctx.fillStyle = '#94a3b8';
             ctx.beginPath();
-            ctx.moveTo(108, 206);
-            ctx.quadraticCurveTo(128, 214, 148, 202);
+            ctx.moveTo(112, 202);
+            ctx.quadraticCurveTo(128, 198, 144, 200);
+            ctx.quadraticCurveTo(128, 208, 112, 202);
+            ctx.fill();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(110, 202);
+            ctx.quadraticCurveTo(128, 207, 146, 200);
             ctx.stroke();
 
             // Outer Outline
@@ -4200,52 +4234,70 @@
             c.width = 256; c.height = 256;
             const ctx = c.getContext('2d');
 
-            // Pearlescent White Sports Coupe Hood
+            // Pearlescent White Sculpted Bust
             const hoodGrad = ctx.createLinearGradient(0, 0, 0, 256);
             hoodGrad.addColorStop(0, '#ffffff');
-            hoodGrad.addColorStop(0.7, '#f1f5f9');
+            hoodGrad.addColorStop(0.6, '#f1f5f9');
             hoodGrad.addColorStop(1, '#e2e8f0');
             ctx.fillStyle = hoodGrad;
             ctx.fillRect(0, 0, 256, 256);
 
-            // Aerodynamic Sky-Blue Side Fender Scoops (Left & Right)
+            // Aerodynamic Sky-Blue Hourglass Bust-Flank Curves (Left & Right)
             const scoopGrad = ctx.createLinearGradient(0, 0, 0, 256);
-            scoopGrad.addColorStop(0, '#0284c7');
+            scoopGrad.addColorStop(0, '#38bdf8');
+            scoopGrad.addColorStop(0.5, '#0284c7');
             scoopGrad.addColorStop(1, '#0369a1');
             ctx.fillStyle = scoopGrad;
+            // Left curve
             ctx.beginPath();
-            ctx.moveTo(0, 0); ctx.lineTo(44, 0); ctx.lineTo(34, 256); ctx.lineTo(0, 256);
+            ctx.moveTo(0, 0); ctx.lineTo(52, 0);
+            ctx.bezierCurveTo(46, 70, 26, 140, 48, 256);
+            ctx.lineTo(0, 256);
             ctx.closePath();
             ctx.fill();
+            // Right curve
             ctx.beginPath();
-            ctx.moveTo(256, 0); ctx.lineTo(212, 0); ctx.lineTo(222, 256); ctx.lineTo(256, 256);
+            ctx.moveTo(256, 0); ctx.lineTo(204, 0);
+            ctx.bezierCurveTo(210, 70, 230, 140, 208, 256);
+            ctx.lineTo(256, 256);
             ctx.closePath();
             ctx.fill();
 
-            // Twin Charcoal Hood Louvers / Heat Vents
+            // Dark Charcoal Windshield Collar at Top
             ctx.fillStyle = '#0f172a';
-            ctx.fillRect(72, 28, 32, 54);
-            ctx.fillRect(152, 28, 32, 54);
+            ctx.beginPath();
+            ctx.moveTo(38, 0); ctx.lineTo(218, 0);
+            ctx.lineTo(194, 38); ctx.lineTo(62, 38);
+            ctx.closePath();
+            ctx.fill();
             ctx.strokeStyle = '#38bdf8';
             ctx.lineWidth = 2;
-            ctx.strokeRect(72, 28, 32, 54);
-            ctx.strokeRect(152, 28, 32, 54);
+            ctx.stroke();
+
+            // Twin Charcoal Sports Heat Louvers
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(76, 52, 28, 44);
+            ctx.fillRect(152, 52, 28, 44);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(76, 52, 28, 44);
+            ctx.strokeRect(152, 52, 28, 44);
 
             // Vented Slats
             ctx.strokeStyle = '#64748b';
-            ctx.lineWidth = 2.5;
-            [40, 52, 64].forEach(vy => {
+            ctx.lineWidth = 2;
+            [62, 74, 86].forEach(vy => {
                 ctx.beginPath();
-                ctx.moveTo(76, vy); ctx.lineTo(100, vy);
-                ctx.moveTo(156, vy); ctx.lineTo(180, vy);
+                ctx.moveTo(80, vy); ctx.lineTo(100, vy);
+                ctx.moveTo(156, vy); ctx.lineTo(176, vy);
                 ctx.stroke();
             });
 
-            // Center Red Autobot Shield Insignia
+            // Center Red Autobot Shield Insignia (Heroic Fembot Badge)
             ctx.fillStyle = '#ef4444';
             ctx.beginPath();
-            ctx.moveTo(128, 120);
-            ctx.lineTo(156, 134); ctx.lineTo(150, 184); ctx.lineTo(128, 206); ctx.lineTo(106, 184); ctx.lineTo(100, 134);
+            ctx.moveTo(128, 122);
+            ctx.lineTo(154, 134); ctx.lineTo(148, 180); ctx.lineTo(128, 202); ctx.lineTo(108, 180); ctx.lineTo(102, 134);
             ctx.closePath();
             ctx.fill();
             ctx.strokeStyle = '#ffffff';
@@ -4256,17 +4308,21 @@
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 2.5;
             ctx.beginPath();
-            ctx.moveTo(128, 130); ctx.lineTo(128, 168);
+            ctx.moveTo(128, 130); ctx.lineTo(128, 166);
             ctx.moveTo(114, 146); ctx.lineTo(142, 146);
-            ctx.moveTo(118, 166); ctx.lineTo(138, 166);
+            ctx.moveTo(118, 164); ctx.lineTo(138, 164);
             ctx.stroke();
 
-            // Lower Grille Band
+            // Lower Waist Taper Band
             ctx.fillStyle = '#0f172a';
-            ctx.fillRect(52, 224, 152, 26);
+            ctx.beginPath();
+            ctx.moveTo(48, 226); ctx.lineTo(208, 226);
+            ctx.lineTo(188, 256); ctx.lineTo(68, 256);
+            ctx.closePath();
+            ctx.fill();
             ctx.strokeStyle = '#38bdf8';
             ctx.lineWidth = 2;
-            ctx.strokeRect(52, 224, 152, 26);
+            ctx.stroke();
 
             // Border
             ctx.strokeStyle = '#0f172a';
@@ -8488,6 +8544,8 @@
         const matQuickFace = new THREE.MeshBasicMaterial({ map: texFaceQuickshadow });
         const matQuickChest = new THREE.MeshBasicMaterial({ map: texChestQuickshadow });
         const matQuickVisor = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        const matQuickCyanGlow = matQuickVisor;
+        const matQuickLightSteel = new THREE.MeshToonMaterial({ color: 0xcbd5e1, gradientMap: toonGrad3 });
 
         function createQuickshadowWheel(radius = 0.64, width = 0.42) {
             const wg = new THREE.Group();
@@ -11441,181 +11499,257 @@
 
             else if (botType === 'QUICKSHADOW') {
                 // TV Show Quickshadow: Sleek, stylish British covert operations specialist!
-                // Luxury white sports coupe with sky-blue accents, dark charcoal glass & rear GT wing spoiler
+                // Elegant, athletic feminine silhouette: slender hourglass waist, flared hip armor,
+                // long slender legs with signature turbine pods, delicate hands, and swept-back winglets!
 
-                // 1. Torso: Pearlescent White Sports Coupe Hood Chest with Autobot Emblem & Twin Louvers
-                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.65, 2.15, 1.85), matQuickWhite);
+                // 1. Torso: Sculpted Feminine Upper Chest (Bust), Narrow Cyber-Waist & Flared Hips
+                // A. Upper Chest (Bust) - Sculpted aerodynamic sports coupe hood
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.05, 1.45, 1.45), matQuickWhite);
+                chest.position.set(0, 0.42, 0);
                 chest.castShadow = true;
                 parts.torso.add(chest);
 
                 // Sloped Hood Front Panel with Custom Painted Texture (Autobot Crest & Vents)
-                const hoodPlate = new THREE.Mesh(new THREE.BoxGeometry(2.35, 1.85, 0.14), matQuickChest);
-                hoodPlate.position.set(0, 0.05, 0.95);
+                const hoodPlate = new THREE.Mesh(new THREE.BoxGeometry(1.92, 1.35, 0.14), matQuickChest);
+                hoodPlate.position.set(0, 0.42, 0.74);
                 hoodPlate.userData.noOutline = true;
                 parts.torso.add(hoodPlate);
 
-                // Twin Sky-Blue Aerodynamic Fender Cowls
-                [-1.38, 1.38].forEach(side => {
-                    const cowl = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.95, 1.82), matQuickCyan);
-                    cowl.position.set(side, 0.05, 0);
+                // Angled Windshield Cowl / Collar at Top of Bust
+                const collar = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.65, 0.42, 0.32).rotateX(0.28),
+                    matQuickDark
+                );
+                collar.position.set(0, 1.12, 0.35);
+                parts.torso.add(collar);
+
+                // Twin Aerodynamic Sky-Blue Side Fender Scoops framing the Bust
+                [-1.08, 1.08].forEach(side => {
+                    const cowl = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.35, 1.42), matQuickCyan);
+                    cowl.position.set(side, 0.42, 0);
                     parts.torso.add(cowl);
                 });
 
-                // Charcoal Radiator Grille & Splitter at Base of Torso
-                const lowGrille = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.42, 0.45), matQuickDark);
-                lowGrille.position.set(0, -0.92, 0.88);
-                parts.torso.add(lowGrille);
+                // B. Slender Cyber-Midriff / Corset Waist (The quintessential fembot hourglass feature!)
+                const midriff = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.85, 0.95), matQuickDark);
+                midriff.position.set(0, -0.65, 0);
+                midriff.castShadow = true;
+                parts.torso.add(midriff);
 
-                // Pelvis: Slender Charcoal Waist & Pelvic Chassis with Sky-Blue Hip Armor
-                const waist = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.65, 1.25), matQuickDark);
-                waist.position.set(0, -1.25, 0);
-                parts.torso.add(waist);
+                // Cyber-Abdominal Plating
+                const absPlate = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.65, 0.12), matQuickSilver);
+                absPlate.position.set(0, -0.65, 0.48);
+                parts.torso.add(absPlate);
 
-                [-0.85, 0.85].forEach(hx => {
-                    const hipArmor = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.55, 0.85), matQuickCyan);
-                    hipArmor.position.set(hx, -1.25, 0.15);
+                [-0.60, 0.60].forEach(sx => {
+                    const waistPill = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.72, 0.85), matQuickCyan);
+                    waistPill.position.set(sx, -0.65, 0);
+                    parts.torso.add(waistPill);
+                });
+
+                // C. Pelvis with Flared Feminine Hip Armor (Tassets)
+                const pelvis = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.55, 1.05), matQuickDark);
+                pelvis.position.set(0, -1.25, 0);
+                parts.torso.add(pelvis);
+
+                // Curved Sky-Blue Flared Hip Armor Plates (Wrap down over the upper thighs)
+                [-0.82, 0.82].forEach(hx => {
+                    const hipArmor = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.82, 1.15), matQuickCyan);
+                    hipArmor.position.set(hx, -1.30, 0.05);
+                    hipArmor.rotation.z = (hx < 0 ? 0.18 : -0.18);
                     parts.torso.add(hipArmor);
+
+                    // Circular Cyan Hip Pivot Jewel
+                    const hipDisc = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.22, 0.22, 0.15, 16).rotateZ(Math.PI / 2),
+                        matQuickVisor
+                    );
+                    hipDisc.position.set(hx * 1.15, -1.25, 0.12);
+                    parts.torso.add(hipDisc);
                 });
 
-                // 2. High Rear Black GT Racing Spoiler (Mounted on Back Attachment)
-                [-0.75, 0.75].forEach(sx => {
-                    const stanchion = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.65, 0.24), matQuickDark);
-                    stanchion.position.set(sx, 1.25, -0.65);
-                    stanchion.rotation.x = -0.22;
+                // 2. High Swept-Back GT Winglets / Spoilers (Mounted on Back Attachment)
+                [-0.78, 0.78].forEach(sx => {
+                    const stanchion = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.75, 0.26), matQuickDark);
+                    stanchion.position.set(sx, 1.35, -0.65);
+                    stanchion.rotation.x = -0.32;
+                    stanchion.rotation.z = (sx < 0 ? 0.22 : -0.22);
                     parts.backAttachment.add(stanchion);
+
+                    const stanchionTrim = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.65, 0.12), matQuickCyan);
+                    stanchionTrim.position.set(sx, 1.38, -0.58);
+                    stanchionTrim.rotation.x = -0.32;
+                    stanchionTrim.rotation.z = (sx < 0 ? 0.22 : -0.22);
+                    parts.backAttachment.add(stanchionTrim);
                 });
-                const gtWing = new THREE.Mesh(new THREE.BoxGeometry(3.05, 0.14, 0.65), matQuickDark);
-                gtWing.position.set(0, 1.95, -0.85);
+                const gtWing = new THREE.Mesh(new THREE.BoxGeometry(2.75, 0.12, 0.55), matQuickDark);
+                gtWing.position.set(0, 2.15, -0.92);
                 gtWing.castShadow = true;
                 parts.backAttachment.add(gtWing);
 
                 // Sky-Blue Endplate Winglets on GT Wing
-                [-1.52, 1.52].forEach(wx => {
-                    const endplate = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.58, 0.75), matQuickCyan);
-                    endplate.position.set(wx, 1.95, -0.85);
+                [-1.38, 1.38].forEach(wx => {
+                    const endplate = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.65, 0.75), matQuickCyan);
+                    endplate.position.set(wx, 2.15, -0.92);
                     parts.backAttachment.add(endplate);
                 });
 
                 // Front Ground-Effects Splitter on `parts.frontAttachment`
-                const frontSplitter = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.12, 0.75), matQuickDark);
+                const frontSplitter = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.10, 0.65), matQuickDark);
                 frontSplitter.position.set(0, 0.05, 0.35);
                 parts.frontAttachment.add(frontSplitter);
 
-                // 3. Head: Charcoal Helmet with Swept-Back Ear Winglets, Cyan Forehead Arch & Visor
-                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.15, 1.15), matQuickDark);
+                // 3. Head & Feminine Cyber-Neck:
+                // Slender Cyber-Neck
+                const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 0.52, 12), matQuickSilver);
+                neck.position.set(0, -0.45, 0);
+                parts.head.add(neck);
+
+                // Rounded Feminine Helmet
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.95, 0.98), matQuickDark);
                 helm.castShadow = true;
                 parts.head.add(helm);
 
-                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.95, 1.18), matQuickFace);
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.88, 1.02), matQuickFace);
                 faceMesh.position.set(0, -0.04, 0.04);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
 
-                // Swept-Back High Ear Winglet Fins (Her iconic silhouette!)
-                [-0.62, 0.62].forEach(ex => {
-                    const earFin = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.85, 0.55), matQuickDark);
-                    earFin.position.set(ex, 0.52, -0.25);
-                    earFin.rotation.x = -0.38;
-                    earFin.rotation.z = (ex < 0 ? 0.22 : -0.22);
+                // Tapered Feminine Chin Guard / Jawline
+                const chinGuard = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.26, 0.35), matQuickSilver);
+                chinGuard.position.set(0, -0.46, 0.44);
+                parts.head.add(chinGuard);
+
+                // Arched Sky-Blue Brow Tiara with Glowing Center Jewel
+                const tiara = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.18, 0.24).rotateX(0.22), matQuickCyan);
+                tiara.position.set(0, 0.42, 0.46);
+                const tiaraJewel = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.14, 8).rotateX(Math.PI / 2), matQuickVisor);
+                tiaraJewel.position.set(0, 0.42, 0.54);
+                parts.head.add(tiara, tiaraJewel);
+
+                // Swept-Back High Ear Winglet Fins (Feline/Cat-Ear Fembot Silhouette!)
+                [-0.52, 0.52].forEach(ex => {
+                    const earFin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.85, 0.52), matQuickDark);
+                    earFin.position.set(ex, 0.48, -0.22);
+                    earFin.rotation.x = -0.35;
+                    earFin.rotation.z = (ex < 0 ? 0.26 : -0.26);
                     parts.head.add(earFin);
 
-                    const finTrim = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.72, 0.12), matQuickCyan);
-                    finTrim.position.set(ex, 0.55, -0.05);
-                    finTrim.rotation.x = -0.38;
-                    finTrim.rotation.z = (ex < 0 ? 0.22 : -0.22);
+                    const finTrim = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.72, 0.12), matQuickCyan);
+                    finTrim.position.set(ex, 0.50, -0.04);
+                    finTrim.rotation.x = -0.35;
+                    finTrim.rotation.z = (ex < 0 ? 0.26 : -0.26);
                     parts.head.add(finTrim);
                 });
 
-                // 4. Arms: White Aerodynamic Pauldrons with Cyan Trim, Dark Biceps, Cyan Cuffs, Charcoal Hands & Front Sports Wheels
+                // 4. Arms: Rounded White Pauldrons, Slender Silver Biceps, Tapered Gauntlets & Delicate Charcoal Hands
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.leftArm : parts.rightArm;
                     const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
 
-                    // Rounded Aerodynamic White Pauldron
-                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.25, 1.28), matQuickWhite);
+                    // Rounded Aerodynamic White Pauldron (More compact & feminine)
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.05, 1.08), matQuickWhite);
                     shoulder.castShadow = true;
                     armG.add(shoulder);
 
-                    const shoulderTrim = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.22, 1.3), matQuickCyan);
-                    shoulderTrim.position.set(0, 0.28, 0);
+                    const shoulderTrim = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.18, 1.10), matQuickCyan);
+                    shoulderTrim.position.set(0, 0.24, 0);
                     armG.add(shoulderTrim);
 
-                    // Front Sports Wheel mounted on outer shoulder
-                    const wheel = createQuickshadowWheel(0.64, 0.40);
-                    wheel.position.set(side * 0.55, -0.15, 0.05);
+                    // Front Sports Wheel mounted flush on outer shoulder
+                    const wheel = createQuickshadowWheel(0.60, 0.36);
+                    wheel.position.set(side * 0.46, -0.10, 0.04);
                     armG.add(wheel);
                     parts.wheels.push(wheel);
 
-                    // Dark Silver Bicep
-                    const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.65, 12), matQuickSilver);
-                    bicep.position.set(0, -0.78, 0);
+                    // Slender Silver Bicep
+                    const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.68, 12), matQuickSilver);
+                    bicep.position.set(0, -0.72, 0);
                     armG.add(bicep);
 
-                    // Forearm & Hand
-                    forearmG.position.set(0, -1.18, 0);
+                    // Forearm & Delicate Hand
+                    forearmG.position.set(0, -1.12, 0);
                     armG.add(forearmG);
 
-                    const gauntlet = new THREE.Mesh(new THREE.BoxGeometry(0.88, 1.28, 0.88), matQuickWhite);
-                    gauntlet.position.set(0, -0.42, 0.04);
+                    // Tapered White Gauntlet
+                    const gauntlet = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.15, 0.72), matQuickWhite);
+                    gauntlet.position.set(0, -0.38, 0.04);
                     gauntlet.castShadow = true;
 
-                    const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.24, 0.94), matQuickCyan);
-                    cuff.position.set(0, -0.18, 0.04);
+                    const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.20, 0.78), matQuickCyan);
+                    cuff.position.set(0, -0.16, 0.04);
 
-                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.48, 0.48), matQuickDark);
-                    hand.position.set(0, -1.12, 0.04);
+                    // Slender Charcoal Hand with Delicate Fingers
+                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.42, 0.36), matQuickDark);
+                    hand.position.set(0, -1.02, 0.04);
 
                     forearmG.add(gauntlet, cuff, hand);
                 });
 
-                // 5. Legs: Silver Thighs, Flared Aerodynamic White Shins with Cyan Intake Pods, Rear Sports Wheels & Racing Boots
+                // 5. Legs: Slender Silver Thighs, Prominent Circular Knee Discs, Dramatically Flared White Shins,
+                // Signature Sky-Blue Turbine Pods & Sleek Wedge Racing Boots
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
 
-                    // Silver Cylindrical Thigh
-                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 1.15, 12), matQuickSilver);
-                    thigh.position.set(-side * 0.05, -0.48, 0);
+                    // Slender, Elongated Silver Thigh
+                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.24, 1.45, 12), matQuickSilver);
+                    thigh.position.set(-side * 0.05, -0.55, 0);
                     thigh.castShadow = true;
                     legG.add(thigh);
 
-                    // Knee Joint
-                    const knee = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.32, 0.32, 0.32, 12).rotateZ(Math.PI / 2),
-                        matQuickDark
+                    // Prominent Sky-Blue Circular Knee Disc Joint (Iconic Quickshadow Bio Feature!)
+                    const kneeDisc = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.28, 0.28, 0.22, 16).rotateZ(Math.PI / 2),
+                        matQuickCyan
                     );
-                    knee.position.set(-side * 0.05, -1.02, 0.05);
-                    legG.add(knee);
+                    kneeDisc.position.set(side * 0.26, -1.22, 0.08);
+                    const kneeJewel = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.18, 0.18, 0.24, 12).rotateZ(Math.PI / 2),
+                        matQuickVisor
+                    );
+                    kneeJewel.position.set(side * 0.26, -1.22, 0.08);
+                    legG.add(kneeDisc, kneeJewel);
 
-                    // Aerodynamic White Flared Shin
-                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.28, 2.25, 1.48), matQuickWhite);
-                    shin.position.set(-side * 0.08, -1.72, 0.05);
+                    // Beautifully Flared White Bell-Bottom Shin
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 2.35, 1.35), matQuickWhite);
+                    shin.position.set(-side * 0.08, -1.82, 0.05);
                     shin.castShadow = true;
-                    legG.add(shin);
 
-                    // Outer Sky-Blue Turbine / Air Intake Pod
-                    const intakePod = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.18, 16).rotateZ(Math.PI / 2), matQuickCyan);
-                    intakePod.position.set(side * 0.62, -1.55, 0.05);
-                    legG.add(intakePod);
+                    // Flared Lower Ankle Flare Over Boots
+                    const ankleCuff = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.48, 1.45), matQuickWhite);
+                    ankleCuff.position.set(-side * 0.08, -2.62, 0.08);
+                    legG.add(shin, ankleCuff);
+
+                    // Signature Large Sky-Blue Turbine / Air Intake Pod on Outer Calf
+                    const intakePod = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.18, 18).rotateZ(Math.PI / 2), matQuickCyan);
+                    intakePod.position.set(side * 0.58, -1.65, 0.05);
+                    const intakeVents = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.20, 12).rotateZ(Math.PI / 2), matQuickDark);
+                    intakeVents.position.set(side * 0.58, -1.65, 0.05);
+                    legG.add(intakePod, intakeVents);
 
                     // Rear Sports Wheel Mount (Outer lower shin)
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
                     wheelMount.position.set(side * 0.55, 0, -0.1);
                     legG.add(wheelMount);
 
-                    const rw = createQuickshadowWheel(0.66, 0.42);
-                    rw.position.set(0, -1.82, 0);
+                    const rw = createQuickshadowWheel(0.66, 0.40);
+                    rw.position.set(0, -1.95, 0);
                     wheelMount.add(rw);
                     parts.wheels.push(rw);
 
-                    // Sleek Racing Boot: Charcoal Heel + Sloped Sky-Blue / White Toe
-                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.42, 1.45), matQuickDark);
-                    boot.position.set(-side * 0.08, -2.82, 0.12);
+                    // Sleek Feminine Racing Boot: Charcoal Wedge Heel + Sloped Sky-Blue Toe Guard
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.38, 1.45), matQuickDark);
+                    boot.position.set(-side * 0.08, -2.88, 0.12);
                     boot.castShadow = true;
 
-                    const toeAccent = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.22, 0.55), matQuickCyan);
-                    toeAccent.position.set(-side * 0.08, -2.76, 0.62);
+                    // Wedge Heel Riser
+                    const heelWedge = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.25, 0.55), matQuickDark);
+                    heelWedge.position.set(-side * 0.08, -2.82, -0.32);
 
-                    legG.add(boot, toeAccent);
+                    const toeAccent = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.20, 0.52), matQuickCyan);
+                    toeAccent.position.set(-side * 0.08, -2.84, 0.58);
+
+                    legG.add(boot, heelWedge, toeAccent);
                 });
 
                 // 6. Dilophosaurus Dinobot Mode (Twin Aerodynamic Crests, Predatory Head, Raptor Arms & Whip Tail)
