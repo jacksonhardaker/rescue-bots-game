@@ -106,6 +106,19 @@
         .custom-bot-scroll::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.55);
         }
+        #bot-roster {
+            position: fixed !important;
+            bottom: 1.5rem !important;
+            left: 1.25rem !important;
+            top: auto !important;
+            right: auto !important;
+        }
+        @media (min-width: 640px) {
+            #bot-roster {
+                bottom: 2.25rem !important;
+                left: 2rem !important;
+            }
+        }
         .mono-font {
             font-family: 'JetBrains Mono', monospace;
         }
@@ -708,7 +721,7 @@
     </header>
 
     <!-- Bottom Left: Compact Rescue Bots Roster + Follow-Along Buddy Bot Picker -->
-    <div id="bot-roster" class="fixed bottom-4 left-3 sm:bottom-6 sm:left-5 z-20 pointer-events-auto hud-glass rounded-2xl p-1.5 sm:p-2 flex flex-col gap-1 border border-white/20 w-44 sm:w-48 max-h-[64vh] sm:max-h-[72vh] shadow-2xl backdrop-blur-md">
+    <div id="bot-roster" class="fixed bottom-6 left-5 sm:bottom-9 sm:left-8 z-20 pointer-events-auto hud-glass rounded-2xl p-1.5 sm:p-2 flex flex-col gap-1 border border-white/20 w-44 sm:w-48 max-h-[64vh] sm:max-h-[72vh] shadow-2xl backdrop-blur-md">
         <button id="btn-buddy-cycle" class="tactile-btn px-2 py-1 rounded-lg bg-gradient-to-r from-cyan-600/90 to-sky-800/90 border border-cyan-300/60 flex items-center justify-between gap-1.5 text-left w-full h-7 min-h-[28px] max-h-[28px] shrink-0" title="Cycle AI Wingman Partner Bot (Key: B)">
             <span class="text-[9px] sm:text-[10px] font-extrabold tracking-wide text-cyan-100 uppercase flex items-center gap-1 truncate">
                 <span class="w-3 h-3 flex items-center justify-center shrink-0 text-cyan-200">
@@ -744,7 +757,6 @@
                         <div class="text-[8px] sm:text-[9px] text-lime-200 font-semibold truncate mt-0.5">Dozer • Triceratops</div>
                     </div>
                 </div>
-                <span data-buddy-badge="BOULDER" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
             </button>
 
             <!-- 2. HEATWAVE -->
@@ -764,7 +776,6 @@
                         <div class="text-[8px] sm:text-[9px] text-rose-200 font-semibold truncate mt-0.5">Fire • Brachiosaur</div>
                     </div>
                 </div>
-                <span data-buddy-badge="HEATWAVE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
             </button>
 
             <!-- 3. CHASE -->
@@ -784,7 +795,6 @@
                         <div class="text-[8px] sm:text-[9px] text-sky-200 font-semibold truncate mt-0.5">Police • Stegosaur</div>
                     </div>
                 </div>
-                <span data-buddy-badge="CHASE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
             </button>
 
             <!-- 4. BLADES -->
@@ -804,7 +814,6 @@
                         <div class="text-[8px] sm:text-[9px] text-amber-100 font-semibold truncate mt-0.5">Copter • Pterosaur</div>
                     </div>
                 </div>
-                <span data-buddy-badge="BLADES" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
             </button>
 
             <!-- 5. OPTIMUS PRIME (Unlocked via Griffin Rock Discovery) -->
@@ -827,7 +836,6 @@
                         <div class="text-[8px] sm:text-[9px] text-blue-200 font-semibold truncate mt-0.5">Semi • Leader</div>
                     </div>
                 </div>
-                <span data-buddy-badge="OPTIMUS" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
             </button>
 
             <!-- 6. BUMBLEBEE (Unlocked via Griffin Rock Discovery) -->
@@ -848,7 +856,6 @@
                         <div class="text-[8px] sm:text-[9px] text-yellow-100 font-semibold truncate mt-0.5">Sports • Raptor</div>
                     </div>
                 </div>
-                <span data-buddy-badge="BUMBLEBEE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
             </button>
 
             <!-- 7. BLURR (Unlocked via Griffin Rock Discovery) -->
@@ -869,7 +876,6 @@
                         <div class="text-[8px] sm:text-[9px] text-purple-200 font-semibold truncate mt-0.5">Speedster • Hypercar</div>
                     </div>
                 </div>
-                <span data-buddy-badge="BLURR" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
             </button>
 
             <!-- 8. SALVAGE (Unlocked via Griffin Rock Discovery) -->
@@ -891,7 +897,6 @@
                         <div class="text-[8px] sm:text-[9px] text-lime-200 font-semibold truncate mt-0.5">Recycle • Heavy Cab</div>
                     </div>
                 </div>
-                <span data-buddy-badge="SALVAGE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
             </button>
 
             <!-- 9. HIGH TIDE (Unlocked via Griffin Rock Discovery) -->
@@ -911,7 +916,6 @@
                         <div class="text-[8px] sm:text-[9px] text-cyan-200 font-semibold truncate mt-0.5">Sub • Patrol Rig</div>
                     </div>
                 </div>
-                <span data-buddy-badge="HIGHTIDE" class="hidden text-[7px] sm:text-[8px] font-extrabold bg-cyan-400 text-slate-950 px-1 py-0.5 rounded-full uppercase shrink-0">BUDDY</span>
             </button>
         </div>
     </div>
@@ -11281,15 +11285,6 @@
                 } else {
                     btn.classList.remove('active-bot');
                     btn.classList.remove('buddy-bot');
-                }
-
-                const badge = btn.querySelector('[data-buddy-badge]');
-                if (badge) {
-                    if (bType === buddyBot.botType) {
-                        badge.classList.remove('hidden');
-                    } else {
-                        badge.classList.add('hidden');
-                    }
                 }
             });
 
