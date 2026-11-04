@@ -2260,6 +2260,28 @@
                     osc.stop(now + 1.5);
                 });
             }
+            playCarHonk(pitch = 1.0) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                // Dual-tone cheerful civilian car horn (F4 349.23Hz + A4 440Hz)
+                const freqs = [349.23 * pitch, 440.0 * pitch];
+                freqs.forEach(freq => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(freq, now);
+                    gain.gain.setValueAtTime(0.001, now);
+                    gain.gain.linearRampToValueAtTime(0.07, now + 0.02);
+                    gain.gain.setValueAtTime(0.07, now + 0.14);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.20);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                });
+            }
             playDockClank() {
                 if (!this.enabled) return;
                 this.init();
@@ -16710,6 +16732,185 @@
             }
         }
 
+        // Physical Dimensions & Weight Specifications for Civilian Vehicles
+        const CIVILIAN_VEHICLE_SPECS = {
+            SEDAN: {
+                width: 3.6,
+                length: 6.6,
+                halfWidth: 1.8,
+                halfLength: 3.3,
+                mass: 1600 // 1.6 metric tons
+            },
+            PICKUP: {
+                width: 3.8,
+                length: 7.4,
+                halfWidth: 1.9,
+                halfLength: 3.7,
+                mass: 2400 // 2.4 metric tons
+            },
+            VAN: {
+                width: 3.8,
+                length: 7.2,
+                halfWidth: 1.9,
+                halfLength: 3.6,
+                mass: 3800 // 3.8 metric tons
+            },
+            BUS: {
+                width: 4.4,
+                length: 10.2,
+                halfWidth: 2.2,
+                halfLength: 5.1,
+                mass: 14000 // 14.0 metric tons
+            }
+        };
+
+        // Physical Dimensions & Weight Specifications for Playable Rescue Bots
+        const BOT_PHYSICS_SPECS = {
+            BOULDER: {
+                mass: 28000, // 28 tons - Heavy Armored Bulldozer / Triceratops
+                vehicle: { halfWidth: 2.2, halfLength: 3.8 },
+                dino: { halfWidth: 2.0, halfLength: 3.6 },
+                bot: { halfWidth: 1.8, halfLength: 1.8 }
+            },
+            HEATWAVE: {
+                mass: 22000, // 22 tons - Heavy Fire Engine / Brachiosaur
+                vehicle: { halfWidth: 2.1, halfLength: 4.4 },
+                dino: { halfWidth: 2.1, halfLength: 4.5 },
+                bot: { halfWidth: 1.8, halfLength: 1.8 }
+            },
+            OPTIMUS: {
+                mass: 25000, // 25 tons - Semi-Truck Cab Prime / T-Rex
+                vehicle: { halfWidth: 2.1, halfLength: 4.6 },
+                dino: { halfWidth: 2.1, halfLength: 4.4 },
+                bot: { halfWidth: 1.9, halfLength: 1.9 }
+            },
+            SALVAGE: {
+                mass: 20000, // 20 tons - Heavy Waste & Recycling Truck / Ankylosaur
+                vehicle: { halfWidth: 2.1, halfLength: 4.0 },
+                dino: { halfWidth: 2.0, halfLength: 3.8 },
+                bot: { halfWidth: 1.8, halfLength: 1.8 }
+            },
+            HIGHTIDE: {
+                mass: 22000, // 22 tons - Armored Submersible / Plesiosaur
+                vehicle: { halfWidth: 2.1, halfLength: 4.0 },
+                dino: { halfWidth: 2.0, halfLength: 3.8 },
+                bot: { halfWidth: 1.8, halfLength: 1.8 }
+            },
+            CHASE: {
+                mass: 4800, // 4.8 tons - Police Interceptor / Stegosaur
+                vehicle: { halfWidth: 1.85, halfLength: 3.5 },
+                dino: { halfWidth: 1.8, halfLength: 3.4 },
+                bot: { halfWidth: 1.6, halfLength: 1.6 }
+            },
+            BLADES: {
+                mass: 4500, // 4.5 tons - Rescue Helicopter / Pterosaur
+                vehicle: { halfWidth: 1.9, halfLength: 3.8 },
+                dino: { halfWidth: 1.8, halfLength: 3.4 },
+                bot: { halfWidth: 1.6, halfLength: 1.6 }
+            },
+            BLURR: {
+                mass: 3200, // 3.2 tons - High-Speed Racecar / Gallimimus
+                vehicle: { halfWidth: 1.8, halfLength: 3.4 },
+                dino: { halfWidth: 1.6, halfLength: 3.2 },
+                bot: { halfWidth: 1.5, halfLength: 1.5 }
+            },
+            BUMBLEBEE: {
+                mass: 3200, // 3.2 tons - Sports Speedster / Velociraptor
+                vehicle: { halfWidth: 1.8, halfLength: 3.5 },
+                dino: { halfWidth: 1.6, halfLength: 3.2 },
+                bot: { halfWidth: 1.5, halfLength: 1.5 }
+            },
+            QUICKSHADOW: {
+                mass: 3100, // 3.1 tons - Covert Luxury Coupe / Dilophosaur
+                vehicle: { halfWidth: 1.75, halfLength: 3.4 },
+                dino: { halfWidth: 1.6, halfLength: 3.2 },
+                bot: { halfWidth: 1.5, halfLength: 1.5 }
+            }
+        };
+
+        // 2D Oriented Bounding Box (OBB) Separating Axis Theorem (SAT) Overlap Test
+        function testOBBOverlap2D(boxA, boxB) {
+            const dx = boxB.x - boxA.x;
+            const dz = boxB.z - boxA.z;
+
+            // Unit axes for Box A (Forward: [sinA, cosA], Right: [cosA, -sinA])
+            const sinA = Math.sin(boxA.heading);
+            const cosA = Math.cos(boxA.heading);
+            const rAx = cosA, rAz = -sinA;
+            const fAx = sinA, fAz = cosA;
+
+            // Unit axes for Box B
+            const sinB = Math.sin(boxB.heading);
+            const cosB = Math.cos(boxB.heading);
+            const rBx = cosB, rBz = -sinB;
+            const fBx = sinB, fBz = cosB;
+
+            const axes = [
+                { x: rAx, z: rAz },
+                { x: fAx, z: fAz },
+                { x: rBx, z: rBz },
+                { x: fBx, z: fBz }
+            ];
+
+            let minOverlap = Infinity;
+            let bestAxis = null;
+
+            for (let i = 0; i < 4; i++) {
+                const ax = axes[i].x;
+                const az = axes[i].z;
+
+                // Half-extent projection of Box A onto axis
+                const rA = boxA.halfWidth * Math.abs(rAx * ax + rAz * az) +
+                           boxA.halfLength * Math.abs(fAx * ax + fAz * az);
+
+                // Half-extent projection of Box B onto axis
+                const rB = boxB.halfWidth * Math.abs(rBx * ax + rBz * az) +
+                           boxB.halfLength * Math.abs(fBx * ax + fBz * az);
+
+                const dist = Math.abs(dx * ax + dz * az);
+                const overlap = (rA + rB) - dist;
+                if (overlap <= 0.0001) return null; // Separating axis found -> No collision
+
+                if (overlap < minOverlap) {
+                    minOverlap = overlap;
+                    bestAxis = { x: ax, z: az };
+                }
+            }
+
+            // Orient Minimum Translation Vector (MTV) pointing from Box A toward Box B
+            if (dx * bestAxis.x + dz * bestAxis.z < 0) {
+                bestAxis.x = -bestAxis.x;
+                bestAxis.z = -bestAxis.z;
+            }
+
+            return {
+                depth: minOverlap,
+                mtv: { x: bestAxis.x * minOverlap, z: bestAxis.z * minOverlap }
+            };
+        }
+
+        function getPlayerOBB() {
+            const spec = BOT_PHYSICS_SPECS[player.botType] || {
+                mass: 5000,
+                vehicle: { halfWidth: 1.8, halfLength: 3.5 },
+                dino: { halfWidth: 1.8, halfLength: 3.5 },
+                bot: { halfWidth: 1.6, halfLength: 1.6 }
+            };
+            let dims;
+            if (player.mode === 'VEHICLE') dims = spec.vehicle;
+            else if (player.mode === 'DINO') dims = spec.dino;
+            else dims = spec.bot;
+
+            return {
+                x: player.pos.x,
+                z: player.pos.z,
+                heading: player.heading,
+                halfWidth: dims.halfWidth,
+                halfLength: dims.halfLength,
+                mass: spec.mass
+            };
+        }
+
         function getCompassDirection(dx, dz) {
             // In world coords: -Z is North, +Z is South, +X is East, -X is West
             const angle = Math.atan2(dx, -dz); // 0 = North, PI/2 = East, PI = South, -PI/2 = West
@@ -16995,16 +17196,28 @@
                 scene.add(meshData.root);
                 const dir = i % 2 === 0 ? 1 : -1;
                 const laneOffset = dir > 0 ? 6.0 : -6.0;
+                const spec = CIVILIAN_VEHICLE_SPECS[vType];
+                const cruiseSpd = 24 + (i % 4) * 3.5;
                 vehicleNPCs.push({
                     isVehicle: true,
                     name: driverNames[i % driverNames.length],
                     role: "Inner Highway Driver",
+                    vType,
+                    mass: spec.mass,
+                    halfWidth: spec.halfWidth,
+                    halfLength: spec.halfLength,
                     routeType: 'INNER_RING',
                     theta: (i / 10) * Math.PI * 2,
                     dir,
                     laneOffset,
                     baseLaneOffset: laneOffset,
-                    speed: 24 + (i % 4) * 3.5,
+                    speed: cruiseSpd,
+                    cruiseSpeed: cruiseSpd,
+                    currentSpeed: cruiseSpd,
+                    targetSpeed: cruiseSpd,
+                    isBraking: false,
+                    stoppedTimer: 0,
+                    honkCooldown: 0,
                     x: 0, y: 4, z: 0,
                     heading: 0,
                     voicePitch: 0.95 + (i % 5) * 0.05,
@@ -17025,16 +17238,28 @@
                 scene.add(meshData.root);
                 const dir = i % 2 === 0 ? 1 : -1;
                 const laneOffset = dir > 0 ? 6.5 : -6.5;
+                const spec = CIVILIAN_VEHICLE_SPECS[vType];
+                const cruiseSpd = 32 + (i % 4) * 4.0;
                 vehicleNPCs.push({
                     isVehicle: true,
                     name: driverNames[(i + 4) % driverNames.length],
                     role: "Coastal Highway Driver",
+                    vType,
+                    mass: spec.mass,
+                    halfWidth: spec.halfWidth,
+                    halfLength: spec.halfLength,
                     routeType: 'OUTER_RING',
                     theta: (i / 12) * Math.PI * 2,
                     dir,
                     laneOffset,
                     baseLaneOffset: laneOffset,
-                    speed: 32 + (i % 4) * 4.0,
+                    speed: cruiseSpd,
+                    cruiseSpeed: cruiseSpd,
+                    currentSpeed: cruiseSpd,
+                    targetSpeed: cruiseSpd,
+                    isBraking: false,
+                    stoppedTimer: 0,
+                    honkCooldown: 0,
                     x: 0, y: 4, z: 0,
                     heading: 0,
                     voicePitch: 0.94 + (i % 5) * 0.05,
@@ -17054,16 +17279,28 @@
                 const meshData = createCivilianVehicleMesh(vType, color);
                 scene.add(meshData.root);
                 const isNS = i < 3;
+                const spec = CIVILIAN_VEHICLE_SPECS[vType];
+                const cruiseSpd = 28 + (i % 3) * 4.5;
                 vehicleNPCs.push({
                     isVehicle: true,
                     name: driverNames[(i + 7) % driverNames.length],
                     role: isNS ? "North-South Express" : "East-West Express",
+                    vType,
+                    mass: spec.mass,
+                    halfWidth: spec.halfWidth,
+                    halfLength: spec.halfLength,
                     routeType: isNS ? 'NS_HIGHWAY' : 'EW_HIGHWAY',
                     progress: -950 + (i % 3) * 850,
                     dir: i % 2 === 0 ? 1 : -1,
                     laneOffset: 5.8,
                     baseLaneOffset: 5.8,
-                    speed: 28 + (i % 3) * 4.5,
+                    speed: cruiseSpd,
+                    cruiseSpeed: cruiseSpd,
+                    currentSpeed: cruiseSpd,
+                    targetSpeed: cruiseSpd,
+                    isBraking: false,
+                    stoppedTimer: 0,
+                    honkCooldown: 0,
                     x: 0, y: 4, z: 0,
                     heading: 0,
                     voicePitch: 0.98 + (i % 4) * 0.05,
@@ -17184,6 +17421,8 @@
                 const v = vehicleNPCs[i];
                 const distToPlayer = Math.hypot(player.pos.x - v.x, player.pos.z - v.z);
 
+                if (v.honkCooldown > 0) v.honkCooldown = Math.max(0, v.honkCooldown - dt);
+
                 // Dynamic Siren Response & Polite Shoulder Pull-Over
                 const isSirenOn = !!(player.sirenActive || player.boostTimer > 0);
                 const inSirenRange = isSirenOn && distToPlayer < 95.0;
@@ -17194,25 +17433,119 @@
                 const targetOffset = inSirenRange ? shoulderOffset : baseOffset;
                 v.laneOffset = THREE.MathUtils.lerp(v.laneOffset, targetOffset, Math.min(1.0, dt * 2.5));
 
-                // Slow down and halt if siren is active nearby
-                let speedFactor = 1.0;
-                if (inSirenRange) {
-                    speedFactor = distToPlayer < 70.0 ? 0.0 : 0.35;
-                } else {
-                    speedFactor = distToPlayer < 15.0 ? 0.0 : (distToPlayer < 26.0 ? 0.45 : 1.0);
-                }
-                const effSpeed = v.speed * speedFactor;
+                // FORWARD FOLLOW-DISTANCE & OBSTACLE DETECTION (Other vehicles, traffic queue, or player in lane)
+                const fwdX = Math.sin(v.heading);
+                const fwdZ = Math.cos(v.heading);
+                const rightX = Math.cos(v.heading);
+                const rightZ = -Math.sin(v.heading);
 
-                // Flash hazard taillights when yielding for emergency sirens
-                if (inSirenRange && v.taillights) {
-                    v.taillights.visible = Math.floor(now / 220) % 2 === 0;
-                } else if (v.taillights) {
-                    v.taillights.visible = true;
+                let closestClearDist = Infinity;
+
+                // Check against other civilian vehicles ahead in the lane corridor
+                for (let j = 0; j < vehicleNPCs.length; j++) {
+                    if (i === j) continue;
+                    const o = vehicleNPCs[j];
+                    const odx = o.x - v.x;
+                    const odz = o.z - v.z;
+                    if (odx * odx + odz * odz > 1024) continue; // > 32m away
+
+                    const odFwd = odx * fwdX + odz * fwdZ;
+                    if (odFwd <= 0 || odFwd > 30.0) continue; // Must be ahead and within 30m
+
+                    const odLat = Math.abs(odx * rightX + odz * rightZ);
+                    const corridorLimit = (v.halfWidth || 1.8) + (o.halfWidth || 1.8) + 1.1;
+                    if (odLat < corridorLimit) {
+                        const clearDist = odFwd - ((v.halfLength || 3.3) + (o.halfLength || 3.3));
+                        if (clearDist < closestClearDist) {
+                            closestClearDist = clearDist;
+                        }
+                    }
+                }
+
+                // Check against player if player is on or near the roadway
+                const playerGroundY = getSurfaceHeight(player.pos.x, player.pos.z);
+                const playerClearance = player.pos.y - playerGroundY;
+                if (!player.inCrane && playerClearance < 6.0 && Math.abs(player.pos.y - v.y) < 5.0) {
+                    const pdx = player.pos.x - v.x;
+                    const pdz = player.pos.z - v.z;
+                    if (pdx * pdx + pdz * pdz < 1024) {
+                        const pdFwd = pdx * fwdX + pdz * fwdZ;
+                        if (pdFwd > 0 && pdFwd < 30.0) {
+                            const pdLat = Math.abs(pdx * rightX + pdz * rightZ);
+                            const pOBB = getPlayerOBB();
+                            const pCorridorLimit = (v.halfWidth || 1.8) + pOBB.halfWidth + 1.1;
+                            if (pdLat < pCorridorLimit) {
+                                const pClearDist = pdFwd - ((v.halfLength || 3.3) + pOBB.halfLength);
+                                if (pClearDist < closestClearDist) {
+                                    closestClearDist = pClearDist;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Calculate target speed factor based on follow distance & emergency sirens
+                let targetFactor = 1.0;
+                if (closestClearDist <= 4.8) {
+                    // Standoff buffer: come to a smooth, complete halt behind vehicle/player
+                    targetFactor = 0.0;
+                } else if (closestClearDist < 18.0) {
+                    // Smooth linear deceleration curve into following distance
+                    targetFactor = (closestClearDist - 4.8) / (18.0 - 4.8);
+                } else {
+                    targetFactor = 1.0;
+                }
+
+                if (inSirenRange) {
+                    const sirenFactor = distToPlayer < 70.0 ? 0.0 : 0.35;
+                    targetFactor = Math.min(targetFactor, sirenFactor);
+                }
+
+                const baseSpd = v.cruiseSpeed || v.speed || 24;
+                v.targetSpeed = baseSpd * targetFactor;
+                if (v.currentSpeed === undefined) v.currentSpeed = baseSpd;
+
+                // Braking decelerates faster than cruising acceleration
+                const accelRate = (v.targetSpeed < v.currentSpeed) ? 5.5 : 2.2;
+                v.currentSpeed = THREE.MathUtils.lerp(v.currentSpeed, v.targetSpeed, Math.min(1.0, dt * accelRate));
+                if (v.currentSpeed < 0.05) v.currentSpeed = 0.0;
+
+                v.isBraking = (v.targetSpeed < baseSpd * 0.85) || (v.currentSpeed < 1.0);
+
+                // Polite honk when stalled in traffic for more than 3.2 seconds
+                if (v.currentSpeed < 0.5 && closestClearDist < 12.0) {
+                    v.stoppedTimer = (v.stoppedTimer || 0) + dt;
+                    if (v.stoppedTimer > 3.2 && (v.honkCooldown || 0) <= 0) {
+                        v.stoppedTimer = 0;
+                        v.honkCooldown = 7.0 + Math.random() * 5.0;
+                        if (sfx.playCarHonk && distToPlayer < 90.0) {
+                            sfx.playCarHonk(v.voicePitch || 1.0);
+                        }
+                    }
+                } else {
+                    v.stoppedTimer = 0;
+                }
+
+                // Taillights illumination (bright red when braking or stopped; hazard flashing during siren yield)
+                const isNightOrDark = WEATHER_MODES[currentWeatherIdx].headlightIntensity > 0;
+                if (v.taillights) {
+                    for (let t = 0; t < v.taillights.length; t++) {
+                        if (inSirenRange) {
+                            const hazardOn = Math.floor(now / 220) % 2 === 0;
+                            v.taillights[t].material = hazardOn ? matNPCTaillightOn : matNPCTaillightOff;
+                        } else if (v.isBraking || isNightOrDark) {
+                            v.taillights[t].material = matNPCTaillightOn;
+                        } else {
+                            v.taillights[t].material = matNPCTaillightOff;
+                        }
+                    }
                 }
 
                 if (distToPlayer < 16.5 && Math.abs(player.speed) < 25) {
                     speakClosestDisasterForNPC(v, false);
                 }
+
+                const effSpeed = v.currentSpeed;
 
                 if (v.routeType === 'INNER_RING' || v.routeType === 'OUTER_RING') {
                     const baseR = v.routeType === 'INNER_RING' ? getInnerRoadRadius(v.theta) : getOuterRoadRadius(v.theta);
@@ -17273,6 +17606,39 @@
                     const wheelRot = effSpeed * dt * 1.1;
                     for (let w = 0; w < v.wheels.length; w++) {
                         v.wheels[w].rotation.x += wheelRot;
+                    }
+                }
+            }
+
+            // 2B. Civilian Vehicle vs Civilian Vehicle OBB Physical Separation
+            for (let i = 0; i < vehicleNPCs.length; i++) {
+                const vA = vehicleNPCs[i];
+                for (let j = i + 1; j < vehicleNPCs.length; j++) {
+                    const vB = vehicleNPCs[j];
+                    const dx = vB.x - vA.x;
+                    const dz = vB.z - vA.z;
+                    if (dx * dx + dz * dz > 144) continue; // > 12m away
+
+                    const col = testOBBOverlap2D(vA, vB);
+                    if (col) {
+                        const totalM = (vA.mass || 2000) + (vB.mass || 2000);
+                        const wA = (vB.mass || 2000) / totalM;
+                        const wB = (vA.mass || 2000) / totalM;
+
+                        vA.x -= col.mtv.x * wA;
+                        vA.z -= col.mtv.z * wA;
+                        vB.x += col.mtv.x * wB;
+                        vB.z += col.mtv.z * wB;
+
+                        vA.root.position.x = vA.x;
+                        vA.root.position.z = vA.z;
+                        vB.root.position.x = vB.x;
+                        vB.root.position.z = vB.z;
+
+                        vA.currentSpeed = Math.max(0, (vA.currentSpeed || 0) * 0.4);
+                        vB.currentSpeed = Math.max(0, (vB.currentSpeed || 0) * 0.4);
+                        vA.isBraking = true;
+                        vB.isBraking = true;
                     }
                 }
             }
@@ -20940,6 +21306,99 @@
                         // High-speed Ramming tackle damages MorBot:
                         if (Math.abs(player.speed) >= 9.5) {
                             morbotBattle.damageMorBot(1, "RAMMING TACKLE");
+                        }
+                    }
+                }
+
+                // Dynamic 2D OBB Collision against Civilian Vehicle NPCs (Weight-based mass separation & impact physics)
+                const playerOBB = getPlayerOBB();
+                for (let i = 0; i < vehicleNPCs.length; i++) {
+                    const v = vehicleNPCs[i];
+                    const dx = player.pos.x - v.x;
+                    const dz = player.pos.z - v.z;
+                    if (dx * dx + dz * dz > 256) continue; // Broadphase squared distance > 16m
+
+                    const vOBB = {
+                        x: v.x,
+                        z: v.z,
+                        heading: v.heading,
+                        halfWidth: v.halfWidth || 1.8,
+                        halfLength: v.halfLength || 3.3,
+                        mass: v.mass || 2000
+                    };
+
+                    const col = testOBBOverlap2D(playerOBB, vOBB);
+                    if (col) {
+                        const totalMass = playerOBB.mass + vOBB.mass;
+                        const playerDispFactor = vOBB.mass / totalMass;
+                        const vehicleDispFactor = playerOBB.mass / totalMass;
+
+                        // Separate positions along MTV inversely proportional to mass
+                        player.pos.x -= col.mtv.x * playerDispFactor;
+                        player.pos.z -= col.mtv.z * playerDispFactor;
+                        playerOBB.x = player.pos.x;
+                        playerOBB.z = player.pos.z;
+
+                        v.x += col.mtv.x * vehicleDispFactor;
+                        v.z += col.mtv.z * vehicleDispFactor;
+                        v.root.position.x = v.x;
+                        v.root.position.z = v.z;
+
+                        // Nudge vehicle route progress/theta so it doesn't instantly snap back
+                        if (v.routeType === 'INNER_RING' || v.routeType === 'OUTER_RING') {
+                            v.theta = (Math.atan2(v.z, v.x) + Math.PI * 2) % (Math.PI * 2);
+                        } else if (v.routeType === 'NS_HIGHWAY') {
+                            v.progress = v.z;
+                        } else if (v.routeType === 'EW_HIGHWAY') {
+                            v.progress = v.x;
+                        }
+
+                        // Physical impact impulses & audio/visual feedback
+                        const impactSpeed = Math.abs(player.speed);
+                        if (impactSpeed > 2.5) {
+                            if (playerOBB.mass >= 20000 || vOBB.mass >= 10000) {
+                                sfx.playSmash();
+                            } else {
+                                sfx.playDockClank();
+                            }
+                            if (sfx.playCarHonk && Math.random() < 0.65) {
+                                sfx.playCarHonk(v.voicePitch || 1.0);
+                            }
+                            spawnBurstParticles(
+                                (player.pos.x + v.x) * 0.5,
+                                player.pos.y + 1.1,
+                                (player.pos.z + v.z) * 0.5,
+                                0xffcc00,
+                                12,
+                                1.3
+                            );
+                            spawnMagnetSparkParticles(
+                                (player.pos.x + v.x) * 0.5,
+                                player.pos.y + 0.9,
+                                (player.pos.z + v.z) * 0.5,
+                                10
+                            );
+
+                            // Player speed loss scaled by vehicle mass vs player mass
+                            const massResistance = Math.min(0.85, (vOBB.mass / playerOBB.mass) * 0.55);
+                            player.speed *= (1.0 - massResistance);
+
+                            // Civilian vehicle is jarred, brakes, and triggers brake lights
+                            v.currentSpeed = Math.max(0, (v.currentSpeed || v.speed || 24) - 8.0);
+                            v.isBraking = true;
+                        } else {
+                            // Gentle bumper contact
+                            player.speed *= 0.82;
+                            v.currentSpeed = Math.max(0, (v.currentSpeed || v.speed || 24) * 0.6);
+                            v.isBraking = true;
+                        }
+
+                        // Slide tangential path if player is on autopilot waypoint navigation
+                        if (player.hasWaypoint) {
+                            const tangX = -col.mtv.z;
+                            const tangZ = col.mtv.x;
+                            player.pos.x += tangX * dt * 4;
+                            player.pos.z += tangZ * dt * 4;
                         }
                     }
                 }
