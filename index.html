@@ -1014,7 +1014,7 @@
             <span id="altitude-readout" class="hidden mono-font text-xs text-cyan-300">ALT: 00m</span>
         </div>
         <div class="hidden md:block text-[11px] text-white/70 bg-slate-950/70 px-3 py-0.5 rounded-full border border-white/10">
-            <span class="text-amber-300">TAP SCREEN</span> Drive/Fly • <span class="text-lime-300">1-4</span> Bot • <span class="text-yellow-300">SPACE</span> Cycle Mode • <span class="text-sky-300">WASD</span> Move
+            <span class="text-amber-300">TAP SCREEN</span> Drive/Fly • <span class="text-lime-300">1-5</span> Bot • <span class="text-yellow-300">SPACE</span> Cycle Mode • <span class="text-sky-300">WASD</span> Move
         </div>
     </div>
 
@@ -13142,8 +13142,9 @@
             document.getElementById('mode-readout').className = `text-xs sm:text-sm font-bold tracking-wide uppercase ${meta.colorClass}`;
             document.getElementById('mode-dot').className = `w-2.5 h-2.5 rounded-full ${meta.dotClass}`;
 
+            const isHighTideWaterBlocked = (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0));
             const nextTransformLabel = player.mode === 'BOT'
-                ? ((player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) ? `TO ${meta.dinoName}` : `TO ${meta.vehName}`)
+                ? (isHighTideWaterBlocked ? `NEEDS WATER` : `TO ${meta.vehName}`)
                 : (player.mode === 'VEHICLE' ? (meta.dinoName ? `TO ${meta.dinoName}` : 'TO ROBOT') : 'TO ROBOT');
             document.getElementById('transform-sub').textContent = nextTransformLabel;
 
@@ -13338,12 +13339,13 @@
                 player.flightAlt = 0;
             }
 
-            // High Tide submarine mode requires water; if deployed on dry land, revert to Bot mode
-            if (newBotType === 'HIGHTIDE' && player.mode === 'VEHICLE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
+            // High Tide submarine and plesiosaur modes require water; if deployed on dry land, revert to Bot mode
+            if (newBotType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO') && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
                 player.mode = 'BOT';
                 player.targetMorph = 0.0;
                 player.targetDinoMorph = 0.0;
                 player.morph = 0.0;
+                player.dinoMorph = 0.0;
             }
 
             syncVisitingAutobotsVisibility();
@@ -16480,13 +16482,13 @@
             buddyBot.pitch = THREE.MathUtils.lerp(buddyBot.pitch || 0, bTargetPitch, Math.min(1.0, dt * 14.0));
             buddyBot.roll = THREE.MathUtils.lerp(buddyBot.roll || 0, bTargetRoll, Math.min(1.0, dt * 14.0));
 
-            const isHighTideBuddySub = (buddyBot.botType === 'HIGHTIDE' && buddyBot.mode === 'VEHICLE');
+            const isHighTideBuddyWaterMode = (buddyBot.botType === 'HIGHTIDE' && (buddyBot.targetMorph > 0.5 || buddyBot.targetDinoMorph > 0.5));
             if (isFlying) {
                 const targetAlt = Math.max(14, player.flightAlt + Math.sin(now * 0.003) * 1.5);
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, bCenterY + targetAlt, Math.min(1.0, dt * 4.5));
-            } else if (isHighTideBuddySub && isPointInWater(buddyBot.pos.x, buddyBot.pos.z)) {
+            } else if (isHighTideBuddyWaterMode && isPointInWater(buddyBot.pos.x, buddyBot.pos.z)) {
                 const subSwell = Math.sin(now * 0.003 + 1.2) * 0.12;
-                const waterTargetY = -0.45 - 0.22 + subSwell;
+                const waterTargetY = -0.45 - (buddyBot.targetDinoMorph > 0.5 ? 0.35 : 0.22) + subSwell;
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, waterTargetY, Math.min(1.0, dt * 16.0));
             } else {
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, bTargetGroundY, Math.min(1.0, dt * 20.0));
@@ -16832,12 +16834,12 @@
                 }
             });
 
-            // High Tide submarine moves in water; Blades flies freely; other bots stay on land
-            const isHighTideSub = (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE');
+            // High Tide submarine and plesiosaur move in water; Blades flies freely; other bots stay on land
+            const isHighTideWaterMode = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
             let ty = getSurfaceHeight(hitPoint.x, hitPoint.z);
-            if (isHighTideSub) {
-                // High Tide submarine moves in water: if tapped on dry land, find nearest water point along line towards player
+            if (isHighTideWaterMode) {
+                // High Tide submarine and plesiosaur move in water: if tapped on dry land, find nearest water point along line towards player
                 if (!isPointInWater(hitPoint.x, hitPoint.z)) {
                     for (let step = 0; step <= 1.0; step += 0.05) {
                         const tx = THREE.MathUtils.lerp(hitPoint.x, player.pos.x, step);
@@ -16865,7 +16867,7 @@
                 }
             }
 
-            const markerY = isHighTideSub ? -0.45 : Math.max(0.0, ty);
+            const markerY = isHighTideWaterMode ? -0.45 : Math.max(0.0, ty);
             player.waypoint.set(hitPoint.x, markerY, hitPoint.z);
             player.hasWaypoint = true;
 
@@ -16990,6 +16992,11 @@
                 }
                 speakBotCatchphrase(player.botType, 'TO_VEHICLE');
             } else if (nextMode === 'DINO') {
+                if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
+                    showToast("🌊 WATER REQUIRED TO DIVE", "High Tide's plesiosaur dinobot mode requires water! Head to the harbor or shoreline!");
+                    sfx.playSpeechPop();
+                    return;
+                }
                 player.mode = 'DINO';
                 player.targetMorph = 0.0;
                 player.targetDinoMorph = 1.0;
@@ -17018,12 +17025,17 @@
         // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot)
         function triggerTransform() {
             const hasDino = BOT_METADATA[player.botType] && BOT_METADATA[player.botType].dinoName;
-            if (player.mode === 'BOT') {
-                if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
-                    setPlayerMode('DINO');
+            if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
+                if (player.mode !== 'BOT') {
+                    setPlayerMode('BOT');
                 } else {
-                    setPlayerMode('VEHICLE');
+                    showToast("🌊 WATER REQUIRED", "High Tide's submarine and dinobot modes require water! Head to the harbor or shoreline!");
+                    sfx.playSpeechPop();
                 }
+                return;
+            }
+            if (player.mode === 'BOT') {
+                setPlayerMode('VEHICLE');
             } else if (player.mode === 'VEHICLE') {
                 if (hasDino) {
                     setPlayerMode('DINO');
@@ -17539,13 +17551,14 @@
             showToast("EMERGENCY DISPATCH!", "8 New Island Emergencies Active!");
         });
 
-        // Keyboard Shortcuts (1-4 Switch Bot, 6-0 Secret Ally Switch, WASD Move, Space Cycle Transform, E/Shift Special, Q/C Ascend/Descend)
+        // Keyboard Shortcuts (1-5 Switch Bot, 6-0 Secret Ally Switch, WASD Move, Space Cycle Transform, E/Shift Special, Q/C Ascend/Descend)
         window.addEventListener('keydown', e => {
             input.keys[e.code] = true;
             if (e.code === 'Digit1' || e.code === 'Numpad1') switchRescueBot('BOULDER');
             if (e.code === 'Digit2' || e.code === 'Numpad2') switchRescueBot('HEATWAVE');
             if (e.code === 'Digit3' || e.code === 'Numpad3') switchRescueBot('CHASE');
             if (e.code === 'Digit4' || e.code === 'Numpad4') switchRescueBot('BLADES');
+            if (e.code === 'Digit5' || e.code === 'Numpad5') unlockAndSwitchBot('QUICKSHADOW');
             // Secret cheat codes: 6, 7, 8, 9, 0 unlock & deploy visiting Autobot allies!
             if (e.code === 'Digit6' || e.code === 'Numpad6') unlockAndSwitchBot('OPTIMUS');
             if (e.code === 'Digit7' || e.code === 'Numpad7') unlockAndSwitchBot('BUMBLEBEE');
@@ -18084,7 +18097,7 @@
             }
 
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
-            const isHighTideSub = (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE');
+            const isHighTideWaterMode = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
             const onRoad = isPointOnRoad(player.pos.x, player.pos.z);
 
             // Top Speed per Rescue Bot & Mode (Bot, Vehicle, and Dinobot!)
@@ -18170,8 +18183,8 @@
                 const nextZ = player.pos.z + Math.cos(player.heading) * player.speed * dt;
                 const nextGroundY = getSurfaceHeight(nextX, nextZ);
 
-                if (isHighTideSub) {
-                    // High Tide in Submarine mode moves in water only: cannot cross onto dry land
+                if (isHighTideWaterMode) {
+                    // High Tide in Submarine or Plesiosaur mode moves in water only: cannot cross onto dry land
                     const inWater = isPointInWater(nextX, nextZ);
                     if (inWater || nextGroundY < 0.25) {
                         player.pos.x = Math.max(-2380, Math.min(2380, nextX));
@@ -18182,7 +18195,9 @@
                         waypointGroup.visible = false;
                         if (!player.lastShorelineToast || now - player.lastShorelineToast > 3500) {
                             player.lastShorelineToast = now;
-                            showToast("⚓ SUBMARINE AT SHORELINE", "High Tide moves in water only! Transform to Bot Mode to walk on land!");
+                            const modeTitle = player.mode === 'DINO' ? 'PLESIOSAUR AT SHORELINE' : 'SUBMARINE AT SHORELINE';
+                            const modeDesc = player.mode === 'DINO' ? 'Plesiosaur Dinobot' : 'Submarine';
+                            showToast(`⚓ ${modeTitle}`, `High Tide's ${modeDesc} moves in water only! Transform to Bot Mode to walk on land!`);
                             sfx.playSpeechPop();
                         }
                     }
@@ -18231,10 +18246,10 @@
 
             // Target ground height under the chassis
             let targetGroundY = Math.max((frontY + rearY) * 0.5, centerGroundY);
-            if (isHighTideSub) {
-                // High Tide Submarine cruises on the water surface with gentle marine swell bobbing
+            if (isHighTideWaterMode) {
+                // High Tide Submarine and Plesiosaur cruise on the water surface with gentle marine swell bobbing
                 const subSwell = Math.sin(now * 0.003) * 0.12;
-                const waterTargetY = -0.45 - 0.22 + subSwell;
+                const waterTargetY = -0.45 - (player.mode === 'DINO' ? 0.35 : 0.22) + subSwell;
                 targetGroundY = Math.max(targetGroundY, waterTargetY);
             } else if (isVehicleOrDino && player.speed > 1.0 && noseY > frontY) {
                 // Moving forward towards an uphill slope: gently elevate front suspension to prevent bumper clipping
@@ -18250,7 +18265,7 @@
                 targetRoll = Math.atan2(rightY - leftY, halfTrack * 2.0);
                 targetPitch = Math.max(-0.7, Math.min(0.7, targetPitch));
                 targetRoll = Math.max(-0.45, Math.min(0.45, targetRoll));
-                if (isHighTideSub) {
+                if (isHighTideWaterMode) {
                     targetPitch += Math.sin(now * 0.0028) * 0.04;
                     targetRoll += Math.cos(now * 0.0022) * 0.05;
                 }
@@ -18334,8 +18349,8 @@
                 }
             }
 
-            // High Tide Submarine twin ducted thruster water spray & foaming wake
-            if (isHighTideSub && Math.abs(player.speed) > 1.2 && Math.random() < 0.45) {
+            // High Tide Submarine & Plesiosaur twin water spray & foaming wake
+            if (isHighTideWaterMode && Math.abs(player.speed) > 1.2 && Math.random() < 0.45) {
                 const sinH = Math.sin(player.heading);
                 const cosH = Math.cos(player.heading);
                 const wakeX = player.pos.x - sinH * 2.8 + (Math.random() - 0.5) * 1.6;
