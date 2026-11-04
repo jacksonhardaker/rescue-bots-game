@@ -5075,8 +5075,8 @@
                     const lT = Math.max(0, Math.min(1, (x - 1180) / 140));
                     const smoothLT = lT * lT * (3 - 2 * lT);
                     idealRoadH = THREE.MathUtils.lerp(idealRoadH, 14.5, smoothLT);
-                } else if (distMoroccoRoad < 22 && mRoadT > 0.05) {
-                    idealRoadH = THREE.MathUtils.lerp(idealRoadH, 11.5, mRoadT);
+                } else if (distMoroccoRoad < 26) {
+                    idealRoadH = THREE.MathUtils.lerp(9.3, 11.5, mRoadT);
                 }
                 h = h * smoothBlend + idealRoadH * (1 - smoothBlend);
             }
@@ -5513,8 +5513,8 @@
                 // Wayward Causeway Highway, Ocean Bridge, and Island Road (from Outer Ring Highway at X=1120 to Wayward Ruins at X=1900)
                 ctx.moveTo(1120, 540);
                 ctx.lineTo(1900, 540);
-                // Dr. Morocco Lair Access Road (from Outer Ring Highway at -640, -1120 to Morocco Cliffside Lair at -820, -1180)
-                ctx.moveTo(-640, -1120);
+                // Dr. Morocco Lair Access Road (from Outer Ring Highway at -619.3, -1083.8 to Morocco Cliffside Lair at -820, -1180)
+                ctx.moveTo(-619.3, -1083.8);
                 ctx.lineTo(-820, -1180);
             }
 
@@ -5913,7 +5913,8 @@
         createRoadIntersectionPad(380, 25, 18.0);               // East Inner Junction (EW x Inner Ring)
         createRoadIntersectionPad(1068.9, 540, 17.5);           // Wayward Causeway Junction (Causeway x Outer Ring)
         createRoadIntersectionPad(1181.5, 60, 16.5);            // East Lighthouse Junction (Lighthouse Road x Outer Ring)
-        createRoadIntersectionPad(-619.3, -1083.8, 17.5);       // Dr. Morocco Lair Junction (Morocco Road x Outer Ring)
+        createRoadIntersectionPad(-619.3, -1083.8, 19.5);       // Dr. Morocco Lair Junction (Morocco Road x Outer Ring)
+        createRoadIntersectionPad(-820, -1180, 22.0);            // Dr. Morocco Lair Plateau Terminal Apron
 
         // Cel-Shaded Cartoon Ocean Water Plane + Animated White Foam Ripples (Scaled for 10X World)
         const waterMesh = new THREE.Mesh(
@@ -8864,9 +8865,10 @@
             if (Math.hypot(x - 1960, z - 540) < 120) return true; // Wayward Ruins Plateau
             if (Math.hypot(x - 1320, z - 60) < 55) return true; // East Lighthouse Lookout Terrace
             if (x >= 1450 && x <= 1780 && Math.abs(z - 540) < 32) return true; // Wayward Causeway Bridge Corridor
-            // Dr. Morocco Cliffside Lair Access Road & Plaza (X: -820 .. -640, Z: -1180 .. -1120)
-            const mRoadT = Math.max(0, Math.min(1, ((x - (-640)) * (-180) + (z - (-1120)) * (-60)) / (180 * 180 + 60 * 60)));
-            if (Math.hypot(x - (-640 - mRoadT * 180), z - (-1120 - mRoadT * 60)) < 12.0) return true;
+            // Dr. Morocco Cliffside Lair Access Road & Plaza (X: -820 .. -619.3, Z: -1180 .. -1083.8)
+            const mLenSq = 200.7 * 200.7 + 96.2 * 96.2;
+            const mRoadT = Math.max(0, Math.min(1, ((x - (-619.3)) * (-200.7) + (z - (-1083.8)) * (-96.2)) / mLenSq));
+            if (Math.hypot(x - (-619.3 + mRoadT * (-200.7)), z - (-1083.8 + mRoadT * (-96.2))) < 14.0) return true;
             if (Math.hypot(x + 820, z + 1180) < 55) return true;
 
             return false;
