@@ -1322,6 +1322,12 @@
                 <line x1="20" y1="5" x2="20" y2="14"/>
                 <path d="M8 5l4-3 4 3M9 8l3-2 3 2"/>
             </svg>`,
+            T_REX_ROAR: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 14c2-5 6-10 14-10 2 0 4 2 4 4 0 3-3 4-5 5l2 4c-3 1-6 2-9 2-2 0-4-2-6-5z" fill="currentColor" fill-opacity="0.25"/>
+                <path d="M11 9l2 2-2 2M15 10l2 2-2 2"/>
+                <path d="M6 16l3-1M5 19l4-2M9 22l2-3"/>
+                <circle cx="16" cy="7" r="1.5" fill="#facc15" stroke="none"/>
+            </svg>`,
 
             // Bumblebee Special Powers
             STINGER_PULSE: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1562,20 +1568,22 @@
                 const now = this.ctx.currentTime;
                 const isPterosaur = botType === 'BLADES';
                 const isRaptor = botType === 'BUMBLEBEE';
-                const baseFreq = isPterosaur ? 720 : (isRaptor ? 420 : (botType === 'CHASE' ? 165 : 115));
+                const isTRex = botType === 'OPTIMUS';
+                const baseFreq = isPterosaur ? 720 : (isRaptor ? 420 : (isTRex ? 82 : (botType === 'CHASE' ? 165 : 115)));
+                const roarDuration = isTRex ? 0.65 : 0.48;
                 [1.0, 1.35].forEach((mult, idx) => {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     osc.type = (isPterosaur || isRaptor) ? 'triangle' : 'sawtooth';
                     osc.frequency.setValueAtTime(baseFreq * mult, now + idx * 0.04);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 1.45 : (isRaptor ? 1.65 : 0.68)), now + 0.22);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 0.55 : (isRaptor ? 0.72 : 0.42)), now + 0.46);
-                    gain.gain.setValueAtTime(0.13, now + idx * 0.04);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.48);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 1.45 : (isRaptor ? 1.65 : (isTRex ? 1.55 : 0.68))), now + 0.22);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 0.55 : (isRaptor ? 0.72 : (isTRex ? 0.42 : 0.42))), now + roarDuration - 0.04);
+                    gain.gain.setValueAtTime(isTRex ? 0.18 : 0.13, now + idx * 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + roarDuration);
                     osc.connect(gain);
                     gain.connect(this.ctx.destination);
                     osc.start(now + idx * 0.04);
-                    osc.stop(now + 0.5);
+                    osc.stop(now + roarDuration + 0.02);
                 });
             }
             playBotSwitch() {
@@ -8321,6 +8329,9 @@
                 dinoTail: new THREE.Group(),
                 dinoLeftWing: new THREE.Group(),
                 dinoRightWing: new THREE.Group(),
+                dinoLeftArm: new THREE.Group(),
+                dinoRightArm: new THREE.Group(),
+                dinoLowerJaw: null,
                 wheels: [],
                 rotors: null,
                 tailRotor: null,
@@ -8342,6 +8353,8 @@
             parts.dinoGroup.add(parts.dinoTail);
             parts.dinoGroup.add(parts.dinoLeftWing);
             parts.dinoGroup.add(parts.dinoRightWing);
+            parts.dinoGroup.add(parts.dinoLeftArm);
+            parts.dinoGroup.add(parts.dinoRightArm);
 
             if (botType === 'BOULDER') {
                 // TV Show Boulder: Vibrant Chartreuse-Lime Green (#76d31b), Construction Yellow (#ffcc00) & Silver Trim
@@ -9748,6 +9761,263 @@
                         parts.wheels.push(w);
                     });
                 });
+
+                // =============================================================
+                // DINOBOT MODE: OPTIMUS PRIME T-REX (Tyrannosaurus Rex)
+                // Source Image: media_1793754738745_10dc5229.jpg
+                // Chiseled Red T-Rex Skull, Blue Helmet Crown & Brow Ridges,
+                // Glowing Amber-Yellow Predator Optics, Dual Silver Smokestacks on Jaw Hinges,
+                // Hinged Serrated Lower Jaw, Ribbed Underbelly Plating,
+                // Articulated Small Mechanical Forearms, Talon Boot Claws & Segmented Tail with Chevron Drill Tip
+                // =============================================================
+
+                // 1. Dinosaur Body / Armor Overlay in dinoGroup
+                const tRexBackShell = new THREE.Mesh(new THREE.BoxGeometry(2.96, 1.35, 3.1), matOptimusRed);
+                tRexBackShell.position.set(0, 2.75, -0.05);
+                tRexBackShell.castShadow = true;
+                parts.dinoGroup.add(tRexBackShell);
+
+                // Blue & Silver Dorsal Ridge along Spine
+                const tRexSpine = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.45, 2.95), matOptimusBlue);
+                tRexSpine.position.set(0, 3.48, -0.05);
+                parts.dinoGroup.add(tRexSpine);
+
+                // Cyan Windshield / Canopy on T-Rex Back (echoing truck cab)
+                const tRexGlass = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.55, 1.45), matCabGlass);
+                tRexGlass.position.set(0, 3.25, 0.45);
+                tRexGlass.userData.noOutline = true;
+                parts.dinoGroup.add(tRexGlass);
+
+                // Ribbed Silver/Chrome Underbelly Armor Leading from Collar to Pelvis
+                const underbellyGroup = new THREE.Group();
+                underbellyGroup.position.set(0, 2.15, 0.35);
+                const bellyBase = new THREE.Mesh(new THREE.BoxGeometry(1.88, 0.65, 2.65), matChrome);
+                underbellyGroup.add(bellyBase);
+                for (let b = 0; b < 5; b++) {
+                    const rib = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.18, 0.36), matOptimusRed);
+                    rib.position.set(0, -0.28, -0.85 + b * 0.44);
+                    underbellyGroup.add(rib);
+                }
+                parts.dinoGroup.add(underbellyGroup);
+
+                // 2. Small T-Rex Forearms on Upper Chest Sides
+                [-1, 1].forEach(side => {
+                    const arm = side === -1 ? parts.dinoLeftArm : parts.dinoRightArm;
+                    arm.position.set(side * 1.32, 2.35, 1.35);
+
+                    // Red Ball Shoulder Joint
+                    const shoulderBall = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 8), matOptimusRed);
+                    arm.add(shoulderBall);
+
+                    // Red Upper Arm Strut
+                    const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.55, 0.28), matOptimusRed);
+                    bicep.position.set(0, -0.26, 0.12);
+                    bicep.rotation.x = 0.35;
+                    arm.add(bicep);
+
+                    // Silver Elbow Joint
+                    const elbow = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.32, 8).rotateZ(Math.PI / 2), matChrome);
+                    elbow.position.set(0, -0.48, 0.28);
+                    arm.add(elbow);
+
+                    // Silver Forearm Strut
+                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.48, 0.24), matChrome);
+                    forearm.position.set(0, -0.68, 0.42);
+                    forearm.rotation.x = -0.55;
+                    arm.add(forearm);
+
+                    // Blue Two-Clawed Mechanical T-Rex Hand
+                    const handBase = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.28), matOptimusBlue);
+                    handBase.position.set(0, -0.88, 0.58);
+                    arm.add(handBase);
+
+                    [-0.1, 0.1].forEach(cx => {
+                        const claw = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 0.16), matOptimusBlue);
+                        claw.position.set(cx, -1.02, 0.68);
+                        claw.rotation.x = 0.45;
+                        arm.add(claw);
+                    });
+                });
+
+                // 3. T-Rex Head Assembly (Mounted on parts.dinoHead)
+                // Red Cranium / Main Skull
+                const skull = new THREE.Mesh(new THREE.BoxGeometry(1.82, 1.45, 2.05), matOptimusRed);
+                skull.position.set(0, 0.45, 0.72);
+                skull.castShadow = true;
+                parts.dinoHead.add(skull);
+
+                // Sloped Red Snout
+                const snout = new THREE.Mesh(new THREE.BoxGeometry(1.48, 1.15, 1.75), matOptimusRed);
+                snout.position.set(0, 0.32, 2.25);
+                snout.castShadow = true;
+                parts.dinoHead.add(snout);
+
+                // Snout Tip & Nostrils
+                const noseCap = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.95, 0.65), matOptimusRed);
+                noseCap.position.set(0, 0.24, 3.15);
+                parts.dinoHead.add(noseCap);
+
+                [-0.28, 0.28].forEach(nx => {
+                    const nostril = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.12), matChrome);
+                    nostril.position.set(nx, 0.48, 3.45);
+                    parts.dinoHead.add(nostril);
+                });
+
+                // Iconic Blue Central Helmet Crest along top of T-Rex Skull
+                const tRexCrown = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.45, 3.4), matOptimusBlue);
+                tRexCrown.position.set(0, 1.18, 1.75);
+                tRexCrown.castShadow = true;
+                parts.dinoHead.add(tRexCrown);
+
+                const crownFin = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.55, 1.1), matOptimusBlue);
+                crownFin.position.set(0, 1.52, 0.75);
+                parts.dinoHead.add(crownFin);
+
+                // Angled Blue Brow Ridges & Glowing Yellow Optics
+                const matDinoEyeYellow = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+                [-1, 1].forEach(side => {
+                    // Blue Eyebrow Armor
+                    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.38, 1.45), matOptimusBlue);
+                    brow.position.set(side * 0.88, 0.92, 1.45);
+                    brow.rotation.z = side * -0.15;
+                    brow.rotation.y = side * 0.12;
+                    parts.dinoHead.add(brow);
+
+                    // Angled Predator Eye Inset
+                    const eyeHousing = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.35, 0.68), matChrome);
+                    eyeHousing.position.set(side * 0.92, 0.62, 1.42);
+                    parts.dinoHead.add(eyeHousing);
+
+                    const eyeLens = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.24, 0.52), matDinoEyeYellow);
+                    eyeLens.position.set(side * 0.98, 0.62, 1.42);
+                    eyeLens.userData.noOutline = true;
+                    parts.dinoHead.add(eyeLens);
+
+                    // Side-Mounted Truck Smokestacks on Jaw/Temple Hinges!
+                    const stackBracket = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), matChrome);
+                    stackBracket.position.set(side * 1.05, 0.55, 0.35);
+                    parts.dinoHead.add(stackBracket);
+
+                    const stackPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 2.35, 10), matChrome);
+                    stackPipe.position.set(side * 1.18, 1.45, 0.35);
+                    parts.dinoHead.add(stackPipe);
+
+                    // Perforated Exhaust Heat Shield / Cap
+                    const stackCap = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.65, 10), matOptimusRed);
+                    stackCap.position.set(side * 1.18, 2.25, 0.35);
+                    parts.dinoHead.add(stackCap);
+                });
+
+                // Upper Teeth (Sharp Triangular Chrome / White Fangs along Upper Jaw Rim)
+                const upperTeethRow = new THREE.Group();
+                upperTeethRow.position.set(0, -0.22, 2.15);
+                for (let t = 0; t < 6; t++) {
+                    const zPos = -0.75 + t * 0.32;
+                    [-0.62, 0.62].forEach(tx => {
+                        const fang = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.28, 4).rotateX(Math.PI), matChrome);
+                        fang.position.set(tx, 0, zPos);
+                        upperTeethRow.add(fang);
+                    });
+                }
+                parts.dinoHead.add(upperTeethRow);
+
+                // Articulated Lower Jaw
+                const lowerJaw = new THREE.Group();
+                lowerJaw.position.set(0, -0.32, 0.95);
+                parts.dinoHead.add(lowerJaw);
+                parts.dinoLowerJaw = lowerJaw;
+
+                const jawChin = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.48, 2.35), matOptimusRed);
+                jawChin.position.set(0, -0.15, 0.95);
+                jawChin.castShadow = true;
+                lowerJaw.add(jawChin);
+
+                const innerMaw = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.25, 2.15), matOptimusBlue);
+                innerMaw.position.set(0, 0.08, 0.95);
+                lowerJaw.add(innerMaw);
+
+                // Lower Teeth
+                for (let t = 0; t < 6; t++) {
+                    const zPos = 0.22 + t * 0.32;
+                    [-0.56, 0.56].forEach(tx => {
+                        const fang = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.28, 4), matChrome);
+                        fang.position.set(tx, 0.28, zPos);
+                        lowerJaw.add(fang);
+                    });
+                }
+
+                // 4. Segmented Heavy T-Rex Counterbalance Tail with Chevron Drill Tip
+                let prevOptTail = parts.dinoTail;
+                const tailSegs = [
+                    { w: 1.85, h: 1.55, l: 1.15, color: matOptimusRed },
+                    { w: 1.55, h: 1.35, l: 1.15, color: matChrome },
+                    { w: 1.25, h: 1.15, l: 1.15, color: matOptimusRed },
+                    { w: 0.95, h: 0.92, l: 1.15, color: matOptimusRed },
+                    { w: 0.72, h: 0.72, l: 1.05, color: matChrome }
+                ];
+                tailSegs.forEach(segData => {
+                    const seg = new THREE.Group();
+                    seg.position.set(0, 0, -1.02);
+                    const segMesh = new THREE.Mesh(new THREE.BoxGeometry(segData.w, segData.h, segData.l), segData.color);
+                    segMesh.position.set(0, 0, -0.48);
+                    segMesh.castShadow = true;
+                    seg.add(segMesh);
+
+                    // Spine ridge
+                    const spineRidge = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.28, segData.l), matOptimusBlue);
+                    spineRidge.position.set(0, segData.h * 0.5 + 0.1, -0.48);
+                    seg.add(spineRidge);
+
+                    prevOptTail.add(seg);
+                    prevOptTail = seg;
+                });
+
+                // Tail Tip: Iconic Chevron Drill Tail Tip
+                const tailTip = new THREE.Group();
+                tailTip.position.set(0, 0, -1.05);
+                const tipBase = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.75, 0.45), matChrome);
+                tipBase.position.set(0, 0, -0.22);
+                tailTip.add(tipBase);
+
+                // Blue Chevron Flukes
+                const tipDrill = new THREE.Mesh(new THREE.ConeGeometry(0.48, 1.25, 4).rotateX(-Math.PI / 2), matOptimusBlue);
+                tipDrill.position.set(0, 0, -0.85);
+                tailTip.add(tipDrill);
+
+                [-1, 1].forEach(side => {
+                    const fluke = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.15, 0.85), matOptimusBlue);
+                    fluke.position.set(side * 0.45, 0, -0.65);
+                    fluke.rotation.y = side * 0.35;
+                    tailTip.add(fluke);
+                });
+                prevOptTail.add(tailTip);
+
+                // 5. Dinosaur Talon Claws on Boots (Front 3 Claws + Rear Spur)
+                [parts.leftLeg, parts.rightLeg].forEach((legG, legIdx) => {
+                    const side = legIdx === 0 ? -1 : 1;
+                    const talonsGroup = new THREE.Group();
+                    talonsGroup.position.set(-side * 0.08, -2.52, 0.95);
+                    legG.add(talonsGroup);
+
+                    // 3 Forward Dinosaur Talon Claws
+                    [-0.42, 0, 0.42].forEach(tx => {
+                        const talon = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.18, 0.75, 5).rotateX(Math.PI / 2 + 0.25),
+                            matChrome
+                        );
+                        talon.position.set(tx, -0.15, 0.35);
+                        talon.castShadow = true;
+                        talonsGroup.add(talon);
+                    });
+
+                    // Rear Heel Claw
+                    const rearClaw = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.16, 0.55, 5).rotateX(-Math.PI / 2 - 0.25),
+                        matChrome
+                    );
+                    rearClaw.position.set(0, -0.15, -1.65);
+                    talonsGroup.add(rearClaw);
+                });
             }
 
             else if (botType === 'BUMBLEBEE') {
@@ -10783,7 +11053,7 @@
 
             // 1. Torso (Upright in Bot, Low Chassis in Vehicle, Horizontal Dinosaur Core in Dinobot)
             const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : 0) - smashOffset * 0.5;
-            const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' ? 2.35 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.16 : 0);
+            const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' ? 2.45 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.18 : 0);
             const vehTorsoY = (rig.botType === 'BOULDER') ? 1.56
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.78
                 : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 1.35
@@ -10797,10 +11067,11 @@
             rig.torso.position.set(
                 0,
                 botTorsoY * (1 - m - d) + vehTorsoY * m + dinoTorsoY * d,
-                vehTorsoZ * m + 0.05 * d
+                vehTorsoZ * m + (rig.botType === 'OPTIMUS' ? 0.22 : 0.05) * d
             );
             const vehTorsoRotX = (rig.botType === 'CHASE' || rig.botType === 'BLADES') ? (Math.PI / 2) * m : 0;
-            rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + vehTorsoRotX + (Math.PI * 0.48) * d;
+            const dinoTorsoRotX = (rig.botType === 'OPTIMUS') ? (Math.PI * 0.22) : (Math.PI * 0.48);
+            rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + vehTorsoRotX + dinoTorsoRotX * d;
 
             // For Chase, his police lightbar sits immediately behind his head in Bot mode, then shifts onto the cruiser roof in Vehicle mode!
             if (rig.botType === 'CHASE' && rig.lightbar) {
@@ -10845,8 +11116,10 @@
                     0.06 * (1 - m - d) + 1.15 * m + 0.15 * d
                 );
                 rig.head.rotation.x = 0;
-                const hwHeadScale = 1.0 * (1 - m - d) + 0.25 * m + 0.22 * d;
-                rig.head.scale.setScalar(hwHeadScale);
+                const hwHeadScale = (rig.botType === 'OPTIMUS')
+                    ? (1.0 * (1 - m) + 0.25 * m) * (1.0 - d)
+                    : (1.0 * (1 - m - d) + 0.25 * m + 0.22 * d);
+                rig.head.scale.setScalar(Math.max(0.001, hwHeadScale));
             } else if (rig.botType === 'CHASE') {
                 rig.head.position.set(
                     0,
@@ -11013,7 +11286,7 @@
                 : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? -1.18
                 : (rig.botType === 'HIGHTIDE') ? 0.65 : 1.25;
 
-            const armScaleDino = (rig.botType === 'BUMBLEBEE') ? (1.0 - d * 0.85) : 1.0;
+            const armScaleDino = (rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS') ? (1.0 - d * 0.88) : 1.0;
             rig.leftArm.scale.setScalar(armScaleDino);
             rig.rightArm.scale.setScalar(armScaleDino);
 
@@ -11223,6 +11496,24 @@
                     const flapAngle = Math.sin(now * (isMoving ? 0.015 : 0.008)) * (isMoving ? 0.52 : 0.28);
                     rig.dinoLeftWing.rotation.z = flapAngle;
                     rig.dinoRightWing.rotation.z = -flapAngle;
+                } else if (rig.botType === 'OPTIMUS') {
+                    // Optimus Prime T-Rex: Predatory head, articulated jaw chomp, small arms, and heavy counterbalance tail
+                    const chompAngle = smashOffset * 0.52;
+                    rig.dinoHead.position.set(0, 3.45 + (isMoving ? Math.sin(walkCycle) * 0.12 : 0), 1.65);
+                    rig.dinoHead.rotation.x = (isMoving ? Math.sin(walkCycle * 2) * 0.08 : Math.sin(now * 0.0025) * 0.04) - smashOffset * 0.25;
+                    if (rig.dinoLowerJaw) {
+                        rig.dinoLowerJaw.rotation.x = chompAngle + Math.sin(now * 0.004) * 0.05;
+                    }
+                    if (rig.dinoLeftArm && rig.dinoRightArm) {
+                        const armGrasp = Math.sin(now * 0.005) * 0.15 + smashOffset * 0.6;
+                        rig.dinoLeftArm.rotation.x = 0.35 + armGrasp;
+                        rig.dinoRightArm.rotation.x = 0.35 - armGrasp * 0.5;
+                        rig.dinoLeftArm.rotation.z = -0.15;
+                        rig.dinoRightArm.rotation.z = 0.15;
+                    }
+                    rig.dinoTail.position.set(0, 2.15, -1.65);
+                    rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.38 : Math.sin(now * 0.003) * 0.14) + smashOffset * 0.15;
+                    rig.dinoTail.rotation.x = -0.12 + Math.sin(now * 0.002) * 0.04;
                 }
             }
 
@@ -11327,7 +11618,7 @@
                 role: 'Autobot Supreme Commander',
                 voicePitch: 0.72,
                 vehName: 'HEAVY CAB TRUCK',
-                dinoName: null,
+                dinoName: 'T-REX',
                 colorClass: 'text-red-400',
                 dotClass: 'bg-red-600',
                 btnActionBg: 'from-blue-600 via-red-600 to-blue-900 border-red-300',
@@ -11335,8 +11626,8 @@
                 botActionLabel: 'MATRIX PULSE',
                 vehActionIcon: 'CAB_BOOST',
                 vehActionLabel: 'CAB BOOST',
-                dinoActionIcon: 'MATRIX_PULSE',
-                dinoActionLabel: 'MATRIX PULSE'
+                dinoActionIcon: 'T_REX_ROAR',
+                dinoActionLabel: 'T-REX ROAR'
             },
             BUMBLEBEE: {
                 name: 'BUMBLEBEE',
@@ -15508,6 +15799,15 @@
                     buddyBot.smashTimer = 0.4;
                     sfx.playSmash();
                     clearHazardNode(targetBeacon, nearestHazard);
+                } else if (buddyBot.botType === 'OPTIMUS') {
+                    buddyBot.smashTimer = 0.55;
+                    if (player.mode === 'DINO') {
+                        sfx.playDinoRoar('OPTIMUS');
+                    } else {
+                        sfx.playSmash();
+                    }
+                    clearHazardNode(targetBeacon, nearestHazard);
+                    spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0xdc2626, 12, 1.3);
                 }
             }
         }
@@ -16028,8 +16328,45 @@
             }
 
             if (player.botType === 'OPTIMUS') {
-                // OPTIMUS PRIME: Matrix of Leadership Pulse / Heavy Ramming Cab Boost!
-                if (player.mode === 'VEHICLE') {
+                if (player.mode === 'DINO') {
+                    // T-REX DINOBOT MODE: Primal T-Rex Roar & Seismic Ground Stomp!
+                    player.smashTimer = 0.65;
+                    sfx.playDinoRoar('OPTIMUS');
+                    sfx.playSmash();
+                    spawnBurstParticles(
+                        player.pos.x + Math.sin(player.heading) * 3.8,
+                        player.pos.y + 0.8,
+                        player.pos.z + Math.cos(player.heading) * 3.8,
+                        0xdc2626,
+                        18,
+                        1.8
+                    );
+                    spawnBurstParticles(
+                        player.pos.x + Math.sin(player.heading) * 3.8,
+                        player.pos.y + 0.8,
+                        player.pos.z + Math.cos(player.heading) * 3.8,
+                        0x2563eb,
+                        14,
+                        1.5
+                    );
+                    spawnBurstParticles(
+                        player.pos.x,
+                        player.pos.y + 0.2,
+                        player.pos.z,
+                        0xfacc15,
+                        16,
+                        2.0
+                    );
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 25.0) {
+                                clearHazardNode(beacon, n);
+                            }
+                        });
+                    });
+                    showToast("🦖 PRIMAL T-REX ROAR!", "Optimus Prime unleashes a seismic dinosaur shockwave!");
+                    return;
+                } else if (player.mode === 'VEHICLE') {
                     player.boostTimer = 1.6;
                     player.speed = Math.max(player.speed, 36.0);
                     sfx.playSmash();
@@ -16944,6 +17281,8 @@
             } else if (player.mode === 'DINO') {
                 // Dinobots excel off-road as well as on highways!
                 if (player.botType === 'BLADES') maxSpeed = hasBoost ? 80 : 64; // Pterosaur flight
+                else if (player.botType === 'OPTIMUS') maxSpeed = hasBoost ? 82 : 60; // T-Rex primal charge
+                else if (player.botType === 'BUMBLEBEE') maxSpeed = hasBoost ? 78 : 58; // Velociraptor sprint
                 else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 68 : 48; // Stegosaurus charge
                 else if (player.botType === 'BOULDER') maxSpeed = hasBoost ? 64 : 45; // Triceratops stampede
                 else maxSpeed = hasBoost ? 58 : 42; // Heatwave Brachiosaurus stride
