@@ -340,6 +340,12 @@
         .border-white\/15 { border-color: rgba(255, 255, 255, 0.15); }
         .border-white\/20 { border-color: rgba(255, 255, 255, 0.2); }
         .border-white\/25 { border-color: rgba(255, 255, 255, 0.25); }
+        .border-lime-300 { border-color: #bef264; }
+        .border-red-300 { border-color: #fca5a5; }
+        .border-red-400 { border-color: #f87171; }
+        .border-sky-300 { border-color: #7dd3fc; }
+        .border-yellow-200 { border-color: #fef08a; }
+        .border-purple-300 { border-color: #d8b4fe; }
 
         .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4); }
         .shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.45); }
@@ -397,6 +403,63 @@
         .from-lime-400 { --tw-gradient-from: #a3e635; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(163, 230, 53, 0)); }
         .via-green-500 { --tw-gradient-stops: var(--tw-gradient-from), #22c55e, var(--tw-gradient-to, rgba(34, 197, 94, 0)); }
         .to-emerald-700 { --tw-gradient-to: #047857; }
+        .from-lime-500 { --tw-gradient-from: #84cc16; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(132, 204, 22, 0)); }
+        .via-emerald-600 { --tw-gradient-stops: var(--tw-gradient-from), #059669, var(--tw-gradient-to, rgba(5, 150, 105, 0)); }
+        .to-green-700 { --tw-gradient-to: #15803d; }
+        .from-rose-500 { --tw-gradient-from: #f43f5e; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(244, 63, 94, 0)); }
+        .via-red-600 { --tw-gradient-stops: var(--tw-gradient-from), #dc2626, var(--tw-gradient-to, rgba(220, 38, 38, 0)); }
+        .to-orange-700 { --tw-gradient-to: #c2410c; }
+        .from-sky-500 { --tw-gradient-from: #0ea5e9; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(14, 165, 233, 0)); }
+        .via-blue-600 { --tw-gradient-stops: var(--tw-gradient-from), #2563eb, var(--tw-gradient-to, rgba(37, 99, 235, 0)); }
+        .to-indigo-800 { --tw-gradient-to: #3730a3; }
+        .from-blue-600 { --tw-gradient-from: #2563eb; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(37, 99, 235, 0)); }
+        .to-blue-900 { --tw-gradient-to: #1e3a8a; }
+        .from-yellow-400 { --tw-gradient-from: #facc15; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(250, 204, 21, 0)); }
+        .via-amber-500 { --tw-gradient-stops: var(--tw-gradient-from), #f59e0b, var(--tw-gradient-to, rgba(245, 158, 11, 0)); }
+        .to-yellow-600 { --tw-gradient-to: #ca8a04; }
+        .from-purple-500 { --tw-gradient-from: #a855f7; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(168, 85, 247, 0)); }
+        .via-violet-600 { --tw-gradient-stops: var(--tw-gradient-from), #7c3aed, var(--tw-gradient-to, rgba(124, 58, 237, 0)); }
+        .to-fuchsia-800 { --tw-gradient-to: #86198f; }
+        .from-cyan-500 { --tw-gradient-from: #06b6d4; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(6, 182, 212, 0)); }
+        .via-blue-700 { --tw-gradient-stops: var(--tw-gradient-from), #1d4ed8, var(--tw-gradient-to, rgba(29, 78, 216, 0)); }
+
+        /* Bot-Specific Special Action Button Theming */
+        .action-btn-boulder {
+            background-image: linear-gradient(to bottom, #84cc16, #059669, #15803d) !important;
+            border-color: #bef264 !important;
+        }
+        .action-btn-heatwave {
+            background-image: linear-gradient(to bottom, #f43f5e, #dc2626, #c2410c) !important;
+            border-color: #fca5a5 !important;
+        }
+        .action-btn-chase {
+            background-image: linear-gradient(to bottom, #0ea5e9, #2563eb, #312e81) !important;
+            border-color: #7dd3fc !important;
+        }
+        .action-btn-blades {
+            background-image: linear-gradient(to bottom, #fbbf24, #f97316, #dc2626) !important;
+            border-color: #fde68a !important;
+        }
+        .action-btn-optimus {
+            background-image: linear-gradient(to bottom, #1d4ed8 0%, #dc2626 50%, #1e1b4b 100%) !important;
+            border-color: #f87171 !important;
+        }
+        .action-btn-bumblebee {
+            background-image: linear-gradient(to bottom, #facc15, #f59e0b, #b45309) !important;
+            border-color: #fef08a !important;
+        }
+        .action-btn-blurr {
+            background-image: linear-gradient(to bottom, #9333ea, #7c3aed, #701a75) !important;
+            border-color: #d8b4fe !important;
+        }
+        .action-btn-salvage {
+            background-image: linear-gradient(to bottom, #65a30d 0%, #1d4ed8 50%, #0f172a 100%) !important;
+            border-color: #bef264 !important;
+        }
+        .action-btn-hightide {
+            background-image: linear-gradient(to bottom, #06b6d4 0%, #1e40af 50%, #020617 100%) !important;
+            border-color: #67e8f9 !important;
+        }
 
         .text-white { color: #ffffff; }
         .text-white\/30 { color: rgba(255, 255, 255, 0.3); }
@@ -968,7 +1031,7 @@
         </button>
 
         <!-- Special Power Button: SMASH / WATER CANNON / EMP SIREN / WINCH SCAN -->
-        <button id="btn-action" class="tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-amber-400 via-orange-500 to-red-600 border-2 border-amber-200 flex flex-col items-center justify-center text-white select-none mb-1.5">
+        <button id="btn-action" class="tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-2 flex flex-col items-center justify-center text-white select-none mb-1.5 action-btn-boulder">
             <span class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center leading-none" id="action-icon">
                 <svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 6l4-4 4 4-4 4-4-4z" fill="currentColor" fill-opacity="0.25"/>
@@ -11261,8 +11324,9 @@
                 : (isVeh ? meta.vehActionLabel : meta.botActionLabel);
 
             const btnAction = document.getElementById('btn-action');
-            if (btnAction && meta.btnActionBg) {
-                btnAction.className = `tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b ${meta.btnActionBg} border-2 flex flex-col items-center justify-center text-white select-none mb-1.5`;
+            if (btnAction) {
+                const botKey = (player.botType || 'BOULDER').toLowerCase();
+                btnAction.className = `tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-2 flex flex-col items-center justify-center text-white select-none mb-1.5 action-btn-${botKey} bg-gradient-to-b ${meta.btnActionBg || ''}`;
             }
 
             // Optional Emergency Siren Toggle Button (Shown for Heatwave & Chase)
