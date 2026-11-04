@@ -2958,81 +2958,346 @@
             const ctx = c.getContext('2d');
 
             // Vibrant Bumblebee Yellow Helmet Face Backing
-            ctx.fillStyle = '#facc15';
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            bgGrad.addColorStop(0, '#fde047');
+            bgGrad.addColorStop(0.4, '#facc15');
+            bgGrad.addColorStop(1, '#eab308');
+            ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, 256, 256);
 
-            // Center Black Racing Stripe down Helmet Crown
+            // Double Curved Black Racing Stripes down Helmet Forehead & Crown
             ctx.fillStyle = '#0f172a';
-            ctx.fillRect(110, 0, 36, 68);
-
-            // Silver Forehead Crest Band
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillRect(40, 56, 176, 14);
-
-            // Silver Face Core
-            const faceGrad = ctx.createLinearGradient(0, 70, 0, 240);
-            faceGrad.addColorStop(0, '#f1f5f9');
-            faceGrad.addColorStop(1, '#cbd5e1');
-            ctx.fillStyle = faceGrad;
             ctx.beginPath();
-            ctx.moveTo(42, 70); ctx.lineTo(214, 70);
-            ctx.lineTo(192, 236); ctx.lineTo(128, 248); ctx.lineTo(64, 236);
+            ctx.moveTo(86, 0); ctx.lineTo(112, 0);
+            ctx.lineTo(108, 64); ctx.lineTo(82, 64);
             ctx.closePath();
             ctx.fill();
 
-            // Expressive Large Cyan Optics (Circular Rings with Glints)
+            ctx.beginPath();
+            ctx.moveTo(144, 0); ctx.lineTo(170, 0);
+            ctx.lineTo(174, 64); ctx.lineTo(148, 64);
+            ctx.closePath();
+            ctx.fill();
+
+            // Ear Pods on Left & Right with 3 Horizontal Black Louver Slats
+            [-1, 1].forEach(side => {
+                const ex = side === -1 ? 0 : 220;
+                ctx.fillStyle = '#eab308';
+                ctx.fillRect(ex, 90, 36, 75);
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(ex, 90, 36, 75);
+
+                ctx.fillStyle = '#0f172a';
+                [102, 122, 142].forEach(ly => {
+                    ctx.fillRect(ex + 4, ly, 28, 6);
+                });
+            });
+
+            // Smooth Pale Silver / Light Grey Faceplate
+            const faceGrad = ctx.createLinearGradient(0, 64, 0, 230);
+            faceGrad.addColorStop(0, '#f8fafc');
+            faceGrad.addColorStop(0.5, '#e2e8f0');
+            faceGrad.addColorStop(1, '#cbd5e1');
+            ctx.fillStyle = faceGrad;
+            ctx.beginPath();
+            ctx.moveTo(40, 68); ctx.lineTo(216, 68);
+            ctx.lineTo(200, 204); ctx.lineTo(128, 240); ctx.lineTo(56, 204);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Expressive Large Inward-Slanted Cyan Optics with Black Mask Borders
             [-1, 1].forEach(side => {
                 const ox = 128 + side * 44;
-                const oy = 112;
-                // Dark eye socket
+                const oy = 118;
+
+                // Black outer almond/trapezoid eye mask
                 ctx.fillStyle = '#0f172a';
                 ctx.beginPath();
-                ctx.arc(ox, oy, 28, 0, Math.PI * 2);
+                ctx.moveTo(ox - side * 28, oy - 18);
+                ctx.lineTo(ox + side * 26, oy - 12);
+                ctx.lineTo(ox + side * 22, oy + 22);
+                ctx.lineTo(ox - side * 24, oy + 16);
+                ctx.closePath();
                 ctx.fill();
-                // Cyan pupil iris
-                const eyeGrad = ctx.createRadialGradient(ox - 4, oy - 4, 2, ox, oy, 24);
+
+                // Luminous Cyan Pupil Iris
+                const eyeGrad = ctx.createRadialGradient(ox - side * 4, oy - 2, 2, ox, oy, 20);
                 eyeGrad.addColorStop(0, '#a5f3fc');
-                eyeGrad.addColorStop(0.6, '#06b6d4');
+                eyeGrad.addColorStop(0.5, '#22d3ee');
                 eyeGrad.addColorStop(1, '#0891b2');
                 ctx.fillStyle = eyeGrad;
                 ctx.beginPath();
-                ctx.arc(ox, oy, 24, 0, Math.PI * 2);
+                ctx.arc(ox, oy, 16, 0, Math.PI * 2);
                 ctx.fill();
-                // Dual white highlight glints
+
+                // Bright White Highlight Glints
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
-                ctx.arc(ox - 7, oy - 7, 7, 0, Math.PI * 2);
-                ctx.arc(ox + 7, oy + 7, 3.5, 0, Math.PI * 2);
+                ctx.arc(ox - 5, oy - 5, 5.5, 0, Math.PI * 2);
+                ctx.arc(ox + 5, oy + 5, 2.8, 0, Math.PI * 2);
                 ctx.fill();
             });
 
-            // Friendly Confident Smile
-            ctx.strokeStyle = '#0f172a';
-            ctx.lineWidth = 7;
-            ctx.lineCap = 'round';
+            // Prominent Yellow Chevron Chin-Guard / Jaw Framing
+            ctx.fillStyle = '#facc15';
             ctx.beginPath();
-            ctx.moveTo(88, 186);
-            ctx.quadraticCurveTo(128, 214, 168, 186);
+            ctx.moveTo(68, 172);
+            ctx.lineTo(128, 198);
+            ctx.lineTo(188, 172);
+            ctx.lineTo(194, 212);
+            ctx.lineTo(128, 248);
+            ctx.lineTo(62, 212);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#ca8a04';
+            ctx.lineWidth = 3;
             ctx.stroke();
 
-            // Smile corner dimples
-            ctx.lineWidth = 4;
+            // Black Triangular Mouth Vent
+            ctx.fillStyle = '#0f172a';
             ctx.beginPath();
-            ctx.moveTo(84, 182); ctx.lineTo(90, 192);
-            ctx.moveTo(172, 182); ctx.lineTo(166, 192);
-            ctx.stroke();
-
-            // Chin Plate Seam
-            ctx.strokeStyle = '#64748b';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(106, 226); ctx.lineTo(150, 226);
-            ctx.stroke();
+            ctx.moveTo(112, 192);
+            ctx.lineTo(144, 192);
+            ctx.lineTo(128, 218);
+            ctx.closePath();
+            ctx.fill();
 
             // Outer Outline
             ctx.strokeStyle = '#0f172a';
-            ctx.lineWidth = 10;
-            ctx.strokeRect(5, 5, 246, 246);
+            ctx.lineWidth = 6;
+            ctx.strokeRect(3, 3, 250, 250);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeBumblebeeChestTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Bright Yellow Hood
+            const hoodGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            hoodGrad.addColorStop(0, '#fde047');
+            hoodGrad.addColorStop(0.5, '#facc15');
+            hoodGrad.addColorStop(1, '#eab308');
+            ctx.fillStyle = hoodGrad;
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Arched Cyan Windshield Header at Top
+            const glassGrad = ctx.createLinearGradient(0, 0, 0, 52);
+            glassGrad.addColorStop(0, '#67e8f9');
+            glassGrad.addColorStop(0.6, '#06b6d4');
+            glassGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = glassGrad;
+            ctx.beginPath();
+            ctx.moveTo(16, 48);
+            ctx.quadraticCurveTo(128, 10, 240, 48);
+            ctx.lineTo(246, 12);
+            ctx.quadraticCurveTo(128, -8, 10, 12);
+            ctx.closePath();
+            ctx.fill();
+
+            // Central Black Windshield Divider Pillar with Yellow Trim
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(120, 0, 16, 56);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(123, 0, 10, 56);
+
+            // Bold Black Racing Stripe down Center Hood
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.moveTo(98, 50); ctx.lineTo(158, 50);
+            ctx.lineTo(164, 210); ctx.lineTo(92, 210);
+            ctx.closePath();
+            ctx.fill();
+
+            // Angular Black Side Flank Stripes
+            ctx.beginPath();
+            ctx.moveTo(22, 54); ctx.lineTo(54, 54);
+            ctx.lineTo(68, 185); ctx.lineTo(36, 185);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(234, 54); ctx.lineTo(202, 54);
+            ctx.lineTo(188, 185); ctx.lineTo(220, 185);
+            ctx.closePath();
+            ctx.fill();
+
+            // Red Autobot Shield Insignia centered on the hood
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.arc(128, 128, 26, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(128, 128, 23, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.moveTo(112, 114); ctx.lineTo(144, 114);
+            ctx.lineTo(144, 134); ctx.lineTo(136, 142);
+            ctx.lineTo(128, 148); ctx.lineTo(120, 142);
+            ctx.lineTo(112, 134);
+            ctx.closePath();
+            ctx.fill();
+            // Optics cutouts
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(116, 120, 6, 8);
+            ctx.fillRect(134, 120, 6, 8);
+            ctx.fillRect(125, 124, 6, 16);
+
+            // Lower Grille / Cowl Slats
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(48, 218, 160, 32);
+            ctx.fillStyle = '#cbd5e1';
+            [224, 234, 244].forEach(gy => {
+                ctx.fillRect(62, gy, 132, 3);
+            });
+
+            // Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(3, 3, 250, 250);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeBumblebeeWingTexture() {
+            const c = document.createElement('canvas');
+            c.width = 128; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Bright Yellow Car Door
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(0, 0, 128, 256);
+
+            // Inset Dark Tinted Cyan Window
+            const winGrad = ctx.createLinearGradient(0, 10, 0, 140);
+            winGrad.addColorStop(0, '#38bdf8');
+            winGrad.addColorStop(0.5, '#0284c7');
+            winGrad.addColorStop(1, '#0f172a');
+            ctx.fillStyle = winGrad;
+            ctx.beginPath();
+            ctx.moveTo(18, 18);
+            ctx.lineTo(110, 36);
+            ctx.lineTo(110, 140);
+            ctx.lineTo(18, 140);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Bold Black Racing Stripe down door
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(44, 146, 40, 100);
+
+            // Black Lower Sill / Skirt
+            ctx.fillRect(0, 242, 128, 14);
+
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(2, 2, 124, 252);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeBumblebeeShinTexture() {
+            const c = document.createElement('canvas');
+            c.width = 128; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Bright Yellow Shin Armor
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(0, 0, 128, 256);
+
+            // Silver Knee Top Section
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(16, 12, 96, 28);
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(16, 12, 96, 28);
+
+            // 3 Recessed Black Louver Vent Slats
+            const louverY = [70, 115, 160];
+            louverY.forEach(ly => {
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.moveTo(24, ly);
+                ctx.lineTo(104, ly);
+                ctx.lineTo(96, ly + 28);
+                ctx.lineTo(32, ly + 28);
+                ctx.closePath();
+                ctx.fill();
+
+                // Chrome slat edge
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillRect(30, ly + 4, 68, 4);
+                ctx.fillRect(34, ly + 14, 60, 4);
+            });
+
+            // Lower Boot Trim
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(12, 224, 104, 24);
+
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(2, 2, 124, 252);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeBumblebeeWheelTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Dark Charcoal Tire Rubber
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(128, 128, 124, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tire Tread Grooves
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.arc(128, 128, 112, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Silver Mag Wheel Rim
+            const rimGrad = ctx.createRadialGradient(128, 128, 10, 128, 128, 96);
+            rimGrad.addColorStop(0, '#ffffff');
+            rimGrad.addColorStop(0.5, '#cbd5e1');
+            rimGrad.addColorStop(1, '#64748b');
+            ctx.fillStyle = rimGrad;
+            ctx.beginPath();
+            ctx.arc(128, 128, 96, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 5-Spoke Star Design
+            ctx.fillStyle = '#0f172a';
+            for (let i = 0; i < 5; i++) {
+                const a1 = (i / 5) * Math.PI * 2 + 0.15;
+                const a2 = ((i + 1) / 5) * Math.PI * 2 - 0.15;
+                ctx.beginPath();
+                ctx.moveTo(128, 128);
+                ctx.arc(128, 128, 85, a1, a2);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Center Wheel Cap & Lug Nuts
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(128, 128, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.arc(128, 128, 8, 0, Math.PI * 2);
+            ctx.fill();
+
             return new THREE.CanvasTexture(c);
         }
 
@@ -4020,6 +4285,10 @@
 
         const texFaceOptimus = makeOptimusFaceTexture();
         const texFaceBumblebee = makeBumblebeeFaceTexture();
+        const texBeeChest = makeBumblebeeChestTexture();
+        const texBeeWing = makeBumblebeeWingTexture();
+        const texBeeShin = makeBumblebeeShinTexture();
+        const texBeeWheel = makeBumblebeeWheelTexture();
         const texFaceBlurr = makeBlurrFaceTexture();
         const texBlurrChest = makeBlurrChestTexture();
         const texBlurrShoulder = makeBlurrShoulderTexture();
@@ -8164,7 +8433,12 @@
 
         const matBeeYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad4 });
         const matBeeBlack = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
+        const matBeeGrey = new THREE.MeshToonMaterial({ color: 0xcbd5e1, gradientMap: toonGrad3 });
         const matBeeFace = new THREE.MeshBasicMaterial({ map: texFaceBumblebee });
+        const matBeeChest = new THREE.MeshBasicMaterial({ map: texBeeChest });
+        const matBeeWing = new THREE.MeshBasicMaterial({ map: texBeeWing });
+        const matBeeShin = new THREE.MeshBasicMaterial({ map: texBeeShin });
+        const matBeeWheel = new THREE.MeshBasicMaterial({ map: texBeeWheel });
         const matBeeGlowCyan = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
 
         const matBlurrPurple = new THREE.MeshToonMaterial({ color: 0x7c3aed, gradientMap: toonGrad4 });
@@ -10021,108 +10295,237 @@
             }
 
             else if (botType === 'BUMBLEBEE') {
-                // TV Show Bumblebee: Yellow Sports Car & Velociraptor Dinobot Mode
-                // Torso: Sports Car Hood Chest with Black Center Racing Stripes
-                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.65, 2.25, 2.05), matBeeYellow);
+                // TV Show Bumblebee: Bright Yellow Sports Car & Velociraptor Dinobot Mode
+                // 1. Torso: Sports Car Hood Chest with Autobot crest, racing stripes, cyan windshield header
+                const chestMatArray = [matBeeYellow, matBeeYellow, matBeeYellow, matBeeYellow, matBeeChest, matBeeYellow];
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.65, 2.15, 2.05), chestMatArray);
                 chest.castShadow = true;
                 parts.torso.add(chest);
 
-                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.68, 2.28, 2.08), matBeeBlack);
-                parts.torso.add(stripe);
+                // Arched cyan windshield header bar across top front of chest
+                const headerBar = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.28, 0.16), matBeeGlowCyan);
+                headerBar.position.set(0, 0.96, 1.05);
+                headerBar.userData.noOutline = true;
+                parts.torso.add(headerBar);
 
-                [-0.85, 0.85].forEach(hx => {
-                    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.32, 0.18), matBeeGlowCyan);
-                    hl.position.set(hx, 0.28, 1.04);
-                    hl.userData.noOutline = true;
-                    parts.torso.add(hl);
-                });
+                const headerPillar = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.32, 0.2), matBeeYellow);
+                headerPillar.position.set(0, 0.96, 1.06);
+                parts.torso.add(headerPillar);
 
-                // Door Wings on Upper Back (Fold in car mode)
+                // Raised central cowl induction scoop on hood
+                const cowlScoop = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.2, 1.35), matBeeYellow);
+                cowlScoop.position.set(0, 1.05, 0.25);
+                parts.torso.add(cowlScoop);
+
+                const cowlStripe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 1.37), matBeeBlack);
+                cowlStripe.position.set(0, 1.05, 0.25);
+                parts.torso.add(cowlStripe);
+
+                // Sculpted light grey midriff & black ribbed abdominal tuck
+                const midriff = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.82, 1.45), matBeeGrey);
+                midriff.position.set(0, -1.18, 0);
+                parts.torso.add(midriff);
+
+                const abVent = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.52, 1.52), matBeeBlack);
+                abVent.position.set(0, -1.18, 0.04);
+                parts.torso.add(abVent);
+
+                const pelvis = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.55, 1.55), matBeeYellow);
+                pelvis.position.set(0, -1.65, 0);
+                parts.torso.add(pelvis);
+
+                // 2. Soaring Yellow Door Wings (Stand tall behind shoulders in bot mode, fold in vehicle mode)
                 [-1, 1].forEach(side => {
                     const wingG = side === -1 ? parts.leftDoorWing : parts.rightDoorWing;
-                    wingG.position.set(side * 1.25, 0.35, -0.92);
-                    const wingMesh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 1.55, 0.22), matBeeYellow);
-                    wingMesh.position.set(side * 0.35, 0, 0);
-                    wingG.add(wingMesh);
+                    wingG.position.set(side * 1.35, 1.35, -0.65);
+                    const wingMaterials = [matBeeYellow, matBeeYellow, matBeeYellow, matBeeYellow, matBeeWing, matBeeWing];
+                    const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(1.22, 2.45, 0.18), wingMaterials);
+                    doorMesh.position.set(side * 0.35, 0.65, 0);
+                    wingG.add(doorMesh);
+
+                    // Upturned aerodynamic winglet end tip
+                    const wingTip = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.45, 0.2), matBeeYellow);
+                    wingTip.position.set(side * 0.85, 1.95, 0);
+                    wingG.add(wingTip);
                     parts.torso.add(wingG);
                 });
 
-                // Head: Yellow Helmet with Horn Crests & Cyan Visor
-                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.28, 1.25, 1.22), matBeeYellow);
+                // 3. Front Attachment: Aggressive Sports Car Bumper, Silver Slat Grille & Twin Fog Lamps
+                const bumper = new THREE.Mesh(new THREE.BoxGeometry(2.72, 0.55, 0.85), matBeeYellow);
+                bumper.position.set(0, 0, 0);
+                parts.frontAttachment.add(bumper);
+
+                const grille = new THREE.Mesh(new THREE.BoxGeometry(1.82, 0.42, 0.22), matChrome);
+                grille.position.set(0, 0.04, 0.43);
+                grille.userData.noOutline = true;
+                parts.frontAttachment.add(grille);
+
+                const airDam = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.16, 0.88), matBeeBlack);
+                airDam.position.set(0, -0.28, 0.02);
+                parts.frontAttachment.add(airDam);
+
+                // Twin amber fog lights
+                [-0.65, 0.65].forEach(fx => {
+                    const fogMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+                    const fogLight = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.12, 12).rotateX(Math.PI / 2), fogMat);
+                    fogLight.position.set(fx, -0.16, 0.46);
+                    fogLight.userData.noOutline = true;
+                    parts.frontAttachment.add(fogLight);
+                });
+
+                // Dual twin headlights
+                [-1.08, 1.08].forEach(hx => {
+                    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.24, 0.18), matBeeGlowCyan);
+                    hl.position.set(hx, 0.18, 0.44);
+                    hl.userData.noOutline = true;
+                    parts.frontAttachment.add(hl);
+                });
+
+                // 4. Back Attachment: High Rear Yellow GT Spoiler with Twin Support Stanchions & Upturned Winglets
+                [-0.85, 0.85].forEach(sx => {
+                    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.72, 0.22), matBeeBlack);
+                    post.position.set(sx, 0.25, 0);
+                    parts.backAttachment.add(post);
+                });
+
+                const wingBlade = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.16, 0.65), matBeeYellow);
+                wingBlade.position.set(0, 0.62, 0);
+                parts.backAttachment.add(wingBlade);
+
+                const wingStripe = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.67), matBeeBlack);
+                wingStripe.position.set(0, 0.62, 0);
+                parts.backAttachment.add(wingStripe);
+
+                [-1.28, 1.28].forEach(ex => {
+                    const endplate = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.42, 0.72), matBeeYellow);
+                    endplate.position.set(ex, 0.72, 0);
+                    parts.backAttachment.add(endplate);
+                });
+
+                // Dual chrome exhaust pipes
+                [-0.65, 0.65].forEach(px => {
+                    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.45, 10).rotateX(Math.PI / 2), matChrome);
+                    pipe.position.set(px, -0.22, -0.15);
+                    parts.backAttachment.add(pipe);
+                });
+
+                // 5. Head: Rounded Yellow Helmet, Twin Black Crown Stripes, Ear Pods with 3 Louvers, Faceplate & Chin Guard
+                const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.45, 12), matBeeGrey);
+                neck.position.set(0, -0.55, 0);
+                parts.head.add(neck);
+
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.24, 1.25, 1.24), matBeeYellow);
                 helm.castShadow = true;
                 parts.head.add(helm);
 
-                const helmStripe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.28, 1.25), matBeeBlack);
-                parts.head.add(helmStripe);
-
-                [-0.68, 0.68].forEach(side => {
-                    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.68, 6), matBeeYellow);
-                    horn.position.set(side, 0.85, -0.05);
-                    horn.rotation.z = side > 0 ? -0.35 : 0.35;
-                    parts.head.add(horn);
+                [-0.26, 0.26].forEach(sx => {
+                    const hStripe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 1.26), matBeeBlack);
+                    hStripe.position.set(sx, 0.62, 0);
+                    parts.head.add(hStripe);
                 });
 
-                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.95, 1.24), matBeeFace);
+                [-0.66, 0.66].forEach(side => {
+                    const earPod = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.75, 0.55), matBeeYellow);
+                    earPod.position.set(side, 0.05, 0.05);
+                    parts.head.add(earPod);
+
+                    [-0.18, 0.05, 0.25].forEach(ly => {
+                        const louver = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.06, 0.42), matBeeBlack);
+                        louver.position.set(side, 0.05 + ly, 0.05);
+                        parts.head.add(louver);
+                    });
+                });
+
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.95, 1.26), matBeeFace);
                 faceMesh.position.set(0, -0.05, 0.04);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
 
-                // Arms: Yellow Shoulders & Forearms + Front Wheels
+                const chinGuard = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.32, 0.28), matBeeYellow);
+                chinGuard.position.set(0, -0.48, 0.55);
+                parts.head.add(chinGuard);
+
+                // 6. Arms: Yellow Pauldrons with 5-Spoke Front Wheels, Silver Biceps & Wrist Armor Flare Fins
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.leftArm : parts.rightArm;
                     const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
 
-                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.22, 1.18), matBeeYellow);
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.25, 1.28), matBeeYellow);
                     shoulder.castShadow = true;
                     armG.add(shoulder);
 
                     const wheel = createWheelAssembly(0.68, 0.44);
-                    wheel.position.set(side * 0.48, -0.22, 0.25);
+                    wheel.position.set(side * 0.52, -0.15, 0.22);
                     armG.add(wheel);
                     parts.wheels.push(wheel);
+
+                    const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.85, 12), matBeeGrey);
+                    bicep.position.set(0, -0.65, 0);
+                    armG.add(bicep);
+
+                    const elbow = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.3, 10), matBeeBlack);
+                    elbow.position.set(0, -1.05, 0);
+                    armG.add(elbow);
 
                     forearmG.position.set(0, -1.15, 0);
                     armG.add(forearmG);
 
-                    const fore = new THREE.Mesh(new THREE.BoxGeometry(0.88, 1.25, 0.88), matBeeYellow);
-                    fore.position.set(0, -0.42, 0.05);
+                    const fore = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.35, 1.05), matBeeYellow);
+                    fore.position.set(0, -0.45, 0.05);
                     fore.castShadow = true;
                     forearmG.add(fore);
+
+                    // Pointed wrist armor flare fin extending backwards/outwards from gauntlet
+                    const wristFin = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.24, 0.85, 4).rotateZ(side * -0.65).rotateX(0.2),
+                        matBeeYellow
+                    );
+                    wristFin.position.set(side * 0.58, -0.32, -0.18);
+                    forearmG.add(wristFin);
+
+                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.52, 0.58), matBeeBlack);
+                    hand.position.set(0, -1.12, 0.05);
+                    forearmG.add(hand);
                 });
 
-                // Legs: Chrome Thighs, Yellow Shins & Boots + Rear Wheels
+                // 7. Legs: Cylindrical Silver Thighs, Knee Hubs, 3-Louver Shin Vents & Boots + Outer Rear Wheels
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
 
-                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.25, 1.15), matChrome);
+                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 1.25, 12), matBeeGrey);
                     thigh.position.set(-side * 0.05, -0.48, 0);
                     legG.add(thigh);
 
-                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.25, 1.55), matBeeYellow);
+                    const knee = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.35, 12).rotateZ(Math.PI / 2), matChrome);
+                    knee.position.set(-side * 0.05, -0.92, 0.45);
+                    legG.add(knee);
+
+                    const shinMats = [matBeeYellow, matBeeYellow, matBeeYellow, matBeeYellow, matBeeShin, matBeeYellow];
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.42, 2.35, 1.55), shinMats);
                     shin.position.set(-side * 0.08, -1.45, 0.05);
                     shin.castShadow = true;
                     legG.add(shin);
 
-                    const knee = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.38, 0.28), matBeeBlack);
-                    knee.position.set(-side * 0.08, -0.85, 0.85);
-                    legG.add(knee);
-
-                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.52, 1.75), matBeeYellow);
-                    boot.position.set(-side * 0.08, -2.48, 0.18);
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.55, 1.95), matBeeYellow);
+                    boot.position.set(-side * 0.08, -2.48, 0.22);
                     boot.castShadow = true;
                     legG.add(boot);
 
+                    const sole = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.22, 0.65), matBeeBlack);
+                    sole.position.set(-side * 0.08, -2.65, 0.85);
+                    legG.add(sole);
+
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
-                    wheelMount.position.set(side * 0.55, 0, -0.05);
+                    wheelMount.position.set(side * 0.62, 0, -0.05);
                     legG.add(wheelMount);
 
-                    const w = createWheelAssembly(0.68, 0.44);
+                    const w = createWheelAssembly(0.72, 0.46);
                     w.position.set(0, -1.55, 0);
                     wheelMount.add(w);
                     parts.wheels.push(w);
                 });
 
-                // Velociraptor Dinosaur Head & Segmented Tail
+                // 8. Velociraptor Dinosaur Head & Segmented Tail
                 const raptorSkull = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 1.9), matBeeYellow);
                 raptorSkull.position.set(0, 0.35, 0.6);
                 parts.dinoHead.add(raptorSkull);
@@ -11197,6 +11600,12 @@
                     2.15 * (1 - m - d) + 0.38 * m + 1.55 * d,
                     0.95 * (1 - m - d) + 2.35 * m + 1.35 * d
                 );
+            } else if (rig.botType === 'BUMBLEBEE') {
+                rig.frontAttachment.position.set(
+                    0,
+                    2.15 * (1 - m - d) + 0.42 * m + 1.55 * d,
+                    0.95 * (1 - m - d) + 2.35 * m + 1.35 * d
+                );
             } else {
                 rig.frontAttachment.position.set(
                     0,
@@ -11246,6 +11655,14 @@
                     -1.15 * (1 - m - d) - 1.85 * m - 0.45 * d
                 );
                 rig.backAttachment.rotation.x = 0;
+            } else if (rig.botType === 'BUMBLEBEE') {
+                rig.backAttachment.position.set(
+                    0,
+                    3.85 * (1 - m - d) + 1.52 * m + 2.05 * d,
+                    -1.15 * (1 - m - d) - 1.85 * m - 0.45 * d
+                );
+                rig.backAttachment.rotation.x = 0;
+                rig.backAttachment.scale.setScalar(THREE.MathUtils.lerp(1.0, 0.4, d));
             } else if (rig.botType === 'HIGHTIDE') {
                 rig.backAttachment.position.set(
                     0,
@@ -11304,8 +11721,37 @@
             rig.rightArm.rotation.x = (armSwingR - smashOffset * 1.4) * (1 - m - d) + (Math.PI / 2) * m + dinoArmRotR * d;
 
             if (rig.leftDoorWing && rig.rightDoorWing) {
-                rig.leftDoorWing.rotation.z = 0.38 * (1 - m);
-                rig.rightDoorWing.rotation.z = -0.38 * (1 - m);
+                if (rig.botType === 'BUMBLEBEE') {
+                    // Robot mode: Soaring door wings standing tall behind shoulders!
+                    // Vehicle mode: Fold down along sports car flanks
+                    // Dino mode: Tuck neatly along raptor sides
+                    rig.leftDoorWing.position.set(
+                        -1.35 * (1 - m - d) - 1.25 * m - 0.75 * d,
+                        1.35 * (1 - m - d) - 0.15 * m + 0.35 * d,
+                        -0.65 * (1 - m - d) - 0.15 * m - 0.45 * d
+                    );
+                    rig.leftDoorWing.rotation.set(
+                        0.15 * (1 - m - d) + 0 * m + 0.2 * d,
+                        0.18 * (1 - m - d) + 0 * m + 0.25 * d,
+                        -0.28 * (1 - m - d) + 0.05 * m - 0.1 * d
+                    );
+                    rig.rightDoorWing.position.set(
+                        1.35 * (1 - m - d) + 1.25 * m + 0.75 * d,
+                        1.35 * (1 - m - d) - 0.15 * m + 0.35 * d,
+                        -0.65 * (1 - m - d) - 0.15 * m - 0.45 * d
+                    );
+                    rig.rightDoorWing.rotation.set(
+                        0.15 * (1 - m - d) + 0 * m + 0.2 * d,
+                        -0.18 * (1 - m - d) + 0 * m - 0.25 * d,
+                        0.28 * (1 - m - d) - 0.05 * m + 0.1 * d
+                    );
+                    const wingScale = THREE.MathUtils.lerp(1.0, 0.85, d);
+                    rig.leftDoorWing.scale.setScalar(wingScale);
+                    rig.rightDoorWing.scale.setScalar(wingScale);
+                } else {
+                    rig.leftDoorWing.rotation.z = 0.38 * (1 - m);
+                    rig.rightDoorWing.rotation.z = -0.38 * (1 - m);
+                }
             }
 
             if (rig.botType === 'BOULDER') {
@@ -11319,7 +11765,7 @@
                     rig.rightForearm.rotation.z = -0.65 * m;
                 }
             }
-            if ((rig.botType === 'HEATWAVE' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') && rig.leftForearm && rig.rightForearm) {
+            if ((rig.botType === 'HEATWAVE' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') && rig.leftForearm && rig.rightForearm) {
                 rig.leftForearm.rotation.z = (Math.PI / 2) * m;
                 rig.rightForearm.rotation.z = -(Math.PI / 2) * m;
             }
