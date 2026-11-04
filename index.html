@@ -8450,6 +8450,7 @@
         const matBlurrWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 });
         const matBlurrNeonGreen = new THREE.MeshToonMaterial({ color: 0x22c55e, gradientMap: toonGrad3 });
         const matBlurrCyan = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+        const matBlurrCyanGlow = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
         const matBlurrBlack = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
         const matBlurrSteel = new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 });
         const matBlurrFace = new THREE.MeshBasicMaterial({ map: texFaceBlurr });
@@ -8464,6 +8465,7 @@
         const matSalvageSteel = new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 });
         const matSalvageLightSteel = new THREE.MeshToonMaterial({ color: 0x94a3b8, gradientMap: toonGrad3 });
         const matSalvageAqua = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+        const matAqua = matSalvageAqua;
         const matSalvageRecycle = new THREE.MeshBasicMaterial({ map: texSalvageChest });
         const matSalvageFace = new THREE.MeshBasicMaterial({ map: texFaceSalvage });
 
@@ -8473,6 +8475,7 @@
         const matHighTideGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
         const matHighTideDark = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
         const matHighTideCanopy = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+        const matHighTideCyanGlow = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
         const matHighTideLamp = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
         const matHighTideFace = new THREE.MeshBasicMaterial({ map: texFaceHighTide });
         const matHighTideChest = new THREE.MeshBasicMaterial({ map: texChestHighTide });
@@ -11088,7 +11091,7 @@
                     parts.dinoHead.add(topHorn, cheekHorn);
                 });
 
-                const ankyVisor = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.28, 0.45), matAqua);
+                const ankyVisor = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.28, 0.45), matSalvageAqua);
                 ankyVisor.position.set(0, 0.28, 0.95);
                 ankyVisor.userData.noOutline = true;
                 const ankyBeak = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.55, 0.65), matSalvageSteel);
