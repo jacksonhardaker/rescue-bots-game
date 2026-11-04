@@ -11439,6 +11439,20 @@
             switchRescueBot(botType);
         }
 
+        function syncVisitingAutobotsVisibility() {
+            if (typeof visitingAutobots === 'undefined' || !visitingAutobots) return;
+            for (let i = 0; i < visitingAutobots.length; i++) {
+                const ally = visitingAutobots[i];
+                const isOccupied = (player.botType === ally.id) || (buddyBot && buddyBot.botType === ally.id);
+                if (ally.charRig && ally.charRig.root) {
+                    ally.charRig.root.visible = !isOccupied;
+                }
+                if (ally.holoGlobe) ally.holoGlobe.visible = !isOccupied;
+                if (ally.holoProjector) ally.holoProjector.visible = !isOccupied;
+                if (ally.servo && ally.servo.root) ally.servo.root.visible = !isOccupied;
+            }
+        }
+
         function setBuddyBot(botType) {
             if (botType === player.botType) return;
             buddyBot.botType = botType;
@@ -11460,6 +11474,7 @@
             const bMeta = BOT_METADATA[botType];
             showToast("RESCUE WINGMAN", `${bMeta.name} is now your Buddy Bot!`);
             triggerNPCSpeech(bMeta.name, "Wingman Partner", `I'm right behind you, ${BOT_METADATA[player.botType].name}! Ready to rescue!`, buddyBot, true);
+            syncVisitingAutobotsVisibility();
             syncHUDToActiveBot();
         }
 
@@ -11491,6 +11506,7 @@
                 player.flightAlt = 0;
             }
 
+            syncVisitingAutobotsVisibility();
             syncHUDToActiveBot();
             showToast("RESCUE BOTS ROSTER", `${BOT_METADATA[newBotType].name} Deployed!`);
             speakBotCatchphrase(newBotType, 'DEPLOY');
@@ -11950,6 +11966,10 @@
                 for (let k = 0; k < visitingAutobots.length; k++) {
                     const ally = visitingAutobots[k];
                     if (ally.name && (ally.name.toUpperCase() === upper || upper.includes(ally.id))) {
+                        const isOccupied = (player.botType === ally.id) || (buddyBot && buddyBot.botType === ally.id);
+                        if (isOccupied) {
+                            return (player.botType === ally.id) ? player : buddyBot;
+                        }
                         return ally.root || ally;
                     }
                 }
@@ -13675,10 +13695,11 @@
 
                 let servoModel = null;
                 let holoGlobe = null;
+                let holoProjector = null;
 
                 if (cfg.id === 'OPTIMUS') {
                     // Holographic Earth / Griffin Rock Projector directly on helipad surface
-                    const holoProjector = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 0.4, 12), matChrome);
+                    holoProjector = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 0.4, 12), matChrome);
                     holoProjector.position.set(0, 0.2, 2.8);
                     holoGlobe = new THREE.Mesh(
                         new THREE.SphereGeometry(0.75, 12, 12),
@@ -13800,9 +13821,12 @@
                     isRaptor: false,
                     servo: servoModel,
                     holoGlobe,
+                    holoProjector,
                     lastSpeechTime: 0
                 });
             });
+
+            syncVisitingAutobotsVisibility();
         }
 
         function updateVisitingAutobots(dt, now) {
@@ -13811,6 +13835,17 @@
 
             for (let i = 0; i < visitingAutobots.length; i++) {
                 const ally = visitingAutobots[i];
+                const isOccupied = (player.botType === ally.id) || (buddyBot && buddyBot.botType === ally.id);
+
+                // Disappear in world if the player or buddy is this character
+                if (ally.charRig && ally.charRig.root) {
+                    ally.charRig.root.visible = !isOccupied;
+                }
+                if (ally.holoGlobe) ally.holoGlobe.visible = !isOccupied;
+                if (ally.holoProjector) ally.holoProjector.visible = !isOccupied;
+                if (ally.servo && ally.servo.root) ally.servo.root.visible = !isOccupied;
+
+                if (isOccupied) continue;
                 if (!ally.root.visible) continue;
 
                 // 1. Idle Breathing Animation / Morph Update
@@ -15762,6 +15797,8 @@
             if (typeof visitingAutobots !== 'undefined') {
                 for (let i = 0; i < visitingAutobots.length; i++) {
                     const ally = visitingAutobots[i];
+                    const isOccupied = (player.botType === ally.id) || (buddyBot && buddyBot.botType === ally.id);
+                    if (isOccupied) continue;
                     const isDiscovered = Array.isArray(progression.discoveredAllies) && progression.discoveredAllies.includes(ally.id);
                     const ax = cx + ally.x * mapScale;
                     const az = cy + ally.z * mapScale;
