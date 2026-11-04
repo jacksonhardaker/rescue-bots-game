@@ -3597,59 +3597,75 @@
             c.width = 256; c.height = 256;
             const ctx = c.getContext('2d');
 
-            // Deep Navy Maritime Officer Helmet
-            ctx.fillStyle = '#0f172a';
+            // Royal Blue Maritime Autobot Helmet
+            const helmGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            helmGrad.addColorStop(0, '#2563eb');
+            helmGrad.addColorStop(0.4, '#1d4ed8');
+            helmGrad.addColorStop(1, '#1e3a8a');
+            ctx.fillStyle = helmGrad;
             ctx.fillRect(0, 0, 256, 256);
 
-            // Crisp White Captains Cap Brow Crown
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(0, 0, 256, 48);
-
-            // Gold Anchor / Autobot Command Emblem on Cap Brow
+            // Center Forehead Golden Diving Searchlight Bezel & Optic
             ctx.fillStyle = '#f59e0b';
             ctx.beginPath();
-            ctx.arc(128, 26, 14, 0, Math.PI * 2);
+            ctx.arc(128, 38, 28, 0, Math.PI * 2);
             ctx.fill();
-            ctx.fillStyle = '#0f172a';
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Glowing Amber-Yellow Diving Searchlight Optic Lens
+            const lampGrad = ctx.createRadialGradient(128, 38, 4, 128, 38, 22);
+            lampGrad.addColorStop(0, '#ffffff');
+            lampGrad.addColorStop(0.3, '#fef08a');
+            lampGrad.addColorStop(0.7, '#facc15');
+            lampGrad.addColorStop(1, '#eab308');
+            ctx.fillStyle = lampGrad;
             ctx.beginPath();
-            ctx.arc(128, 26, 7, 0, Math.PI * 2);
+            ctx.arc(128, 38, 22, 0, Math.PI * 2);
             ctx.fill();
 
-            // Gold Commander Visor Brim
-            ctx.fillStyle = '#d97706';
-            ctx.fillRect(24, 46, 208, 12);
+            // Golden Brow Arch & Helmet Trim
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.moveTo(34, 76); ctx.lineTo(128, 64); ctx.lineTo(222, 76);
+            ctx.lineTo(214, 88); ctx.lineTo(128, 76); ctx.lineTo(42, 88);
+            ctx.closePath();
+            ctx.fill();
+
+            // Recessed Optic Housing
+            ctx.fillStyle = '#020617';
+            ctx.fillRect(40, 88, 176, 52);
 
             // Stern Cyan Ocular Sensors
-            ctx.fillStyle = '#020617';
-            ctx.fillRect(38, 58, 180, 56);
-
-            const eyeGrad = ctx.createLinearGradient(0, 64, 0, 108);
+            const eyeGrad = ctx.createLinearGradient(0, 92, 0, 132);
             eyeGrad.addColorStop(0, '#67e8f9');
+            eyeGrad.addColorStop(0.5, '#38bdf8');
             eyeGrad.addColorStop(1, '#0284c7');
             ctx.fillStyle = eyeGrad;
-            // Stern angled oculars
+            // Left & Right angled oculars
             ctx.beginPath();
-            ctx.moveTo(48, 68); ctx.lineTo(112, 74); ctx.lineTo(108, 104); ctx.lineTo(52, 100);
+            ctx.moveTo(50, 98); ctx.lineTo(112, 104); ctx.lineTo(108, 130); ctx.lineTo(54, 126);
             ctx.closePath();
             ctx.fill();
             ctx.beginPath();
-            ctx.moveTo(208, 68); ctx.lineTo(144, 74); ctx.lineTo(148, 104); ctx.lineTo(204, 100);
+            ctx.moveTo(206, 98); ctx.lineTo(144, 104); ctx.lineTo(148, 130); ctx.lineTo(202, 126);
             ctx.closePath();
             ctx.fill();
 
             // High-Glint Optical Flares
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(60, 74, 16, 10);
-            ctx.fillRect(158, 74, 16, 10);
+            ctx.fillRect(62, 104, 16, 9);
+            ctx.fillRect(158, 104, 16, 9);
 
-            // Sturdy Maritime Silver Acoustic Vocoder Beard-Plate
-            const beardGrad = ctx.createLinearGradient(0, 114, 0, 256);
+            // Grizzled Maritime Silver Acoustic Vocoder Beard-Plate
+            const beardGrad = ctx.createLinearGradient(0, 140, 0, 256);
             beardGrad.addColorStop(0, '#f8fafc');
-            beardGrad.addColorStop(0.6, '#cbd5e1');
+            beardGrad.addColorStop(0.5, '#cbd5e1');
             beardGrad.addColorStop(1, '#64748b');
             ctx.fillStyle = beardGrad;
             ctx.beginPath();
-            ctx.moveTo(46, 114); ctx.lineTo(210, 114);
+            ctx.moveTo(48, 140); ctx.lineTo(208, 140);
             ctx.lineTo(194, 238); ctx.lineTo(128, 254); ctx.lineTo(62, 238);
             ctx.closePath();
             ctx.fill();
@@ -3657,7 +3673,7 @@
             // Acoustic Vocoder Slats / Beard Vents
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 4;
-            [138, 156, 174, 192, 210].forEach(vy => {
+            [160, 178, 196, 214].forEach(vy => {
                 ctx.beginPath();
                 ctx.moveTo(88, vy); ctx.lineTo(168, vy);
                 ctx.stroke();
@@ -3667,6 +3683,145 @@
             ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 10;
             ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeHighTideChestTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Royal Blue Torso Hull
+            const hullGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            hullGrad.addColorStop(0, '#1d4ed8');
+            hullGrad.addColorStop(1, '#1e3a8a');
+            ctx.fillStyle = hullGrad;
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Oval Submarine Cockpit Bubble Canopy
+            const canopyGrad = ctx.createLinearGradient(0, 40, 0, 210);
+            canopyGrad.addColorStop(0, '#67e8f9');
+            canopyGrad.addColorStop(0.35, '#06b6d4');
+            canopyGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = canopyGrad;
+            ctx.beginPath();
+            ctx.ellipse(128, 128, 86, 78, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Thick Golden Bulkhead Rim Frame
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 14;
+            ctx.stroke();
+            ctx.strokeStyle = '#b45309';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Vertical Center Golden Window Bar
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(122, 52, 12, 152);
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(122, 52, 12, 152);
+
+            // Cockpit Glass Glare Highlights
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.beginPath();
+            ctx.ellipse(92, 94, 34, 18, -0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Red Autobot Shield Crest on Upper Collar
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(128, 8);
+            ctx.lineTo(146, 18); ctx.lineTo(142, 42); ctx.lineTo(128, 52); ctx.lineTo(114, 42); ctx.lineTo(110, 18);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Golden Rivets around Bulkhead Frame
+            ctx.fillStyle = '#fef08a';
+            for (let i = 0; i < 8; i++) {
+                const ang = (i / 8) * Math.PI * 2;
+                const rx = 128 + Math.cos(ang) * 86;
+                const ry = 128 + Math.sin(ang) * 78;
+                ctx.beginPath();
+                ctx.arc(rx, ry, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Outer Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 248, 248);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeHighTideShoulderTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Royal Blue Shoulder Armor
+            ctx.fillStyle = '#1d4ed8';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Bold Golden/Yellow Anchor Insignia
+            ctx.fillStyle = '#f59e0b';
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 4;
+
+            // Anchor Ring / Eyelet
+            ctx.beginPath();
+            ctx.arc(128, 48, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#1d4ed8';
+            ctx.beginPath();
+            ctx.arc(128, 48, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Anchor Stock (Crossbar)
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.roundRect(58, 76, 140, 18, 6);
+            ctx.fill();
+            ctx.stroke();
+
+            // Anchor Shank (Central Shaft)
+            ctx.fillRect(117, 60, 22, 140);
+            ctx.strokeRect(117, 60, 22, 140);
+
+            // Curved Flukes & Crown
+            ctx.beginPath();
+            ctx.arc(128, 175, 75, 0.15 * Math.PI, 0.85 * Math.PI);
+            ctx.lineWidth = 22;
+            ctx.strokeStyle = '#f59e0b';
+            ctx.stroke();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#78350f';
+            ctx.stroke();
+
+            // Left & Right Arrowhead Fluke Tips
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.moveTo(60, 205); ctx.lineTo(40, 160); ctx.lineTo(82, 172);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(196, 205); ctx.lineTo(216, 160); ctx.lineTo(174, 172);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Outer Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 248, 248);
             return new THREE.CanvasTexture(c);
         }
 
@@ -3865,6 +4020,8 @@
         const texFaceSalvage = makeSalvageFaceTexture();
         const texSalvageChest = makeSalvageChestTexture();
         const texFaceHighTide = makeHighTideFaceTexture();
+        const texChestHighTide = makeHighTideChestTexture();
+        const texShoulderHighTide = makeHighTideShoulderTexture();
         const texFaceQuickshadow = makeQuickshadowFaceTexture();
         const texChestQuickshadow = makeQuickshadowChestTexture();
 
@@ -4149,6 +4306,34 @@
                 const fdx = x - ferryController.currentPos.x;
                 const fdz = z - ferryController.currentPos.z;
                 if (Math.hypot(fdx, fdz) <= 22.0) return true;
+            }
+            return false;
+        }
+
+        function isPointInWater(x, z) {
+            const sh = getSurfaceHeight(x, z);
+            const th = getTerrainHeight(x, z);
+            // Water plane is at y = -0.45.
+            // If surface is underwater (sh <= -0.35) or terrain is underwater and surface isn't an elevated deck/bridge
+            return (sh <= -0.35 || (th <= -0.8 && sh < 0.25));
+        }
+
+        function isNearWater(x, z, radius = 22.0) {
+            if (isPointInWater(x, z)) return true;
+            const curH = getSurfaceHeight(x, z);
+            // If on a high suspension bridge (Wayward bridge surface ~7.5), don't allow diving unless near the shoreline/harbor piers
+            if (curH > 4.5) return false;
+            const steps = 12;
+            const radSteps = 5;
+            for (let r = 4.0; r <= radius; r += (radius - 4.0) / (radSteps - 1)) {
+                for (let i = 0; i < steps; i++) {
+                    const ang = (i / steps) * Math.PI * 2;
+                    const sx = x + Math.cos(ang) * r;
+                    const sz = z + Math.sin(ang) * r;
+                    if (isPointInWater(sx, sz)) {
+                        return true;
+                    }
+                }
             }
             return false;
         }
@@ -7997,9 +8182,15 @@
         const matSalvageFace = new THREE.MeshBasicMaterial({ map: texFaceSalvage });
 
         const matHighTideNavy = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad4 });
+        const matHighTideBlue = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad4 });
         const matHighTideWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
         const matHighTideGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
+        const matHighTideDark = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
+        const matHighTideCanopy = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+        const matHighTideLamp = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
         const matHighTideFace = new THREE.MeshBasicMaterial({ map: texFaceHighTide });
+        const matHighTideChest = new THREE.MeshBasicMaterial({ map: texChestHighTide });
+        const matHighTideShoulder = new THREE.MeshBasicMaterial({ map: texShoulderHighTide });
 
         const matQuickWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
         const matQuickCyan = new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad4 });
@@ -10128,116 +10319,243 @@
             }
 
             else if (botType === 'HIGHTIDE') {
-                // TV Show High Tide: Deep Navy (#0f172a) & Nautical White (#f8fafc) Oceanic Commander
-                // Torso: Bridge Cabin with Brass Portholes & White Bib
-                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.85, 2.35, 2.15), matHighTideNavy);
+                // TV Show High Tide: Maritime Search & Rescue Submersible Autobot!
+                // Primary Royal Blue (#1d4ed8), Warm Yellow/Gold (#f59e0b), Scuba Black (#0f172a), Marine White & Cyan Dome Canopy!
+
+                // 1. Torso: Heavy Royal Blue Submarine Hull with Domed Aqua Cockpit Canopy & Scuba Rebreather Tubes
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.85, 2.35, 2.15), matHighTideBlue);
                 chest.castShadow = true;
                 parts.torso.add(chest);
 
-                const whiteBib = new THREE.Mesh(new THREE.BoxGeometry(1.85, 1.65, 0.18), matHighTideWhite);
-                whiteBib.position.set(0, 0.15, 1.1);
-                parts.torso.add(whiteBib);
+                // Central Cockpit Bubble Canopy Panel with Autobot crest & golden bulkhead frame
+                const canopyPlate = new THREE.Mesh(new THREE.BoxGeometry(2.25, 1.85, 0.16), matHighTideChest);
+                canopyPlate.position.set(0, 0.12, 1.10);
+                canopyPlate.userData.noOutline = true;
+                parts.torso.add(canopyPlate);
 
-                [-0.48, 0.48].forEach(px => {
-                    const porthole = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.14, 10).rotateX(Math.PI / 2), matHighTideGold);
-                    porthole.position.set(px, 0.35, 1.18);
-                    parts.torso.add(porthole);
+                // Curved Submersible Cockpit Dome Glass (physical 3D glass bubble)
+                const canopyDome = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.82, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5),
+                    matHighTideCanopy
+                );
+                canopyDome.rotation.x = Math.PI / 2;
+                canopyDome.position.set(0, 0.15, 1.12);
+                canopyDome.scale.set(1.15, 0.42, 1.35);
+                canopyDome.userData.noOutline = true;
+                parts.torso.add(canopyDome);
+
+                // Golden Bulkhead Arch Frame Collar
+                const collarArch = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.28, 0.32), matHighTideGold);
+                collarArch.position.set(0, 1.12, 0.95);
+                parts.torso.add(collarArch);
+
+                // Dual Heavy Black Scuba / Rebreather Tubes looping from collar over the shoulders
+                [-1.15, 1.15].forEach(tx => {
+                    const tube1 = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.55, 10), matHighTideDark);
+                    tube1.position.set(tx, 0.85, 0.35);
+                    tube1.rotation.x = 0.55;
+                    parts.torso.add(tube1);
+
+                    const tube2 = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.45, 10), matHighTideDark);
+                    tube2.position.set(tx, 0.55, -0.65);
+                    tube2.rotation.x = -0.42;
+                    parts.torso.add(tube2);
                 });
 
-                // Head: Navy Officer Peaked Cap Helmet with White Crown & Gold Brim
-                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.32, 1.32, 1.25), matHighTideNavy);
+                // Abdomen: Silver/White Lower Torso Deck
+                const lowerAbs = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.65, 1.55), matHighTideWhite);
+                lowerAbs.position.set(0, -0.95, 0.12);
+                parts.torso.add(lowerAbs);
+
+                // Naval Belt with Royal Blue Center Buckle
+                const belt = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.32, 1.62), matHighTideWhite);
+                belt.position.set(0, -1.25, 0);
+                const buckle = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.36, 0.22), matHighTideBlue);
+                buckle.position.set(0, -1.25, 0.82);
+                const groin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.65, 1.25), matHighTideDark);
+                groin.position.set(0, -1.55, 0);
+                parts.torso.add(belt, buckle, groin);
+
+                // 2. Head: Royal Blue Helmet, Golden Diving Headlamp, Ear Horns, Cyan Eyes & Vocoder Beard
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.28, 1.25, 1.22), matHighTideBlue);
                 helm.castShadow = true;
                 parts.head.add(helm);
 
-                const capCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.88, 0.78, 0.48, 12), matHighTideWhite);
-                capCrown.position.set(0, 0.95, 0.1);
-                parts.head.add(capCrown);
+                // Center Forehead Golden Diving Searchlight (High Tide's signature headlamp!)
+                const lampHousing = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.32, 0.32, 0.24, 16).rotateX(Math.PI / 2),
+                    matHighTideGold
+                );
+                lampHousing.position.set(0, 0.72, 0.62);
+                const lampLens = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.24, 0.24, 0.26, 16).rotateX(Math.PI / 2),
+                    matHighTideLamp
+                );
+                lampLens.position.set(0, 0.72, 0.63);
+                lampLens.userData.noOutline = true;
+                parts.head.add(lampHousing, lampLens);
 
-                const capBrim = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.16, 0.58), matHighTideGold);
-                capBrim.position.set(0, 0.75, 0.65);
-                parts.head.add(capBrim);
+                // Twin Blue Angled Ear Horn Fins
+                [-0.68, 0.68].forEach(hx => {
+                    const earHorn = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.75, 0.42), matHighTideBlue);
+                    earHorn.position.set(hx, 0.62, 0.05);
+                    earHorn.rotation.z = hx < 0 ? 0.25 : -0.25;
+                    parts.head.add(earHorn);
+                });
 
-                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.95, 1.25), matHighTideFace);
-                faceMesh.position.set(0, -0.05, 0.04);
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.96, 1.24), matHighTideFace);
+                faceMesh.position.set(0, -0.04, 0.04);
                 faceMesh.userData.noOutline = true;
                 parts.head.add(faceMesh);
 
-                // Back Attachment: Dual Spinning Gold Rescue Propellers on Stern
+                // 3. Back Attachment: Twin Ducted Hydro-Jet Propulsion Pods & Central Dorsal Stabilizer Fin
                 const propGroup = new THREE.Group();
                 parts.rotors = propGroup;
                 parts.backAttachment.add(propGroup);
 
-                [-1.65, 1.65].forEach(side => {
-                    const pPod = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 2.2, 10).rotateX(Math.PI / 2), matHighTideWhite);
-                    pPod.position.set(side, 0.25, -0.65);
-                    parts.backAttachment.add(pPod);
+                // Central Royal Blue Dorsal Rudder / Sail Fin
+                const dorsalFin = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.65, 1.85), matHighTideBlue);
+                dorsalFin.position.set(0, 0.65, -0.65);
+                dorsalFin.castShadow = true;
+                parts.backAttachment.add(dorsalFin);
 
+                [-1.55, 1.55].forEach(side => {
+                    // Ducted Hydro-Jet Thruster Pod Casing
+                    const pod = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.55, 0.55, 2.35, 16).rotateX(Math.PI / 2),
+                        matHighTideBlue
+                    );
+                    pod.position.set(side, 0.25, -0.75);
+                    pod.castShadow = true;
+
+                    // Golden Forward Intake Cowl Ring
+                    const intakeRing = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.62, 0.58, 0.25, 16).rotateX(Math.PI / 2),
+                        matHighTideGold
+                    );
+                    intakeRing.position.set(side, 0.25, 0.38);
+
+                    // Golden Aft Exhaust Nozzle Ring
+                    const exhaustRing = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.48, 0.58, 0.28, 16).rotateX(Math.PI / 2),
+                        matHighTideGold
+                    );
+                    exhaustRing.position.set(side, 0.25, -1.88);
+
+                    parts.backAttachment.add(pod, intakeRing, exhaustRing);
+
+                    // Spinning 3-Blade Propeller Turbine inside Ducted Shroud
                     const spinner = new THREE.Group();
-                    spinner.position.set(side, 0.25, -1.85);
+                    spinner.position.set(side, 0.25, -1.95);
                     for (let b = 0; b < 3; b++) {
-                        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.75, 0.08), matHighTideGold);
+                        const blade = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.72, 0.08), matHighTideGold);
                         blade.rotation.z = (b * Math.PI * 2) / 3;
-                        blade.position.y = 0.35;
+                        blade.position.y = 0.32;
                         spinner.add(blade);
                     }
+                    const hub = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.35, 10).rotateX(-Math.PI / 2), matHighTideDark);
+                    spinner.add(hub);
                     propGroup.add(spinner);
                 });
 
-                // Arms: White Officer Sleeves, Gold Cuffs, Navy Gauntlets + Wheels
+                // 4. Arms: Royal Blue Pauldrons with Golden Anchors, Dark Biceps, Forearm Fin Blades & Golden Cuffs
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.leftArm : parts.rightArm;
                     const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
 
-                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.15, 1.22), matHighTideWhite);
+                    // Rounded Royal Blue Shoulder Pauldron
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.32, 1.35), matHighTideBlue);
                     shoulder.castShadow = true;
                     armG.add(shoulder);
 
-                    const wheel = createWheelAssembly(0.68, 0.44);
-                    wheel.position.set(side * 0.48, -0.22, 0.25);
-                    armG.add(wheel);
-                    parts.wheels.push(wheel);
+                    // Golden Anchor Emblem on outer shoulder
+                    const anchorBadge = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.05, 1.05), matHighTideShoulder);
+                    anchorBadge.position.set(side * 0.65, 0, 0);
+                    anchorBadge.userData.noOutline = true;
+                    armG.add(anchorBadge);
 
-                    forearmG.position.set(0, -1.15, 0);
+                    // Black Bicep Joint Cylinder
+                    const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.65, 10), matHighTideDark);
+                    bicep.position.set(0, -0.78, 0);
+                    armG.add(bicep);
+
+                    forearmG.position.set(0, -1.18, 0);
                     armG.add(forearmG);
 
-                    const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.28, 0.98), matHighTideGold);
-                    cuff.position.set(0, 0.2, 0);
-                    const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.32, 0.92), matHighTideNavy);
-                    forearm.position.set(0, -0.45, 0.05);
-                    forearm.castShadow = true;
-                    forearmG.add(cuff, forearm);
+                    // Royal Blue Forearm Gauntlet
+                    const gauntlet = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.32, 1.08), matHighTideBlue);
+                    gauntlet.position.set(0, -0.42, 0.04);
+                    gauntlet.castShadow = true;
+
+                    // Flared Outer Hydrofoil Fin Blade extending from forearm/elbow
+                    const armFin = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.15, 0.65), matHighTideBlue);
+                    armFin.position.set(side * 0.65, -0.35, -0.25);
+                    armFin.rotation.y = side * 0.25;
+
+                    // Chunky Golden Wrist Cuff
+                    const cuff = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.35, 1.15), matHighTideGold);
+                    cuff.position.set(0, -0.88, 0.04);
+
+                    // Dark Charcoal Hand
+                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.52, 0.58), matHighTideDark);
+                    hand.position.set(0, -1.22, 0.04);
+
+                    forearmG.add(gauntlet, armFin, cuff, hand);
                 });
 
-                // Legs: White Thighs, Navy Shins, Nautical Boots with Hydro-Stabilizer Fins + Wheels
+                // 5. Legs: Charcoal Thighs, White Knees & Upper Shins, Flared Blue Calves with Hydro Ports, & Massive Flipper Feet!
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
 
-                    const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.25, 1.15), matHighTideWhite);
+                    // Charcoal Upper Thigh Cylinder
+                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.15, 12), matHighTideDark);
                     thigh.position.set(-side * 0.05, -0.48, 0);
+                    thigh.castShadow = true;
                     legG.add(thigh);
 
-                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.38, 2.25, 1.55), matHighTideNavy);
-                    shin.position.set(-side * 0.08, -1.45, 0.05);
+                    // White Knee Armor Cap & Upper Shin
+                    const knee = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.95, 1.25), matHighTideWhite);
+                    knee.position.set(-side * 0.06, -1.02, 0.06);
+                    knee.castShadow = true;
+                    legG.add(knee);
+
+                    // Flared Royal Blue Lower Shin / Calf Armor
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.38, 1.85, 1.55), matHighTideBlue);
+                    shin.position.set(-side * 0.08, -1.82, 0.05);
                     shin.castShadow = true;
                     legG.add(shin);
 
-                    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.15, 0.72), matHighTideWhite);
-                    fin.position.set(side * 0.75, -1.45, -0.35);
-                    legG.add(fin);
+                    // Outer Cylindrical Hydro-Thruster Port / Intake Nacelle
+                    const portRing = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.38, 0.38, 0.18, 16).rotateZ(Math.PI / 2),
+                        matHighTideGold
+                    );
+                    portRing.position.set(side * 0.68, -1.82, 0.05);
+                    const portCore = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.28, 0.28, 0.22, 16).rotateZ(Math.PI / 2),
+                        matHighTideDark
+                    );
+                    portCore.position.set(side * 0.68, -1.82, 0.05);
+                    portCore.userData.noOutline = true;
+                    legG.add(portRing, portCore);
 
-                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.52, 1.85), matHighTideNavy);
-                    boot.position.set(-side * 0.08, -2.48, 0.18);
-                    boot.castShadow = true;
-                    legG.add(boot);
+                    // Iconic Massive White Nautical Flipper / Webbed Diving Foot with 3 Toe Claws
+                    const flipperBoot = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.45, 2.15), matHighTideWhite);
+                    flipperBoot.position.set(-side * 0.08, -2.82, 0.28);
+                    flipperBoot.castShadow = true;
 
-                    const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
-                    wheelMount.position.set(side * 0.55, 0, -0.05);
-                    legG.add(wheelMount);
+                    // 3 Clawed Toe Prongs / Diving Flukes on front of flipper
+                    [-0.42, 0, 0.42].forEach(tx => {
+                        const claw = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.28, 0.65), matHighTideWhite);
+                        claw.position.set(-side * 0.08 + tx, -2.86, 1.45);
+                        flipperBoot.add(claw);
+                    });
 
-                    const w = createWheelAssembly(0.68, 0.44);
-                    w.position.set(0, -1.55, 0);
-                    wheelMount.add(w);
-                    parts.wheels.push(w);
+                    // Side Hydrofoil Stabilizer Fin on outer heel
+                    const heelFin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.55, 0.85), matHighTideGold);
+                    heelFin.position.set(side * 0.75, -2.75, -0.35);
+
+                    legG.add(flipperBoot, heelFin);
                 });
             }
 
@@ -11072,7 +11390,7 @@
                 name: 'HIGH TIDE',
                 role: 'Deep-Ocean Rescue Commander',
                 voicePitch: 0.76,
-                vehName: 'OFFSHORE RESCUE VESSEL',
+                vehName: 'SUBMARINE',
                 dinoName: null,
                 colorClass: 'text-blue-400',
                 dotClass: 'bg-blue-600',
@@ -11526,8 +11844,8 @@
                     "Attention on deck! Deep-sea rescue specialist ready!"
                 ],
                 TO_VEHICLE: [
-                    "High Tide, transform! Offshore rescue vessel mode!",
-                    "Hydro-thrusters engaged! Cutting through the waves!"
+                    "High Tide, transform! Submarine mode engaged!",
+                    "Hydro-thrusters engaged! Submerging into deep water!"
                 ],
                 TO_DINO: [
                     "High Tide, Plesiosaur Dinobot mode! Tidal surge!",
@@ -11977,6 +12295,14 @@
                 player.flightAlt = Math.max(player.flightAlt, 14);
             } else if (newBotType !== 'BLADES') {
                 player.flightAlt = 0;
+            }
+
+            // High Tide submarine mode requires water; if deployed on dry land, revert to Bot mode
+            if (newBotType === 'HIGHTIDE' && player.mode === 'VEHICLE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
+                player.mode = 'BOT';
+                player.targetMorph = 0.0;
+                player.targetDinoMorph = 0.0;
+                player.morph = 0.0;
             }
 
             syncVisitingAutobotsVisibility();
@@ -15113,9 +15439,14 @@
             buddyBot.pitch = THREE.MathUtils.lerp(buddyBot.pitch || 0, bTargetPitch, Math.min(1.0, dt * 14.0));
             buddyBot.roll = THREE.MathUtils.lerp(buddyBot.roll || 0, bTargetRoll, Math.min(1.0, dt * 14.0));
 
+            const isHighTideBuddySub = (buddyBot.botType === 'HIGHTIDE' && buddyBot.mode === 'VEHICLE');
             if (isFlying) {
                 const targetAlt = Math.max(14, player.flightAlt + Math.sin(now * 0.003) * 1.5);
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, bCenterY + targetAlt, Math.min(1.0, dt * 4.5));
+            } else if (isHighTideBuddySub && isPointInWater(buddyBot.pos.x, buddyBot.pos.z)) {
+                const subSwell = Math.sin(now * 0.003 + 1.2) * 0.12;
+                const waterTargetY = -0.45 - 0.22 + subSwell;
+                buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, waterTargetY, Math.min(1.0, dt * 16.0));
             } else {
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, bTargetGroundY, Math.min(1.0, dt * 20.0));
             }
@@ -15421,10 +15752,25 @@
                 }
             });
 
-            // Keep ground bots on safe land if the child taps deep ocean water
+            // High Tide submarine moves in water; Blades flies freely; other bots stay on land
+            const isHighTideSub = (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE');
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
             let ty = getSurfaceHeight(hitPoint.x, hitPoint.z);
-            if (!isFlyingCopter && ty < -1.0) {
+            if (isHighTideSub) {
+                // High Tide submarine moves in water: if tapped on dry land, find nearest water point along line towards player
+                if (!isPointInWater(hitPoint.x, hitPoint.z)) {
+                    for (let step = 0; step <= 1.0; step += 0.05) {
+                        const tx = THREE.MathUtils.lerp(hitPoint.x, player.pos.x, step);
+                        const tz = THREE.MathUtils.lerp(hitPoint.z, player.pos.z, step);
+                        if (isPointInWater(tx, tz)) {
+                            hitPoint.x = tx;
+                            hitPoint.z = tz;
+                            ty = getSurfaceHeight(tx, tz);
+                            break;
+                        }
+                    }
+                }
+            } else if (!isFlyingCopter && ty < -1.0) {
                 const angle = Math.atan2(hitPoint.z, hitPoint.x);
                 for (let testDist = Math.min(r, 1620); testDist > 50; testDist -= 20) {
                     const tx = Math.cos(angle) * testDist;
@@ -15439,7 +15785,7 @@
                 }
             }
 
-            const markerY = Math.max(0.0, ty);
+            const markerY = isHighTideSub ? -0.45 : Math.max(0.0, ty);
             player.waypoint.set(hitPoint.x, markerY, hitPoint.z);
             player.hasWaypoint = true;
 
@@ -15548,8 +15894,13 @@
 
         // Mode Transition Helper (Supports BOT, VEHICLE, and DINO Modes + Iconic Voice Catchphrases!)
         function setPlayerMode(nextMode) {
-            player.mode = nextMode;
             if (nextMode === 'VEHICLE') {
+                if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
+                    showToast("🌊 WATER REQUIRED TO SUBMERGE", "High Tide's submarine mode requires water! Head to the harbor or shoreline!");
+                    sfx.playSpeechPop();
+                    return;
+                }
+                player.mode = 'VEHICLE';
                 player.targetMorph = 1.0;
                 player.targetDinoMorph = 0.0;
                 sfx.playTransform(true);
@@ -15559,6 +15910,7 @@
                 }
                 speakBotCatchphrase(player.botType, 'TO_VEHICLE');
             } else if (nextMode === 'DINO') {
+                player.mode = 'DINO';
                 player.targetMorph = 0.0;
                 player.targetDinoMorph = 1.0;
                 sfx.playTransform(true);
@@ -16575,6 +16927,7 @@
             }
 
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+            const isHighTideSub = (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE');
             const onRoad = isPointOnRoad(player.pos.x, player.pos.z);
 
             // Top Speed per Rescue Bot & Mode (Bot, Vehicle, and Dinobot!)
@@ -16583,6 +16936,7 @@
             if (player.mode === 'VEHICLE') {
                 if (player.botType === 'BLURR') maxSpeed = hasBoost ? 88 : (onRoad ? 72 : 54);
                 else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 84 : (onRoad ? 68 : 50);
+                else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 82 : 62; // Hydro-thruster submarine
                 else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 74 : (onRoad ? 58 : 44);
                 else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 78 : 62;
                 else if (player.botType === 'HEATWAVE') maxSpeed = hasBoost ? 58 : (onRoad ? 46 : 36);
@@ -16653,8 +17007,24 @@
                 const nextZ = player.pos.z + Math.cos(player.heading) * player.speed * dt;
                 const nextGroundY = getSurfaceHeight(nextX, nextZ);
 
-                // Blades Helicopter can fly freely over water & mountains; Ground bots stay on land across the 10x island & Wayward Island
-                if (isFlyingCopter || nextGroundY > -1.5) {
+                if (isHighTideSub) {
+                    // High Tide in Submarine mode moves in water only: cannot cross onto dry land
+                    const inWater = isPointInWater(nextX, nextZ);
+                    if (inWater || nextGroundY < 0.25) {
+                        player.pos.x = Math.max(-2380, Math.min(2380, nextX));
+                        player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
+                    } else {
+                        player.speed *= -0.4;
+                        player.hasWaypoint = false;
+                        waypointGroup.visible = false;
+                        if (!player.lastShorelineToast || now - player.lastShorelineToast > 3500) {
+                            player.lastShorelineToast = now;
+                            showToast("⚓ SUBMARINE AT SHORELINE", "High Tide moves in water only! Transform to Bot Mode to walk on land!");
+                            sfx.playSpeechPop();
+                        }
+                    }
+                } else if (isFlyingCopter || nextGroundY > -1.5) {
+                    // Blades Helicopter can fly freely over water & mountains; Ground bots stay on land across the 10x island & Wayward Island
                     player.pos.x = Math.max(-2380, Math.min(2380, nextX));
                     player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
                 } else {
@@ -16698,7 +17068,12 @@
 
             // Target ground height under the chassis
             let targetGroundY = Math.max((frontY + rearY) * 0.5, centerGroundY);
-            if (isVehicleOrDino && player.speed > 1.0 && noseY > frontY) {
+            if (isHighTideSub) {
+                // High Tide Submarine cruises on the water surface with gentle marine swell bobbing
+                const subSwell = Math.sin(now * 0.003) * 0.12;
+                const waterTargetY = -0.45 - 0.22 + subSwell;
+                targetGroundY = Math.max(targetGroundY, waterTargetY);
+            } else if (isVehicleOrDino && player.speed > 1.0 && noseY > frontY) {
                 // Moving forward towards an uphill slope: gently elevate front suspension to prevent bumper clipping
                 const leadClimbY = (noseY + rearY) * 0.5 - 0.15;
                 targetGroundY = Math.max(targetGroundY, leadClimbY);
@@ -16712,6 +17087,10 @@
                 targetRoll = Math.atan2(rightY - leftY, halfTrack * 2.0);
                 targetPitch = Math.max(-0.7, Math.min(0.7, targetPitch));
                 targetRoll = Math.max(-0.45, Math.min(0.45, targetRoll));
+                if (isHighTideSub) {
+                    targetPitch += Math.sin(now * 0.0028) * 0.04;
+                    targetRoll += Math.cos(now * 0.0022) * 0.05;
+                }
             } else {
                 targetPitch = Math.atan2(frontY - rearY, 3.2) * 0.35;
                 targetRoll = Math.atan2(rightY - leftY, 2.2) * 0.35;
@@ -16790,6 +17169,15 @@
                     player.vy = 0;
                     player.grounded = true;
                 }
+            }
+
+            // High Tide Submarine twin ducted thruster water spray & foaming wake
+            if (isHighTideSub && Math.abs(player.speed) > 1.2 && Math.random() < 0.45) {
+                const sinH = Math.sin(player.heading);
+                const cosH = Math.cos(player.heading);
+                const wakeX = player.pos.x - sinH * 2.8 + (Math.random() - 0.5) * 1.6;
+                const wakeZ = player.pos.z - cosH * 2.8 + (Math.random() - 0.5) * 1.6;
+                spawnWaterWakeParticles(wakeX, -0.45, wakeZ, 3);
             }
 
             // KID-FRIENDLY SMART AUTO-RESCUE: Automatically trigger rescue powers when arriving near any emergency!
