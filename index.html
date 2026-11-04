@@ -894,7 +894,7 @@
                     </span>
                     <div class="leading-none min-w-0">
                         <div class="text-[11px] sm:text-xs font-black text-white truncate">OPTIMUS</div>
-                        <div class="text-[8px] sm:text-[9px] text-blue-200 font-semibold truncate mt-0.5">Semi • Leader</div>
+                        <div class="text-[8px] sm:text-[9px] text-blue-200 font-semibold truncate mt-0.5">Semi • T-Rex</div>
                     </div>
                 </div>
             </button>
@@ -934,7 +934,7 @@
                     </span>
                     <div class="leading-none min-w-0">
                         <div class="text-[11px] sm:text-xs font-black text-white truncate">BLURR</div>
-                        <div class="text-[8px] sm:text-[9px] text-purple-200 font-semibold truncate mt-0.5">Speedster • Hypercar</div>
+                        <div class="text-[8px] sm:text-[9px] text-purple-200 font-semibold truncate mt-0.5">Speedster • Gallimimus</div>
                     </div>
                 </div>
             </button>
@@ -955,7 +955,7 @@
                     </span>
                     <div class="leading-none min-w-0">
                         <div class="text-[11px] sm:text-xs font-black text-white truncate">SALVAGE</div>
-                        <div class="text-[8px] sm:text-[9px] text-lime-200 font-semibold truncate mt-0.5">Recycle • Heavy Cab</div>
+                        <div class="text-[8px] sm:text-[9px] text-lime-200 font-semibold truncate mt-0.5">Recycle • Ankylosaur</div>
                     </div>
                 </div>
             </button>
@@ -974,7 +974,7 @@
                     </span>
                     <div class="leading-none min-w-0">
                         <div class="text-[11px] sm:text-xs font-black text-white truncate">HIGH TIDE</div>
-                        <div class="text-[8px] sm:text-[9px] text-cyan-200 font-semibold truncate mt-0.5">Sub • Patrol Rig</div>
+                        <div class="text-[8px] sm:text-[9px] text-cyan-200 font-semibold truncate mt-0.5">Sub • Plesiosaur</div>
                     </div>
                 </div>
             </button>
@@ -994,7 +994,7 @@
                     </span>
                     <div class="leading-none min-w-0">
                         <div class="text-[11px] sm:text-xs font-black text-white truncate">QUICKSHADOW</div>
-                        <div class="text-[8px] sm:text-[9px] text-sky-200 font-semibold truncate mt-0.5">Covert • Sports Coupe</div>
+                        <div class="text-[8px] sm:text-[9px] text-sky-200 font-semibold truncate mt-0.5">Covert • Dilophosaur</div>
                     </div>
                 </div>
             </button>
@@ -1568,16 +1568,20 @@
                 const now = this.ctx.currentTime;
                 const isPterosaur = botType === 'BLADES';
                 const isRaptor = botType === 'BUMBLEBEE';
+                const isGallimimus = botType === 'BLURR';
                 const isTRex = botType === 'OPTIMUS';
-                const baseFreq = isPterosaur ? 720 : (isRaptor ? 420 : (isTRex ? 82 : (botType === 'CHASE' ? 165 : 115)));
-                const roarDuration = isTRex ? 0.65 : 0.48;
+                const isDilophosaur = botType === 'QUICKSHADOW';
+                const isPlesiosaur = botType === 'HIGHTIDE';
+                const isAnkylosaur = botType === 'SALVAGE';
+                const baseFreq = isPterosaur ? 720 : (isGallimimus ? 560 : (isRaptor ? 420 : (isDilophosaur ? 380 : (isPlesiosaur ? 210 : (isAnkylosaur ? 125 : (isTRex ? 82 : (botType === 'CHASE' ? 165 : 115)))))));
+                const roarDuration = isTRex ? 0.65 : (isPlesiosaur ? 0.58 : 0.48);
                 [1.0, 1.35].forEach((mult, idx) => {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
-                    osc.type = (isPterosaur || isRaptor) ? 'triangle' : 'sawtooth';
+                    osc.type = (isPterosaur || isRaptor || isGallimimus || isDilophosaur) ? 'triangle' : 'sawtooth';
                     osc.frequency.setValueAtTime(baseFreq * mult, now + idx * 0.04);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 1.45 : (isRaptor ? 1.65 : (isTRex ? 1.55 : 0.68))), now + 0.22);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 0.55 : (isRaptor ? 0.72 : (isTRex ? 0.42 : 0.42))), now + roarDuration - 0.04);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 1.45 : (isGallimimus ? 1.75 : (isRaptor ? 1.65 : (isDilophosaur ? 1.55 : (isTRex ? 1.55 : (isPlesiosaur ? 1.35 : 0.68)))))), now + 0.22);
+                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 0.55 : (isGallimimus ? 0.85 : (isRaptor ? 0.72 : (isTRex ? 0.42 : 0.42)))), now + roarDuration - 0.04);
                     gain.gain.setValueAtTime(isTRex ? 0.18 : 0.13, now + idx * 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + roarDuration);
                     osc.connect(gain);
@@ -10768,6 +10772,71 @@
 
                     legG.add(heel, whiteToe, sideSplitter);
                 });
+
+                // 6. Gallimimus Dinobot Mode (Aerodynamic S-Neck, Slender Head, Avian Forelimbs & Counterbalance Tail)
+                const galliNeckLower = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.45, 1.8, 10).rotateX(0.28), matBlurrPurple);
+                galliNeckLower.position.set(0, 0.85, 0.25);
+                parts.dinoHead.add(galliNeckLower);
+
+                const galliNeckStripe = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.82, 0.48), matBlurrWhite);
+                galliNeckStripe.position.set(0, 0.85, 0.26);
+                parts.dinoHead.add(galliNeckStripe);
+
+                const galliHeadGroup = new THREE.Group();
+                galliHeadGroup.position.set(0, 1.85, 0.65);
+                parts.dinoHead.add(galliHeadGroup);
+
+                const galliSkull = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.68, 1.45), matBlurrPurple);
+                galliSkull.position.set(0, 0, 0.35);
+                galliHeadGroup.add(galliSkull);
+
+                const galliStripe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.72, 1.48), matBlurrWhite);
+                galliStripe.position.set(0, 0, 0.35);
+                galliHeadGroup.add(galliStripe);
+
+                [-0.32, 0.32].forEach(cx => {
+                    const crest = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.42, 1.1).rotateX(-0.35), matBlurrNeonGreen);
+                    crest.position.set(cx, 0.38, 0.05);
+                    galliHeadGroup.add(crest);
+                });
+
+                const galliVisor = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.24, 0.55), matBlurrCyanGlow);
+                galliVisor.position.set(0, 0.08, 0.65);
+                galliVisor.userData.noOutline = true;
+                galliHeadGroup.add(galliVisor);
+
+                const galliBeak = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.85, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4), matBlurrBlack);
+                galliBeak.position.set(0, -0.08, 1.45);
+                galliHeadGroup.add(galliBeak);
+
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.dinoLeftArm : parts.dinoRightArm;
+                    armG.position.set(side * 0.75, 2.1, 0.65);
+                    const armUpper = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.65, 0.22).rotateX(0.45), matBlurrPurple);
+                    armUpper.position.set(0, -0.28, 0);
+                    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.38, 4).rotateX(Math.PI / 2), matBlurrNeonGreen);
+                    claw.position.set(0, -0.58, 0.18);
+                    armG.add(armUpper, claw);
+                });
+
+                let prevTail = parts.dinoTail;
+                for (let s = 0; s < 5; s++) {
+                    const seg = new THREE.Group();
+                    seg.position.set(0, 0, -0.85);
+                    const sz = 0.95 - s * 0.16;
+                    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sz, sz * 0.82, 0.95), matBlurrPurple);
+                    mesh.position.set(0, 0, -0.42);
+                    const dorsal = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.15, 0.96), matBlurrWhite);
+                    dorsal.position.set(0, sz * 0.42, -0.42);
+                    seg.add(mesh, dorsal);
+                    if (s === 4) {
+                        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.65, 4).rotateX(-Math.PI / 2), matBlurrNeonGreen);
+                        tip.position.set(0, 0, -0.95);
+                        seg.add(tip);
+                    }
+                    prevTail.add(seg);
+                    prevTail = seg;
+                }
             }
 
             else if (botType === 'SALVAGE') {
@@ -10989,6 +11058,68 @@
                         parts.wheels.push(tireAssembly);
                     });
                 });
+
+                // 5. Ankylosaurus Dinobot Mode (Heavy Armored Carapace, Spiked Skull & Heavy Wrecking Club Tail)
+                const ankyShell = new THREE.Mesh(new THREE.BoxGeometry(2.95, 0.45, 2.85), matSalvageLime);
+                ankyShell.position.set(0, 2.55, 0);
+                parts.dinoGroup.add(ankyShell);
+
+                [-1.15, 0, 1.15].forEach(sx => {
+                    [-1.0, 0, 1.0].forEach(sz => {
+                        const spike = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.55, 4).rotateZ(sx * -0.2), matSalvageSteel);
+                        spike.position.set(sx, 2.85, sz);
+                        parts.dinoGroup.add(spike);
+                    });
+                });
+
+                const ankySkull = new THREE.Mesh(new THREE.BoxGeometry(1.65, 1.15, 1.85), matSalvageLime);
+                ankySkull.position.set(0, 0.15, 0.65);
+                parts.dinoHead.add(ankySkull);
+
+                const ankyPlate = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.35, 1.45), matSalvageBlue);
+                ankyPlate.position.set(0, 0.65, 0.45);
+                parts.dinoHead.add(ankyPlate);
+
+                [-0.85, 0.85].forEach(hx => {
+                    const topHorn = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.52, 4).rotateX(-0.45).rotateZ(hx * -0.35), matSalvageSteel);
+                    topHorn.position.set(hx, 0.65, 0.05);
+                    const cheekHorn = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.45, 4).rotateZ(hx * -Math.PI / 2), matSalvageSteel);
+                    cheekHorn.position.set(hx * 1.1, 0, 0.35);
+                    parts.dinoHead.add(topHorn, cheekHorn);
+                });
+
+                const ankyVisor = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.28, 0.45), matAqua);
+                ankyVisor.position.set(0, 0.28, 0.95);
+                ankyVisor.userData.noOutline = true;
+                const ankyBeak = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.55, 0.65), matSalvageSteel);
+                ankyBeak.position.set(0, -0.15, 1.55);
+                parts.dinoHead.add(ankyVisor, ankyBeak);
+
+                let prevAnkyTail = parts.dinoTail;
+                for (let s = 0; s < 4; s++) {
+                    const seg = new THREE.Group();
+                    seg.position.set(0, 0, -0.75);
+                    const sz = 1.25 - s * 0.18;
+                    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sz, sz * 0.85, 0.85), matSalvageLime);
+                    mesh.position.set(0, 0, -0.38);
+                    const band = new THREE.Mesh(new THREE.BoxGeometry(sz * 1.05, 0.18, 0.45), matSalvageSteel);
+                    band.position.set(0, sz * 0.4, -0.38);
+                    seg.add(mesh, band);
+                    prevAnkyTail.add(seg);
+                    prevAnkyTail = seg;
+                }
+
+                const clubGroup = new THREE.Group();
+                clubGroup.position.set(0, 0, -0.95);
+                [-0.45, 0.45].forEach(lx => {
+                    const lobe = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 10), matSalvageSteel);
+                    lobe.scale.set(1.15, 0.75, 1.35);
+                    lobe.position.set(lx, 0, 0);
+                    clubGroup.add(lobe);
+                });
+                const clubCenter = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1.25, 8).rotateZ(Math.PI / 2), matSalvageLightSteel);
+                clubGroup.add(clubCenter);
+                prevAnkyTail.add(clubGroup);
             }
 
             else if (botType === 'HIGHTIDE') {
@@ -11230,6 +11361,79 @@
 
                     legG.add(flipperBoot, heelFin);
                 });
+
+                // 5. Plesiosaur Dinobot Mode (Graceful Marine Neck, Hydrofoil Flippers & Rudder Tail)
+                const plesioNeckBase = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.72, 1.6, 12).rotateX(0.25), matHighTideBlue);
+                plesioNeckBase.position.set(0, 0.85, 0.15);
+                parts.dinoHead.add(plesioNeckBase);
+
+                const plesioCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.35, 12).rotateX(0.25), matHighTideGold);
+                plesioCollar.position.set(0, 1.35, 0.28);
+                parts.dinoHead.add(plesioCollar);
+
+                const plesioNeckUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.52, 1.6, 12).rotateX(0.12), matHighTideWhite);
+                plesioNeckUpper.position.set(0, 2.15, 0.45);
+                parts.dinoHead.add(plesioNeckUpper);
+
+                const plesioHeadGroup = new THREE.Group();
+                plesioHeadGroup.position.set(0, 2.95, 0.65);
+                parts.dinoHead.add(plesioHeadGroup);
+
+                const plesioSkull = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.78, 1.65), matHighTideBlue);
+                plesioSkull.position.set(0, 0, 0.42);
+                plesioHeadGroup.add(plesioSkull);
+
+                const plesioCrest = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.45, 1.2).rotateX(-0.15), matHighTideGold);
+                plesioCrest.position.set(0, 0.42, 0.25);
+                plesioHeadGroup.add(plesioCrest);
+
+                const plesioVisor = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.28, 0.55), matHighTideCyanGlow);
+                plesioVisor.position.set(0, 0.12, 0.75);
+                plesioVisor.userData.noOutline = true;
+                plesioHeadGroup.add(plesioVisor);
+
+                const plesioJaw = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.35, 1.45), matHighTideWhite);
+                plesioJaw.position.set(0, -0.28, 0.55);
+                plesioHeadGroup.add(plesioJaw);
+
+                [-1, 1].forEach(side => {
+                    const wingG = side === -1 ? parts.dinoLeftWing : parts.dinoRightWing;
+                    wingG.position.set(side * 1.65, 2.0, 0.25);
+
+                    const flipper = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.16, 0.88), matHighTideBlue);
+                    flipper.position.set(side * 0.95, 0, 0);
+                    flipper.rotation.y = side * 0.22;
+
+                    const flipperTrim = new THREE.Mesh(new THREE.BoxGeometry(2.18, 0.18, 0.22), matHighTideWhite);
+                    flipperTrim.position.set(side * 0.95, 0, 0.35);
+                    flipperTrim.rotation.y = side * 0.22;
+
+                    wingG.add(flipper, flipperTrim);
+                });
+
+                [-1, 1].forEach(side => {
+                    const rearFlipper = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.14, 0.65), matHighTideBlue);
+                    rearFlipper.position.set(side * 1.95, 1.85, -1.25);
+                    rearFlipper.rotation.y = side * -0.28;
+                    parts.dinoGroup.add(rearFlipper);
+                });
+
+                let prevPlesioTail = parts.dinoTail;
+                for (let s = 0; s < 4; s++) {
+                    const seg = new THREE.Group();
+                    seg.position.set(0, 0, -0.85);
+                    const sz = 1.05 - s * 0.18;
+                    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sz, sz * 0.75, 0.95), matHighTideBlue);
+                    mesh.position.set(0, 0, -0.42);
+                    const keel = new THREE.Mesh(new THREE.BoxGeometry(0.12, sz * 0.95, 0.95), matHighTideGold);
+                    keel.position.set(0, 0, -0.42);
+                    seg.add(mesh, keel);
+                    prevPlesioTail.add(seg);
+                    prevPlesioTail = seg;
+                }
+                const tailFin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.45, 0.95), matHighTideWhite);
+                tailFin.position.set(0, 0, -0.85);
+                prevPlesioTail.add(tailFin);
             }
 
             else if (botType === 'QUICKSHADOW') {
@@ -11410,6 +11614,63 @@
 
                     legG.add(boot, toeAccent);
                 });
+
+                // 6. Dilophosaurus Dinobot Mode (Twin Aerodynamic Crests, Predatory Head, Raptor Arms & Whip Tail)
+                const diloSkull = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.75, 1.65), matQuickWhite);
+                diloSkull.position.set(0, 0.25, 0.45);
+                parts.dinoHead.add(diloSkull);
+
+                const diloJaw = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.32, 1.55), matQuickDark);
+                diloJaw.position.set(0, -0.22, 0.55);
+                parts.dinoHead.add(diloJaw);
+
+                [-0.32, 0.32].forEach(cx => {
+                    const crest = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.72, 1.45).rotateX(-0.18), matQuickCyan);
+                    crest.position.set(cx, 0.65, 0.35);
+                    const crestBorder = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.15, 1.48).rotateX(-0.18), matQuickWhite);
+                    crestBorder.position.set(cx, 0.95, 0.35);
+                    parts.dinoHead.add(crest, crestBorder);
+                });
+
+                const diloVisor = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.22, 0.45), matQuickCyan);
+                diloVisor.position.set(0, 0.32, 0.75);
+                diloVisor.userData.noOutline = true;
+                parts.dinoHead.add(diloVisor);
+
+                [-0.45, 0.45].forEach(fx => {
+                    const frillVane = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.55, 0.85).rotateY(fx * 0.35), matQuickCyan);
+                    frillVane.position.set(fx, 0, -0.15);
+                    parts.dinoHead.add(frillVane);
+                });
+
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.dinoLeftArm : parts.dinoRightArm;
+                    armG.position.set(side * 0.72, 2.05, 0.65);
+
+                    const armUpper = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.68, 0.24).rotateX(0.42), matQuickWhite);
+                    armUpper.position.set(0, -0.28, 0);
+
+                    const claw = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.45, 4).rotateX(Math.PI / 2), matQuickSilver);
+                    claw.position.set(0, -0.58, 0.18);
+                    armG.add(armUpper, claw);
+                });
+
+                let prevDiloTail = parts.dinoTail;
+                for (let s = 0; s < 5; s++) {
+                    const seg = new THREE.Group();
+                    seg.position.set(0, 0, -0.85);
+                    const sz = 0.92 - s * 0.15;
+                    const mesh = new THREE.Mesh(new THREE.BoxGeometry(sz, sz * 0.8, 0.95), matQuickWhite);
+                    mesh.position.set(0, 0, -0.42);
+                    [-1, 1].forEach(finSide => {
+                        const fin = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.75), matQuickCyan);
+                        fin.position.set(finSide * (sz * 0.55 + 0.08), 0, -0.42);
+                        seg.add(fin);
+                    });
+                    seg.add(mesh);
+                    prevDiloTail.add(seg);
+                    prevDiloTail = seg;
+                }
             }
 
             // Apply Saturday-Morning Cartoon Black Ink Outlines & Panel Creases to the entire Bot Rig!
@@ -11456,7 +11717,7 @@
 
             // 1. Torso (Upright in Bot, Low Chassis in Vehicle, Horizontal Dinosaur Core in Dinobot)
             const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : 0) - smashOffset * 0.5;
-            const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' ? 2.45 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.18 : 0);
+            const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE' || rig.botType === 'HIGHTIDE' ? 2.45 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.18 : 0);
             const vehTorsoY = (rig.botType === 'BOULDER') ? 1.56
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.78
                 : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 1.35
@@ -11473,7 +11734,7 @@
                 vehTorsoZ * m + (rig.botType === 'OPTIMUS' ? 0.22 : 0.05) * d
             );
             const vehTorsoRotX = (rig.botType === 'CHASE' || rig.botType === 'BLADES') ? (Math.PI / 2) * m : 0;
-            const dinoTorsoRotX = (rig.botType === 'OPTIMUS') ? (Math.PI * 0.22) : (Math.PI * 0.48);
+            const dinoTorsoRotX = (rig.botType === 'OPTIMUS' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? (Math.PI * 0.22) : (Math.PI * 0.48);
             rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + vehTorsoRotX + dinoTorsoRotX * d;
 
             // For Chase, his police lightbar sits immediately behind his head in Bot mode, then shifts onto the cruiser roof in Vehicle mode!
@@ -11519,7 +11780,7 @@
                     0.06 * (1 - m - d) + 1.15 * m + 0.15 * d
                 );
                 rig.head.rotation.x = 0;
-                const hwHeadScale = (rig.botType === 'OPTIMUS')
+                const hwHeadScale = (rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE' || rig.botType === 'HIGHTIDE')
                     ? (1.0 * (1 - m) + 0.25 * m) * (1.0 - d)
                     : (1.0 * (1 - m - d) + 0.25 * m + 0.22 * d);
                 rig.head.scale.setScalar(Math.max(0.001, hwHeadScale));
@@ -11539,8 +11800,8 @@
                     0.06 * (1 - m - d) + 0.35 * m + 0.15 * d
                 );
                 rig.head.rotation.x = 0;
-                const quickHeadScale = 1.0 * (1 - m - d) + 0.12 * m + 0.22 * d;
-                rig.head.scale.setScalar(quickHeadScale);
+                const quickHeadScale = (1.0 * (1 - m) + 0.12 * m) * (1.0 - d);
+                rig.head.scale.setScalar(Math.max(0.001, quickHeadScale));
             } else if (rig.botType === 'BUMBLEBEE') {
                 rig.head.position.set(
                     0,
@@ -11703,7 +11964,7 @@
                 : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? -1.18
                 : (rig.botType === 'HIGHTIDE') ? 0.65 : 1.25;
 
-            const armScaleDino = (rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS') ? (1.0 - d * 0.88) : 1.0;
+            const armScaleDino = (rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'HIGHTIDE') ? (1.0 - d * 0.88) : 1.0;
             rig.leftArm.scale.setScalar(armScaleDino);
             rig.rightArm.scale.setScalar(armScaleDino);
 
@@ -11960,6 +12221,46 @@
                     rig.dinoTail.position.set(0, 2.15, -1.65);
                     rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.38 : Math.sin(now * 0.003) * 0.14) + smashOffset * 0.15;
                     rig.dinoTail.rotation.x = -0.12 + Math.sin(now * 0.002) * 0.04;
+                } else if (rig.botType === 'BLURR') {
+                    // Blurr Gallimimus: Rapid running head bob, folded avian arms, and long counterbalance tail
+                    rig.dinoHead.position.set(0, 2.55 + (isMoving ? Math.sin(walkCycle * 2) * 0.12 : 0), 1.45);
+                    rig.dinoHead.rotation.x = (isMoving ? Math.sin(walkCycle * 2) * 0.14 : Math.sin(now * 0.003) * 0.05) - smashOffset * 0.22;
+                    if (rig.dinoLeftArm && rig.dinoRightArm) {
+                        rig.dinoLeftArm.rotation.x = isMoving ? -walkSin * 0.35 : 0;
+                        rig.dinoRightArm.rotation.x = isMoving ? walkSin * 0.35 : 0;
+                    }
+                    rig.dinoTail.position.set(0, 2.15, -1.55);
+                    rig.dinoTail.rotation.y = isMoving ? walkSin * 0.42 : Math.sin(now * 0.003) * 0.12;
+                } else if (rig.botType === 'SALVAGE') {
+                    // Salvage Ankylosaurus: Low armored posture, heavy head, and sweeping tail club
+                    rig.dinoHead.position.set(0, 1.95 - smashOffset * 0.25, 1.65);
+                    rig.dinoHead.rotation.x = isMoving ? Math.sin(walkCycle) * 0.08 : 0;
+                    rig.dinoTail.position.set(0, 1.95, -1.65);
+                    rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.35 : Math.sin(now * 0.002) * 0.1) + smashOffset * 1.35;
+                } else if (rig.botType === 'HIGHTIDE') {
+                    // High Tide Plesiosaur: Towering periscope marine neck sway, rhythmic flipper paddle strokes, and rudder tail
+                    rig.dinoHead.position.set(0, 2.75, 1.35);
+                    rig.dinoHead.rotation.x = Math.sin(now * 0.002) * 0.08 + (isMoving ? 0.12 : 0);
+                    rig.dinoHead.rotation.y = Math.sin(now * 0.0015) * 0.14;
+                    if (rig.dinoLeftWing && rig.dinoRightWing) {
+                        const paddleAngle = Math.sin(now * (isMoving ? 0.008 : 0.003)) * 0.45;
+                        rig.dinoLeftWing.rotation.z = paddleAngle;
+                        rig.dinoRightWing.rotation.z = -paddleAngle;
+                        rig.dinoLeftWing.rotation.y = -paddleAngle * 0.5;
+                        rig.dinoRightWing.rotation.y = paddleAngle * 0.5;
+                    }
+                    rig.dinoTail.position.set(0, 2.15, -1.55);
+                    rig.dinoTail.rotation.y = isMoving ? Math.sin(now * 0.006) * 0.35 : Math.sin(now * 0.002) * 0.12;
+                } else if (rig.botType === 'QUICKSHADOW') {
+                    // Quickshadow Dilophosaurus: Sleek low prowl, predatory head, articulated jaw, stealth raptor arms, and agile whip tail
+                    rig.dinoHead.position.set(0, 2.45 + (isMoving ? Math.sin(walkCycle) * 0.08 : 0), 1.55);
+                    rig.dinoHead.rotation.x = (isMoving ? Math.sin(walkCycle) * 0.1 : 0) - smashOffset * 0.28;
+                    if (rig.dinoLeftArm && rig.dinoRightArm) {
+                        rig.dinoLeftArm.rotation.x = 0.45 + smashOffset * 0.7;
+                        rig.dinoRightArm.rotation.x = 0.45 + smashOffset * 0.7;
+                    }
+                    rig.dinoTail.position.set(0, 2.15, -1.55);
+                    rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.42 : Math.sin(now * 0.003) * 0.14) + smashOffset * 0.6;
                 }
             }
 
@@ -12096,7 +12397,7 @@
                 role: 'Hyper-Speed Rescue Specialist',
                 voicePitch: 1.28,
                 vehName: 'CYBER-SPEEDSTER',
-                dinoName: null,
+                dinoName: 'GALLIMIMUS',
                 colorClass: 'text-purple-300',
                 dotClass: 'bg-purple-500',
                 btnActionBg: 'from-purple-500 via-violet-600 to-fuchsia-800 border-purple-300',
@@ -12104,15 +12405,15 @@
                 botActionLabel: 'HYPER BLUR',
                 vehActionIcon: 'SUPERSONIC_DASH',
                 vehActionLabel: 'SUPERSONIC DASH',
-                dinoActionIcon: 'HYPER_BLUR',
-                dinoActionLabel: 'HYPER BLUR'
+                dinoActionIcon: 'SUPERSONIC_DASH',
+                dinoActionLabel: 'SONIC STRIDE'
             },
             SALVAGE: {
                 name: 'SALVAGE',
                 role: 'Reclamation & Recycling Hero',
                 voicePitch: 0.82,
                 vehName: 'RECYCLING TRUCK',
-                dinoName: null,
+                dinoName: 'ANKYLOSAUR',
                 colorClass: 'text-lime-300',
                 dotClass: 'bg-lime-400',
                 btnActionBg: 'from-lime-500 via-blue-600 to-slate-800 border-lime-300',
@@ -12120,15 +12421,15 @@
                 botActionLabel: 'SCRAP MAGNET',
                 vehActionIcon: 'COMPACTOR_SMASH',
                 vehActionLabel: 'COMPACTOR SMASH',
-                dinoActionIcon: 'SCRAP_MAGNET',
-                dinoActionLabel: 'SCRAP MAGNET'
+                dinoActionIcon: 'COMPACTOR_SMASH',
+                dinoActionLabel: 'TAIL SMASH'
             },
             HIGHTIDE: {
                 name: 'HIGH TIDE',
                 role: 'Deep-Ocean Rescue Commander',
                 voicePitch: 0.76,
                 vehName: 'SUBMARINE',
-                dinoName: null,
+                dinoName: 'PLESIOSAUR',
                 colorClass: 'text-blue-400',
                 dotClass: 'bg-blue-600',
                 btnActionBg: 'from-cyan-500 via-blue-700 to-slate-900 border-cyan-300',
@@ -12137,14 +12438,14 @@
                 vehActionIcon: 'HYDRO_TORPEDO',
                 vehActionLabel: 'HYDRO TORPEDO',
                 dinoActionIcon: 'TIDAL_SURGE',
-                dinoActionLabel: 'TIDAL SURGE'
+                dinoActionLabel: 'PLESIO SURGE'
             },
             QUICKSHADOW: {
                 name: 'QUICKSHADOW',
                 role: 'Covert Operations Specialist',
                 voicePitch: 1.22,
                 vehName: 'LUXURY COUPE',
-                dinoName: null,
+                dinoName: 'DILOPHOSAUR',
                 colorClass: 'text-sky-300',
                 dotClass: 'bg-sky-400',
                 btnActionBg: 'from-slate-100 via-sky-600 to-slate-900 border-sky-300',
@@ -12153,7 +12454,7 @@
                 vehActionIcon: 'TURBO_OVERDRIVE',
                 vehActionLabel: 'TURBO OVERDRIVE',
                 dinoActionIcon: 'STEALTH_CLOAK',
-                dinoActionLabel: 'STEALTH CLOAK'
+                dinoActionLabel: 'SHADOW AMBUSH'
             }
         };
 
@@ -12525,8 +12826,8 @@
                     "Zero to three hundred, blink and you'll miss me!"
                 ],
                 TO_DINO: [
-                    "Blurr, Hyper-Raptor mode! Blitz pounce!",
-                    "Fastest dinosaur on the planet! Zoooom!"
+                    "Blurr, Gallimimus Dinobot mode! Supersonic sprint!",
+                    "Fastest dinosaur in the galaxy! Try and catch a Gallimimus!"
                 ],
                 TO_BOT: [
                     "Blurr, robot mode! What's next, what's next, what's next?!",
@@ -12615,8 +12916,8 @@
                     "Turbo overdrive engaged! You won't even see me coming!"
                 ],
                 TO_DINO: [
-                    "Quickshadow, Velociraptor stealth mode! Silent strike!",
-                    "Shadow stalker unleashed! Swift and untraceable!"
+                    "Quickshadow, Dilophosaur Dinobot mode! Silent strike!",
+                    "Shadow stalker unleashed! Swift, silent, and untraceable!"
                 ],
                 TO_BOT: [
                     "Quickshadow, robot mode! Direct, precise, and completely effective.",
@@ -12839,7 +13140,7 @@
             document.getElementById('mode-dot').className = `w-2.5 h-2.5 rounded-full ${meta.dotClass}`;
 
             const nextTransformLabel = player.mode === 'BOT'
-                ? `TO ${meta.vehName}`
+                ? ((player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) ? `TO ${meta.dinoName}` : `TO ${meta.vehName}`)
                 : (player.mode === 'VEHICLE' ? (meta.dinoName ? `TO ${meta.dinoName}` : 'TO ROBOT') : 'TO ROBOT');
             document.getElementById('transform-sub').textContent = nextTransformLabel;
 
@@ -16254,6 +16555,36 @@
                     }
                     clearHazardNode(targetBeacon, nearestHazard);
                     spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0xdc2626, 12, 1.3);
+                } else if (buddyBot.botType === 'BUMBLEBEE') {
+                    buddyBot.smashTimer = 0.45;
+                    if (player.mode === 'DINO') sfx.playDinoRoar('BUMBLEBEE');
+                    else sfx.playStuntChime();
+                    clearHazardNode(targetBeacon, nearestHazard);
+                    spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0xfacc15, 12, 1.2);
+                } else if (buddyBot.botType === 'BLURR') {
+                    buddyBot.smashTimer = 0.45;
+                    if (player.mode === 'DINO') sfx.playDinoRoar('BLURR');
+                    else sfx.playStuntChime();
+                    clearHazardNode(targetBeacon, nearestHazard);
+                    spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0xa855f7, 12, 1.2);
+                } else if (buddyBot.botType === 'SALVAGE') {
+                    buddyBot.smashTimer = 0.55;
+                    if (player.mode === 'DINO') sfx.playDinoRoar('SALVAGE');
+                    else sfx.playRockBreak();
+                    clearHazardNode(targetBeacon, nearestHazard);
+                    spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0x84cc16, 12, 1.2);
+                } else if (buddyBot.botType === 'HIGHTIDE') {
+                    buddyBot.waterTimer = 1.4;
+                    if (player.mode === 'DINO') sfx.playDinoRoar('HIGHTIDE');
+                    sfx.playWaterSpray();
+                    clearHazardNode(targetBeacon, nearestHazard);
+                    spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0x38bdf8, 12, 1.2);
+                } else if (buddyBot.botType === 'QUICKSHADOW') {
+                    buddyBot.smashTimer = 0.45;
+                    if (player.mode === 'DINO') sfx.playDinoRoar('QUICKSHADOW');
+                    else sfx.playStuntChime();
+                    clearHazardNode(targetBeacon, nearestHazard);
+                    spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0x38bdf8, 12, 1.2);
                 }
             }
         }
@@ -16685,7 +17016,11 @@
         function triggerTransform() {
             const hasDino = BOT_METADATA[player.botType] && BOT_METADATA[player.botType].dinoName;
             if (player.mode === 'BOT') {
-                setPlayerMode('VEHICLE');
+                if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
+                    setPlayerMode('DINO');
+                } else {
+                    setPlayerMode('VEHICLE');
+                }
             } else if (player.mode === 'VEHICLE') {
                 if (hasDino) {
                     setPlayerMode('DINO');
@@ -16874,14 +17209,21 @@
             }
 
             if (player.botType === 'BLURR') {
-                // BLURR: Hyper Blur & Supersonic Velocity Dash!
-                player.boostTimer = 2.2;
-                player.speed = Math.max(player.speed, 52.0);
-                sfx.playStuntChime();
-                sfx.playTransform(false);
+                if (player.mode === 'DINO') {
+                    // GALLIMIMUS: Sonic Stride Supersonic Dash & Lightning Sprint!
+                    player.boostTimer = 2.4;
+                    player.speed = Math.max(player.speed, 64.0);
+                    sfx.playDinoRoar('BLURR');
+                    sfx.playStuntChime();
+                } else {
+                    player.boostTimer = 2.2;
+                    player.speed = Math.max(player.speed, 52.0);
+                    sfx.playStuntChime();
+                    sfx.playTransform(false);
+                }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 22.0) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
                             clearHazardNode(beacon, n);
                         }
                     });
@@ -16894,17 +17236,31 @@
                     18,
                     1.8
                 );
+                spawnBurstParticles(
+                    player.pos.x,
+                    player.pos.y + 0.5,
+                    player.pos.z,
+                    0x22c55e,
+                    12,
+                    1.4
+                );
                 return;
             }
 
             if (player.botType === 'SALVAGE') {
-                // SALVAGE: Reclamation Magnet / Compactor Heavy Smash!
-                player.scoopTimer = 1.2;
-                player.smashTimer = 0.5;
-                sfx.playRockBreak();
+                if (player.mode === 'DINO') {
+                    // ANKYLOSAURUS: Heavy Wrecking Club Tail Smash & Ground Shockwave!
+                    player.smashTimer = 0.65;
+                    sfx.playDinoRoar('SALVAGE');
+                    sfx.playRockBreak();
+                } else {
+                    player.scoopTimer = 1.2;
+                    player.smashTimer = 0.5;
+                    sfx.playRockBreak();
+                }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 22.0) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
                             clearHazardNode(beacon, n);
                         }
                     });
@@ -16914,20 +17270,27 @@
                     player.pos.y + 0.7,
                     player.pos.z + Math.cos(player.heading) * 4.0,
                     0x84cc16,
-                    14,
-                    1.3
+                    16,
+                    1.5
                 );
                 return;
             }
 
             if (player.botType === 'HIGHTIDE') {
-                // HIGH TIDE: Tidal Surge / Hydro Torpedo Splash!
-                player.waterTimer = 1.8;
-                sfx.playWaterSpray();
-                sfx.playSmash();
+                if (player.mode === 'DINO') {
+                    // PLESIOSAUR: Plesio Surge Marine Geyser & Tidal Splash!
+                    player.waterTimer = 2.0;
+                    player.smashTimer = 0.45;
+                    sfx.playDinoRoar('HIGHTIDE');
+                    sfx.playWaterSpray();
+                } else {
+                    player.waterTimer = 1.8;
+                    sfx.playWaterSpray();
+                    sfx.playSmash();
+                }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 22.0) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
                             clearHazardNode(beacon, n);
                         }
                     });
@@ -16937,21 +17300,29 @@
                     player.pos.y + 0.8,
                     player.pos.z + Math.cos(player.heading) * 4.0,
                     0x38bdf8,
-                    16,
-                    1.5
+                    18,
+                    1.6
                 );
                 return;
             }
 
             if (player.botType === 'QUICKSHADOW') {
-                // QUICKSHADOW: Stealth Cloak & Turbo Overdrive!
-                player.boostTimer = 2.0;
-                player.speed = Math.max(player.speed, 48.0);
-                sfx.playSirenPulse();
-                sfx.playStuntChime();
+                if (player.mode === 'DINO') {
+                    // DILOPHOSAURUS: Shadow Ambush Stealth Leap & Covert Strike!
+                    player.boostTimer = 2.2;
+                    player.smashTimer = 0.55;
+                    player.speed = Math.max(player.speed, 54.0);
+                    sfx.playDinoRoar('QUICKSHADOW');
+                    sfx.playStuntChime();
+                } else {
+                    player.boostTimer = 2.0;
+                    player.speed = Math.max(player.speed, 48.0);
+                    sfx.playSirenPulse();
+                    sfx.playStuntChime();
+                }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 22.0) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
                             clearHazardNode(beacon, n);
                         }
                     });
@@ -16961,10 +17332,10 @@
                     player.pos.y + 0.6,
                     player.pos.z,
                     0x38bdf8,
-                    20,
-                    1.6
+                    22,
+                    1.7
                 );
-                spawnSparkleGlints(player.pos.x, player.pos.y + 1.2, player.pos.z, 16);
+                spawnSparkleGlints(player.pos.x, player.pos.y + 1.2, player.pos.z, 18);
                 return;
             }
             player.scoopTimer = 0.85;
@@ -17726,7 +18097,11 @@
                 else maxSpeed = hasBoost ? 54 : (onRoad ? 42 : 34); // Boulder
             } else if (player.mode === 'DINO') {
                 // Dinobots excel off-road as well as on highways!
-                if (player.botType === 'BLADES') maxSpeed = hasBoost ? 80 : 64; // Pterosaur flight
+                if (player.botType === 'BLURR') maxSpeed = hasBoost ? 86 : 68; // Gallimimus supersonic sprint!
+                else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 82 : 64; // Dilophosaur stealth sprint
+                else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 80 : 62; // Plesiosaur marine glide
+                else if (player.botType === 'SALVAGE') maxSpeed = hasBoost ? 62 : 44; // Ankylosaur armored march
+                else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 80 : 64; // Pterosaur flight
                 else if (player.botType === 'OPTIMUS') maxSpeed = hasBoost ? 82 : 60; // T-Rex primal charge
                 else if (player.botType === 'BUMBLEBEE') maxSpeed = hasBoost ? 78 : 58; // Velociraptor sprint
                 else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 68 : 48; // Stegosaurus charge
