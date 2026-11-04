@@ -460,6 +460,10 @@
             background-image: linear-gradient(to bottom, #06b6d4 0%, #1e40af 50%, #020617 100%) !important;
             border-color: #67e8f9 !important;
         }
+        .action-btn-quickshadow {
+            background-image: linear-gradient(to bottom, #f8fafc 0%, #0284c7 50%, #0f172a 100%) !important;
+            border-color: #38bdf8 !important;
+        }
 
         .text-white { color: #ffffff; }
         .text-white\/30 { color: rgba(255, 255, 255, 0.3); }
@@ -664,7 +668,7 @@
                             <svg viewBox="0 0 24 24" style="width:11px;height:11px;display:inline-block;" class="shrink-0" fill="#a855f7" stroke="#c084fc" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 2L4 7v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V7l-8-5z"/>
                             </svg>
-                            <span>Allies: <span id="stat-total-allies" class="text-purple-300">0</span>/5</span>
+                            <span>Allies: <span id="stat-total-allies" class="text-purple-300">0</span>/6</span>
                         </span>
                     </div>
                     <div class="flex items-center justify-between gap-2 pt-0.5 text-[10px] sm:text-[11px] font-extrabold">
@@ -971,6 +975,26 @@
                     <div class="leading-none min-w-0">
                         <div class="text-[11px] sm:text-xs font-black text-white truncate">HIGH TIDE</div>
                         <div class="text-[8px] sm:text-[9px] text-cyan-200 font-semibold truncate mt-0.5">Sub • Patrol Rig</div>
+                    </div>
+                </div>
+            </button>
+
+            <!-- 10. QUICKSHADOW (Unlocked via Griffin Rock Discovery) -->
+            <button data-bot="QUICKSHADOW" class="bot-card hidden px-2 py-1 rounded-xl bg-gradient-to-b from-slate-800/90 via-sky-900/90 to-slate-950/90 border-2 border-sky-400/50 flex items-center justify-between gap-1.5 text-left w-full h-8 sm:h-9 shrink-0">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center shrink-0">
+                        <svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 22L7 14L12 11H20L25 14L28 22H4Z" fill="#f8fafc" stroke="#38bdf8" stroke-width="1.2"/>
+                            <path d="M9 14L13 12H19L23 14H9Z" fill="#0f172a"/>
+                            <rect x="25" y="10" width="2" height="5" fill="#0f172a"/>
+                            <line x1="24" y1="10" x2="28" y2="10" stroke="#0284c7" stroke-width="1.5"/>
+                            <circle cx="8" cy="22" r="3" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+                            <circle cx="24" cy="22" r="3" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+                        </svg>
+                    </span>
+                    <div class="leading-none min-w-0">
+                        <div class="text-[11px] sm:text-xs font-black text-white truncate">QUICKSHADOW</div>
+                        <div class="text-[8px] sm:text-[9px] text-sky-200 font-semibold truncate mt-0.5">Covert • Sports Coupe</div>
                     </div>
                 </div>
             </button>
@@ -1367,6 +1391,20 @@
                 <path d="M5 14v4M7 15v2"/>
                 <line x1="1" y1="9" x2="3" y2="9"/>
                 <line x1="2" y1="17" x2="5" y2="17"/>
+            </svg>`,
+
+            // Quickshadow Special Powers
+            STEALTH_CLOAK: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a5 5 0 00-5 5v1H5a2 2 0 00-2 2v2c0 6 7 10 9 10s9-4 9-10V10a2 2 0 00-2-2h-2V7a5 5 0 00-5-5z" fill="#0284c7" fill-opacity="0.25"/>
+                <circle cx="9" cy="12" r="1.2" fill="#38bdf8"/>
+                <circle cx="15" cy="12" r="1.2" fill="#38bdf8"/>
+                <path d="M9 16c1.5 1 4.5 1 6 0"/>
+                <path d="M4 4l16 16" stroke="#38bdf8" stroke-dasharray="2 2"/>
+            </svg>`,
+            TURBO_OVERDRIVE: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="#38bdf8"/>
+                <circle cx="12" cy="12" r="4" fill="#0284c7" fill-opacity="0.3"/>
+                <path d="M12 9l3 3-3 3"/>
             </svg>`,
             TROPHY: `<svg viewBox="0 0 24 24" class="w-10 h-10 stroke-amber-300 fill-amber-400" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M6 9H4a2 2 0 01-2-2V5a2 2 0 012-2h2M18 9h2a2 2 0 002-2V5a2 2 0 00-2-2h-2M4 5h16v6a7 7 0 01-14 0V5zM12 18v3M8 21h8"/>
@@ -3632,6 +3670,179 @@
             return new THREE.CanvasTexture(c);
         }
 
+        function makeQuickshadowFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Sleek Glossy Charcoal-Black Helmet Frame
+            const helmGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            helmGrad.addColorStop(0, '#1e293b');
+            helmGrad.addColorStop(0.3, '#0f172a');
+            helmGrad.addColorStop(1, '#020617');
+            ctx.fillStyle = helmGrad;
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Sky-Blue Aerodynamic Helmet Forehead Arch
+            const archGrad = ctx.createLinearGradient(0, 0, 0, 64);
+            archGrad.addColorStop(0, '#38bdf8');
+            archGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = archGrad;
+            ctx.beginPath();
+            ctx.moveTo(34, 46);
+            ctx.quadraticCurveTo(128, 16, 222, 46);
+            ctx.lineTo(214, 62);
+            ctx.quadraticCurveTo(128, 36, 42, 62);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Recessed Visor Housing
+            ctx.fillStyle = '#020617';
+            ctx.beginPath();
+            ctx.moveTo(42, 64); ctx.lineTo(214, 64);
+            ctx.lineTo(198, 122); ctx.lineTo(128, 134); ctx.lineTo(58, 122);
+            ctx.closePath();
+            ctx.fill();
+
+            // Glowing Cyan / Sky-Blue Visor Optics
+            const visorGrad = ctx.createLinearGradient(0, 64, 0, 130);
+            visorGrad.addColorStop(0, '#67e8f9');
+            visorGrad.addColorStop(0.5, '#38bdf8');
+            visorGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = visorGrad;
+            ctx.beginPath();
+            ctx.moveTo(48, 70); ctx.lineTo(208, 70);
+            ctx.lineTo(192, 116); ctx.lineTo(128, 128); ctx.lineTo(64, 116);
+            ctx.closePath();
+            ctx.fill();
+
+            // Visor Highlights & Optic Slits
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(88, 86, 18, 5, -0.15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(168, 86, 18, 5, 0.15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Feminine Silver Sculpted Faceplate & Cheeks
+            const faceGrad = ctx.createLinearGradient(0, 128, 0, 256);
+            faceGrad.addColorStop(0, '#ffffff');
+            faceGrad.addColorStop(0.4, '#e2e8f0');
+            faceGrad.addColorStop(1, '#94a3b8');
+            ctx.fillStyle = faceGrad;
+            ctx.beginPath();
+            ctx.moveTo(68, 126); ctx.lineTo(188, 126);
+            ctx.lineTo(180, 186); ctx.lineTo(152, 236); ctx.lineTo(128, 248); ctx.lineTo(104, 236); ctx.lineTo(76, 186);
+            ctx.closePath();
+            ctx.fill();
+
+            // Slender Nose Bridge & Cheek Contours
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(128, 134); ctx.lineTo(128, 172);
+            ctx.lineTo(124, 182); ctx.lineTo(132, 182);
+            ctx.stroke();
+
+            // Confident Spy Smirk / Mouth
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            ctx.moveTo(108, 206);
+            ctx.quadraticCurveTo(128, 214, 148, 202);
+            ctx.stroke();
+
+            // Outer Outline
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeQuickshadowChestTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Pearlescent White Sports Coupe Hood
+            const hoodGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            hoodGrad.addColorStop(0, '#ffffff');
+            hoodGrad.addColorStop(0.7, '#f1f5f9');
+            hoodGrad.addColorStop(1, '#e2e8f0');
+            ctx.fillStyle = hoodGrad;
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Aerodynamic Sky-Blue Side Fender Scoops (Left & Right)
+            const scoopGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            scoopGrad.addColorStop(0, '#0284c7');
+            scoopGrad.addColorStop(1, '#0369a1');
+            ctx.fillStyle = scoopGrad;
+            ctx.beginPath();
+            ctx.moveTo(0, 0); ctx.lineTo(44, 0); ctx.lineTo(34, 256); ctx.lineTo(0, 256);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(256, 0); ctx.lineTo(212, 0); ctx.lineTo(222, 256); ctx.lineTo(256, 256);
+            ctx.closePath();
+            ctx.fill();
+
+            // Twin Charcoal Hood Louvers / Heat Vents
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(72, 28, 32, 54);
+            ctx.fillRect(152, 28, 32, 54);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(72, 28, 32, 54);
+            ctx.strokeRect(152, 28, 32, 54);
+
+            // Vented Slats
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2.5;
+            [40, 52, 64].forEach(vy => {
+                ctx.beginPath();
+                ctx.moveTo(76, vy); ctx.lineTo(100, vy);
+                ctx.moveTo(156, vy); ctx.lineTo(180, vy);
+                ctx.stroke();
+            });
+
+            // Center Red Autobot Shield Insignia
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(128, 120);
+            ctx.lineTo(156, 134); ctx.lineTo(150, 184); ctx.lineTo(128, 206); ctx.lineTo(106, 184); ctx.lineTo(100, 134);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 3.5;
+            ctx.stroke();
+
+            // Inner Crest Markings
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(128, 130); ctx.lineTo(128, 168);
+            ctx.moveTo(114, 146); ctx.lineTo(142, 146);
+            ctx.moveTo(118, 166); ctx.lineTo(138, 166);
+            ctx.stroke();
+
+            // Lower Grille Band
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(52, 224, 152, 26);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(52, 224, 152, 26);
+
+            // Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 248, 248);
+            return new THREE.CanvasTexture(c);
+        }
+
         const texHazard = makeHazardStripeTexture();
         const texGrille = makeGrilleTexture();
         const texEmblem = makeRescueEmblemTexture();
@@ -3654,6 +3865,8 @@
         const texFaceSalvage = makeSalvageFaceTexture();
         const texSalvageChest = makeSalvageChestTexture();
         const texFaceHighTide = makeHighTideFaceTexture();
+        const texFaceQuickshadow = makeQuickshadowFaceTexture();
+        const texChestQuickshadow = makeQuickshadowChestTexture();
 
         /***********************************************************************
          * 3. EXPANDED 10X GRIFFIN ROCK ISLAND TERRAIN & MULTI-RING HIGHWAY
@@ -7788,6 +8001,35 @@
         const matHighTideGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
         const matHighTideFace = new THREE.MeshBasicMaterial({ map: texFaceHighTide });
 
+        const matQuickWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
+        const matQuickCyan = new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad4 });
+        const matQuickDark = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
+        const matQuickSilver = new THREE.MeshToonMaterial({ color: 0x94a3b8, gradientMap: toonGrad3 });
+        const matQuickFace = new THREE.MeshBasicMaterial({ map: texFaceQuickshadow });
+        const matQuickChest = new THREE.MeshBasicMaterial({ map: texChestQuickshadow });
+        const matQuickVisor = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+        function createQuickshadowWheel(radius = 0.64, width = 0.42) {
+            const wg = new THREE.Group();
+            const tire = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius, radius, width, 24).rotateZ(Math.PI / 2),
+                matTire
+            );
+            tire.castShadow = true;
+            wg.add(tire);
+            const rim = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius * 0.74, radius * 0.74, width + 0.02, 24).rotateZ(Math.PI / 2),
+                matQuickCyan
+            );
+            wg.add(rim);
+            const hub = new THREE.Mesh(
+                new THREE.CylinderGeometry(radius * 0.52, radius * 0.52, width + 0.04, 16).rotateZ(Math.PI / 2),
+                matQuickDark
+            );
+            wg.add(hub);
+            return wg;
+        }
+
         function createWheelAssembly(radius = 0.72, width = 0.52) {
             const wg = new THREE.Group();
             const tire = new THREE.Mesh(
@@ -9999,13 +10241,193 @@
                 });
             }
 
+            else if (botType === 'QUICKSHADOW') {
+                // TV Show Quickshadow: Sleek, stylish British covert operations specialist!
+                // Luxury white sports coupe with sky-blue accents, dark charcoal glass & rear GT wing spoiler
+
+                // 1. Torso: Pearlescent White Sports Coupe Hood Chest with Autobot Emblem & Twin Louvers
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.65, 2.15, 1.85), matQuickWhite);
+                chest.castShadow = true;
+                parts.torso.add(chest);
+
+                // Sloped Hood Front Panel with Custom Painted Texture (Autobot Crest & Vents)
+                const hoodPlate = new THREE.Mesh(new THREE.BoxGeometry(2.35, 1.85, 0.14), matQuickChest);
+                hoodPlate.position.set(0, 0.05, 0.95);
+                hoodPlate.userData.noOutline = true;
+                parts.torso.add(hoodPlate);
+
+                // Twin Sky-Blue Aerodynamic Fender Cowls
+                [-1.38, 1.38].forEach(side => {
+                    const cowl = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.95, 1.82), matQuickCyan);
+                    cowl.position.set(side, 0.05, 0);
+                    parts.torso.add(cowl);
+                });
+
+                // Charcoal Radiator Grille & Splitter at Base of Torso
+                const lowGrille = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.42, 0.45), matQuickDark);
+                lowGrille.position.set(0, -0.92, 0.88);
+                parts.torso.add(lowGrille);
+
+                // Pelvis: Slender Charcoal Waist & Pelvic Chassis with Sky-Blue Hip Armor
+                const waist = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.65, 1.25), matQuickDark);
+                waist.position.set(0, -1.25, 0);
+                parts.torso.add(waist);
+
+                [-0.85, 0.85].forEach(hx => {
+                    const hipArmor = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.55, 0.85), matQuickCyan);
+                    hipArmor.position.set(hx, -1.25, 0.15);
+                    parts.torso.add(hipArmor);
+                });
+
+                // 2. High Rear Black GT Racing Spoiler (Mounted on Back Attachment)
+                [-0.75, 0.75].forEach(sx => {
+                    const stanchion = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.65, 0.24), matQuickDark);
+                    stanchion.position.set(sx, 1.25, -0.65);
+                    stanchion.rotation.x = -0.22;
+                    parts.backAttachment.add(stanchion);
+                });
+                const gtWing = new THREE.Mesh(new THREE.BoxGeometry(3.05, 0.14, 0.65), matQuickDark);
+                gtWing.position.set(0, 1.95, -0.85);
+                gtWing.castShadow = true;
+                parts.backAttachment.add(gtWing);
+
+                // Sky-Blue Endplate Winglets on GT Wing
+                [-1.52, 1.52].forEach(wx => {
+                    const endplate = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.58, 0.75), matQuickCyan);
+                    endplate.position.set(wx, 1.95, -0.85);
+                    parts.backAttachment.add(endplate);
+                });
+
+                // Front Ground-Effects Splitter on `parts.frontAttachment`
+                const frontSplitter = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.12, 0.75), matQuickDark);
+                frontSplitter.position.set(0, 0.05, 0.35);
+                parts.frontAttachment.add(frontSplitter);
+
+                // 3. Head: Charcoal Helmet with Swept-Back Ear Winglets, Cyan Forehead Arch & Visor
+                const helm = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.15, 1.15), matQuickDark);
+                helm.castShadow = true;
+                parts.head.add(helm);
+
+                const faceMesh = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.95, 1.18), matQuickFace);
+                faceMesh.position.set(0, -0.04, 0.04);
+                faceMesh.userData.noOutline = true;
+                parts.head.add(faceMesh);
+
+                // Swept-Back High Ear Winglet Fins (Her iconic silhouette!)
+                [-0.62, 0.62].forEach(ex => {
+                    const earFin = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.85, 0.55), matQuickDark);
+                    earFin.position.set(ex, 0.52, -0.25);
+                    earFin.rotation.x = -0.38;
+                    earFin.rotation.z = (ex < 0 ? 0.22 : -0.22);
+                    parts.head.add(earFin);
+
+                    const finTrim = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.72, 0.12), matQuickCyan);
+                    finTrim.position.set(ex, 0.55, -0.05);
+                    finTrim.rotation.x = -0.38;
+                    finTrim.rotation.z = (ex < 0 ? 0.22 : -0.22);
+                    parts.head.add(finTrim);
+                });
+
+                // 4. Arms: White Aerodynamic Pauldrons with Cyan Trim, Dark Biceps, Cyan Cuffs, Charcoal Hands & Front Sports Wheels
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+
+                    // Rounded Aerodynamic White Pauldron
+                    const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.25, 1.28), matQuickWhite);
+                    shoulder.castShadow = true;
+                    armG.add(shoulder);
+
+                    const shoulderTrim = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.22, 1.3), matQuickCyan);
+                    shoulderTrim.position.set(0, 0.28, 0);
+                    armG.add(shoulderTrim);
+
+                    // Front Sports Wheel mounted on outer shoulder
+                    const wheel = createQuickshadowWheel(0.64, 0.40);
+                    wheel.position.set(side * 0.55, -0.15, 0.05);
+                    armG.add(wheel);
+                    parts.wheels.push(wheel);
+
+                    // Dark Silver Bicep
+                    const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.65, 12), matQuickSilver);
+                    bicep.position.set(0, -0.78, 0);
+                    armG.add(bicep);
+
+                    // Forearm & Hand
+                    forearmG.position.set(0, -1.18, 0);
+                    armG.add(forearmG);
+
+                    const gauntlet = new THREE.Mesh(new THREE.BoxGeometry(0.88, 1.28, 0.88), matQuickWhite);
+                    gauntlet.position.set(0, -0.42, 0.04);
+                    gauntlet.castShadow = true;
+
+                    const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.24, 0.94), matQuickCyan);
+                    cuff.position.set(0, -0.18, 0.04);
+
+                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.48, 0.48), matQuickDark);
+                    hand.position.set(0, -1.12, 0.04);
+
+                    forearmG.add(gauntlet, cuff, hand);
+                });
+
+                // 5. Legs: Silver Thighs, Flared Aerodynamic White Shins with Cyan Intake Pods, Rear Sports Wheels & Racing Boots
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+
+                    // Silver Cylindrical Thigh
+                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 1.15, 12), matQuickSilver);
+                    thigh.position.set(-side * 0.05, -0.48, 0);
+                    thigh.castShadow = true;
+                    legG.add(thigh);
+
+                    // Knee Joint
+                    const knee = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.32, 0.32, 0.32, 12).rotateZ(Math.PI / 2),
+                        matQuickDark
+                    );
+                    knee.position.set(-side * 0.05, -1.02, 0.05);
+                    legG.add(knee);
+
+                    // Aerodynamic White Flared Shin
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.28, 2.25, 1.48), matQuickWhite);
+                    shin.position.set(-side * 0.08, -1.72, 0.05);
+                    shin.castShadow = true;
+                    legG.add(shin);
+
+                    // Outer Sky-Blue Turbine / Air Intake Pod
+                    const intakePod = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.18, 16).rotateZ(Math.PI / 2), matQuickCyan);
+                    intakePod.position.set(side * 0.62, -1.55, 0.05);
+                    legG.add(intakePod);
+
+                    // Rear Sports Wheel Mount (Outer lower shin)
+                    const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
+                    wheelMount.position.set(side * 0.55, 0, -0.1);
+                    legG.add(wheelMount);
+
+                    const rw = createQuickshadowWheel(0.66, 0.42);
+                    rw.position.set(0, -1.82, 0);
+                    wheelMount.add(rw);
+                    parts.wheels.push(rw);
+
+                    // Sleek Racing Boot: Charcoal Heel + Sloped Sky-Blue / White Toe
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.42, 1.45), matQuickDark);
+                    boot.position.set(-side * 0.08, -2.82, 0.12);
+                    boot.castShadow = true;
+
+                    const toeAccent = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.22, 0.55), matQuickCyan);
+                    toeAccent.position.set(-side * 0.08, -2.76, 0.62);
+
+                    legG.add(boot, toeAccent);
+                });
+            }
+
             // Apply Saturday-Morning Cartoon Black Ink Outlines & Panel Creases to the entire Bot Rig!
             applyCartoonInkOutlines(root, 1.06, true);
 
             return parts;
         }
 
-        // Build all 9 Rescue Bot Rigs!
+        // Build all 10 Rescue Bot Rigs!
         const botRigs = {
             BOULDER: buildRescueBotModel('BOULDER'),
             HEATWAVE: buildRescueBotModel('HEATWAVE'),
@@ -10015,7 +10437,8 @@
             BUMBLEBEE: buildRescueBotModel('BUMBLEBEE'),
             BLURR: buildRescueBotModel('BLURR'),
             SALVAGE: buildRescueBotModel('SALVAGE'),
-            HIGHTIDE: buildRescueBotModel('HIGHTIDE')
+            HIGHTIDE: buildRescueBotModel('HIGHTIDE'),
+            QUICKSHADOW: buildRescueBotModel('QUICKSHADOW')
         };
 
         // Add all 4 Rigs to the Scene (1 Active Player, 3 Parked at HQ Command Center)
@@ -10045,12 +10468,12 @@
             const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' ? 2.35 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.16 : 0);
             const vehTorsoY = (rig.botType === 'BOULDER') ? 1.56
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.78
-                : (rig.botType === 'BLURR') ? 1.35
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 1.35
                 : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? 1.42
                 : (rig.botType === 'HIGHTIDE') ? 1.58 : 1.72;
             const vehTorsoZ = (rig.botType === 'BOULDER') ? -0.18
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.15
-                : (rig.botType === 'BLURR') ? 0.35
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 0.35
                 : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? -0.42
                 : (rig.botType === 'HIGHTIDE') ? 0.35 : 0.95;
             rig.torso.position.set(
@@ -10115,15 +10538,15 @@
                 rig.head.rotation.x = 0;
                 const chaseHeadScale = 1.0 * (1 - m - d) + 0.25 * m + 0.22 * d;
                 rig.head.scale.setScalar(chaseHeadScale);
-            } else if (rig.botType === 'BLURR') {
+            } else if (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') {
                 rig.head.position.set(
                     0,
                     (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.25 * m + 1.95 * d,
                     0.06 * (1 - m - d) + 0.35 * m + 0.15 * d
                 );
                 rig.head.rotation.x = 0;
-                const blurrHeadScale = 1.0 * (1 - m - d) + 0.12 * m + 0.22 * d;
-                rig.head.scale.setScalar(blurrHeadScale);
+                const quickHeadScale = 1.0 * (1 - m - d) + 0.12 * m + 0.22 * d;
+                rig.head.scale.setScalar(quickHeadScale);
             } else if (rig.botType === 'BUMBLEBEE') {
                 rig.head.position.set(
                     0,
@@ -10177,7 +10600,7 @@
                     3.65 * (1 - m - d) + 1.55 * m + 1.95 * d,
                     0.85 * (1 - m - d) + 2.05 * m + 0.95 * d
                 );
-            } else if (rig.botType === 'BLURR') {
+            } else if (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') {
                 rig.frontAttachment.position.set(
                     0,
                     2.15 * (1 - m - d) + 0.38 * m + 1.55 * d,
@@ -10225,6 +10648,13 @@
                     -1.15 * (1 - m - d) - 1.25 * m - 0.45 * d
                 );
                 rig.backAttachment.rotation.x = 0;
+            } else if (rig.botType === 'QUICKSHADOW') {
+                rig.backAttachment.position.set(
+                    0,
+                    3.85 * (1 - m - d) + 1.45 * m + 2.05 * d,
+                    -1.15 * (1 - m - d) - 1.85 * m - 0.45 * d
+                );
+                rig.backAttachment.rotation.x = 0;
             } else if (rig.botType === 'HIGHTIDE') {
                 rig.backAttachment.position.set(
                     0,
@@ -10251,17 +10681,17 @@
 
             const vehArmX = (rig.botType === 'BOULDER') ? 1.46
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.36
-                : (rig.botType === 'BLURR') ? 1.32
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 1.32
                 : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? 0.92
                 : (rig.botType === 'HIGHTIDE') ? 1.25 : 1.16;
             const vehArmY = (rig.botType === 'BOULDER') ? 1.08
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.14
-                : (rig.botType === 'BLURR') ? 0.95
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 0.95
                 : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? 1.02
                 : (rig.botType === 'HIGHTIDE') ? 1.18 : 1.48;
             const vehArmZ = (rig.botType === 'BOULDER') ? -0.35
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.42
-                : (rig.botType === 'BLURR') ? 1.35
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 1.35
                 : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? -1.18
                 : (rig.botType === 'HIGHTIDE') ? 0.65 : 1.25;
 
@@ -10298,7 +10728,7 @@
                     rig.rightForearm.rotation.z = -0.65 * m;
                 }
             }
-            if ((rig.botType === 'HEATWAVE' || rig.botType === 'BLURR') && rig.leftForearm && rig.rightForearm) {
+            if ((rig.botType === 'HEATWAVE' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') && rig.leftForearm && rig.rightForearm) {
                 rig.leftForearm.rotation.z = (Math.PI / 2) * m;
                 rig.rightForearm.rotation.z = -(Math.PI / 2) * m;
             }
@@ -10367,7 +10797,7 @@
                     rig.leftLegWheelMount.position.z = wheelGroundShiftZ;
                     rig.rightLegWheelMount.position.z = wheelGroundShiftZ;
                 }
-            } else if (rig.botType === 'BLURR') {
+            } else if (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') {
                 rig.leftLeg.position.set(
                     -0.88 * (1 - m - d) - 0.92 * m - dinoLegX * d,
                     2.35 * (1 - m - d) + 0.95 * m + dinoLegY * d,
@@ -10653,6 +11083,22 @@
                 vehActionLabel: 'HYDRO TORPEDO',
                 dinoActionIcon: 'TIDAL_SURGE',
                 dinoActionLabel: 'TIDAL SURGE'
+            },
+            QUICKSHADOW: {
+                name: 'QUICKSHADOW',
+                role: 'Covert Operations Specialist',
+                voicePitch: 1.22,
+                vehName: 'LUXURY COUPE',
+                dinoName: null,
+                colorClass: 'text-sky-300',
+                dotClass: 'bg-sky-400',
+                btnActionBg: 'from-slate-100 via-sky-600 to-slate-900 border-sky-300',
+                botActionIcon: 'STEALTH_CLOAK',
+                botActionLabel: 'STEALTH CLOAK',
+                vehActionIcon: 'TURBO_OVERDRIVE',
+                vehActionLabel: 'TURBO OVERDRIVE',
+                dinoActionIcon: 'STEALTH_CLOAK',
+                dinoActionLabel: 'STEALTH CLOAK'
             }
         };
 
@@ -11103,10 +11549,40 @@
                     "Launching over the crest! Steady as she goes!",
                     "Full speed ahead and into the skies!"
                 ]
+            },
+            QUICKSHADOW: {
+                DEPLOY: [
+                    "I am where you don't think I am! Quickshadow on mission!",
+                    "Covert operations active. Style, stealth, and supreme speed!"
+                ],
+                TO_VEHICLE: [
+                    "Quickshadow, transform! Luxury sports coupe mode!",
+                    "Turbo overdrive engaged! You won't even see me coming!"
+                ],
+                TO_DINO: [
+                    "Quickshadow, Velociraptor stealth mode! Silent strike!",
+                    "Shadow stalker unleashed! Swift and untraceable!"
+                ],
+                TO_BOT: [
+                    "Quickshadow, robot mode! Direct, precise, and completely effective.",
+                    "Back in bot mode. Let's finish this assignment with flair!"
+                ],
+                RESCUE: [
+                    "Mission completed flawlessly. Child's play, really!",
+                    "Target secured and danger neutralized. Never in doubt!"
+                ],
+                WASH: [
+                    "A spotless polish for a pristine agent. Splendid!",
+                    "Not a speck of dust on the bodywork. Perfection!"
+                ],
+                STUNT: [
+                    "Aerodynamic excellence at high altitude!",
+                    "High-flying elegance! Catch me if you can!"
+                ]
             }
         };
 
-        const botPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0 };
+        const botPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0, QUICKSHADOW: 0 };
 
         function speakBotCatchphrase(botType, eventKey) {
             const botLines = BOT_CATCHPHRASES[botType] && BOT_CATCHPHRASES[botType][eventKey];
@@ -11398,7 +11874,7 @@
         function getUnlockedPlayableBots() {
             const base = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES'];
             const allies = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies : [];
-            const validAllies = ['OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE'].filter(id => allies.includes(id));
+            const validAllies = ['OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'].filter(id => allies.includes(id));
             return [...base, ...validAllies];
         }
 
@@ -11822,7 +12298,7 @@
             if (totalAlliesEl) {
                 const count = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies.length : 0;
                 totalAlliesEl.textContent = String(count);
-                totalAlliesEl.className = count === 5 ? 'text-emerald-400 font-extrabold' : 'text-purple-300 font-bold';
+                totalAlliesEl.className = count >= 6 ? 'text-emerald-400 font-extrabold' : 'text-purple-300 font-bold';
             }
 
             const rankInfo = getRescueStarRank(progression);
@@ -11856,7 +12332,7 @@
                         <span class="text-slate-500">•</span>
                         <span class="flex items-center gap-1">${SVG_ICONS.BOLT} <span>Energon: ${progression.totalEnergonCubes}</span></span>
                         <span class="text-slate-500">•</span>
-                        <span class="flex items-center gap-1">${SVG_ICONS.STAR} <span>Allies: ${Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies.length : 0}/5</span></span>
+                        <span class="flex items-center gap-1">${SVG_ICONS.STAR} <span>Allies: ${Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies.length : 0}/6</span></span>
                     </div>
                 `;
             }
@@ -13619,6 +14095,22 @@
                     "Servo and I run offshore deep-water patrol. If a tidal surge or marine storm hits South Harbor, we're ready!",
                     "You've proven your mettle on land, bots. Keep that same steadfast resolve, and Griffin Rock will always stand strong!"
                 ]
+            },
+            {
+                id: 'QUICKSHADOW',
+                name: 'QUICKSHADOW',
+                role: 'Covert Operations Specialist',
+                voicePitch: 1.22,
+                badgeColor: '#0284c7',
+                x: 0,
+                y: 6.0,
+                z: -1105,
+                rotY: 3.14,
+                dialogues: [
+                    "I am where you don't think I am! Quickshadow, covert operations specialist. Keeping Griffin Rock secure from the shadows.",
+                    "Discretion and precision are everything. When a mission requires high stealth and surgical speed, I take the wheel.",
+                    "Impressive reflexes, darling! A skilled agent knows that true strength lies in knowing exactly when and where to strike."
+                ]
             }
         ];
 
@@ -13797,6 +14289,22 @@
                     });
 
                     grp.add(platform);
+
+                } else if (cfg.id === 'QUICKSHADOW') {
+                    // North Observatory Research Plaza Covert Ops Staging Pad
+                    const pad = new THREE.Mesh(
+                        new THREE.CylinderGeometry(4.2, 4.6, 0.4, 16),
+                        new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 })
+                    );
+                    pad.position.y = -0.2;
+                    const neonRing = new THREE.Mesh(
+                        new THREE.RingGeometry(3.6, 3.9, 24).rotateX(-Math.PI / 2),
+                        new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide })
+                    );
+                    neonRing.position.y = 0.22;
+                    neonRing.userData.noOutline = true;
+                    pad.add(neonRing);
+                    grp.add(pad);
                 }
 
                 scene.add(grp);
@@ -15299,6 +15807,31 @@
                 );
                 return;
             }
+
+            if (player.botType === 'QUICKSHADOW') {
+                // QUICKSHADOW: Stealth Cloak & Turbo Overdrive!
+                player.boostTimer = 2.0;
+                player.speed = Math.max(player.speed, 48.0);
+                sfx.playSirenPulse();
+                sfx.playStuntChime();
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 22.0) {
+                            clearHazardNode(beacon, n);
+                        }
+                    });
+                });
+                spawnBurstParticles(
+                    player.pos.x,
+                    player.pos.y + 0.6,
+                    player.pos.z,
+                    0x38bdf8,
+                    20,
+                    1.6
+                );
+                spawnSparkleGlints(player.pos.x, player.pos.y + 1.2, player.pos.z, 16);
+                return;
+            }
             player.scoopTimer = 0.85;
             player.smashTimer = 0.45;
             if (player.mode === 'DINO') {
@@ -15510,6 +16043,7 @@
             if (e.code === 'Digit8' || e.code === 'Numpad8') unlockAndSwitchBot('BLURR');
             if (e.code === 'Digit9' || e.code === 'Numpad9') unlockAndSwitchBot('SALVAGE');
             if (e.code === 'Digit0' || e.code === 'Numpad0') unlockAndSwitchBot('HIGHTIDE');
+            if (e.code === 'Minus' || e.code === 'NumpadSubtract') unlockAndSwitchBot('QUICKSHADOW');
             if (e.code === 'Space' && !e.repeat) {
                 e.preventDefault();
                 triggerTransform();
@@ -16047,7 +16581,9 @@
             let maxSpeed = 26; // Bot walking speed
             const hasBoost = (player.boostTimer > 0 || player.energonBoostTimer > 0);
             if (player.mode === 'VEHICLE') {
-                if (player.botType === 'CHASE') maxSpeed = hasBoost ? 74 : (onRoad ? 58 : 44);
+                if (player.botType === 'BLURR') maxSpeed = hasBoost ? 88 : (onRoad ? 72 : 54);
+                else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 84 : (onRoad ? 68 : 50);
+                else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 74 : (onRoad ? 58 : 44);
                 else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 78 : 62;
                 else if (player.botType === 'HEATWAVE') maxSpeed = hasBoost ? 58 : (onRoad ? 46 : 36);
                 else maxSpeed = hasBoost ? 54 : (onRoad ? 42 : 34); // Boulder
