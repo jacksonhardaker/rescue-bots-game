@@ -1158,27 +1158,111 @@
             <div class="absolute -top-12 -left-12 w-32 h-32 bg-purple-600/30 rounded-full blur-2xl pointer-events-none"></div>
             <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-red-600/30 rounded-full blur-2xl pointer-events-none"></div>
 
-            <!-- Dr. Morocco Portrait Avatar -->
-            <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-b from-purple-900 via-slate-900 to-slate-950 border-2 border-purple-400 flex items-center justify-center mb-3 shadow-lg relative">
-                <svg viewBox="0 0 48 48" class="w-16 h-16" fill="none">
-                    <!-- Top Hat -->
-                    <path d="M12 18H36V8H12V18Z" fill="#0f172a" stroke="#a855f7" stroke-width="1.5"/>
-                    <rect x="8" y="17" width="32" height="3" rx="1.5" fill="#1e1b4b" stroke="#c084fc" stroke-width="1.2"/>
-                    <rect x="12" y="14" width="24" height="2.5" fill="#dc2626"/>
-                    <!-- Face -->
-                    <circle cx="24" cy="28" r="9" fill="#f8fafc" stroke="#334155" stroke-width="1.2"/>
-                    <!-- Monocle with gold chain -->
-                    <circle cx="28" cy="27" r="3.5" fill="#38bdf8" fill-opacity="0.4" stroke="#f59e0b" stroke-width="1.4"/>
-                    <path d="M31.5 27Q36 31 32 37" stroke="#f59e0b" stroke-width="1" fill="none"/>
-                    <!-- Eyes & brow -->
-                    <circle cx="20" cy="27" r="1.5" fill="#0f172a"/>
-                    <path d="M18 24L22 25" stroke="#475569" stroke-width="1.5"/>
-                    <path d="M26 23L30 22" stroke="#475569" stroke-width="1.5"/>
-                    <!-- Silver handlebar mustache -->
-                    <path d="M17 31C20 31 22 33 24 32C26 33 28 31 31 31C33 31 32 34 29 33C26 32 25 34 24 33C23 34 22 32 19 33C16 34 15 31 17 31Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="0.8"/>
-                    <!-- Victorian Ascot Tie with Verne Device Core -->
-                    <path d="M21 37H27L29 45H19L21 37Z" fill="#7f1d1d"/>
-                    <circle cx="24" cy="40" r="2.5" fill="#22c55e" stroke="#f59e0b" stroke-width="1"/>
+            <!-- Dr. Morocco Portrait Avatar (Cartoon-Accurate to Transformers: Rescue Bots) -->
+            <div class="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-b from-purple-900/90 via-slate-900 to-slate-950 border-2 border-purple-400 flex items-center justify-center mb-3 shadow-xl shadow-purple-950/60 relative overflow-hidden group">
+                <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="bgGlow" cx="50%" cy="45%" r="55%">
+                            <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="#0f172a" stop-opacity="0.0"/>
+                        </radialGradient>
+                        <linearGradient id="moroccoSkin" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#f5caa6"/>
+                            <stop offset="50%" stop-color="#dfa780"/>
+                            <stop offset="100%" stop-color="#c48b64"/>
+                        </linearGradient>
+                        <linearGradient id="hairGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1e293b"/>
+                            <stop offset="100%" stop-color="#090d16"/>
+                        </linearGradient>
+                        <linearGradient id="verneGem" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#c084fc"/>
+                            <stop offset="45%" stop-color="#86198f"/>
+                            <stop offset="100%" stop-color="#4a044e"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Aura Background Glow -->
+                    <circle cx="50" cy="50" r="48" fill="url(#bgGlow)"/>
+
+                    <!-- Shoulders & Coat (Victorian Double-Breasted Charcoal/Plum) -->
+                    <path d="M12 100 L26 75 L42 73 L50 80 L58 73 L74 75 L88 100 Z" fill="#2d2938" stroke="#15121e" stroke-width="1.6"/>
+                    <path d="M26 75 L42 73 L46 90 L34 100 Z" fill="#3c374a" stroke="#15121e" stroke-width="1.2"/>
+                    <path d="M74 75 L58 73 L47 88 L58 100 Z" fill="#3c374a" stroke="#15121e" stroke-width="1.2"/>
+                    <path d="M46 84 L64 96" stroke="#15121e" stroke-width="1.4"/>
+                    <circle cx="43" cy="80" r="1.6" fill="#facc15" stroke="#ca8a04" stroke-width="0.8"/>
+
+                    <!-- Neck & Shadow -->
+                    <path d="M43 58 L41 74 L59 74 L57 58 Z" fill="#ba7d56"/>
+
+                    <!-- High Stiff Dress Collar -->
+                    <path d="M41 74 L46 62 L50 72 Z" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1"/>
+                    <path d="M59 74 L54 62 L50 72 Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1"/>
+
+                    <!-- Verne Device Brooch / Medallion -->
+                    <ellipse cx="50" cy="73.5" rx="6.2" ry="7.8" fill="#eab308" stroke="#a16207" stroke-width="1.4"/>
+                    <ellipse cx="50" cy="73.5" rx="4.4" ry="5.6" fill="url(#verneGem)"/>
+                    <ellipse cx="48.8" cy="71.8" rx="1.4" ry="2.0" fill="#f5d0fe" opacity="0.85"/>
+
+                    <!-- Ears (Pointed Aristocratic) -->
+                    <path d="M36 36 C30 33 29 43 36 45 Z" fill="#dfa780" stroke="#1e293b" stroke-width="1.2"/>
+                    <path d="M64 34 C70 31 71 42 64 44 Z" fill="#dfa780" stroke="#1e293b" stroke-width="1.2"/>
+                    <path d="M64.5 35.5 C67 34 68 40 64 42" stroke="#ba7d56" stroke-width="1" fill="none"/>
+
+                    <!-- Face Base (Long Narrow Jaw & Pointed Chin) -->
+                    <path d="M36 32 C36 32 40 28 50 28 C60 28 64 32 64 32 C65 40 64 46 63 49 C60 55 54 60 50 63 C46 60 40 55 37 49 C36 46 35 40 36 32 Z" fill="url(#moroccoSkin)" stroke="#1e293b" stroke-width="1.4"/>
+
+                    <!-- Cheekbone & Chin Shadows -->
+                    <path d="M47 61 Q50 63 53 61" stroke="#ba7d56" stroke-width="1.2" fill="none"/>
+
+                    <!-- Hair Base (Sleek Black with Swept-Back Wings & Widow Peak) -->
+                    <path d="M35 32 C31 29 27 24 29 20 C31 16 35 15 39 17 C37 13 42 11 47 11 C54 11 58 13 62 11 C68 12 72 15 69 19 C73 17 76 22 73 26 C71 29 65 31 64 32 C60 30 55 30 50 28 C45 30 40 30 35 32 Z" fill="url(#hairGrad)" stroke="#090d16" stroke-width="1.4"/>
+
+                    <!-- Hair Blue-Slate Highlights -->
+                    <path d="M31 21 C33 18 37 17 41 18 C37 20 34 23 32 26 Z" fill="#38bdf8" opacity="0.45"/>
+                    <path d="M48 12 C52 12 56 13 59 12 C56 14 52 14 49 13 Z" fill="#38bdf8" opacity="0.4"/>
+                    <path d="M68 20 C66 17 62 16 58 16 C61 18 64 21 66 24 Z" fill="#38bdf8" opacity="0.45"/>
+
+                    <!-- Right Eyebrow (Angry/Stern Angle Downward over Monocle) -->
+                    <path d="M32 29.5 C36 29.5 40 31.5 44 33" stroke="#090d16" stroke-width="2.6" stroke-linecap="round"/>
+
+                    <!-- Left Eyebrow (Arching High Villain Smirk) -->
+                    <path d="M55 30 C58 23 64 22.5 68 26.5" stroke="#090d16" stroke-width="2.6" stroke-linecap="round"/>
+
+                    <!-- Brow Wrinkle -->
+                    <path d="M48.5 30.5 L48.5 33" stroke="#9a603d" stroke-width="1.1" stroke-linecap="round"/>
+
+                    <!-- Monocle Cord (Drapes from Monocle rim down to lapel pin) -->
+                    <path d="M37.5 45 C33.5 53 35 67 43 80" stroke="#0f172a" stroke-width="1.3" fill="none"/>
+
+                    <!-- Left Eye (Viewer Right: Smug Narrowed Squint) -->
+                    <path d="M57 36 Q62 33.5 66.5 35.5 Q62 38 57 36 Z" fill="#ffffff"/>
+                    <circle cx="61.8" cy="35.8" r="1.8" fill="#0f172a"/>
+                    <path d="M56 35 Q62 33 67 35.5" stroke="#0f172a" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M68 35.5 L70 35 M68 37.5 L70.5 37" stroke="#9a603d" stroke-width="0.9"/>
+
+                    <!-- Nose (Long Sharp Aquiline Hook) -->
+                    <path d="M49 31.5 L48 45.5 L45.5 47.8 Q48.5 48.8 51.5 47.2 L52.5 45.5" stroke="#1e293b" stroke-width="1.4" stroke-linejoin="round" fill="#dfa780"/>
+                    <path d="M51 46 Q53.5 45.5 54 47.2" stroke="#9a603d" stroke-width="1.1" fill="none"/>
+
+                    <!-- Pencil Mustache (Sharp Black Styled Mustache) -->
+                    <path d="M42 49.5 C45 49 48 48.5 50 48.5 C52 48.5 55 49 58 50 C55 52 52 52.2 50 51.5 C48 52.2 45 52 42 49.5 Z" fill="#090d16"/>
+
+                    <!-- Mouth (Arrogant Villainous Smirk showing teeth) -->
+                    <path d="M44.5 52.8 Q50 52 56 53.6 C55 57 49.5 57.5 44.5 52.8 Z" fill="#581c87" stroke="#1e293b" stroke-width="1.2"/>
+                    <path d="M45.8 53.2 Q50 52.5 55 53.8 C54.5 55.4 50 55.6 45.8 53.2 Z" fill="#ffffff"/>
+                    <path d="M48 58 Q50 58.8 52 58" stroke="#ba7d56" stroke-width="1.1" stroke-linecap="round"/>
+
+                    <!-- Right Eye & Gold Monocle (Viewer Left) -->
+                    <path d="M33 37 Q37.5 34.5 42 37 Q37.5 39.5 33 37 Z" fill="#ffffff"/>
+                    <circle cx="38" cy="37" r="2.0" fill="#0f172a"/>
+                    <path d="M33 36.2 Q38 34.5 42 36.5" stroke="#0f172a" stroke-width="1.4"/>
+                    <!-- Translucent Tinted Monocle Glass -->
+                    <circle cx="37.5" cy="37" r="7.8" fill="#d8b4fe" fill-opacity="0.42"/>
+                    <!-- Gold Rim -->
+                    <circle cx="37.5" cy="37" r="7.8" stroke="#eab308" stroke-width="2.2" fill="none"/>
+                    <circle cx="37.5" cy="37" r="6.8" stroke="#fef08a" stroke-width="0.7" fill="none"/>
+                    <path d="M34 33 Q37 31 40 33" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.85"/>
                 </svg>
             </div>
 
@@ -3517,57 +3601,59 @@
             ctx.fillStyle = '#0f172a';
             ctx.fillRect(123, 0, 10, 56);
 
-            // Bold Black Racing Stripe down Center Hood
+            // Bold Twin Black Racing Stripes down Hood (Screen Accurate to Rescue Bots Image 2!)
             ctx.fillStyle = '#0f172a';
+            // Left racing stripe
             ctx.beginPath();
-            ctx.moveTo(98, 50); ctx.lineTo(158, 50);
-            ctx.lineTo(164, 210); ctx.lineTo(92, 210);
+            ctx.moveTo(42, 50); ctx.lineTo(82, 50);
+            ctx.lineTo(88, 220); ctx.lineTo(36, 220);
             ctx.closePath();
             ctx.fill();
 
-            // Angular Black Side Flank Stripes
+            // Right racing stripe
             ctx.beginPath();
-            ctx.moveTo(22, 54); ctx.lineTo(54, 54);
-            ctx.lineTo(68, 185); ctx.lineTo(36, 185);
+            ctx.moveTo(174, 50); ctx.lineTo(214, 50);
+            ctx.lineTo(220, 220); ctx.lineTo(168, 220);
             ctx.closePath();
             ctx.fill();
 
-            ctx.beginPath();
-            ctx.moveTo(234, 54); ctx.lineTo(202, 54);
-            ctx.lineTo(188, 185); ctx.lineTo(220, 185);
-            ctx.closePath();
-            ctx.fill();
+            // Center Raised Cowl Induction Scoop with Horizontal Silver Louvers
+            ctx.fillStyle = '#fde047';
+            ctx.fillRect(92, 52, 72, 138);
+            ctx.strokeStyle = '#ca8a04';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(92, 52, 72, 138);
 
-            // Red Autobot Shield Insignia centered on the hood
+            // Silver cooling louvers inside scoop
+            [68, 86, 104, 122, 140, 158].forEach(ly => {
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillRect(98, ly, 60, 6);
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(98, ly + 6, 60, 3);
+            });
+
+            // Bold Red Autobot Shield Insignia centered at front of hood
             ctx.fillStyle = '#dc2626';
             ctx.beginPath();
-            ctx.arc(128, 128, 26, 0, Math.PI * 2);
+            ctx.arc(128, 206, 20, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(128, 128, 23, 0, Math.PI * 2);
+            ctx.arc(128, 206, 17, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = '#dc2626';
             ctx.beginPath();
-            ctx.moveTo(112, 114); ctx.lineTo(144, 114);
-            ctx.lineTo(144, 134); ctx.lineTo(136, 142);
-            ctx.lineTo(128, 148); ctx.lineTo(120, 142);
-            ctx.lineTo(112, 134);
+            ctx.moveTo(116, 194); ctx.lineTo(140, 194);
+            ctx.lineTo(140, 210); ctx.lineTo(134, 216);
+            ctx.lineTo(128, 222); ctx.lineTo(122, 216);
+            ctx.lineTo(116, 210);
             ctx.closePath();
             ctx.fill();
             // Optics cutouts
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(116, 120, 6, 8);
-            ctx.fillRect(134, 120, 6, 8);
-            ctx.fillRect(125, 124, 6, 16);
-
-            // Lower Grille / Cowl Slats
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(48, 218, 160, 32);
-            ctx.fillStyle = '#cbd5e1';
-            [224, 234, 244].forEach(gy => {
-                ctx.fillRect(62, gy, 132, 3);
-            });
+            ctx.fillRect(119, 199, 4, 6);
+            ctx.fillRect(133, 199, 4, 6);
+            ctx.fillRect(126, 202, 4, 12);
 
             // Border
             ctx.strokeStyle = '#0f172a';
@@ -3578,40 +3664,52 @@
 
         function makeBumblebeeWingTexture() {
             const c = document.createElement('canvas');
-            c.width = 128; c.height = 256;
+            c.width = 256; c.height = 256;
             const ctx = c.getContext('2d');
 
-            // Bright Yellow Car Door
-            ctx.fillStyle = '#facc15';
-            ctx.fillRect(0, 0, 128, 256);
+            // Bright Yellow Car Door Body
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            bgGrad.addColorStop(0, '#fde047');
+            bgGrad.addColorStop(0.5, '#facc15');
+            bgGrad.addColorStop(1, '#eab308');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, 256, 256);
 
-            // Inset Dark Tinted Cyan Window
-            const winGrad = ctx.createLinearGradient(0, 10, 0, 140);
-            winGrad.addColorStop(0, '#38bdf8');
+            // Inset Tinted Cyan Coupe Window
+            const winGrad = ctx.createLinearGradient(0, 15, 0, 130);
+            winGrad.addColorStop(0, '#67e8f9');
             winGrad.addColorStop(0.5, '#0284c7');
             winGrad.addColorStop(1, '#0f172a');
             ctx.fillStyle = winGrad;
             ctx.beginPath();
-            ctx.moveTo(18, 18);
-            ctx.lineTo(110, 36);
-            ctx.lineTo(110, 140);
-            ctx.lineTo(18, 140);
+            ctx.moveTo(35, 20);
+            ctx.lineTo(225, 45);
+            ctx.lineTo(225, 130);
+            ctx.lineTo(35, 130);
             ctx.closePath();
             ctx.fill();
             ctx.strokeStyle = '#0f172a';
-            ctx.lineWidth = 4;
+            ctx.lineWidth = 5;
             ctx.stroke();
 
-            // Bold Black Racing Stripe down door
+            // Matte Black Racing Stripe along side flank
             ctx.fillStyle = '#0f172a';
-            ctx.fillRect(44, 146, 40, 100);
+            ctx.fillRect(20, 142, 216, 38);
 
-            // Black Lower Sill / Skirt
-            ctx.fillRect(0, 242, 128, 14);
+            // Chrome door handle
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(175, 150, 42, 8);
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(175, 150, 42, 8);
+
+            // Matte Black Lower Rocker Skirt
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 228, 256, 28);
 
             ctx.strokeStyle = '#0f172a';
-            ctx.lineWidth = 5;
-            ctx.strokeRect(2, 2, 124, 252);
+            ctx.lineWidth = 6;
+            ctx.strokeRect(3, 3, 250, 250);
             return new THREE.CanvasTexture(c);
         }
 
@@ -4923,31 +5021,42 @@
                 h = h * flatFactor + 11.5 * (1 - flatFactor);
             }
 
-            // Carve Inner & Outer Ring Highways + North-South & East-West Arterials
+            // Carve Inner & Outer Ring Highways + North-South & East-West Arterials + Connecting Spurs
             const innerR = getInnerRoadRadius(theta);
             const outerR = getOuterRoadRadius(theta);
             const distInner = Math.abs(r - innerR);
             const distOuter = Math.abs(r - outerR);
-            const distNS = (z > -1180 && z < 1180) ? Math.abs(x) : 999;
-            const distEW = (x > -1180 && x < 1200) ? Math.abs(z - 25) : 999;
-            const distCausewayApproach = (x >= 1120 && x <= 1520) ? Math.abs(z - 540) : 999;
-            const distLighthouseRoad = (x >= 1180 && x <= 1320) ? Math.abs(z - 60) : 999;
+            const distNS = (z > -1180 && z < 1185) ? Math.abs(x) : 999;
+            const distEW = (x > -1180 && x < 1210) ? Math.abs(z - 25) : 999;
+            const distCausewayApproach = (x >= 1065 && x <= 1520) ? Math.abs(z - 540) : 999;
+            const distLighthouseRoad = (x >= 1175 && x <= 1325) ? Math.abs(z - 60) : 999;
 
-            // Morocco Lair Access Road segment: (-640, -1120) to (-820, -1180)
-            const mRoadT = Math.max(0, Math.min(1, ((x - (-640)) * (-180) + (z - (-1120)) * (-60)) / (180 * 180 + 60 * 60)));
-            const mProjX = -640 + mRoadT * (-180);
-            const mProjZ = -1120 + mRoadT * (-60);
+            // Morocco Lair Access Road segment: connects Outer Ring at (-619.3, -1083.8) to Lair at (-820, -1180)
+            const mLenSq = 200.7 * 200.7 + 96.2 * 96.2;
+            const mRoadT = Math.max(0, Math.min(1, ((x - (-619.3)) * (-200.7) + (z - (-1083.8)) * (-96.2)) / mLenSq));
+            const mProjX = -619.3 + mRoadT * (-200.7);
+            const mProjZ = -1083.8 + mRoadT * (-96.2);
             const distMoroccoRoad = Math.hypot(x - mProjX, z - mProjZ);
 
             const minRoadDist = Math.min(distInner, distOuter, distNS, distEW, distCausewayApproach, distLighthouseRoad, distMoroccoRoad);
 
-            if (minRoadDist < 24) {
-                const roadBlend = Math.max(0, Math.min(1, (minRoadDist - 12.0) / 12.0));
-                let idealRoadH = Math.max(3.4, h * 0.48 + 2.4);
-                if (distCausewayApproach < 24) idealRoadH = 7.5;
-                else if (distLighthouseRoad < 24) idealRoadH = 14.5;
-                else if (distMoroccoRoad < 24) idealRoadH = THREE.MathUtils.lerp(6.5, 11.5, mRoadT);
-                h = h * roadBlend + idealRoadH * (1 - roadBlend);
+            if (minRoadDist < 26) {
+                // Smooth wide shoulder embankment with gentle cosine transition
+                const roadBlend = Math.max(0, Math.min(1, (minRoadDist - 12.0) / 14.0));
+                const smoothBlend = roadBlend * roadBlend * (3 - 2 * roadBlend);
+                let idealRoadH = Math.max(3.4, h * 0.38 + 2.2);
+
+                if (distCausewayApproach < 22 && x >= 1075) {
+                    const cT = Math.max(0, Math.min(1, (x - 1075) / 120));
+                    idealRoadH = THREE.MathUtils.lerp(idealRoadH, 7.5, cT);
+                } else if (distLighthouseRoad < 22 && x >= 1180) {
+                    const lT = Math.max(0, Math.min(1, (x - 1180) / 140));
+                    const smoothLT = lT * lT * (3 - 2 * lT);
+                    idealRoadH = THREE.MathUtils.lerp(idealRoadH, 14.5, smoothLT);
+                } else if (distMoroccoRoad < 22 && mRoadT > 0.05) {
+                    idealRoadH = THREE.MathUtils.lerp(idealRoadH, 11.5, mRoadT);
+                }
+                h = h * smoothBlend + idealRoadH * (1 - smoothBlend);
             }
 
             // Smooth sandy beach slope into ocean
@@ -5042,14 +5151,14 @@
             const theta = Math.atan2(z, x);
             if (Math.abs(r - getInnerRoadRadius(theta)) < 12.5) return true;
             if (Math.abs(r - getOuterRoadRadius(theta)) < 13.5) return true;
-            // Grand North-South Highway from North Outpost (0, -1160) to South Harbor (0, 1160)
-            if (Math.abs(x) < 12.0 && z > -1160 && z < 1160) return true;
-            // Grand East-West Highway from West Tech Park (-1160, 25) to East Coast Highway (1190, 25)
-            if (Math.abs(z - 25) < 12.0 && x > -1160 && x < 1190) return true;
-            // Scenic East Lighthouse Access Road (X: 1180 .. 1320, Z: 60)
-            if (Math.abs(z - 60) < 12.0 && x >= 1180 && x <= 1320) return true;
-            // Wayward Causeway Highway, Suspension Bridge and Island Road (X: 1120 .. 1960, Z: 540)
-            if (Math.abs(z - 540) < 12.5 && x >= 1120 && x <= 1960) return true;
+            // Grand North-South Highway from North Outpost (0, -1160) to South Harbor (0, 1180)
+            if (Math.abs(x) < 12.0 && z > -1160 && z < 1180) return true;
+            // Grand East-West Highway from West Tech Park (-1160, 25) to East Coast Highway (1205, 25)
+            if (Math.abs(z - 25) < 12.0 && x > -1160 && x < 1205) return true;
+            // Scenic East Lighthouse Access Road (X: 1175 .. 1320, Z: 60)
+            if (Math.abs(z - 60) < 12.0 && x >= 1175 && x <= 1320) return true;
+            // Wayward Causeway Highway, Suspension Bridge and Island Road (X: 1065 .. 1960, Z: 540)
+            if (Math.abs(z - 540) < 12.5 && x >= 1065 && x <= 1960) return true;
             // Wayward Island Coastal Trail Loop
             const dWaywardCenter = Math.hypot(x - 1960, z - 540);
             if (dWaywardCenter >= 175 && dWaywardCenter <= 245) return true;
@@ -5068,9 +5177,10 @@
                 const fdz = z - ferryController.currentPos.z;
                 if (Math.hypot(fdx, fdz) <= 22.0) return true;
             }
-            // Dr. Morocco Cliffside Lair Access Road & Plaza (X: -820 .. -640, Z: -1180 .. -1120)
-            const mRoadT = Math.max(0, Math.min(1, ((x - (-640)) * (-180) + (z - (-1120)) * (-60)) / (180 * 180 + 60 * 60)));
-            if (Math.hypot(x - (-640 - mRoadT * 180), z - (-1120 - mRoadT * 60)) < 12.0) return true;
+            // Dr. Morocco Airship Lair Access Road & Plaza (connects Outer Ring at -619.3, -1083.8 to -820, -1180)
+            const mLenSq = 200.7 * 200.7 + 96.2 * 96.2;
+            const mRoadT = Math.max(0, Math.min(1, ((x - (-619.3)) * (-200.7) + (z - (-1083.8)) * (-96.2)) / mLenSq));
+            if (Math.hypot(x - (-619.3 + mRoadT * (-200.7)), z - (-1083.8 + mRoadT * (-96.2))) < 12.0) return true;
             if (Math.hypot(x + 820, z + 1180) < 55) return true;
 
             return false;
@@ -5548,6 +5658,16 @@
 
         const sharedRoadTexture = makeProceduralRoadTexture();
 
+        const worldColliders = [];
+        const cullableWorldObjects = []; // Viewport & Distance Frustum Culling Registry for 60 FPS across 10X Map!
+        const humanNPCs = [];
+        const vehicleNPCs = [];
+        function registerCullableObject(obj, x, y, z, radius = 28) {
+            obj.userData.cullCenter = new THREE.Vector3(x, y, z);
+            obj.userData.cullRadius = radius;
+            cullableWorldObjects.push({ obj, x, y, z, radius });
+        }
+
         function createRoadRibbon(points, width = 18.2, isLoop = false, polyOffsetFactor = -1.0, polyOffsetUnits = -4.0) {
             const N = points.length;
             const segments = isLoop ? N : N - 1;
@@ -5660,19 +5780,57 @@
             return mesh;
         }
 
-        // 1. Grand North-South Highway (North Observatory outpost at Z = -1160 to South Harbor at Z = 1160)
+        function createRoadIntersectionPad(cx, cz, radius = 18.5) {
+            const gy = getSurfaceHeight(cx, cz);
+            const padG = new THREE.Group();
+            padG.position.set(cx, gy + 0.16, cz);
+
+            // Dark Asphalt Paved Apron
+            const padMesh = new THREE.Mesh(
+                new THREE.CircleGeometry(radius, 32).rotateX(-Math.PI / 2),
+                new THREE.MeshToonMaterial({
+                    color: 0x334155,
+                    gradientMap: toonGrad3,
+                    polygonOffset: true,
+                    polygonOffsetFactor: -1.35,
+                    polygonOffsetUnits: -6.0
+                })
+            );
+            padMesh.receiveShadow = true;
+            padG.add(padMesh);
+
+            // Outer Paved Transition Ring
+            const curbMesh = new THREE.Mesh(
+                new THREE.RingGeometry(radius - 0.75, radius, 32).rotateX(-Math.PI / 2),
+                new THREE.MeshToonMaterial({
+                    color: 0x64748b,
+                    gradientMap: toonGrad3,
+                    polygonOffset: true,
+                    polygonOffsetFactor: -1.4,
+                    polygonOffsetUnits: -6.5
+                })
+            );
+            padG.add(curbMesh);
+
+            scene.add(padG);
+            registerCullableObject(padG, cx, gy + 1, cz, radius * 1.5);
+            return padG;
+        }
+
+        // 1. Grand North-South Highway (North Observatory outpost at Z = -1160 to South Harbor Pier at Z = 1180)
         const ptsNS = [];
-        for (let z = -1160; z <= 1160; z += 6) ptsNS.push({ x: 0, z: z });
+        for (let z = -1160; z <= 1180; z += 5) ptsNS.push({ x: 0, z: z });
         scene.add(createRoadRibbon(ptsNS, 18.2, false, -1.0, -4.0));
 
-        // 2. Grand East-West Highway (West Tech Village at X = -1160 to East Coast at X = 1190)
+        // 2. Grand East-West Highway (West Tech Village at X = -1160 to East Coast at X = 1205)
         const ptsEW = [];
-        for (let x = -1160; x <= 1190; x += 6) ptsEW.push({ x: x, z: 25 });
+        for (let x = -1160; x <= 1205; x += 5) ptsEW.push({ x: x, z: 25 });
         scene.add(createRoadRibbon(ptsEW, 18.2, false, -1.05, -4.5));
 
         // 3. Wayward Island Causeway Highway, Suspension Bridge Deck & Ancient Ruins Road
+        // Starts directly at Outer Loop junction (X = 1068, Z = 540) to bridge gap completely
         const ptsWayward = [];
-        for (let x = 1120; x <= 1940; x += 6) ptsWayward.push({ x: x, z: 540 });
+        for (let x = 1068; x <= 1940; x += 5) ptsWayward.push({ x: x, z: 540 });
         scene.add(createRoadRibbon(ptsWayward, 18.2, false, -1.1, -5.0));
 
         // 3b. Wayward Island Scenic Coastal Trail Loop (Beaches, Sea Grotto, Pier & Ruins)
@@ -5686,15 +5844,18 @@
         }
         scene.add(createRoadRibbon(ptsWaywardLoop, 14.5, true, -1.05, -4.5));
 
-        // 4. Scenic East Lighthouse Access Road
+        // 4. Scenic East Lighthouse Access Road (Connects seamlessly to Outer Loop at X = 1175 to Lighthouse at X = 1320)
         const ptsLighthouse = [];
-        for (let x = 1180; x <= 1315; x += 4) ptsLighthouse.push({ x: x, z: 60 });
+        for (let x = 1175; x <= 1320; x += 4) ptsLighthouse.push({ x: x, z: 60 });
         scene.add(createRoadRibbon(ptsLighthouse, 14.0, false, -1.15, -5.5));
 
-        // 4b. Dr. Morocco Lair Access Road (from Outer Ring Highway at -640, -1120 to -820, -1180)
+        // 4b. Dr. Morocco Lair Access Road (Connects Outer Ring Highway at -619.3, -1083.8 to Lair at -820, -1180)
         const ptsMorocco = [];
-        for (let t = 0; t <= 1.0; t += 0.04) {
-            ptsMorocco.push({ x: -640 + t * (-180), z: -1120 + t * (-60) });
+        for (let t = 0; t <= 1.0; t += 0.02) {
+            ptsMorocco.push({
+                x: -619.3 + t * (-820 - (-619.3)),
+                z: -1083.8 + t * (-1180 - (-1083.8))
+            });
         }
         scene.add(createRoadRibbon(ptsMorocco, 14.0, false, -1.15, -5.5));
 
@@ -5718,6 +5879,20 @@
         }
         scene.add(createRoadRibbon(ptsOuterRing, 18.2, true, -1.25, -6.5));
 
+        // 7. Paved Intersection Junction Aprons (Smooths crossings & eliminates line-clipping)
+        createRoadIntersectionPad(0, 0, 19.5);                  // Central Griffin Plaza (NS x EW)
+        createRoadIntersectionPad(0, -1120, 18.5);              // North Outer Junction (NS x Outer Ring)
+        createRoadIntersectionPad(0, 1120, 18.5);               // South Outer Junction (NS x Outer Ring)
+        createRoadIntersectionPad(0, -380, 18.0);               // North Inner Junction (NS x Inner Ring)
+        createRoadIntersectionPad(0, 380, 18.0);                // South Inner Junction (NS x Inner Ring)
+        createRoadIntersectionPad(-1060.8, 25, 18.5);           // West Outer Junction (EW x Outer Ring)
+        createRoadIntersectionPad(1178.2, 25, 18.5);            // East Outer Junction (EW x Outer Ring)
+        createRoadIntersectionPad(-380, 25, 18.0);              // West Inner Junction (EW x Inner Ring)
+        createRoadIntersectionPad(380, 25, 18.0);               // East Inner Junction (EW x Inner Ring)
+        createRoadIntersectionPad(1068.9, 540, 17.5);           // Wayward Causeway Junction (Causeway x Outer Ring)
+        createRoadIntersectionPad(1181.5, 60, 16.5);            // East Lighthouse Junction (Lighthouse Road x Outer Ring)
+        createRoadIntersectionPad(-619.3, -1083.8, 17.5);       // Dr. Morocco Lair Junction (Morocco Road x Outer Ring)
+
         // Cel-Shaded Cartoon Ocean Water Plane + Animated White Foam Ripples (Scaled for 10X World)
         const waterMesh = new THREE.Mesh(
             new THREE.PlaneGeometry(8200, 8200, 32, 32).rotateX(-Math.PI / 2),
@@ -5736,16 +5911,6 @@
         );
         shorelineFoamRing.position.y = -0.25;
         scene.add(shorelineFoamRing);
-
-        const worldColliders = [];
-        const cullableWorldObjects = []; // Viewport & Distance Frustum Culling Registry for 60 FPS across 10X Map!
-        const humanNPCs = [];
-        const vehicleNPCs = [];
-        function registerCullableObject(obj, x, y, z, radius = 28) {
-            obj.userData.cullCenter = new THREE.Vector3(x, y, z);
-            obj.userData.cullRadius = radius;
-            cullableWorldObjects.push({ obj, x, y, z, radius });
-        }
 
         // =====================================================================
         // 5A. ICONIC RESCUE BOTS FIREHOUSE HEADQUARTERS (At X: 0, Z: -45)
@@ -8206,7 +8371,7 @@
         // Accurately aligned on roads, plazas, and terrain features across Griffin Rock
         createStuntRamp(0, 218, 0.0);                   // 1. South Highway HQ Stunt Ramp (aligned on road facing South)
         createStuntRamp(-220, 25, -Math.PI / 2);        // 2. West Tech Leap (aligned on East-West Highway facing West)
-        createStuntRamp(240, -140, 0.876);              // 3. Cliffside Overlook (aligned with Sky Hoop launch vector)
+        createStuntRamp(304, -178, 1.05);               // 3. Cliffside Overlook (aligned on Inner Highway Loop)
         createStuntRamp(0, 740, 0.0);                   // 4. South Highway Outer Ramp (aligned on road facing South)
         createStuntRamp(-680, 25, -Math.PI / 2);        // 5. Outer West Highway Ramp (aligned on East-West Highway)
         createStuntRamp(680, 25, Math.PI / 2);          // 6. Outer East Highway Ramp (aligned on East-West Highway)
@@ -8218,7 +8383,7 @@
             { id: 1, name: "HQ Ramp Stunt Launch", x: 0, y: 15.5, z: 238, rotY: 0.0, radius: 6.2, color: 0x38bdf8 },
             { id: 2, name: "Town Plaza Sky Ring", x: 0, y: 25.0, z: -15, rotY: 0, radius: 7.2, color: 0xfacc15 },
             { id: 3, name: "West Tech Leap", x: -240, y: 16.5, z: 25, rotY: -Math.PI / 2, radius: 6.2, color: 0xa855f7 },
-            { id: 4, name: "Cliffside Overlook", x: 252, y: 24.0, z: -130, rotY: 0.876, radius: 6.5, color: 0xf43f5e },
+            { id: 4, name: "Cliffside Overlook", x: 318, y: 18.5, z: -166, rotY: 1.05, radius: 6.5, color: 0xf43f5e },
             { id: 5, name: "Volcano Caldera Flight Ring", x: -735, y: 68.0, z: -755, rotY: 0.4, radius: 8.0, color: 0xf97316 },
             { id: 6, name: "South Harbor Ocean Bay Ring", x: 0, y: 16.0, z: 1250, rotY: 0, radius: 7.2, color: 0x06b6d4 }
         ];
@@ -10833,33 +10998,71 @@
             }
 
             else if (botType === 'BUMBLEBEE') {
-                // TV Show Bumblebee: Bright Yellow Sports Car & Velociraptor Dinobot Mode
-                // 1. Torso: Sports Car Hood Chest with Autobot crest, racing stripes, cyan windshield header
+                // TV Show Bumblebee: Screen-accurate Bright Yellow Sports Speedster & Velociraptor Dinobot Mode
+                // 1. Torso: Central Sports Car Body (Hood, Aerodynamic Windshield, Roof, Midriff & Pelvis)
+                // Lower Chassis Base connecting front and rear with zero gaps
+                const chassisBase = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.48, 3.4), matBeeYellow);
+                chassisBase.position.set(0, -0.22, 0.10);
+                chassisBase.castShadow = true;
+                parts.torso.add(chassisBase);
+
+                // Main Chest / Sports Car Hood
                 const chestMatArray = [matBeeYellow, matBeeYellow, matBeeYellow, matBeeYellow, matBeeChest, matBeeYellow];
-                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.65, 2.15, 2.05), chestMatArray);
+                const chest = new THREE.Mesh(new THREE.BoxGeometry(2.65, 1.85, 2.15), chestMatArray);
+                chest.position.set(0, 0.45, 0.35);
                 chest.castShadow = true;
                 parts.torso.add(chest);
 
-                // Arched cyan windshield header bar across top front of chest
-                const headerBar = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.28, 0.16), matBeeGlowCyan);
-                headerBar.position.set(0, 0.96, 1.05);
-                headerBar.userData.noOutline = true;
-                parts.torso.add(headerBar);
-
-                const headerPillar = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.32, 0.2), matBeeYellow);
-                headerPillar.position.set(0, 0.96, 1.06);
-                parts.torso.add(headerPillar);
-
-                // Raised central cowl induction scoop on hood
-                const cowlScoop = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.2, 1.35), matBeeYellow);
-                cowlScoop.position.set(0, 1.05, 0.25);
+                // Raised central cowl induction scoop with silver louvers on hood
+                const cowlScoop = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.22, 1.55), matBeeYellow);
+                cowlScoop.position.set(0, 1.38, 0.45);
                 parts.torso.add(cowlScoop);
 
-                const cowlStripe = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.22, 1.37), matBeeBlack);
-                cowlStripe.position.set(0, 1.05, 0.25);
-                parts.torso.add(cowlStripe);
+                // Twin matte black hood racing stripes flanking cowl scoop
+                [-0.62, 0.62].forEach(sx => {
+                    const hStripe = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.23, 1.85), matBeeBlack);
+                    hStripe.position.set(sx, 1.37, 0.40);
+                    parts.torso.add(hStripe);
+                });
 
-                // Sculpted light grey midriff & black ribbed abdominal tuck
+                // Silver cooling louvers inside cowl scoop
+                [-0.35, -0.05, 0.25, 0.55].forEach(lz => {
+                    const louver = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.05, 0.10), matChrome);
+                    louver.position.set(0, 1.48, 0.45 + lz);
+                    parts.torso.add(louver);
+                });
+
+                // Aerodynamic Sloped Cyan Windshield
+                const windshield = new THREE.Mesh(
+                    new THREE.BoxGeometry(2.32, 0.72, 0.16).rotateX(-0.52),
+                    matBeeGlowCyan
+                );
+                windshield.position.set(0, 1.15, -0.32);
+                windshield.userData.noOutline = true;
+                parts.torso.add(windshield);
+
+                // Yellow Sports Car Roof
+                const roof = new THREE.Mesh(new THREE.BoxGeometry(2.28, 0.16, 1.45), matBeeYellow);
+                roof.position.set(0, 1.42, -0.75);
+                parts.torso.add(roof);
+
+                // Twin black racing stripes continuing over the roof
+                [-0.62, 0.62].forEach(sx => {
+                    const roofStripe = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.18, 1.46), matBeeBlack);
+                    roofStripe.position.set(sx, 1.42, -0.75);
+                    parts.torso.add(roofStripe);
+                });
+
+                // Fastback rear window glass
+                const rearWindow = new THREE.Mesh(
+                    new THREE.BoxGeometry(2.15, 0.55, 0.15).rotateX(0.55),
+                    matBeeGlowCyan
+                );
+                rearWindow.position.set(0, 1.16, -1.35);
+                rearWindow.userData.noOutline = true;
+                parts.torso.add(rearWindow);
+
+                // Sculpted light grey midriff & black ribbed abdominal tuck (for Bot Mode)
                 const midriff = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.82, 1.45), matBeeGrey);
                 midriff.position.set(0, -1.18, 0);
                 parts.torso.add(midriff);
@@ -10872,79 +11075,154 @@
                 pelvis.position.set(0, -1.65, 0);
                 parts.torso.add(pelvis);
 
-                // 2. Soaring Yellow Door Wings (Stand tall behind shoulders in bot mode, fold in vehicle mode)
+                // 2. Soaring Yellow Door Wings (Stand tall behind shoulders in Bot Mode, fold flush into car flanks in Vehicle Mode!)
                 [-1, 1].forEach(side => {
                     const wingG = side === -1 ? parts.leftDoorWing : parts.rightDoorWing;
-                    wingG.position.set(side * 1.35, 1.35, -0.65);
-                    const wingMaterials = [matBeeYellow, matBeeYellow, matBeeYellow, matBeeYellow, matBeeWing, matBeeWing];
-                    const doorMesh = new THREE.Mesh(new THREE.BoxGeometry(1.22, 2.45, 0.18), wingMaterials);
-                    doorMesh.position.set(side * 0.35, 0.65, 0);
-                    wingG.add(doorMesh);
+                    wingG.position.set(side * 1.32, 1.25, -0.65);
 
-                    // Upturned aerodynamic winglet end tip
-                    const wingTip = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.45, 0.2), matBeeYellow);
-                    wingTip.position.set(side * 0.85, 1.95, 0);
+                    // Door body panel (aligned along Z = 2.15 length, Y = 0.88 height, X = 0.18 thickness)
+                    const doorMaterials = [matBeeYellow, matBeeYellow, matBeeYellow, matBeeYellow, matBeeWing, matBeeWing];
+                    const doorBody = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.88, 2.15), doorMaterials);
+                    doorBody.castShadow = true;
+                    wingG.add(doorBody);
+
+                    // Matte black side racing stripe
+                    const doorStripe = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.22, 2.15), matBeeBlack);
+                    doorStripe.position.set(0, -0.05, 0);
+                    wingG.add(doorStripe);
+
+                    // Lower black rocker skirt panel
+                    const rockerSkirt = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 2.15), matBeeBlack);
+                    rockerSkirt.position.set(0, -0.42, 0);
+                    wingG.add(rockerSkirt);
+
+                    // Tinted cyan coupe window glass along top of door
+                    const doorWin = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.48, 1.45), matBeeGlowCyan);
+                    doorWin.position.set(0, 0.46, -0.15);
+                    doorWin.userData.noOutline = true;
+                    wingG.add(doorWin);
+
+                    // Aerodynamic swept winglet end tip (serves as wingtip in bot mode, rear flare in car mode)
+                    const wingTip = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.38, 0.55), matBeeYellow);
+                    wingTip.position.set(0, 0.62, 0.85);
                     wingG.add(wingTip);
+
                     parts.torso.add(wingG);
                 });
 
-                // 3. Front Attachment: Aggressive Sports Car Bumper, Silver Slat Grille & Twin Fog Lamps
-                const bumper = new THREE.Mesh(new THREE.BoxGeometry(2.72, 0.55, 0.85), matBeeYellow);
+                // 3. Front Attachment: Aggressive Muscle Bumper, Silver Slat Grille, Dual Headlights, Twin Amber Fog Lamps, & Hood Bridge
+                // Muscular Front Bumper
+                const bumper = new THREE.Mesh(new THREE.BoxGeometry(2.76, 0.52, 0.85), matBeeYellow);
                 bumper.position.set(0, 0, 0);
+                bumper.castShadow = true;
                 parts.frontAttachment.add(bumper);
 
-                const grille = new THREE.Mesh(new THREE.BoxGeometry(1.82, 0.42, 0.22), matChrome);
+                // Low-slung matte black chin splitter / air dam
+                const airDam = new THREE.Mesh(new THREE.BoxGeometry(2.68, 0.14, 0.92), matBeeBlack);
+                airDam.position.set(0, -0.26, 0.02);
+                parts.frontAttachment.add(airDam);
+
+                // Broad curved silver radiator grille bar across front fascia
+                const grille = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.38, 0.22), matChrome);
                 grille.position.set(0, 0.04, 0.43);
                 grille.userData.noOutline = true;
                 parts.frontAttachment.add(grille);
 
-                const airDam = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.16, 0.88), matBeeBlack);
-                airDam.position.set(0, -0.28, 0.02);
-                parts.frontAttachment.add(airDam);
-
-                // Twin amber fog lights
-                [-0.65, 0.65].forEach(fx => {
-                    const fogMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
-                    const fogLight = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.12, 12).rotateX(Math.PI / 2), fogMat);
-                    fogLight.position.set(fx, -0.16, 0.46);
-                    fogLight.userData.noOutline = true;
-                    parts.frontAttachment.add(fogLight);
+                // Grille vertical black divider slats
+                [-0.60, -0.20, 0.20, 0.60].forEach(gx => {
+                    const slat = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.36, 0.24), matBeeBlack);
+                    slat.position.set(gx, 0.04, 0.43);
+                    parts.frontAttachment.add(slat);
                 });
 
-                // Dual twin headlights
+                // Dual inward-angled cyan headlights
                 [-1.08, 1.08].forEach(hx => {
-                    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.24, 0.18), matBeeGlowCyan);
-                    hl.position.set(hx, 0.18, 0.44);
+                    const hl = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.22, 0.18), matBeeGlowCyan);
+                    hl.position.set(hx, 0.16, 0.44);
                     hl.userData.noOutline = true;
                     parts.frontAttachment.add(hl);
                 });
 
-                // 4. Back Attachment: High Rear Yellow GT Spoiler with Twin Support Stanchions & Upturned Winglets
+                // Twin circular amber fog lamps with chrome bezels in lower chin
+                const fogMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+                [-0.68, 0.68].forEach(fx => {
+                    const bezel = new THREE.Mesh(new THREE.CylinderGeometry(0.20, 0.20, 0.14, 14).rotateX(Math.PI / 2), matChrome);
+                    bezel.position.set(fx, -0.16, 0.44);
+                    const fogLight = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.16, 14).rotateX(Math.PI / 2), fogMat);
+                    fogLight.position.set(fx, -0.16, 0.45);
+                    fogLight.userData.noOutline = true;
+                    parts.frontAttachment.add(bezel, fogLight);
+                });
+
+                // Seamless Hood Nose Bridge (spans backward into torso chest, eliminating any gap!)
+                const noseBridge = new THREE.Mesh(new THREE.BoxGeometry(2.65, 0.42, 1.15), matBeeYellow);
+                noseBridge.position.set(0, 0.18, -0.55);
+                noseBridge.castShadow = true;
+                parts.frontAttachment.add(noseBridge);
+
+                [-0.62, 0.62].forEach(nx => {
+                    const noseStripe = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.44, 1.16), matBeeBlack);
+                    noseStripe.position.set(nx, 0.18, -0.55);
+                    parts.frontAttachment.add(noseStripe);
+                });
+
+                // 4. Back Attachment: High Rear GT Spoiler Wing, Rear Deck Extension, Exhaust & Taillights
+                // Seamless Rear Deck Bridge
+                const rearDeckBridge = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.42, 1.15), matBeeYellow);
+                rearDeckBridge.position.set(0, 0.05, 0.45);
+                rearDeckBridge.castShadow = true;
+                parts.backAttachment.add(rearDeckBridge);
+
+                [-0.62, 0.62].forEach(rx => {
+                    const deckStripe = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.44, 1.16), matBeeBlack);
+                    deckStripe.position.set(rx, 0.05, 0.45);
+                    parts.backAttachment.add(deckStripe);
+                });
+
+                // Rear Bumper & Diffuser Valance
+                const rearBumper = new THREE.Mesh(new THREE.BoxGeometry(2.68, 0.52, 0.75), matBeeYellow);
+                rearBumper.position.set(0, 0.10, 0.85);
+                parts.backAttachment.add(rearBumper);
+
+                const diffuser = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.14, 0.78), matBeeBlack);
+                diffuser.position.set(0, -0.22, 0.86);
+                parts.backAttachment.add(diffuser);
+
+                // Dual polished chrome round exhaust tips
+                [-0.65, 0.65].forEach(px => {
+                    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.45, 12).rotateX(Math.PI / 2), matChrome);
+                    pipe.position.set(px, -0.16, 1.15);
+                    parts.backAttachment.add(pipe);
+                });
+
+                // Dual Glowing Red Taillights
+                const tailLightMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+                [-0.95, 0.95].forEach(tx => {
+                    const tl = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.16, 0.12), tailLightMat);
+                    tl.position.set(tx, 0.22, 1.22);
+                    tl.userData.noOutline = true;
+                    parts.backAttachment.add(tl);
+                });
+
+                // GT Spoiler Wing Stanchions & Blade
                 [-0.85, 0.85].forEach(sx => {
-                    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.72, 0.22), matBeeBlack);
-                    post.position.set(sx, 0.25, 0);
+                    const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.68, 0.22), matBeeBlack);
+                    post.position.set(sx, 0.42, 0.55);
                     parts.backAttachment.add(post);
                 });
 
-                const wingBlade = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.16, 0.65), matBeeYellow);
-                wingBlade.position.set(0, 0.62, 0);
+                const wingBlade = new THREE.Mesh(new THREE.BoxGeometry(2.68, 0.14, 0.62), matBeeYellow);
+                wingBlade.position.set(0, 0.76, 0.55);
                 parts.backAttachment.add(wingBlade);
 
-                const wingStripe = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.18, 0.67), matBeeBlack);
-                wingStripe.position.set(0, 0.62, 0);
+                const wingStripe = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.16, 0.64), matBeeBlack);
+                wingStripe.position.set(0, 0.76, 0.55);
                 parts.backAttachment.add(wingStripe);
 
-                [-1.28, 1.28].forEach(ex => {
+                [-1.34, 1.34].forEach(ex => {
                     const endplate = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.42, 0.72), matBeeYellow);
-                    endplate.position.set(ex, 0.72, 0);
+                    endplate.position.set(ex, 0.86, 0.55);
                     parts.backAttachment.add(endplate);
-                });
-
-                // Dual chrome exhaust pipes
-                [-0.65, 0.65].forEach(px => {
-                    const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.45, 10).rotateX(Math.PI / 2), matChrome);
-                    pipe.position.set(px, -0.22, -0.15);
-                    parts.backAttachment.add(pipe);
                 });
 
                 // 5. Head: Rounded Yellow Helmet, Twin Black Crown Stripes, Ear Pods with 3 Louvers, Faceplate & Chin Guard
@@ -11013,7 +11291,7 @@
                     fore.castShadow = true;
                     forearmG.add(fore);
 
-                    // Pointed wrist armor flare fin extending backwards/outwards from gauntlet
+                    // Pointed wrist armor flare fin extending backwards/outwards from gauntlet (signature TV detail!)
                     const wristFin = new THREE.Mesh(
                         new THREE.ConeGeometry(0.24, 0.85, 4).rotateZ(side * -0.65).rotateX(0.2),
                         matBeeYellow
@@ -11054,7 +11332,7 @@
                     legG.add(sole);
 
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
-                    wheelMount.position.set(side * 0.62, 0, -0.05);
+                    wheelMount.position.set(side * 0.72, 0, -0.05);
                     legG.add(wheelMount);
 
                     const w = createWheelAssembly(0.72, 0.46);
@@ -12330,13 +12608,13 @@
             const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE' || rig.botType === 'HIGHTIDE' ? 2.45 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.18 : 0);
             const vehTorsoY = (rig.botType === 'BOULDER') ? 1.56
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.78
-                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 1.35
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? 1.42
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') ? 1.35
+                : (rig.botType === 'CHASE') ? 1.42
                 : (rig.botType === 'HIGHTIDE') ? 1.58 : 1.72;
             const vehTorsoZ = (rig.botType === 'BOULDER') ? -0.18
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.15
-                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 0.35
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? -0.42
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') ? 0.35
+                : (rig.botType === 'CHASE') ? -0.42
                 : (rig.botType === 'HIGHTIDE') ? 0.35 : 0.95;
             rig.torso.position.set(
                 0,
@@ -12415,11 +12693,11 @@
             } else if (rig.botType === 'BUMBLEBEE') {
                 rig.head.position.set(
                     0,
-                    (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.38 * m + 1.95 * d,
-                    0.06 * (1 - m - d) - 0.42 * m + 0.15 * d
+                    (5.45 - smashOffset * 0.35) * (1 - m - d) + 1.15 * m + 1.95 * d,
+                    0.06 * (1 - m - d) + 0.25 * m + 0.15 * d
                 );
                 rig.head.rotation.x = 0;
-                const beeHeadScale = (1.0 * (1 - m) + 0.25 * m) * (1.0 - d);
+                const beeHeadScale = (1.0 * (1 - m) + 0.05 * m) * (1.0 - d);
                 rig.head.scale.setScalar(Math.max(0.001, beeHeadScale));
             } else {
                 // BLADES: Head sits between the retracted collar cockpit halves in Bot mode, then tucks into the expanding Helicopter Cockpit Nose in Vehicle mode!
@@ -12465,16 +12743,10 @@
                     3.65 * (1 - m - d) + 1.55 * m + 1.95 * d,
                     0.85 * (1 - m - d) + 2.05 * m + 0.95 * d
                 );
-            } else if (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') {
+            } else if (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') {
                 rig.frontAttachment.position.set(
                     0,
                     2.15 * (1 - m - d) + 0.38 * m + 1.55 * d,
-                    0.95 * (1 - m - d) + 2.35 * m + 1.35 * d
-                );
-            } else if (rig.botType === 'BUMBLEBEE') {
-                rig.frontAttachment.position.set(
-                    0,
-                    2.15 * (1 - m - d) + 0.42 * m + 1.55 * d,
                     0.95 * (1 - m - d) + 2.35 * m + 1.35 * d
                 );
             } else {
@@ -12519,17 +12791,10 @@
                     -1.15 * (1 - m - d) - 1.25 * m - 0.45 * d
                 );
                 rig.backAttachment.rotation.x = 0;
-            } else if (rig.botType === 'QUICKSHADOW') {
+            } else if (rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') {
                 rig.backAttachment.position.set(
                     0,
                     3.85 * (1 - m - d) + 1.45 * m + 2.05 * d,
-                    -1.15 * (1 - m - d) - 1.85 * m - 0.45 * d
-                );
-                rig.backAttachment.rotation.x = 0;
-            } else if (rig.botType === 'BUMBLEBEE') {
-                rig.backAttachment.position.set(
-                    0,
-                    3.85 * (1 - m - d) + 1.52 * m + 2.05 * d,
                     -1.15 * (1 - m - d) - 1.85 * m - 0.45 * d
                 );
                 rig.backAttachment.rotation.x = 0;
@@ -12560,18 +12825,18 @@
 
             const vehArmX = (rig.botType === 'BOULDER') ? 1.46
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.36
-                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 1.32
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? 0.92
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') ? 1.32
+                : (rig.botType === 'CHASE') ? 0.92
                 : (rig.botType === 'HIGHTIDE') ? 1.25 : 1.16;
             const vehArmY = (rig.botType === 'BOULDER') ? 1.08
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.14
-                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 0.95
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? 1.02
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') ? 0.95
+                : (rig.botType === 'CHASE') ? 1.02
                 : (rig.botType === 'HIGHTIDE') ? 1.18 : 1.48;
             const vehArmZ = (rig.botType === 'BOULDER') ? -0.35
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.42
-                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? 1.35
-                : (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') ? -1.18
+                : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') ? 1.35
+                : (rig.botType === 'CHASE') ? -1.18
                 : (rig.botType === 'HIGHTIDE') ? 0.65 : 1.25;
 
             const armScaleDino = (rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'HIGHTIDE') ? (1.0 - d * 0.88) : 1.0;
@@ -12594,29 +12859,30 @@
             if (rig.leftDoorWing && rig.rightDoorWing) {
                 if (rig.botType === 'BUMBLEBEE') {
                     // Robot mode: Soaring door wings standing tall behind shoulders!
-                    // Vehicle mode: Fold down along sports car flanks
+                    // Vehicle mode: Fold flush along sports car flanks (parallel to car length, zero perpendicular gaps!)
                     // Dino mode: Tuck neatly along raptor sides
+                    const wingFlareX = -Math.PI / 2 + 0.18;
                     rig.leftDoorWing.position.set(
-                        -1.35 * (1 - m - d) - 1.25 * m - 0.75 * d,
-                        1.35 * (1 - m - d) - 0.15 * m + 0.35 * d,
-                        -0.65 * (1 - m - d) - 0.15 * m - 0.45 * d
+                        -1.32 * (1 - m - d) - 1.30 * m - 0.72 * d,
+                        1.25 * (1 - m - d) - 0.38 * m + 0.22 * d,
+                        -0.65 * (1 - m - d) - 0.10 * m - 0.45 * d
                     );
                     rig.leftDoorWing.rotation.set(
-                        0.15 * (1 - m - d) + 0 * m + 0.2 * d,
-                        0.18 * (1 - m - d) + 0 * m + 0.25 * d,
-                        -0.28 * (1 - m - d) + 0.05 * m - 0.1 * d
+                        wingFlareX * (1 - m - d) + 0 * m - 0.25 * d,
+                        0.15 * (1 - m - d) + 0 * m + 0.35 * d,
+                        -0.28 * (1 - m - d) + 0 * m - 0.15 * d
                     );
                     rig.rightDoorWing.position.set(
-                        1.35 * (1 - m - d) + 1.25 * m + 0.75 * d,
-                        1.35 * (1 - m - d) - 0.15 * m + 0.35 * d,
-                        -0.65 * (1 - m - d) - 0.15 * m - 0.45 * d
+                        1.32 * (1 - m - d) + 1.30 * m + 0.72 * d,
+                        1.25 * (1 - m - d) - 0.38 * m + 0.22 * d,
+                        -0.65 * (1 - m - d) - 0.10 * m - 0.45 * d
                     );
                     rig.rightDoorWing.rotation.set(
-                        0.15 * (1 - m - d) + 0 * m + 0.2 * d,
-                        -0.18 * (1 - m - d) + 0 * m - 0.25 * d,
-                        0.28 * (1 - m - d) - 0.05 * m + 0.1 * d
+                        wingFlareX * (1 - m - d) + 0 * m - 0.25 * d,
+                        -0.15 * (1 - m - d) + 0 * m - 0.35 * d,
+                        0.28 * (1 - m - d) + 0 * m + 0.15 * d
                     );
-                    const wingScale = THREE.MathUtils.lerp(1.0, 0.85, d);
+                    const wingScale = THREE.MathUtils.lerp(1.0, 0.65, d);
                     rig.leftDoorWing.scale.setScalar(wingScale);
                     rig.rightDoorWing.scale.setScalar(wingScale);
                 } else {
@@ -12705,7 +12971,7 @@
                     rig.leftLegWheelMount.position.z = wheelGroundShiftZ;
                     rig.rightLegWheelMount.position.z = wheelGroundShiftZ;
                 }
-            } else if (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') {
+            } else if (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') {
                 rig.leftLeg.position.set(
                     -0.88 * (1 - m - d) - 0.92 * m - dinoLegX * d,
                     2.35 * (1 - m - d) + 0.95 * m + dinoLegY * d,
@@ -12724,8 +12990,8 @@
                     rig.leftLegWheelMount.position.z = wheelGroundShiftZ;
                     rig.rightLegWheelMount.position.z = wheelGroundShiftZ;
                 }
-            } else if (rig.botType === 'CHASE' || rig.botType === 'BUMBLEBEE') {
-                const legPitchVeh = (rig.botType === 'CHASE') ? -(Math.PI / 2) : (Math.PI / 2);
+            } else if (rig.botType === 'CHASE') {
+                const legPitchVeh = -(Math.PI / 2);
                 rig.leftLeg.position.set(
                     -0.82 * (1 - m - d) - 0.74 * m - dinoLegX * d,
                     2.35 * (1 - m - d) + 0.86 * m + dinoLegY * d,
@@ -12740,7 +13006,7 @@
                 rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + legPitchVeh * m + dinoLegRotR * d;
 
                 if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
-                    const wheelZ = 0.05 * (1 - m) + (rig.botType === 'CHASE' ? -0.16 : 0.32) * m;
+                    const wheelZ = 0.05 * (1 - m) - 0.16 * m;
                     rig.leftLegWheelMount.position.z = wheelZ;
                     rig.rightLegWheelMount.position.z = wheelZ;
                 }
@@ -17865,51 +18131,81 @@
                 armR.rotation.z = 0.3;
                 moroccoG.add(armL, armR);
 
-                // Head, Silver Handlebar Mustache & Monocle
-                const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 14), matMoroccoSkin);
-                head.position.y = 2.05;
-                const nose = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.15, 0.14), matMoroccoSkin);
-                nose.position.set(0, 2.04, 0.3);
+                // Head, Sleek Black Swept-Back Hair, Pencil Mustache & Gold Monocle (Show-Accurate)
+                const head = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.22, 0.62, 12), matMoroccoSkin);
+                head.position.y = 2.06;
+                const nose = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.18, 0.16), matMoroccoSkin);
+                nose.position.set(0, 2.02, 0.28);
 
-                // Handlebar mustache
-                const mustache = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.1, 0.12), matMoroccoMustache);
-                mustache.position.set(0, 1.95, 0.3);
-                [-0.26, 0.26].forEach((mx, idx) => {
-                    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.16, 6).rotateZ(idx === 0 ? -1.1 : 1.1), matMoroccoMustache);
-                    tip.position.set(mx, 2.02, 0.29);
-                    mustache.add(tip);
+                // Sleek Black Swept-Back Hair with Widow's Peak & Wings
+                const hairDome = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.31, 14, 12).scale(1.02, 0.95, 1.15),
+                    matMorBotBlack
+                );
+                hairDome.position.set(0, 2.22, -0.04);
+                const widowPeak = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.09, 0.18, 6).rotateX(Math.PI),
+                    matMorBotBlack
+                );
+                widowPeak.position.set(0, 2.24, 0.28);
+
+                // Swept-back side wings
+                [-0.28, 0.28].forEach((wx, idx) => {
+                    const wing = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.08, 0.25, 6).rotateZ(idx === 0 ? 1.25 : -1.25),
+                        matMorBotBlack
+                    );
+                    wing.position.set(wx, 2.22, -0.06);
+                    hairDome.add(wing);
                 });
 
-                // Silver Monocle on Right Eye
+                // Pointed Ears
+                [-0.27, 0.27].forEach((ex, idx) => {
+                    const ear = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.06, 0.16, 6).rotateZ(idx === 0 ? -0.8 : 0.8),
+                        matMoroccoSkin
+                    );
+                    ear.position.set(ex, 2.08, 0.02);
+                    moroccoG.add(ear);
+                });
+
+                // Trim Black Pencil Mustache
+                const mustache = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.05, 0.08), matMorBotBlack);
+                mustache.position.set(0, 1.94, 0.26);
+
+                // Gold Monocle on Right Eye with Purple Tinted Glass
                 const monocleRim = new THREE.Mesh(
-                    new THREE.TorusGeometry(0.1, 0.02, 8, 12),
-                    matMorBotSilver
+                    new THREE.TorusGeometry(0.1, 0.022, 8, 16),
+                    matMoroccoGold
                 );
-                monocleRim.position.set(-0.14, 2.12, 0.28);
+                monocleRim.position.set(-0.11, 2.12, 0.26);
                 const monocleGlass = new THREE.Mesh(
-                    new THREE.CircleGeometry(0.09, 12),
-                    matBlimpWindowBlue
+                    new THREE.CircleGeometry(0.09, 14),
+                    new THREE.MeshBasicMaterial({ color: 0xc084fc, transparent: true, opacity: 0.55, side: THREE.DoubleSide })
                 );
-                monocleGlass.position.set(-0.14, 2.12, 0.285);
+                monocleGlass.position.set(-0.11, 2.12, 0.265);
 
-                // Tall Victorian Top Hat with Purple Silk Ribbon
-                const hatBrim = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.55, 0.55, 0.06, 18),
+                // Hanging Monocle Cord down to Lapel Pin
+                const monocleCord = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.012, 0.012, 0.45, 6),
                     matMorBotBlack
                 );
-                hatBrim.position.y = 2.3;
-                const hatCrown = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.38, 0.44, 0.65, 18),
-                    matMorBotBlack
-                );
-                hatCrown.position.y = 2.65;
-                const hatRibbon = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.41, 0.43, 0.12, 18),
-                    matMoroccoPurple
-                );
-                hatRibbon.position.y = 2.42;
+                monocleCord.position.set(-0.16, 1.88, 0.24);
+                monocleCord.rotation.z = -0.3;
 
-                moroccoG.add(head, nose, mustache, monocleRim, monocleGlass, hatBrim, hatCrown, hatRibbon);
+                // Gold Verne Device Oval Brooch on Shirt Collar
+                const verneBrooch = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.09, 0.09, 0.04, 12).rotateX(Math.PI / 2),
+                    matMoroccoGold
+                );
+                verneBrooch.position.set(0, 1.55, 0.32);
+                const verneGem = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.06, 10, 10),
+                    matMoroccoPurpleGlow
+                );
+                verneGem.position.set(0, 1.55, 0.34);
+
+                moroccoG.add(head, nose, hairDome, widowPeak, mustache, monocleRim, monocleGlass, monocleCord, verneBrooch, verneGem);
                 cageG.add(moroccoG);
 
                 winchG.add(cageG);
