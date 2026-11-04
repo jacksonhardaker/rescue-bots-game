@@ -625,12 +625,6 @@
             <div class="text-base sm:text-xl font-bold text-white" id="toast-title">Heatwave Deployed!</div>
         </div>
 
-        <!-- Center HQ Bay Proximity Prompt -->
-        <div id="hq-bay-prompt" class="hidden fixed top-40 left-1/2 -translate-x-1/2 z-30 hud-glass border-2 border-cyan-400 px-5 py-2.5 rounded-2xl text-center shadow-xl pointer-events-auto">
-            <div class="text-[10px] uppercase tracking-widest text-cyan-300 font-bold">INSIDE COMMAND HQ SWAP BAY</div>
-            <div class="text-xs sm:text-sm font-bold text-white mt-0.5">Tap any Rescue Bot on the Roster or press <span class="text-amber-300">[1 - 4]</span> to Switch!</div>
-        </div>
-
         <!-- 3D Comic Speech Bubble Floating Above the Speaking Character -->
         <div id="npc-world-bubble" class="hidden fixed z-40 pointer-events-none transition-transform duration-100 ease-out origin-bottom select-none" style="transform: translate(-50%, -100%);">
             <div class="relative bg-white/95 text-slate-900 border-2 border-slate-950 px-3.5 py-2 rounded-2xl shadow-2xl max-w-[280px] sm:max-w-[340px] flex flex-col gap-0.5">
@@ -3791,10 +3785,6 @@
             if (Math.abs(x - (-60)) <= 13.0 && Math.abs(z - 1480) <= 13.0) {
                 return 1.0;
             }
-            // Sky Array Communications Peak Helipad Deck at (762, -780)
-            if (Math.abs(x - 762) <= 9.2 && Math.abs(z - (-780)) <= 9.2) {
-                return 68.8;
-            }
             // South Harbor Ferry Boarding Bridge Ramp & Pedestrian Side Gangway
             if (x >= 14.5 && x <= 38.0 && z >= 1202.0 && z <= 1220.0) {
                 const t = Math.max(0, Math.min(1, (x - 15.0) / 21.0));
@@ -6373,13 +6363,6 @@
         const arrTower = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 5.2, 34, 8), matSteel);
         arrTower.position.y = 17;
         arrayGroup.add(arrTower);
-        const arrPad = new THREE.Mesh(
-            new THREE.BoxGeometry(18, 0.8, 18),
-            new THREE.MeshBasicMaterial({ map: texHelipad })
-        );
-        arrPad.position.set(-18, 0.4, 0);
-        arrPad.userData.noOutline = true;
-        arrayGroup.add(arrPad);
         applyCartoonInkOutlines(arrayGroup, 1.04, true);
         scene.add(arrayGroup);
         registerCullableObject(arrayGroup, 780, arrY + 18, -780, 48);
@@ -6749,15 +6732,6 @@
         ruinsGroup.add(waywardEnergonShard);
 
         waywardIslandGroup.add(ruinsGroup);
-
-        // C. Cliffside Wayward Helipad (X: 1840, Z: 480 => local: -120, -60)
-        const heliGroup = new THREE.Group();
-        heliGroup.position.set(-120, 0, -60);
-        const wHelipad = new THREE.Mesh(new THREE.BoxGeometry(22, 1.2, 22), new THREE.MeshBasicMaterial({ map: texHelipad }));
-        wHelipad.position.y = 0.6;
-        wHelipad.userData.noOutline = true;
-        heliGroup.add(wHelipad);
-        waywardIslandGroup.add(heliGroup);
 
         // D. Shipwreck Cove on East Reef (X: 2180, Z: 620 => local: 220, 80)
         const shipGroup = new THREE.Group();
@@ -7337,52 +7311,11 @@
             }
         }
 
-        // Fast-Travel & Bot-Swap Outpost Pads across the 10X Island
+        // Fast-Travel & Bot-Swap Outpost Pads across the 10X Island (HQ only; scattered outpost pads removed)
         const OUTPOST_PADS = [
-            { name: "Rescue Bots HQ", x: 0, z: -10, r: 14.0, isHQ: true },
-            { name: "South Harbor Outpost", x: 0, z: 1110, r: 14.0 },
-            { name: "West Tech Outpost", x: -1090, z: 25, r: 14.0 },
-            { name: "North Observatory Pad", x: 0, z: -1090, r: 14.0 },
-            { name: "Lighthouse Point Pad", x: 1120, z: 50, r: 14.0 },
-            { name: "Sky Array Outpost", x: 762, z: -780, r: 14.0 }
+            { name: "Rescue Bots HQ", x: 0, z: -10, r: 14.0, isHQ: true }
         ];
         const outpostPadRings = [];
-
-        OUTPOST_PADS.forEach(pad => {
-            if (pad.isHQ) return; // HQ already has swapPadGroup built above
-            const py = getTerrainHeight(pad.x, pad.z);
-            const padGroup = new THREE.Group();
-            padGroup.position.set(pad.x, py + 0.14, pad.z);
-
-            const ringMesh = new THREE.Mesh(
-                new THREE.RingGeometry(6.8, 8.8, 32),
-                new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide })
-            );
-            ringMesh.rotation.x = -Math.PI / 2;
-            ringMesh.userData.noOutline = true;
-            padGroup.add(ringMesh);
-            outpostPadRings.push(ringMesh);
-
-            const innerGlow = new THREE.Mesh(
-                new THREE.CircleGeometry(6.6, 32),
-                new THREE.MeshBasicMaterial({ color: 0x0284c7, transparent: true, opacity: 0.32, side: THREE.DoubleSide })
-            );
-            innerGlow.rotation.x = -Math.PI / 2;
-            innerGlow.position.y = -0.02;
-            innerGlow.userData.noOutline = true;
-            padGroup.add(innerGlow);
-
-            const beaconPillar = new THREE.Mesh(
-                new THREE.CylinderGeometry(1.1, 1.1, 24, 12, 1, true),
-                new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false })
-            );
-            beaconPillar.position.y = 12;
-            beaconPillar.userData.noOutline = true;
-            padGroup.add(beaconPillar);
-
-            scene.add(padGroup);
-            registerCullableObject(padGroup, pad.x, py + 12, pad.z, 30);
-        });
 
         // =====================================================================
         // 5C. SECTOR-CHUNKED INSTANCED FORESTS, BUSHES & ROCKS FOR VIEWPORT CULLING
@@ -13550,7 +13483,7 @@
                 voicePitch: 0.72,
                 badgeColor: '#dc2626',
                 x: 762,
-                y: 68.8,
+                y: 68.0,
                 z: -780,
                 rotY: -2.35,
                 dialogues: [
@@ -15634,7 +15567,7 @@
                 mCtx.fillRect(vx - 1.5, vz - 1.5, 3.0, 3.0);
             }
 
-            // Draw 6 Fast-Travel Outpost Pads (Cyan Squares)
+            // Draw Rescue Bots HQ Swap Pad (Cyan Square)
             OUTPOST_PADS.forEach(pad => {
                 const ox = cx + pad.x * mapScale;
                 const oz = cy + pad.z * mapScale;
@@ -16348,21 +16281,6 @@
                 });
             });
 
-            // Check Proximity to Rescue Bots HQ Swap Pad or any Regional Outpost Pad
-            let onAnyOutpostPad = false;
-            for (let i = 0; i < OUTPOST_PADS.length; i++) {
-                const pad = OUTPOST_PADS[i];
-                if (Math.hypot(player.pos.x - pad.x, player.pos.z - pad.z) < pad.r) {
-                    onAnyOutpostPad = true;
-                    break;
-                }
-            }
-            const hqPrompt = document.getElementById('hq-bay-prompt');
-            if (onAnyOutpostPad) {
-                hqPrompt.classList.remove('hidden');
-            } else {
-                hqPrompt.classList.add('hidden');
-            }
 
             // Dynamic Shadow Tracking across the 10X Island (Texel-snapped to prevent shadow edge swimming)
             const snapX = Math.round(player.pos.x / 4) * 4;
