@@ -978,6 +978,15 @@
                     </span>
                     <span id="sound-label">Sounds: ON</span>
                 </button>
+                <button id="btn-settings" class="bg-slate-900/80 hover:bg-slate-800/90 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-cyan-400/50 text-white w-full text-left" title="Settings, Graphics Quality & Controls">
+                    <span class="w-5 h-5 flex items-center justify-center shrink-0 text-cyan-400">
+                        <svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                        </svg>
+                    </span>
+                    <span>Settings & Controls</span>
+                </button>
                 <button id="btn-about-legal" class="bg-slate-900/80 hover:bg-slate-800/90 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-cyan-400/50 text-white w-full text-left" title="About this fan project & legal notices">
                     <span class="w-5 h-5 flex items-center justify-center shrink-0 text-cyan-300">
                         <svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1368,6 +1377,204 @@
             <div class="pt-3 border-t border-slate-700/80 flex justify-end">
                 <button id="btn-ack-about" class="tactile-btn bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold px-5 py-2 rounded-xl text-xs sm:text-sm">
                     Back to Griffin Rock
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings, Graphics & Controls Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+        <div class="hud-glass border-2 border-cyan-400 rounded-3xl max-w-xl w-full p-4 sm:p-6 text-left shadow-2xl relative max-h-[92vh] flex flex-col">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700/80">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 font-black">
+                        ⚙️
+                    </div>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-white leading-tight">Settings & Controls</h2>
+                        <p class="text-[10px] text-cyan-300 font-mono">Griffin Rock System Preferences</p>
+                    </div>
+                </div>
+                <button id="btn-close-settings" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg" title="Close">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Tab Navigation Bar -->
+            <div class="flex gap-1.5 sm:gap-2 pt-3 pb-2 border-b border-slate-800/80 overflow-x-auto select-none">
+                <button id="tab-btn-controls" class="settings-tab-btn active px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-cyan-500/30 border border-cyan-400" data-tab="controls">
+                    🎮 Controls
+                </button>
+                <button id="tab-btn-graphics" class="settings-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800/50 border border-transparent" data-tab="graphics">
+                    🖥️ Graphics
+                </button>
+                <button id="tab-btn-audio" class="settings-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800/50 border border-transparent" data-tab="audio">
+                    🔊 Audio
+                </button>
+                <button id="tab-btn-save" class="settings-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800/50 border border-transparent" data-tab="save">
+                    💾 Save Data
+                </button>
+            </div>
+
+            <!-- Scrollable Tab Content Container -->
+            <div class="overflow-y-auto py-3 space-y-4 text-xs text-slate-300 leading-relaxed pr-1 flex-1">
+                <!-- 1. CONTROLS TAB -->
+                <div id="tab-pane-controls" class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-400 text-[11px]">Click any button below, then press any key to rebind.</span>
+                        <button id="btn-reset-controls" class="text-[10px] px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg border border-cyan-500/30 font-bold">
+                            Reset Defaults
+                        </button>
+                    </div>
+                    <div id="settings-controls-list" class="space-y-2">
+                        <!-- Dynamically populated keybind rows -->
+                    </div>
+                </div>
+
+                <!-- 2. GRAPHICS TAB -->
+                <div id="tab-pane-graphics" class="hidden space-y-4">
+                    <!-- Presets -->
+                    <div>
+                        <label class="block font-bold text-white text-[11px] uppercase tracking-wider mb-1.5">Quick Quality Preset</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button class="gfx-preset-btn px-2 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white" data-preset="low">Low</button>
+                            <button class="gfx-preset-btn px-2 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white" data-preset="medium">Medium</button>
+                            <button class="gfx-preset-btn px-2 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white" data-preset="high">High</button>
+                            <button class="gfx-preset-btn px-2 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white" data-preset="ultra">Ultra</button>
+                        </div>
+                    </div>
+
+                    <!-- Shadows -->
+                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white text-xs">Shadow Distance & Quality</span>
+                            <span id="label-gfx-shadows" class="text-cyan-400 font-mono text-[11px]">High (380m)</span>
+                        </div>
+                        <div class="grid grid-cols-4 gap-1.5 pt-1">
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="shadows" data-val="off">Off</button>
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="shadows" data-val="low">Low</button>
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="shadows" data-val="medium">Med</button>
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="shadows" data-val="high">High</button>
+                        </div>
+                    </div>
+
+                    <!-- Comic Ink Outlines -->
+                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-white text-xs">Comic Ink Outlines</div>
+                            <div id="settings-outline-stats" class="text-[10px] text-slate-400">Inverted-hull black ink cartoon edges. Turn off for ~40% FPS boost!</div>
+                        </div>
+                        <button id="btn-toggle-outlines" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-400">
+                            ON
+                        </button>
+                    </div>
+
+                    <!-- Scenery Draw Distance -->
+                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white text-xs">Scenery Draw Distance & Fog</span>
+                            <span id="label-gfx-drawdist" class="text-cyan-400 font-mono text-[11px]">Far (2400m)</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5 pt-1">
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="drawDistance" data-val="low">Near (1300m)</button>
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="drawDistance" data-val="medium">Med (1800m)</button>
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="drawDistance" data-val="high">Far (2400m)</button>
+                        </div>
+                    </div>
+
+                    <!-- Resolution Scale -->
+                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white text-xs">Internal Render Resolution</span>
+                            <span id="label-gfx-res" class="text-cyan-400 font-mono text-[11px]">Native / Sharp</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5 pt-1">
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="resolution" data-val="low">Performance (1x)</button>
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="resolution" data-val="medium">Balanced (1.35x)</button>
+                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="resolution" data-val="high">Sharp (2x Retina)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. AUDIO TAB -->
+                <div id="tab-pane-audio" class="hidden space-y-4">
+                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                        <div>
+                            <span class="font-bold text-white text-xs">Mute All Audio</span>
+                            <div class="text-[10px] text-slate-400">Quickly silence master output</div>
+                        </div>
+                        <button id="btn-toggle-mute" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 border border-slate-700">
+                            UNMUTED
+                        </button>
+                    </div>
+
+                    <!-- Master Volume -->
+                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white text-xs">Master Volume</span>
+                            <span id="label-vol-master" class="text-cyan-400 font-mono text-xs">100%</span>
+                        </div>
+                        <input id="slider-vol-master" type="range" min="0" max="100" value="100" class="w-full accent-cyan-400 cursor-pointer">
+                    </div>
+
+                    <!-- SFX Volume -->
+                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white text-xs">Sound Effects (Transform, Horn, Sirens)</span>
+                            <span id="label-vol-sfx" class="text-cyan-400 font-mono text-xs">100%</span>
+                        </div>
+                        <input id="slider-vol-sfx" type="range" min="0" max="100" value="100" class="w-full accent-cyan-400 cursor-pointer">
+                    </div>
+
+                    <!-- Engine & Rotor Loops Volume -->
+                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white text-xs">Engine & Helicopter Rotor Sounds</span>
+                            <span id="label-vol-engine" class="text-cyan-400 font-mono text-xs">75%</span>
+                        </div>
+                        <input id="slider-vol-engine" type="range" min="0" max="100" value="75" class="w-full accent-cyan-400 cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- 4. SAVE DATA TAB -->
+                <div id="tab-pane-save" class="hidden space-y-4">
+                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-white text-xs">Career Save Status</span>
+                            <span id="settings-save-version" class="text-emerald-400 font-mono text-[10px] font-bold">V4 (Migrated & Synchronized)</span>
+                        </div>
+                        <div id="settings-save-stats" class="grid grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
+                            <!-- Populated in syncProgressionHUD -->
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button id="btn-export-save" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-1.5">
+                            <span>📥</span> Export Save JSON
+                        </button>
+                        <label class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-1.5 cursor-pointer text-center">
+                            <span>📤</span> Import Save JSON
+                            <input id="file-import-save" type="file" accept=".json" class="hidden">
+                        </label>
+                    </div>
+
+                    <div class="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-rose-300 text-xs">Reset Career Progress</div>
+                            <div class="text-[10px] text-rose-200/80">Wipes island emergency & energon stats. Settings are preserved.</div>
+                        </div>
+                        <button id="btn-reset-career" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="pt-3 border-t border-slate-700/80 flex justify-end">
+                <button id="btn-ack-settings" class="tactile-btn bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold px-5 py-2 rounded-xl text-xs sm:text-sm">
+                    Done
                 </button>
             </div>
         </div>
@@ -2025,15 +2232,54 @@
                 this.ctx = null;
                 this.enabled = true;
                 this.loopsReady = false;
+                this.masterBus = null;
+                this.sfxBus = null;
+                this.engineBus = null;
             }
             init() {
                 if (!this.ctx) {
                     const AudioCtx = window.AudioContext || window.webkitAudioContext;
                     if (AudioCtx) this.ctx = new AudioCtx();
                 }
+                if (this.ctx && !this.masterBus) {
+                    try {
+                        this.masterBus = this.ctx.createGain();
+                        this.sfxBus = this.ctx.createGain();
+                        this.engineBus = this.ctx.createGain();
+
+                        this.sfxBus.connect(this.masterBus);
+                        this.engineBus.connect(this.masterBus);
+                        this.masterBus.connect(this.getSfxDest());
+                        this.applySettingsVolumes();
+                    } catch (e) {
+                        console.warn("Audio bus creation failed:", e);
+                    }
+                }
                 if (this.ctx && this.ctx.state === 'suspended') {
                     this.ctx.resume();
                 }
+            }
+            applySettingsVolumes() {
+                if (!this.ctx || !this.masterBus) return;
+                const aud = (typeof gameSettings !== "undefined" && gameSettings.audio)
+                    ? gameSettings.audio
+                    : { masterVolume: 1.0, sfxVolume: 1.0, engineVolume: 0.75, muted: false };
+                const now = this.ctx.currentTime;
+                const isMuted = aud.muted || !this.enabled;
+                const m = isMuted ? 0 : Math.max(0, Math.min(1.0, aud.masterVolume));
+                const s = Math.max(0, Math.min(1.0, aud.sfxVolume));
+                const e = Math.max(0, Math.min(1.0, aud.engineVolume));
+                this.masterBus.gain.setValueAtTime(m, now);
+                this.sfxBus.gain.setValueAtTime(s, now);
+                this.engineBus.gain.setValueAtTime(e, now);
+            }
+            getSfxDest() {
+                this.init();
+                return this.sfxBus || (this.ctx ? this.ctx.destination : null);
+            }
+            getEngineDest() {
+                this.init();
+                return this.engineBus || (this.ctx ? this.ctx.destination : null);
             }
             playSpeechPop() {
                 if (!this.enabled) return;
@@ -2048,7 +2294,7 @@
                 gain.gain.setValueAtTime(0.14, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.13);
             }
@@ -2119,7 +2365,7 @@
                     wetDelay.connect(wetGain);
                     dryGain.connect(env);
                     wetGain.connect(env);
-                    env.connect(ctx.destination);
+                    env.connect(this.getSfxDest());
 
                     // 1. Dual detuned sawtooth/square oscillators with rapid 55Hz servo-ratchet pitch modulation
                     [1.0, 1.498].forEach((harm, hIdx) => {
@@ -2185,7 +2431,7 @@
                     gain.gain.setValueAtTime(isTRex ? 0.18 : 0.13, now + idx * 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + roarDuration);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + idx * 0.04);
                     osc.stop(now + roarDuration + 0.02);
                 });
@@ -2203,7 +2449,7 @@
                     gain.gain.setValueAtTime(0.14, now + i * 0.06);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.22);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + i * 0.06);
                     osc.stop(now + i * 0.06 + 0.24);
                 });
@@ -2221,7 +2467,7 @@
                 gain.gain.setValueAtTime(0.26, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.4);
             }
@@ -2238,7 +2484,7 @@
                 gain.gain.setValueAtTime(0.06, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.16);
             }
@@ -2256,7 +2502,7 @@
                 gain.gain.setValueAtTime(0.09, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.4);
             }
@@ -2274,7 +2520,7 @@
                     gain.gain.setValueAtTime(0.12, now + i * 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.2);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + i * 0.04);
                     osc.stop(now + i * 0.04 + 0.21);
                 });
@@ -2292,7 +2538,7 @@
                     gain.gain.setValueAtTime(0.15, now + i * 0.085);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.085 + 0.35);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + i * 0.085);
                     osc.stop(now + i * 0.085 + 0.36);
                 });
@@ -2310,7 +2556,7 @@
                     gain.gain.setValueAtTime(0.11, now + i * 0.055);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.16);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + i * 0.055);
                     osc.stop(now + i * 0.055 + 0.17);
                 });
@@ -2328,7 +2574,7 @@
                     gain.gain.setValueAtTime(0.12, now + i * 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.18);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + i * 0.04);
                     osc.stop(now + i * 0.04 + 0.19);
                 });
@@ -2346,7 +2592,7 @@
                     gain.gain.setValueAtTime(0.10, now + i * 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.14);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + i * 0.04);
                     osc.stop(now + i * 0.04 + 0.15);
                 });
@@ -2364,7 +2610,7 @@
                     gain.gain.setValueAtTime(0.14, now + i * 0.045);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.045 + 0.24);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + i * 0.045);
                     osc.stop(now + i * 0.045 + 0.25);
                 });
@@ -2382,7 +2628,7 @@
                     gain.gain.setValueAtTime(0.18, now + i * 0.075);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.075 + 0.48);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + i * 0.075);
                     osc.stop(now + i * 0.075 + 0.5);
                 });
@@ -2403,7 +2649,7 @@
                     gain.gain.setValueAtTime(0.09, t);
                     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.065);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(t);
                     osc.stop(t + 0.07);
                 }
@@ -2422,7 +2668,7 @@
                     gain.gain.setValueAtTime(0.18, t);
                     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(t);
                     osc.stop(t + 0.4);
                 });
@@ -2449,7 +2695,7 @@
 
                 osc.connect(filter);
                 filter.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
 
                 osc.start(now);
                 osc.stop(now + 1.55);
@@ -2468,7 +2714,7 @@
                 gain.gain.setValueAtTime(0.18, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 1.25);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 1.3);
             }
@@ -2485,7 +2731,7 @@
                 gain.gain.setValueAtTime(0.18, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.15);
             }
@@ -2503,7 +2749,7 @@
                     gain.gain.setValueAtTime(0.15, now + idx * 0.09);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.55);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + idx * 0.09);
                     osc.stop(now + idx * 0.09 + 0.6);
                 });
@@ -2522,7 +2768,7 @@
                     gain.gain.setValueAtTime(0.18, now + idx * 0.08);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.7);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + idx * 0.08);
                     osc.stop(now + idx * 0.08 + 0.75);
                 });
@@ -2541,7 +2787,7 @@
                     gain.gain.setValueAtTime(idx === 0 ? 0.22 : 0.08, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now);
                     osc.stop(now + 0.9);
                 });
@@ -2567,7 +2813,7 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
                     osc.connect(filter);
                     filter.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now);
                     osc.stop(now + 0.72);
                 });
@@ -2593,7 +2839,7 @@
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
                 osc.connect(filter);
                 filter.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.92);
             }
@@ -2611,7 +2857,7 @@
                     gain.gain.setValueAtTime(0.12, t);
                     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(t);
                     osc.stop(t + 0.13);
                 });
@@ -2630,7 +2876,7 @@
                 gain.gain.setValueAtTime(0.35, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.95);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 1.0);
 
@@ -2642,7 +2888,7 @@
                 gainHi.gain.setValueAtTime(0.2, now);
                 gainHi.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
                 oscHi.connect(gainHi);
-                gainHi.connect(this.ctx.destination);
+                gainHi.connect(this.getSfxDest());
                 oscHi.start(now);
                 oscHi.stop(now + 0.6);
             }
@@ -2662,7 +2908,7 @@
                     gain.gain.setValueAtTime(idx === 2 ? 0.08 : 0.22, now + 1.1);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 1.45);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now);
                     osc.stop(now + 1.5);
                 });
@@ -2684,7 +2930,7 @@
                     gain.gain.setValueAtTime(0.07, now + 0.14);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.20);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now);
                     osc.stop(now + 0.22);
                 });
@@ -2709,7 +2955,7 @@
                     gain.gain.setValueAtTime(0.065, now + 0.85);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 1.25);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now);
                     osc.stop(now + 1.3);
                 });
@@ -2728,7 +2974,7 @@
                     gain.gain.setValueAtTime(idx === 0 ? 0.08 : 0.03, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now);
                     osc.stop(now + 0.25);
                 });
@@ -2747,7 +2993,7 @@
                 gain.gain.setValueAtTime(0.12, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.16);
             }
@@ -2765,7 +3011,7 @@
                 gain.gain.setValueAtTime(0.28, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.38);
             }
@@ -2784,7 +3030,7 @@
                 gain.gain.linearRampToValueAtTime(0.25, now + 0.08);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.7);
             }
@@ -2802,7 +3048,7 @@
                 gain.gain.setValueAtTime(0.28, now);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.58);
             }
@@ -2820,7 +3066,7 @@
                     gain.gain.setValueAtTime(0.18, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now);
                     osc.stop(now + 0.5);
                 });
@@ -2841,7 +3087,7 @@
                 gain.gain.linearRampToValueAtTime(0.24, now + 0.08);
                 gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.getSfxDest());
                 osc.start(now);
                 osc.stop(now + 0.72);
             }
@@ -2860,7 +3106,7 @@
                     gain.gain.linearRampToValueAtTime(0.16, now + idx * 0.09 + 0.02);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.38);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(now + idx * 0.09);
                     osc.stop(now + idx * 0.09 + 0.42);
                 });
@@ -2906,7 +3152,7 @@
                 this.engineOsc2.connect(this.engineSubGain);
                 this.engineSubGain.connect(this.engineFilter);
                 this.engineFilter.connect(this.engineGain);
-                this.engineGain.connect(ctx.destination);
+                this.engineGain.connect(this.getEngineDest());
 
                 this.engineOsc1.start();
                 this.engineOsc2.start();
@@ -2962,7 +3208,7 @@
                 this.rotorThumpOsc.connect(this.rotorThumpGain);
                 this.rotorThumpGain.connect(this.rotorChopGain);
                 this.rotorChopGain.connect(this.rotorGain);
-                this.rotorGain.connect(ctx.destination);
+                this.rotorGain.connect(this.getEngineDest());
 
                 this.rotorNoiseSrc.start();
                 this.rotorThumpOsc.start();
@@ -2982,7 +3228,7 @@
 
                 this.sirenOsc.connect(this.sirenFilter);
                 this.sirenFilter.connect(this.sirenGain);
-                this.sirenGain.connect(ctx.destination);
+                this.sirenGain.connect(this.getSfxDest());
                 this.sirenOsc.start();
             }
             stopContinuousLoops() {
@@ -3108,7 +3354,7 @@
 
                         osc.connect(filter);
                         filter.connect(gain);
-                        gain.connect(this.ctx.destination);
+                        gain.connect(this.getSfxDest());
                         osc.start(t + idx * 0.16);
                         osc.stop(t + idx * 0.16 + 0.48);
                     });
@@ -3134,7 +3380,7 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
 
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
+                    gain.connect(this.getSfxDest());
                     osc.start(t);
                     osc.stop(t + 0.26);
 
@@ -3147,7 +3393,7 @@
                     sparkGain.gain.setValueAtTime(0.06, t);
                     sparkGain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
                     sparkOsc.connect(sparkGain);
-                    sparkGain.connect(this.ctx.destination);
+                    sparkGain.connect(this.getSfxDest());
                     sparkOsc.start(t);
                     sparkOsc.stop(t + 0.36);
                 } catch (e) {
@@ -3174,7 +3420,7 @@
                         gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.12 + (idx === fanNotes.length - 1 ? 0.95 : 0.3));
 
                         osc.connect(gain);
-                        gain.connect(this.ctx.destination);
+                        gain.connect(this.getSfxDest());
                         osc.start(t + idx * 0.12);
                         osc.stop(t + idx * 0.12 + 1.0);
                     });
@@ -3214,7 +3460,7 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
 
                     osc.connect(gain);
-                    gain.connect(ctx.destination);
+                    gain.connect(this.getSfxDest());
 
                     osc.start(now);
                     lfo.start(now);
@@ -3243,7 +3489,7 @@
 
                     noiseSrc.connect(filter);
                     filter.connect(noiseGain);
-                    noiseGain.connect(ctx.destination);
+                    noiseGain.connect(this.getSfxDest());
                     noiseSrc.start(now);
                     noiseSrc.stop(now + 0.31);
 
@@ -3256,7 +3502,7 @@
                     thumpGain.gain.setValueAtTime(0.15, now);
                     thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
                     thumpOsc.connect(thumpGain);
-                    thumpGain.connect(ctx.destination);
+                    thumpGain.connect(this.getSfxDest());
                     thumpOsc.start(now);
                     thumpOsc.stop(now + 0.26);
                 } catch (e) {
@@ -3294,7 +3540,7 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
 
                     osc.connect(gain);
-                    gain.connect(ctx.destination);
+                    gain.connect(this.getSfxDest());
 
                     osc.start(now);
                     lfo.start(now);
@@ -3323,7 +3569,7 @@
 
                     noiseSrc.connect(filter);
                     filter.connect(noiseGain);
-                    noiseGain.connect(ctx.destination);
+                    noiseGain.connect(this.getSfxDest());
                     noiseSrc.start(now);
                     noiseSrc.stop(now + 0.30);
 
@@ -3336,7 +3582,7 @@
                     thumpGain.gain.setValueAtTime(0.13, now);
                     thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
                     thumpOsc.connect(thumpGain);
-                    thumpGain.connect(ctx.destination);
+                    thumpGain.connect(this.getSfxDest());
                     thumpOsc.start(now);
                     thumpOsc.stop(now + 0.27);
                 } catch (e) {
@@ -3345,6 +3591,213 @@
             }
         }
         const sfx = new RescueSoundFX();
+
+        // =====================================================================
+        // PERSISTENT GAME SETTINGS & PREFERENCES (Controls, Graphics & Audio)
+        // Stored in rescue_bots_settings_v1 - Persists independently across versions!
+        // =====================================================================
+        const SETTINGS_STORAGE_KEY = 'rescue_bots_settings_v1';
+        const DEFAULT_SETTINGS = {
+            version: 1,
+            audio: {
+                masterVolume: 1.0,
+                sfxVolume: 1.0,
+                engineVolume: 0.75,
+                muted: false
+            },
+            graphics: {
+                preset: 'high',
+                shadows: 'high', // 'off' | 'low' | 'medium' | 'high'
+                outlines: true,
+                drawDistance: 'high', // 'low' (1300) | 'medium' (1800) | 'high' (2400)
+                resolution: 'high' // 'low' (1x) | 'medium' (1.35x) | 'high' (2x)
+            },
+            controls: {
+                forward: ['KeyW', 'ArrowUp'],
+                backward: ['KeyS', 'ArrowDown'],
+                left: ['KeyA', 'ArrowLeft'],
+                right: ['KeyD', 'ArrowRight'],
+                transform: ['Space'],
+                primaryAction: ['KeyE', 'ShiftLeft', 'ShiftRight'],
+                secondaryAction: ['KeyQ', 'KeyF'],
+                descendAction: ['KeyC'],
+                siren: ['KeyH'],
+                dock: ['KeyX'],
+                buddyCycle: ['KeyB'],
+                weatherCycle: ['KeyT'],
+                map: ['KeyM']
+            }
+        };
+
+        const ACTION_LABELS = {
+            forward: 'Drive Forward / Ascend Flight',
+            backward: 'Reverse / Brake',
+            left: 'Steer Left',
+            right: 'Steer Right',
+            transform: 'Transform (Bot / Vehicle / Dino)',
+            primaryAction: 'Primary Special (Water/Drill/Winch)',
+            secondaryAction: 'Secondary Action / Ascend Flight',
+            descendAction: 'Descend Flight (Helicopter)',
+            siren: 'Toggle Siren & Beacons',
+            dock: 'Dock / Undock High Tide Megabot',
+            buddyCycle: 'Switch Partner Buddy Bot',
+            weatherCycle: 'Cycle Island Weather',
+            map: 'Open Island Tactical Map'
+        };
+
+        function loadGameSettings() {
+            let s = null;
+            try {
+                const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+                if (raw) s = JSON.parse(raw);
+            } catch (e) {
+                console.warn('Could not read settings from localStorage', e);
+            }
+            if (!s || typeof s !== 'object') s = {};
+            return {
+                version: 1,
+                audio: { ...DEFAULT_SETTINGS.audio, ...(s.audio || {}) },
+                graphics: { ...DEFAULT_SETTINGS.graphics, ...(s.graphics || {}) },
+                controls: { ...DEFAULT_SETTINGS.controls, ...(s.controls || {}) }
+            };
+        }
+        let gameSettings = loadGameSettings();
+        let activeRebindAction = null;
+
+        function saveGameSettings() {
+            try {
+                window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(gameSettings));
+            } catch (e) {
+                console.warn('Could not save settings to localStorage', e);
+            }
+        }
+
+        function formatKeyName(code) {
+            if (!code) return 'None';
+            if (code.startsWith('Key')) return code.slice(3);
+            if (code.startsWith('Digit')) return code.slice(5);
+            if (code.startsWith('Numpad')) return 'Num ' + code.slice(6);
+            if (code === 'Space') return 'Space';
+            if (code === 'ArrowUp') return '↑ Up';
+            if (code === 'ArrowDown') return '↓ Down';
+            if (code === 'ArrowLeft') return '← Left';
+            if (code === 'ArrowRight') return '→ Right';
+            if (code === 'ShiftLeft') return 'L-Shift';
+            if (code === 'ShiftRight') return 'R-Shift';
+            return code;
+        }
+
+        function isActionActive(action) {
+            if (!gameSettings || !gameSettings.controls) return false;
+            const list = gameSettings.controls[action];
+            if (!list) return false;
+            for (let i = 0; i < list.length; i++) {
+                if (input.keys[list[i]]) return true;
+            }
+            return false;
+        }
+
+        function matchesAction(eventCode, action) {
+            if (!gameSettings || !gameSettings.controls) return false;
+            const list = gameSettings.controls[action];
+            return Boolean(list && list.includes(eventCode));
+        }
+
+        function getSceneOutlineStats() {
+            let totalMeshes = 0;
+            let outlineMeshes = 0;
+            if (typeof scene !== 'undefined') {
+                scene.traverse(node => {
+                    if (node.isMesh || node.isInstancedMesh) {
+                        totalMeshes++;
+                        if (node.material === matInkOutline || node.material === matInkEdgeLine || (node.userData && node.userData.isOutline)) {
+                            outlineMeshes++;
+                        }
+                    }
+                });
+            }
+            const ratio = Math.round((outlineMeshes / (totalMeshes || 1)) * 100);
+            return { totalMeshes, outlineMeshes, ratio };
+        }
+
+        function applyGameSettings() {
+            // 1. Audio Volumes
+            if (typeof sfx !== 'undefined' && sfx && sfx.applySettingsVolumes) {
+                sfx.applySettingsVolumes();
+            }
+            const soundLabel = document.getElementById('sound-label');
+            if (soundLabel) {
+                soundLabel.textContent = gameSettings.audio.muted ? 'Sounds: OFF' : 'Sounds: ON';
+            }
+
+            // 2. Outlines Material Visibility
+            if (typeof matInkOutline !== 'undefined' && typeof matInkEdgeLine !== 'undefined') {
+                matInkOutline.visible = Boolean(gameSettings.graphics.outlines);
+                matInkEdgeLine.visible = Boolean(gameSettings.graphics.outlines);
+            }
+
+            // 3. Directional Shadows
+            if (typeof renderer !== 'undefined' && typeof sunLight !== 'undefined') {
+                const sh = gameSettings.graphics.shadows;
+                if (sh === 'off') {
+                    renderer.shadowMap.enabled = false;
+                    sunLight.castShadow = false;
+                } else {
+                    renderer.shadowMap.enabled = true;
+                    sunLight.castShadow = true;
+                    let mapSize = 4096;
+                    let radius = 380;
+                    if (sh === 'low') {
+                        mapSize = 1024;
+                        radius = 180;
+                    } else if (sh === 'medium') {
+                        mapSize = 2048;
+                        radius = 280;
+                    }
+                    sunLight.shadow.mapSize.set(mapSize, mapSize);
+                    sunLight.shadow.camera.left = -radius;
+                    sunLight.shadow.camera.right = radius;
+                    sunLight.shadow.camera.top = radius;
+                    sunLight.shadow.camera.bottom = -radius;
+                    sunLight.shadow.camera.updateProjectionMatrix();
+                }
+            }
+
+            // 4. Scenery Draw Distance & Fog
+            if (typeof camera !== 'undefined' && typeof scene !== 'undefined') {
+                const dd = gameSettings.graphics.drawDistance;
+                let far = 2400;
+                let fogD = 0.00038;
+                if (dd === 'low') {
+                    far = 1300;
+                    fogD = 0.00065;
+                } else if (dd === 'medium') {
+                    far = 1800;
+                    fogD = 0.00048;
+                }
+                camera.far = far;
+                camera.updateProjectionMatrix();
+                if (scene.fog) {
+                    scene.fog.density = fogD;
+                }
+            }
+
+            // 5. Internal Resolution
+            if (typeof renderer !== 'undefined') {
+                const res = gameSettings.graphics.resolution;
+                let pr = Math.min(window.devicePixelRatio || 1, 2.0);
+                if (res === 'low') {
+                    pr = 1.0;
+                } else if (res === 'medium') {
+                    pr = Math.min(window.devicePixelRatio || 1, 1.35);
+                }
+                renderer.setPixelRatio(pr);
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            syncSettingsUI();
+        }
+
 
         /***********************************************************************
          * 2. CEL-SHADING GRADIENT MAPS, INK OUTLINES & CARTOON CANVAS TEXTURES
@@ -9629,9 +10082,13 @@
         // & DYNAMIC ENDLESS EMERGENCY SPAWNER + RESCUE STAR RANKS
         // =====================================================================
         const RELEASE_VERSION = '2026.11.02.6';
+        const CURRENT_SAVE_VERSION = 4;
+        const SAVE_STORAGE_KEY = 'rescue_bots_save_v4';
+        const LEGACY_SAVE_KEYS = ['rescue_bots_save_v3', 'rescue_bots_save_v2', 'rescue_bots_save_v1'];
         const PROGRESSION_STORAGE_PREFIX = 'rescue_bots_progression_';
         const PROGRESSION_STORAGE_KEY = `${PROGRESSION_STORAGE_PREFIX}${RELEASE_VERSION}`;
         const progression = {
+            saveVersion: CURRENT_SAVE_VERSION,
             releaseVersion: RELEASE_VERSION,
             totalEmergenciesResolved: 0,
             totalCitizensRescued: 0,
@@ -10305,30 +10762,8 @@
             registerCullableObject(sectorGroup, bucket.cx, 12, bucket.cz, SECTOR_STEP * 0.78);
         });
 
-        // Cartoon Streetlamps along Griffin Town Plaza, Regional Villages & Central Avenue
-        function createTownStreetlamp(lx, lz) {
-            const lampG = new THREE.Group();
-            const ly = getTerrainHeight(lx, lz);
-            lampG.position.set(lx, ly, lz);
-            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.28, 7.2, 8), matDarkSteel);
-            post.position.y = 3.6;
-            post.castShadow = true;
-            lampG.add(post);
-            const bulb = new THREE.Mesh(
-                new THREE.SphereGeometry(0.68, 10, 10),
-                new THREE.MeshBasicMaterial({ color: 0xfef08a })
-            );
-            bulb.position.y = 7.4;
-            bulb.userData.noOutline = true;
-            lampG.add(bulb);
-            const cap = new THREE.Mesh(new THREE.ConeGeometry(0.95, 0.55, 8), matDarkSteel);
-            cap.position.y = 7.95;
-            lampG.add(cap);
-            applyCartoonInkOutlines(lampG, 1.06, false);
-            scene.add(lampG);
-            registerCullableObject(lampG, lx, ly + 4, lz, 14);
-        }
-        [
+        // Performance-Optimized Instanced Streetlamps across Griffin Town & Outposts (Reduces 100 draw calls to 5)
+        const streetlampCoords = [
             // North-South Central Avenue (x = ±14, safely clear of EW Highway at z=25)
             [-14, -30], [14, -30],
             [-14, -10], [14, -10],
@@ -10347,7 +10782,71 @@
             [-1135, 10], [-1105, 10], [-1135, 40], [-1105, 40],
             // North Observatory
             [-14, -1145], [14, -1145], [-14, -1095], [14, -1095]
-        ].forEach(([lx, lz]) => createTownStreetlamp(lx, lz));
+        ];
+
+        function buildInstancedStreetlamps() {
+            const count = streetlampCoords.length;
+            const postGeo = new THREE.CylinderGeometry(0.18, 0.28, 7.2, 8);
+            const bulbGeo = new THREE.SphereGeometry(0.68, 8, 8);
+            const capGeo = new THREE.ConeGeometry(0.95, 0.55, 8);
+            const matBulb = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+
+            const iPosts = new THREE.InstancedMesh(postGeo, matDarkSteel, count);
+            const iBulbs = new THREE.InstancedMesh(bulbGeo, matBulb, count);
+            const iCaps = new THREE.InstancedMesh(capGeo, matDarkSteel, count);
+            const iOutlines = new THREE.InstancedMesh(postGeo, matInkOutline, count);
+            const iCapOutlines = new THREE.InstancedMesh(capGeo, matInkOutline, count);
+
+            iPosts.castShadow = true;
+            iCaps.castShadow = true;
+
+            const dummy = new THREE.Object3D();
+            for (let i = 0; i < count; i++) {
+                const [lx, lz] = streetlampCoords[i];
+                const ly = getTerrainHeight(lx, lz);
+
+                // Post
+                dummy.position.set(lx, ly + 3.6, lz);
+                dummy.rotation.set(0, 0, 0);
+                dummy.scale.set(1, 1, 1);
+                dummy.updateMatrix();
+                iPosts.setMatrixAt(i, dummy.matrix);
+
+                dummy.scale.set(1.08, 1.01, 1.08);
+                dummy.updateMatrix();
+                iOutlines.setMatrixAt(i, dummy.matrix);
+
+                // Bulb
+                dummy.position.set(lx, ly + 7.4, lz);
+                dummy.scale.set(1, 1, 1);
+                dummy.updateMatrix();
+                iBulbs.setMatrixAt(i, dummy.matrix);
+
+                // Cap
+                dummy.position.set(lx, ly + 7.95, lz);
+                dummy.updateMatrix();
+                iCaps.setMatrixAt(i, dummy.matrix);
+
+                dummy.scale.setScalar(1.08);
+                dummy.updateMatrix();
+                iCapOutlines.setMatrixAt(i, dummy.matrix);
+            }
+
+            iPosts.instanceMatrix.needsUpdate = true;
+            iBulbs.instanceMatrix.needsUpdate = true;
+            iCaps.instanceMatrix.needsUpdate = true;
+            iOutlines.instanceMatrix.needsUpdate = true;
+            iCapOutlines.instanceMatrix.needsUpdate = true;
+
+            const grp = new THREE.Group();
+            grp.add(iPosts);
+            grp.add(iBulbs);
+            grp.add(iCaps);
+            grp.add(iOutlines);
+            grp.add(iCapOutlines);
+            scene.add(grp);
+        }
+        buildInstancedStreetlamps();
 
         /***********************************************************************
          * 6. CEL-SHADED TV-ACCURATE ARTICULATED MODELS FOR ALL 4 RESCUE BOTS
@@ -16327,12 +16826,18 @@
                     // Inactive Bots stay parked in standby at Rescue Bots Headquarters or hidden if secret ally!
                     const slot = HQ_PARKING_SLOTS[botKey];
                     if (slot) {
-                        rig.root.visible = true;
-                        rig.root.position.set(slot.x, slot.y, slot.z);
-                        rig.root.rotation.y = slot.rotY;
-                        rig.chassis.rotation.x = 0;
-                        rig.chassis.rotation.z = 0;
-                        applyBotRigMorph(rig, slot.morph, 0, 0, 0, 0, now);
+                        // Performance optimization: Cull inactive parked bot rigs when beyond 140m of camera
+                        const camDist = Math.hypot(camera.position.x - slot.x, camera.position.z - slot.z);
+                        if (camDist > 140) {
+                            rig.root.visible = false;
+                        } else {
+                            rig.root.visible = true;
+                            rig.root.position.set(slot.x, slot.y, slot.z);
+                            rig.root.rotation.y = slot.rotY;
+                            rig.chassis.rotation.x = 0;
+                            rig.chassis.rotation.z = 0;
+                            applyBotRigMorph(rig, slot.morph, 0, 0, 0, 0, now);
+                        }
                     } else {
                         rig.root.visible = false;
                         rig.root.position.set(0, -999, 0);
@@ -16413,62 +16918,112 @@
 
 
         function loadProgression() {
+            let target = {};
             try {
-                // Purge any stale localStorage keys from older release versions so broken schemas never persist
-                const keysToRemove = [];
+                const rawV4 = window.localStorage.getItem(SAVE_STORAGE_KEY);
+                if (rawV4) {
+                    target = JSON.parse(rawV4) || {};
+                }
+            } catch (e) {
+                console.warn('Error reading V4 save:', e);
+            }
+
+            // Upward Migration Pipeline: Inspect legacy save formats V3, V2, V1, and release-scoped keys
+            const candidates = [];
+            try {
+                for (const k of LEGACY_SAVE_KEYS) {
+                    const raw = window.localStorage.getItem(k);
+                    if (raw) {
+                        try { candidates.push(JSON.parse(raw)); } catch(e){}
+                    }
+                }
                 for (let i = 0; i < window.localStorage.length; i++) {
                     const k = window.localStorage.key(i);
-                    if (k && k.startsWith(PROGRESSION_STORAGE_PREFIX) && k !== PROGRESSION_STORAGE_KEY) {
-                        keysToRemove.push(k);
+                    if (k && k.startsWith(PROGRESSION_STORAGE_PREFIX)) {
+                        const raw = window.localStorage.getItem(k);
+                        if (raw) {
+                            try { candidates.push(JSON.parse(raw)); } catch(e){}
+                        }
                     }
                 }
-                keysToRemove.forEach(k => window.localStorage.removeItem(k));
-
-                const raw = window.localStorage.getItem(PROGRESSION_STORAGE_KEY);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (parsed && parsed.releaseVersion === RELEASE_VERSION) {
-                        if (Number.isFinite(parsed.totalEmergenciesResolved) && parsed.totalEmergenciesResolved >= 0) {
-                            progression.totalEmergenciesResolved = Math.floor(parsed.totalEmergenciesResolved);
-                        }
-                        if (Number.isFinite(parsed.totalCitizensRescued) && parsed.totalCitizensRescued >= 0) {
-                            progression.totalCitizensRescued = Math.floor(parsed.totalCitizensRescued);
-                        }
-                        if (Number.isFinite(parsed.totalEnergonCubes) && parsed.totalEnergonCubes >= 0) {
-                            progression.totalEnergonCubes = Math.floor(parsed.totalEnergonCubes);
-                        }
-                        if (Number.isFinite(parsed.totalStuntsCompleted) && parsed.totalStuntsCompleted >= 0) {
-                            progression.totalStuntsCompleted = Math.floor(parsed.totalStuntsCompleted);
-                        }
-                        if (Array.isArray(parsed.discoveredLandmarks)) {
-                            progression.discoveredLandmarks = parsed.discoveredLandmarks.filter(x => typeof x === 'string');
-                        }
-                        if (Array.isArray(parsed.collectedCrests)) {
-                            progression.collectedCrests = parsed.collectedCrests.filter(x => typeof x === 'string' || typeof x === 'number');
-                        }
-                        if (Array.isArray(parsed.discoveredAllies)) {
-                            progression.discoveredAllies = parsed.discoveredAllies.filter(x => typeof x === 'string');
-                        }
-                        if (typeof parsed.autoSpawnEmergencies === 'boolean') {
-                            progression.autoSpawnEmergencies = parsed.autoSpawnEmergencies;
-                        }
-                        if (typeof parsed.buddyBotType === 'string' && BOT_METADATA[parsed.buddyBotType]) {
-                            progression.buddyBotType = parsed.buddyBotType;
-                        }
-                        if (typeof parsed.weatherMode === 'string') {
-                            progression.weatherMode = parsed.weatherMode;
-                        }
-                        if (typeof parsed.highTideDocked === 'boolean') {
-                            progression.highTideDocked = parsed.highTideDocked;
-                        }
-                    } else {
-                        // Schema version mismatch: overwrite with clean release-scoped defaults
-                        window.localStorage.removeItem(PROGRESSION_STORAGE_KEY);
-                    }
-                }
-            } catch (err) {
-                // Fallback gracefully if localStorage is unavailable or malformed
+            } catch (e) {
+                console.warn('Error scanning legacy saves:', e);
             }
+
+            // Merge highest progress without wiping anything
+            candidates.forEach(data => {
+                if (!data) return;
+                ['totalEmergenciesResolved', 'totalCitizensRescued', 'totalEnergonCubes', 'totalStuntsCompleted'].forEach(f => {
+                    if (Number.isFinite(data[f]) && data[f] > (target[f] || 0)) {
+                        target[f] = Math.floor(data[f]);
+                    }
+                });
+                ['discoveredLandmarks', 'collectedCrests', 'discoveredAllies'].forEach(f => {
+                    if (Array.isArray(data[f])) {
+                        const s = new Set(target[f] || []);
+                        data[f].forEach(x => {
+                            if (typeof x === 'string' || typeof x === 'number') s.add(x);
+                        });
+                        target[f] = Array.from(s);
+                    }
+                });
+                if (typeof data.autoSpawnEmergencies === 'boolean' && target.autoSpawnEmergencies === undefined) {
+                    target.autoSpawnEmergencies = data.autoSpawnEmergencies;
+                }
+                if (typeof data.buddyBotType === 'string' && BOT_METADATA[data.buddyBotType] && !target.buddyBotType) {
+                    target.buddyBotType = data.buddyBotType;
+                }
+                if (typeof data.weatherMode === 'string' && !target.weatherMode) {
+                    target.weatherMode = data.weatherMode;
+                }
+                if (typeof data.highTideDocked === 'boolean' && target.highTideDocked === undefined) {
+                    target.highTideDocked = data.highTideDocked;
+                }
+            });
+
+            if (Number.isFinite(target.totalEmergenciesResolved) && target.totalEmergenciesResolved >= 0) {
+                progression.totalEmergenciesResolved = Math.floor(target.totalEmergenciesResolved);
+            }
+            if (Number.isFinite(target.totalCitizensRescued) && target.totalCitizensRescued >= 0) {
+                progression.totalCitizensRescued = Math.floor(target.totalCitizensRescued);
+            }
+            if (Number.isFinite(target.totalEnergonCubes) && target.totalEnergonCubes >= 0) {
+                progression.totalEnergonCubes = Math.floor(target.totalEnergonCubes);
+            }
+            if (Number.isFinite(target.totalStuntsCompleted) && target.totalStuntsCompleted >= 0) {
+                progression.totalStuntsCompleted = Math.floor(target.totalStuntsCompleted);
+            }
+            if (Array.isArray(target.discoveredLandmarks)) {
+                progression.discoveredLandmarks = target.discoveredLandmarks.filter(x => typeof x === 'string');
+            }
+            if (Array.isArray(target.collectedCrests)) {
+                progression.collectedCrests = target.collectedCrests.filter(x => typeof x === 'string' || typeof x === 'number');
+            }
+            if (Array.isArray(target.discoveredAllies)) {
+                progression.discoveredAllies = target.discoveredAllies.filter(x => typeof x === 'string');
+            }
+            if (typeof target.autoSpawnEmergencies === 'boolean') {
+                progression.autoSpawnEmergencies = target.autoSpawnEmergencies;
+            }
+            if (typeof target.buddyBotType === 'string' && BOT_METADATA[target.buddyBotType]) {
+                progression.buddyBotType = target.buddyBotType;
+            }
+            if (typeof target.weatherMode === 'string') {
+                progression.weatherMode = target.weatherMode;
+            }
+            if (typeof target.highTideDocked === 'boolean') {
+                progression.highTideDocked = target.highTideDocked;
+            }
+
+            progression.saveVersion = CURRENT_SAVE_VERSION;
+            progression.releaseVersion = RELEASE_VERSION;
+
+            // Immediately persist migrated state to V4 and backwards-compatible release key
+            try {
+                window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(progression));
+                window.localStorage.setItem(PROGRESSION_STORAGE_KEY, JSON.stringify(progression));
+            } catch(e){}
+
             lastKnownRankLevel = getRescueStarRank(progression).level;
             if (progression.buddyBotType && BOT_METADATA[progression.buddyBotType] && progression.buddyBotType !== player.botType) {
                 buddyBot.botType = progression.buddyBotType;
@@ -16485,7 +17040,9 @@
             lastKnownRankLevel = newRank.level;
 
             try {
+                progression.saveVersion = CURRENT_SAVE_VERSION;
                 progression.releaseVersion = RELEASE_VERSION;
+                window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(progression));
                 window.localStorage.setItem(PROGRESSION_STORAGE_KEY, JSON.stringify(progression));
             } catch (err) {
                 // Ignore storage quota / private mode restrictions
@@ -16505,7 +17062,6 @@
                 );
             }
         }
-
         function syncProgressionHUD() {
             const totalEmEl = document.getElementById('stat-total-emergencies');
             const totalCitEl = document.getElementById('stat-total-citizens');
@@ -18879,6 +19435,7 @@
         }
 
         loadProgression();
+        applyGameSettings();
         buildHazardSites();
         buildEnergonCubes();
         initGoldenCrests();
@@ -23568,6 +24125,356 @@
             showToast("ISLAND RESET", "All 8 Emergencies & Energon Cubes Respawned!");
         });
 
+        
+        // =====================================================================
+        // SETTINGS MODAL INTERACTIVE LOGIC & KEY REBIND MACHINE
+        // =====================================================================
+        function renderSettingsControlsList() {
+            const container = document.getElementById('settings-controls-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            Object.keys(ACTION_LABELS).forEach(action => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-xs';
+
+                const label = document.createElement('span');
+                label.className = 'font-bold text-slate-200';
+                label.textContent = ACTION_LABELS[action];
+                row.appendChild(label);
+
+                const btn = document.createElement('button');
+                btn.className = 'px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold border transition-colors ' +
+                    (activeRebindAction === action
+                        ? 'bg-amber-500 text-slate-950 border-amber-300 animate-pulse'
+                        : 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border-cyan-500/40');
+
+                const keys = gameSettings.controls[action] || [];
+                btn.textContent = activeRebindAction === action ? 'PRESS KEY...' : keys.map(formatKeyName).join(' / ') || 'Unbound';
+
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    activeRebindAction = action;
+                    renderSettingsControlsList();
+                };
+
+                row.appendChild(btn);
+                container.appendChild(row);
+            });
+        }
+
+        function syncSettingsUI() {
+            // Audio Sliders
+            const sMaster = document.getElementById('slider-vol-master');
+            const lMaster = document.getElementById('label-vol-master');
+            if (sMaster && lMaster) {
+                const pct = Math.round(gameSettings.audio.masterVolume * 100);
+                sMaster.value = pct;
+                lMaster.textContent = pct + '%';
+            }
+            const sSfx = document.getElementById('slider-vol-sfx');
+            const lSfx = document.getElementById('label-vol-sfx');
+            if (sSfx && lSfx) {
+                const pct = Math.round(gameSettings.audio.sfxVolume * 100);
+                sSfx.value = pct;
+                lSfx.textContent = pct + '%';
+            }
+            const sEngine = document.getElementById('slider-vol-engine');
+            const lEngine = document.getElementById('label-vol-engine');
+            if (sEngine && lEngine) {
+                const pct = Math.round(gameSettings.audio.engineVolume * 100);
+                sEngine.value = pct;
+                lEngine.textContent = pct + '%';
+            }
+            const btnMute = document.getElementById('btn-toggle-mute');
+            if (btnMute) {
+                if (gameSettings.audio.muted) {
+                    btnMute.textContent = 'MUTED';
+                    btnMute.className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-rose-500/20 text-rose-300 border border-rose-500';
+                } else {
+                    btnMute.textContent = 'UNMUTED';
+                    btnMute.className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 border border-slate-700';
+                }
+            }
+
+            // Graphics Outlines
+            const btnOutlines = document.getElementById('btn-toggle-outlines');
+            if (btnOutlines) {
+                if (gameSettings.graphics.outlines) {
+                    btnOutlines.textContent = 'ON';
+                    btnOutlines.className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-400';
+                } else {
+                    btnOutlines.textContent = 'OFF';
+                    btnOutlines.className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-800 text-slate-400 border border-slate-700';
+                }
+            }
+            const outlineStatsEl = document.getElementById('settings-outline-stats');
+            if (outlineStatsEl) {
+                const stats = getSceneOutlineStats();
+                outlineStatsEl.textContent = `Inverted-hull cartoon edges. Currently ${stats.outlineMeshes} meshes (${stats.ratio}% of scene meshes).`;
+            }
+
+            // Graphics Shadows Label & Buttons
+            const labelShadows = document.getElementById('label-gfx-shadows');
+            if (labelShadows) {
+                const map = { off: 'Disabled', low: 'Low (180m)', medium: 'Med (280m)', high: 'High (380m)' };
+                labelShadows.textContent = map[gameSettings.graphics.shadows] || 'High';
+            }
+            document.querySelectorAll('.gfx-opt-btn[data-opt="shadows"]').forEach(b => {
+                const active = b.dataset.val === gameSettings.graphics.shadows;
+                b.className = 'gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold border ' +
+                    (active ? 'bg-cyan-500/30 text-cyan-300 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-300');
+            });
+
+            // Graphics Draw Distance
+            const labelDrawDist = document.getElementById('label-gfx-drawdist');
+            if (labelDrawDist) {
+                const map = { low: 'Near (1300m)', medium: 'Med (1800m)', high: 'Far (2400m)' };
+                labelDrawDist.textContent = map[gameSettings.graphics.drawDistance] || 'Far';
+            }
+            document.querySelectorAll('.gfx-opt-btn[data-opt="drawDistance"]').forEach(b => {
+                const active = b.dataset.val === gameSettings.graphics.drawDistance;
+                b.className = 'gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold border ' +
+                    (active ? 'bg-cyan-500/30 text-cyan-300 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-300');
+            });
+
+            // Graphics Resolution
+            const labelRes = document.getElementById('label-gfx-res');
+            if (labelRes) {
+                const map = { low: '1x Native', medium: '1.35x Balanced', high: '2x Retina Sharp' };
+                labelRes.textContent = map[gameSettings.graphics.resolution] || '2x Retina';
+            }
+            document.querySelectorAll('.gfx-opt-btn[data-opt="resolution"]').forEach(b => {
+                const active = b.dataset.val === gameSettings.graphics.resolution;
+                b.className = 'gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold border ' +
+                    (active ? 'bg-cyan-500/30 text-cyan-300 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-300');
+            });
+
+            // Career Save Stats
+            const saveStatsEl = document.getElementById('settings-save-stats');
+            if (saveStatsEl && typeof getRescueStarRank === 'function' && typeof progression !== 'undefined') {
+                const rankInfo = getRescueStarRank(progression);
+                saveStatsEl.innerHTML = `
+                    <div class="bg-slate-800/80 p-2 rounded-xl border border-slate-700/60">
+                        <div class="text-slate-400 text-[10px]">RESCUE RANK</div>
+                        <div class="font-bold text-amber-300 text-xs">${rankInfo.title} (${rankInfo.level}★)</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-2 rounded-xl border border-slate-700/60">
+                        <div class="text-slate-400 text-[10px]">HERO POINTS</div>
+                        <div class="font-bold text-cyan-300 text-xs">${rankInfo.pts} Pts</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-2 rounded-xl border border-slate-700/60">
+                        <div class="text-slate-400 text-[10px]">EMERGENCIES</div>
+                        <div class="font-bold text-emerald-300 text-xs">${progression.totalEmergenciesResolved} Resolved</div>
+                    </div>
+                    <div class="bg-slate-800/80 p-2 rounded-xl border border-slate-700/60">
+                        <div class="text-slate-400 text-[10px]">ENERGON CUBES</div>
+                        <div class="font-bold text-yellow-300 text-xs">${progression.totalEnergonCubes} Collected</div>
+                    </div>
+                `;
+            }
+
+            renderSettingsControlsList();
+        }
+
+        function exportSaveData() {
+            const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(progression, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute('href', dataStr);
+            downloadAnchor.setAttribute('download', `griffin-rock-save-v${CURRENT_SAVE_VERSION}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importSaveData(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && typeof parsed === 'object') {
+                        ['totalEmergenciesResolved', 'totalCitizensRescued', 'totalEnergonCubes', 'totalStuntsCompleted'].forEach(f => {
+                            if (Number.isFinite(parsed[f])) progression[f] = Math.max(0, Math.floor(parsed[f]));
+                        });
+                        ['discoveredLandmarks', 'collectedCrests', 'discoveredAllies'].forEach(f => {
+                            if (Array.isArray(parsed[f])) progression[f] = parsed[f];
+                        });
+                        if (typeof parsed.buddyBotType === 'string' && BOT_METADATA[parsed.buddyBotType]) {
+                            progression.buddyBotType = parsed.buddyBotType;
+                        }
+                        saveProgression();
+                        showToast('SAVE IMPORTED!', 'Career progression loaded successfully!');
+                        sfx.playRankUp();
+                        setTimeout(() => window.location.reload(), 1000);
+                    }
+                } catch (err) {
+                    alert('Could not read or parse save file: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function resetCareerProgress() {
+            if (confirm('Are you sure you want to reset your career progress? This will reset your emergency count, energon cubes, and rank. Your settings and keybindings will be kept.')) {
+                progression.totalEmergenciesResolved = 0;
+                progression.totalCitizensRescued = 0;
+                progression.totalEnergonCubes = 0;
+                progression.totalStuntsCompleted = 0;
+                progression.discoveredLandmarks = [];
+                progression.collectedCrests = [];
+                progression.discoveredAllies = [];
+                progression.highTideDocked = false;
+                saveProgression();
+                showToast('CAREER RESET', 'Griffin Rock progress reset to Cadet Bot.');
+                setTimeout(() => window.location.reload(), 800);
+            }
+        }
+
+        // Settings Modal Open/Close Buttons
+        bindButton('btn-settings', () => {
+            closeUtilityMenu();
+            const modal = document.getElementById('settings-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                syncSettingsUI();
+            }
+        });
+        bindButton('btn-close-settings', () => {
+            const modal = document.getElementById('settings-modal');
+            if (modal) modal.classList.add('hidden');
+            activeRebindAction = null;
+        });
+        bindButton('btn-ack-settings', () => {
+            const modal = document.getElementById('settings-modal');
+            if (modal) modal.classList.add('hidden');
+            activeRebindAction = null;
+        });
+
+        // Tab Navigation
+        document.querySelectorAll('.settings-tab-btn').forEach(tabBtn => {
+            tabBtn.onclick = () => {
+                const tabKey = tabBtn.dataset.tab;
+                document.querySelectorAll('.settings-tab-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-cyan-500/30', 'border-cyan-400', 'text-white');
+                    b.classList.add('bg-slate-800/50', 'border-transparent', 'text-slate-400');
+                });
+                tabBtn.classList.remove('bg-slate-800/50', 'border-transparent', 'text-slate-400');
+                tabBtn.classList.add('active', 'bg-cyan-500/30', 'border-cyan-400', 'text-white');
+
+                ['controls', 'graphics', 'audio', 'save'].forEach(t => {
+                    const pane = document.getElementById('tab-pane-' + t);
+                    if (pane) pane.classList.toggle('hidden', t !== tabKey);
+                });
+                syncSettingsUI();
+            };
+        });
+
+        // Audio Sliders
+        const sMasterEl = document.getElementById('slider-vol-master');
+        if (sMasterEl) {
+            sMasterEl.oninput = (e) => {
+                gameSettings.audio.masterVolume = parseFloat(e.target.value) / 100;
+                saveGameSettings();
+                applyGameSettings();
+            };
+        }
+        const sSfxEl = document.getElementById('slider-vol-sfx');
+        if (sSfxEl) {
+            sSfxEl.oninput = (e) => {
+                gameSettings.audio.sfxVolume = parseFloat(e.target.value) / 100;
+                saveGameSettings();
+                applyGameSettings();
+            };
+        }
+        const sEngineEl = document.getElementById('slider-vol-engine');
+        if (sEngineEl) {
+            sEngineEl.oninput = (e) => {
+                gameSettings.audio.engineVolume = parseFloat(e.target.value) / 100;
+                saveGameSettings();
+                applyGameSettings();
+            };
+        }
+
+        // Mute Toggle
+        bindButton('btn-toggle-mute', () => {
+            gameSettings.audio.muted = !gameSettings.audio.muted;
+            sfx.enabled = !gameSettings.audio.muted;
+            saveGameSettings();
+            applyGameSettings();
+        });
+
+        // Graphics Outlines Toggle
+        bindButton('btn-toggle-outlines', () => {
+            gameSettings.graphics.outlines = !gameSettings.graphics.outlines;
+            saveGameSettings();
+            applyGameSettings();
+        });
+
+        // Graphics Quality Presets
+        document.querySelectorAll('.gfx-preset-btn').forEach(btn => {
+            btn.onclick = () => {
+                const p = btn.dataset.preset;
+                gameSettings.graphics.preset = p;
+                if (p === 'low') {
+                    gameSettings.graphics.shadows = 'off';
+                    gameSettings.graphics.outlines = false;
+                    gameSettings.graphics.drawDistance = 'low';
+                    gameSettings.graphics.resolution = 'low';
+                } else if (p === 'medium') {
+                    gameSettings.graphics.shadows = 'low';
+                    gameSettings.graphics.outlines = true;
+                    gameSettings.graphics.drawDistance = 'medium';
+                    gameSettings.graphics.resolution = 'medium';
+                } else if (p === 'high') {
+                    gameSettings.graphics.shadows = 'medium';
+                    gameSettings.graphics.outlines = true;
+                    gameSettings.graphics.drawDistance = 'high';
+                    gameSettings.graphics.resolution = 'high';
+                } else if (p === 'ultra') {
+                    gameSettings.graphics.shadows = 'high';
+                    gameSettings.graphics.outlines = true;
+                    gameSettings.graphics.drawDistance = 'high';
+                    gameSettings.graphics.resolution = 'high';
+                }
+                saveGameSettings();
+                applyGameSettings();
+            };
+        });
+
+        // Graphics Option Buttons (Shadows, Draw Distance, Resolution)
+        document.querySelectorAll('.gfx-opt-btn').forEach(btn => {
+            btn.onclick = () => {
+                const opt = btn.dataset.opt;
+                const val = btn.dataset.val;
+                if (opt && val) {
+                    gameSettings.graphics[opt] = val;
+                    saveGameSettings();
+                    applyGameSettings();
+                }
+            };
+        });
+
+        // Reset Controls
+        bindButton('btn-reset-controls', () => {
+            gameSettings.controls = JSON.parse(JSON.stringify(DEFAULT_SETTINGS.controls));
+            saveGameSettings();
+            renderSettingsControlsList();
+            sfx.playSpeechPop();
+        });
+
+        // Save Export / Import / Reset
+        bindButton('btn-export-save', exportSaveData);
+        const fileImportEl = document.getElementById('file-import-save');
+        if (fileImportEl) {
+            fileImportEl.onchange = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    importSaveData(e.target.files[0]);
+                }
+            };
+        }
+        bindButton('btn-reset-career', resetCareerProgress);
+
         // About & Legal Notice Modal Buttons
         bindButton('btn-about-legal', () => {
             closeUtilityMenu();
@@ -23599,6 +24506,23 @@
 
         // Keyboard Shortcuts (1-5 Switch Bot, 6-0 Secret Ally Switch, WASD Move, Space Cycle Transform, E/Shift Special, Q/C Ascend/Descend)
         window.addEventListener('keydown', e => {
+            // Interactive Control Remapping Interceptor
+            if (activeRebindAction) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (e.code === 'Escape') {
+                    activeRebindAction = null;
+                    renderSettingsControlsList();
+                    return;
+                }
+                gameSettings.controls[activeRebindAction] = [e.code];
+                saveGameSettings();
+                sfx.playSpeechPop();
+                activeRebindAction = null;
+                renderSettingsControlsList();
+                return;
+            }
+
             input.keys[e.code] = true;
             if (e.code === 'Digit1' || e.code === 'Numpad1') switchRescueBot('BOULDER');
             if (e.code === 'Digit2' || e.code === 'Numpad2') switchRescueBot('HEATWAVE');
@@ -23612,23 +24536,24 @@
             if (e.code === 'Digit9' || e.code === 'Numpad9') unlockAndSwitchBot('SALVAGE');
             if (e.code === 'Digit0' || e.code === 'Numpad0') unlockAndSwitchBot('HIGHTIDE');
             if (e.code === 'Minus' || e.code === 'NumpadSubtract') unlockAndSwitchBot('QUICKSHADOW');
-            if (e.code === 'Space' && !e.repeat) {
+
+            if (matchesAction(e.code, 'transform') && !e.repeat) {
                 e.preventDefault();
                 triggerTransform();
             }
-            if ((e.code === 'KeyE' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') && !e.repeat) {
+            if (matchesAction(e.code, 'primaryAction') && !e.repeat) {
                 triggerPrimaryAction();
             }
-            if ((e.code === 'KeyQ' || e.code === 'KeyF') && !e.repeat) {
+            if (matchesAction(e.code, 'secondaryAction') && !e.repeat) {
                 triggerSecondaryAction();
             }
-            if (e.code === 'KeyC' && !e.repeat) {
+            if (matchesAction(e.code, 'descendAction') && !e.repeat) {
                 triggerDescendAction();
             }
-            if (e.code === 'KeyH' && !e.repeat) {
+            if (matchesAction(e.code, 'siren') && !e.repeat) {
                 toggleSiren();
             }
-            if (e.code === 'KeyX' && !e.repeat) {
+            if (matchesAction(e.code, 'dock') && !e.repeat) {
                 if (player.botType === 'HIGHTIDE') {
                     if (progression.highTideDocked) {
                         undockHighTideMegabot();
@@ -23637,10 +24562,10 @@
                     }
                 }
             }
-            if (e.code === 'KeyB' && !e.repeat) {
+            if (matchesAction(e.code, 'buddyCycle') && !e.repeat) {
                 cycleBuddyBot();
             }
-            if (e.code === 'KeyT' && !e.repeat) {
+            if (matchesAction(e.code, 'weatherCycle') && !e.repeat) {
                 applyWeatherMode(currentWeatherIdx + 1, true);
             }
             if (e.code === 'KeyR' && !e.repeat) {
@@ -23649,7 +24574,7 @@
                     toggleBumblebeeMorph();
                 }
             }
-            if (e.code === 'KeyM' && !e.repeat) {
+            if (matchesAction(e.code, 'map') && !e.repeat) {
                 const modal = document.getElementById('tactical-map-modal');
                 if (modal) {
                     if (modal.classList.contains('hidden')) openTacticalMap();
@@ -23657,6 +24582,12 @@
                 }
             }
             if (e.code === 'Escape' && !e.repeat) {
+                const settingsModal = document.getElementById('settings-modal');
+                if (settingsModal && !settingsModal.classList.contains('hidden')) {
+                    settingsModal.classList.add('hidden');
+                    activeRebindAction = null;
+                    return;
+                }
                 const aboutModal = document.getElementById('about-legal-modal');
                 if (aboutModal && !aboutModal.classList.contains('hidden')) {
                     aboutModal.classList.add('hidden');
@@ -24580,10 +25511,10 @@
             let moveY = 0;
             let moveX = 0;
 
-            if (input.keys['KeyW'] || input.keys['ArrowUp']) moveY += 1;
-            if (input.keys['KeyS'] || input.keys['ArrowDown']) moveY -= 1;
-            if (input.keys['KeyA'] || input.keys['ArrowLeft']) moveX -= 1;
-            if (input.keys['KeyD'] || input.keys['ArrowRight']) moveX += 1;
+            if (isActionActive('forward')) moveY += 1;
+            if (isActionActive('backward')) moveY -= 1;
+            if (isActionActive('left')) moveX -= 1;
+            if (isActionActive('right')) moveX += 1;
 
             // Cancel tap-waypoint if manual keyboard keys are pressed
             if (moveY !== 0 || moveX !== 0) {
@@ -25065,8 +25996,8 @@
                 player.grounded = false;
                 player.vy = 0;
             } else if (isFlyingCopter) {
-                if (input.keys['KeyQ']) player.flightAlt = Math.min(95, player.flightAlt + 28 * dt);
-                if (input.keys['KeyC']) player.flightAlt = Math.max(2, player.flightAlt - 28 * dt);
+                if (isActionActive('secondaryAction')) player.flightAlt = Math.min(95, player.flightAlt + 28 * dt);
+                if (isActionActive('descendAction')) player.flightAlt = Math.max(2, player.flightAlt - 28 * dt);
                 const targetHoverY = centerGroundY + player.flightAlt + Math.sin(now * 0.004) * 0.45;
                 player.pos.y = THREE.MathUtils.lerp(player.pos.y, targetHoverY, Math.min(1, dt * 5.5));
                 player.vy = 0;
