@@ -14466,8 +14466,33 @@
             BLADES:   { x: HQ_POS.x - 8,  y: hqY + 16.8, z: HQ_POS.z,     rotY: 0.4, morph: 1.0 } // Rooftop Helipad: X = -56, Z = -45
         };
 
+        // Calibrated Ground Clearance Offsets (Local units inside rig.chassis)
+        // Ensures robot boot soles, vehicle tires/hull, and dinobot feet sit exactly flush on the ground (y = 0)
+        // without penetrating or sinking into terrain across all 10 bots and 3 operational forms.
+        const BOT_GROUND_OFFSETS = {
+            BOULDER:       { bot: 0.36, veh: 0.00, dino: 0.79 },
+            HEATWAVE:      { bot: 0.53, veh: 0.00, dino: 0.68 },
+            CHASE:         { bot: 0.40, veh: 0.00, dino: 0.50 },
+            BLADES:        { bot: 1.28, veh: 0.00, dino: 0.84 },
+            OPTIMUS:       { bot: 0.552, veh: 0.544, dino: 0.648 },
+            BUMBLEBEE:     { bot: 0.41, veh: 0.58, dino: 0.51 },
+            BLURR:         { bot: 0.73, veh: 0.63, dino: 0.83 },
+            SALVAGE:       { bot: 0.46, veh: 0.15, dino: 0.56 },
+            HIGHTIDE:      { bot: 0.692, veh: 0.808, dino: 0.792 },
+            HIGHTIDE_MEGA: { bot: 0.00, veh: 1.226, dino: 1.405 },
+            QUICKSHADOW:   { bot: 0.72, veh: 0.37, dino: 0.82 }
+        };
+
         // Universal Rig Joint Interpolator (Handles Bot Mode <-> Vehicle Mode m <-> Dinobot Mode d)
         function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0) {
+            // Apply mode-dependent ground elevation so the bot's ground contact surface stays flush on terrain
+            const bKey = (rig.botType === 'HIGHTIDE' && rig.isMega) ? 'HIGHTIDE_MEGA' : rig.botType;
+            const gOffsets = BOT_GROUND_OFFSETS[bKey] || { bot: 0, veh: 0, dino: 0 };
+            const groundLiftY = gOffsets.bot * (1 - m - d) + gOffsets.veh * m + gOffsets.dino * d;
+            if (rig.chassis) {
+                rig.chassis.position.y = groundLiftY;
+            }
+
             const walkSin = Math.sin(walkCycle);
             const isMoving = Math.abs(speed) > 0.5;
             const smashOffset = smashTimer > 0 ? Math.sin((smashTimer / 0.45) * Math.PI) : 0;
@@ -26548,6 +26573,7 @@
                 reportTimer -= dt;
                 if (reportTimer <= 0) {
                     reportTimer = 0.5;
+                    console.log('[BOTCHECK_REPORT]', JSON.stringify(issues));
                     q('[data-report]').innerHTML = issues.length
                         ? `<div style="color:#fca5a5;font-weight:700;">${issues.length} ground-contact issue(s):</div>` + issues.map(s => `<div>${s}</div>`).join('')
                         : '<div style="color:#86efac;">✔ No ground-contact issues in view</div>';
