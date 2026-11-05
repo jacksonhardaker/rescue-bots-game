@@ -2,6 +2,8 @@
 
 An interactive, 3D open-world fan game inspired by *Transformers: Rescue Bots*. Explore the island of Griffin Rock, respond to emergencies, transform between Robot, Vehicle, and Dinobot modes, and team up with your AI wingman partner.
 
+![Griffin Rock 3D Open World Gameplay](docs/screenshots/gameplay.png)
+
 ---
 
 > ### ⚠️ Legal Disclaimer & Unofficial Fan Project Notice

@@ -1217,6 +1217,19 @@
     <!-- Bottom Right: Tactile Action Cluster (Adapts to Ground vs Helicopter/Pterosaur Flight) -->
     <div class="fixed bottom-6 right-5 sm:bottom-9 sm:right-9 z-20 flex items-end gap-2 sm:gap-3 pointer-events-auto">
         
+        <!-- High Tide Megabot Undock Button (Shown when High Tide is in Megabot mode) -->
+        <button id="btn-undock" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-blue-700 via-indigo-800 to-slate-900 border-2 border-cyan-300 flex flex-col items-center justify-center text-white select-none">
+            <span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center leading-none" id="undock-icon">
+                <svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="5" r="3"/>
+                    <path d="M12 8v13"/>
+                    <path d="M5 12h14"/>
+                    <path d="M5 15a7 7 0 0014 0"/>
+                </svg>
+            </span>
+            <span class="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase mt-0.5">UNDOCK</span>
+        </button>
+
         <!-- Optional Siren Toggle Button (Shown when Heatwave or Chase is active) -->
         <button id="btn-siren" class="hidden tactile-btn siren-off w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 flex flex-col items-center justify-center text-white select-none">
             <span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center leading-none" id="siren-icon">
@@ -1269,6 +1282,17 @@
             </svg>
             <span class="text-xs sm:text-sm font-extrabold tracking-tight uppercase mt-0.5">TRANSFORM</span>
             <span class="text-[9px] sm:text-[10px] font-bold bg-slate-950/85 text-yellow-300 px-2 py-0.2 rounded-full mt-0.5" id="transform-sub">TO VEHICLE</span>
+        </button>
+    </div>
+
+    <!-- High Tide Megabot Docking Prompt (Floats when player controls High Tide and approaches his oceanic vessel) -->
+    <div id="hightide-dock-prompt" class="hidden fixed bottom-28 sm:bottom-36 right-5 sm:right-9 z-30 flex flex-col items-end pointer-events-auto">
+        <button id="btn-dock" class="tactile-btn px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-800 border-2 border-cyan-300 shadow-2xl flex items-center gap-3 text-white font-extrabold tracking-wider select-none transform hover:scale-105 active:scale-95 transition-transform animate-bounce">
+            <span class="text-xl sm:text-2xl drop-shadow">⚓</span>
+            <div class="flex flex-col text-left">
+                <span class="text-[10px] sm:text-xs uppercase text-cyan-200 tracking-wider">Ocean Rig Ready</span>
+                <span class="text-xs sm:text-sm font-black drop-shadow tracking-wide">DOCK MEGABOT</span>
+            </div>
         </button>
     </div>
 
@@ -5051,6 +5075,172 @@
             return new THREE.CanvasTexture(c);
         }
 
+        function makeMegaBotChestTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Naval White Armored Bezel Background
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Chamfered Bezel Inner Plate
+            ctx.fillStyle = '#e2e8f0';
+            ctx.fillRect(16, 16, 224, 224);
+
+            // Glowing Cyan Tactical Monitor Screen (Images 3 & 4)
+            const screenGrad = ctx.createLinearGradient(0, 24, 0, 232);
+            screenGrad.addColorStop(0, '#67e8f9');
+            screenGrad.addColorStop(0.4, '#06b6d4');
+            screenGrad.addColorStop(1, '#0284c7');
+            ctx.fillStyle = screenGrad;
+            ctx.fillRect(24, 24, 208, 208);
+
+            // Subtle Cybertronian Grid Lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.lineWidth = 2;
+            for (let g = 48; g < 232; g += 26) {
+                ctx.beginPath();
+                ctx.moveTo(24, g); ctx.lineTo(232, g);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(g, 24); ctx.lineTo(g, 232);
+                ctx.stroke();
+            }
+
+            // Prominent Bold Dark Navy / Metallic Blue Autobot Insignia (Images 3 & 4)
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            // Outer Shield Crest
+            ctx.moveTo(68, 64); ctx.lineTo(188, 64);
+            ctx.lineTo(188, 140); ctx.lineTo(162, 175);
+            ctx.lineTo(128, 208); ctx.lineTo(94, 175);
+            ctx.lineTo(68, 140);
+            ctx.closePath();
+            ctx.fill();
+
+            // Inner Cyan Cutouts & Brow
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(82, 80, 92, 14);
+            ctx.fillRect(78, 102, 28, 32);
+            ctx.fillRect(150, 102, 28, 32);
+            ctx.fillRect(116, 102, 24, 60);
+
+            // Lower Cheeks & Chin
+            ctx.beginPath();
+            ctx.moveTo(94, 145); ctx.lineTo(110, 145); ctx.lineTo(104, 168);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(162, 145); ctx.lineTo(146, 145); ctx.lineTo(152, 168);
+            ctx.closePath();
+            ctx.fill();
+
+            // Outer Ink Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeMegaBotShoulderTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Pure Naval White Shoulder Armor
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Bold Red Naval Hazard Chevron Stripes (Images 2, 3, 4)
+            ctx.fillStyle = '#dc2626';
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 5;
+
+            // 3 Stacked Angular Chevrons pointing forward / upward
+            [55, 115, 175].forEach(cy => {
+                ctx.beginPath();
+                ctx.moveTo(35, cy + 30);
+                ctx.lineTo(128, cy - 25);
+                ctx.lineTo(221, cy + 30);
+                ctx.lineTo(205, cy + 48);
+                ctx.lineTo(128, cy);
+                ctx.lineTo(51, cy + 48);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            });
+
+            // Outer Ink Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 248, 248);
+            return new THREE.CanvasTexture(c);
+        }
+
+        function makeMegaShipHullTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d');
+
+            // Crisp White Hull Plate
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Bold Red Autobot Anchor Insignia (Images 1 & 3)
+            ctx.fillStyle = '#dc2626';
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 4;
+
+            // Anchor Crown / Ring
+            ctx.beginPath();
+            ctx.arc(128, 52, 24, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(128, 52, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Crossbar & Central Shank
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(65, 82, 126, 18);
+            ctx.strokeRect(65, 82, 126, 18);
+            ctx.fillRect(116, 70, 24, 135);
+            ctx.strokeRect(116, 70, 24, 135);
+
+            // Curved Bottom Flukes
+            ctx.beginPath();
+            ctx.arc(128, 170, 68, 0.15 * Math.PI, 0.85 * Math.PI);
+            ctx.lineWidth = 20;
+            ctx.strokeStyle = '#dc2626';
+            ctx.stroke();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#0f172a';
+            ctx.stroke();
+
+            // Fluke Arrow Tips
+            ctx.fillStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.moveTo(68, 198); ctx.lineTo(46, 156); ctx.lineTo(88, 168);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(188, 198); ctx.lineTo(210, 156); ctx.lineTo(168, 168);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Outer Ink Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 248, 248);
+            return new THREE.CanvasTexture(c);
+        }
+
         function makeQuickshadowFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
@@ -5308,6 +5498,9 @@
         const texFaceHighTide = makeHighTideFaceTexture();
         const texChestHighTide = makeHighTideChestTexture();
         const texShoulderHighTide = makeHighTideShoulderTexture();
+        const texMegaBotChest = makeMegaBotChestTexture();
+        const texMegaShoulderChevron = makeMegaBotShoulderTexture();
+        const texMegaShipHull = makeMegaShipHullTexture();
         const texFaceQuickshadow = makeQuickshadowFaceTexture();
         const texChestQuickshadow = makeQuickshadowChestTexture();
 
@@ -10137,6 +10330,18 @@
         const matHighTideChest = new THREE.MeshBasicMaterial({ map: texChestHighTide });
         const matHighTideShoulder = new THREE.MeshBasicMaterial({ map: texShoulderHighTide });
 
+        // High Tide Megabot Exo-Armor & Cybertronian Naval Ship Materials (Reference Images 1-4)
+        const matMegaHullWhite = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad4 });
+        const matMegaDeckRed = new THREE.MeshToonMaterial({ color: 0xdc2626, gradientMap: toonGrad4 });
+        const matMegaCraneYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
+        const matMegaClawCharcoal = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
+        const matMegaScreenCyan = new THREE.MeshBasicMaterial({ map: texMegaBotChest });
+        const matMegaWindowBlue = new THREE.MeshToonMaterial({ color: 0x38bdf8, gradientMap: toonGrad3 });
+        const matMegaKneeGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
+        const matMegaKneeLens = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+        const matMegaShoulderChevron = new THREE.MeshBasicMaterial({ map: texMegaShoulderChevron });
+        const matMegaHullBadge = new THREE.MeshBasicMaterial({ map: texMegaShipHull });
+
         const matQuickWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
         const matQuickCyan = new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad4 });
         const matQuickDark = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
@@ -10269,6 +10474,28 @@
             HIGHTIDE: 1.30,
             QUICKSHADOW: 1.0
         };
+
+        function getBotScale(botType) {
+            if (botType === 'HIGHTIDE' && typeof progression !== 'undefined' && progression.highTideDocked) {
+                return 2.65; // Massive Megabot Exo-Armor: Multiple times standard bot size!
+            }
+            return (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[botType]) || 1.0;
+        }
+
+        function setHighTideRigMega(rig, isMega) {
+            if (!rig || rig.botType !== 'HIGHTIDE') return;
+            rig.isMega = Boolean(isMega);
+            const scale = rig.isMega ? 2.65 : 1.30;
+            rig.root.scale.setScalar(scale);
+            rig.root.traverse(child => {
+                if (child.userData && child.userData.isStandardPart !== undefined) {
+                    child.visible = !rig.isMega;
+                }
+                if (child.userData && child.userData.isMegaPart !== undefined) {
+                    child.visible = rig.isMega;
+                }
+            });
+        }
 
         // Master Builder returning an articulated Cel-Shaded + Ink-Outlined rig for any of the Bots
         function buildRescueBotModel(botType) {
@@ -13250,7 +13477,344 @@
                 }
                 const tailFin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.45, 0.95), matHighTideWhite);
                 tailFin.position.set(0, 0, -0.85);
-                prevPlesioTail.add(tailFin);
+                                prevPlesioTail.add(tailFin);
+
+                // Tag all standard sub-geometry as standard parts
+                [parts.torso, parts.head, parts.backAttachment, parts.leftArm, parts.rightArm, parts.leftForearm, parts.rightForearm, parts.leftLeg, parts.rightLeg, parts.dinoHead, parts.dinoLeftWing, parts.dinoRightWing, parts.dinoGroup, parts.dinoTail].forEach(grp => {
+                    grp.children.forEach(child => {
+                        child.userData.isStandardPart = true;
+                    });
+                });
+
+                // =============================================================
+                // MEGABOT EXO-ARMOR GEOMETRY (Canonical TV Show / Bio Images 1-4)
+                // =============================================================
+                // 1. Megabot Torso: Massive White Armored Naval Hull with Glowing Cyan Autobot Screen & Blue Waist
+                const megaTorso = new THREE.Group();
+                megaTorso.userData.isMegaPart = true;
+                parts.torso.add(megaTorso);
+
+                // Main Naval White Armored Chest Block
+                const mChest = new THREE.Mesh(new THREE.BoxGeometry(3.3, 2.65, 2.45), matMegaHullWhite);
+                mChest.castShadow = true;
+                megaTorso.add(mChest);
+
+                // Top Collar Deck Arch
+                const mCollarDeck = new THREE.Mesh(new THREE.BoxGeometry(3.45, 0.42, 2.55), matMegaHullWhite);
+                mCollarDeck.position.set(0, 1.25, 0);
+                const mCollarGold = new THREE.Mesh(new THREE.BoxGeometry(2.7, 0.22, 0.35), matHighTideGold);
+                mCollarGold.position.set(0, 1.35, 1.05);
+                megaTorso.add(mCollarDeck, mCollarGold);
+
+                // Central Glowing Cyan Autobot Screen Frame & Screen (Images 3 & 4)
+                const mScreenFrame = new THREE.Mesh(new THREE.BoxGeometry(2.35, 2.05, 0.16), matMegaKneeGold);
+                mScreenFrame.position.set(0, 0.15, 1.22);
+                const mScreen = new THREE.Mesh(new THREE.BoxGeometry(2.15, 1.85, 0.18), matMegaScreenCyan);
+                mScreen.position.set(0, 0.15, 1.24);
+                mScreen.userData.noOutline = true;
+                megaTorso.add(mScreenFrame, mScreen);
+
+                // Side Naval Air Intakes
+                [-1.68, 1.68].forEach(sx => {
+                    const intake = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.35, 0.65), matHighTideDark);
+                    intake.position.set(sx, 0.15, 0.45);
+                    megaTorso.add(intake);
+                });
+
+                // Heavy Royal Blue Waist Ring (Images 2 & 4)
+                const mWaist = new THREE.Mesh(new THREE.CylinderGeometry(1.42, 1.42, 0.68, 24), matHighTideBlue);
+                mWaist.position.set(0, -1.25, 0);
+                // Lower Naval Groin Deck & Codpiece
+                const mGroin = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.75, 1.55), matMegaHullWhite);
+                mGroin.position.set(0, -1.55, 0);
+                const mCod = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.78, 0.48), matMegaHullWhite);
+                mCod.position.set(0, -1.55, 0.88);
+                megaTorso.add(mWaist, mGroin, mCod);
+
+                // 2. Megabot Head: Blue Helmet, Golden Diving Lamp, Vocoder Chin Beard & Cyan Visor
+                const megaHead = new THREE.Group();
+                megaHead.userData.isMegaPart = true;
+                parts.head.add(megaHead);
+
+                const mHelm = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.32, 1.28), matHighTideBlue);
+                mHelm.castShadow = true;
+                megaHead.add(mHelm);
+
+                // Golden Forehead Diving Searchlight
+                const mLampBezel = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.28, 16).rotateX(Math.PI / 2), matHighTideGold);
+                mLampBezel.position.set(0, 0.76, 0.65);
+                const mLampLens = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.30, 16).rotateX(Math.PI / 2), matHighTideLamp);
+                mLampLens.position.set(0, 0.76, 0.66);
+                mLampLens.userData.noOutline = true;
+                megaHead.add(mLampBezel, mLampLens);
+
+                // Twin Blue Angled Antenna Fins
+                [-0.72, 0.72].forEach(hx => {
+                    const horn = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.88, 0.45), matHighTideBlue);
+                    horn.position.set(hx, 0.65, 0.05);
+                    horn.rotation.z = hx < 0 ? 0.26 : -0.26;
+                    megaHead.add(horn);
+                });
+
+                // Glowing Cyan Visor & Golden Chin Guard
+                const mVisor = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.32, 0.38), matHighTideCyanGlow);
+                mVisor.position.set(0, 0.12, 0.62);
+                mVisor.userData.noOutline = true;
+                const mBeard = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.44, 0.38), matHighTideGold);
+                mBeard.position.set(0, -0.34, 0.60);
+                const mFace = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.98, 1.26), matHighTideFace);
+                mFace.position.set(0, -0.04, 0.04);
+                mFace.userData.noOutline = true;
+                megaHead.add(mVisor, mBeard, mFace);
+
+                // 3. Megabot Back: Dual Yellow Crane Boom Arms over Shoulders + Ship Superstructure Bridge
+                const megaBack = new THREE.Group();
+                megaBack.userData.isMegaPart = true;
+                parts.backAttachment.add(megaBack);
+
+                // Rear Ship Bridge Superstructure in Autobot Red (Images 1 & 3)
+                const mBridgeDeck = new THREE.Mesh(new THREE.BoxGeometry(2.9, 1.6, 1.5), matMegaHullWhite);
+                mBridgeDeck.position.set(0, 0.3, -0.75);
+                const mBridgeTower = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.2, 1.3), matMegaDeckRed);
+                mBridgeTower.position.set(0, 1.3, -0.95);
+                const mBridgeWindows = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.65, 0.15), matMegaWindowBlue);
+                mBridgeWindows.position.set(0, 1.7, -0.25);
+                mBridgeWindows.userData.noOutline = true;
+                megaBack.add(mBridgeDeck, mBridgeTower, mBridgeWindows);
+
+                // Twin Giant Articulated Yellow Deck Crane Arms (Images 1, 2, 3, 4)
+                parts.megaCranes = [];
+                [-1.85, 1.85].forEach((cx, idx) => {
+                    const craneTurret = new THREE.Group();
+                    craneTurret.position.set(cx, 1.3, -0.65);
+
+                    // Turret Base
+                    const tBase = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.55, 16), matMegaHullWhite);
+                    const tRail = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.04, 8, 16).rotateX(Math.PI / 2), matMegaCraneYellow);
+                    tRail.position.y = 0.28;
+                    craneTurret.add(tBase, tRail);
+
+                    // Articulated Crane Boom Pivot
+                    const boomPivot = new THREE.Group();
+                    boomPivot.position.set(0, 0.35, 0);
+
+                    // Lower Yellow Boom (sweeps upward)
+                    const lowBoom = new THREE.Mesh(new THREE.BoxGeometry(0.42, 2.7, 0.48), matMegaCraneYellow);
+                    lowBoom.position.set(0, 1.25, 0);
+                    lowBoom.castShadow = true;
+
+                    // Hydraulic Actuator
+                    const piston = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 1.8, 10), matQuickSilver);
+                    piston.position.set((idx === 0 ? -1 : 1) * 0.25, 1.0, 0);
+                    piston.userData.noOutline = true;
+
+                    // Elbow Hinge Joint
+                    const elbow = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.52, 16).rotateZ(Math.PI / 2), matMegaCraneYellow);
+                    elbow.position.set(0, 2.6, 0);
+
+                    // Upper Yellow Boom (curves forward over shoulders)
+                    const upBoom = new THREE.Mesh(new THREE.BoxGeometry(0.38, 2.4, 0.44), matMegaCraneYellow);
+                    upBoom.position.set(0, 3.4, 0.95);
+                    upBoom.rotation.x = 0.58;
+                    upBoom.castShadow = true;
+
+                    // Wrist Joint & 3 Mechanical Grabber Claws
+                    const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.32, 12), matMegaClawCharcoal);
+                    wrist.position.set(0, 4.3, 1.95);
+
+                    const clawG = new THREE.Group();
+                    clawG.position.set(0, 4.45, 1.95);
+                    for (let c = 0; c < 3; c++) {
+                        const ang = (c * Math.PI * 2) / 3;
+                        const clawJaw = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.88, 0.28), matMegaClawCharcoal);
+                        clawJaw.position.set(Math.cos(ang) * 0.38, 0.42, Math.sin(ang) * 0.38);
+                        clawJaw.rotation.z = Math.cos(ang) * 0.32;
+                        clawJaw.rotation.x = Math.sin(ang) * 0.32;
+                        clawG.add(clawJaw);
+                    }
+
+                    boomPivot.add(lowBoom, piston, elbow, upBoom, wrist, clawG);
+                    craneTurret.add(boomPivot);
+                    megaBack.add(craneTurret);
+                    parts.megaCranes.push(boomPivot);
+                });
+
+                // Dual Stern Hydro-Jet Ducted Thrusters
+                [-1.5, 1.5].forEach(tx => {
+                    const duct = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.65, 2.4, 16).rotateX(Math.PI / 2), matMegaHullWhite);
+                    duct.position.set(tx, 0.15, -1.8);
+                    const cowl = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.72, 0.3, 16).rotateX(Math.PI / 2), matMegaKneeGold);
+                    cowl.position.set(tx, 0.15, -0.65);
+                    megaBack.add(duct, cowl);
+                });
+
+                // 4. Megabot Arms: White Pauldrons with Red Chevrons, Red Forearms & Blue Claws (Images 2, 3, 4)
+                [-1, 1].forEach((side, idx) => {
+                    const armG = side === -1 ? parts.leftArm : parts.rightArm;
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+
+                    const megaArm = new THREE.Group();
+                    megaArm.userData.isMegaPart = true;
+                    armG.add(megaArm);
+
+                    // Massive White Flared Shoulder Pauldron
+                    const pShoulder = new THREE.Mesh(new THREE.BoxGeometry(1.68, 1.68, 1.78), matMegaHullWhite);
+                    pShoulder.castShadow = true;
+                    // Angled Top Armor Crown
+                    const pCrown = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.42, 1.82), matMegaHullWhite);
+                    pCrown.position.set(0, 0.88, 0);
+                    pCrown.rotation.z = side * -0.22;
+
+                    // Bold Red Naval Chevron Stripes (Images 2, 3, 4)
+                    const pChevron = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.45, 1.45), matMegaShoulderChevron);
+                    pChevron.position.set(side * 0.88, 0.08, 0);
+                    pChevron.userData.noOutline = true;
+
+                    // Charcoal Bicep
+                    const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.85, 12), matHighTideDark);
+                    bicep.position.set(0, -0.85, 0);
+
+                    megaArm.add(pShoulder, pCrown, pChevron, bicep);
+
+                    // Forearm: Crimson Red & White Hull with Blue Grabber Claw Hands
+                    const megaForearm = new THREE.Group();
+                    megaForearm.userData.isMegaPart = true;
+                    forearmG.add(megaForearm);
+
+                    // Upper Crimson Red Gauntlet
+                    const redGauntlet = new THREE.Mesh(new THREE.BoxGeometry(1.42, 1.48, 1.42), matMegaDeckRed);
+                    redGauntlet.position.set(0, -0.45, 0.04);
+                    redGauntlet.castShadow = true;
+
+                    // Lower White Hull Plating
+                    const whiteGauntlet = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.75, 1.48), matMegaHullWhite);
+                    whiteGauntlet.position.set(0, -0.88, 0.04);
+
+                    // Side Charcoal Heat Sinks
+                    const heatSink = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 0.65), matHighTideDark);
+                    heatSink.position.set(side * 0.76, -0.45, 0.04);
+
+                    // Golden Wrist Cuff
+                    const cuff = new THREE.Mesh(new THREE.BoxGeometry(1.54, 0.32, 1.54), matHighTideGold);
+                    cuff.position.set(0, -1.08, 0.04);
+
+                    // Massive Royal Blue Hydraulic Claw Hand (Images 2, 3, 4)
+                    const handBlock = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.48, 0.85), matHighTideBlue);
+                    handBlock.position.set(0, -1.38, 0.04);
+
+                    const palmLens = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.1, 16), matHighTideCyanGlow);
+                    palmLens.position.set(0, -1.62, 0.04);
+                    palmLens.userData.noOutline = true;
+
+                    // 3 Hydraulic Claws
+                    const claws = new THREE.Group();
+                    claws.position.set(0, -1.45, 0.04);
+                    [-0.32, 0, 0.32].forEach((cx, cIdx) => {
+                        const clawF = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.85, 0.35), matHighTideBlue);
+                        clawF.position.set(cx, -0.45, cIdx === 1 ? -0.28 : 0.28);
+                        clawF.rotation.x = cIdx === 1 ? -0.28 : 0.28;
+                        claws.add(clawF);
+                    });
+
+                    megaForearm.add(redGauntlet, whiteGauntlet, heatSink, cuff, handBlock, palmLens, claws);
+                });
+
+                // 5. Megabot Legs: Charcoal Thighs, Yellow Knee Discs with Cyan Lenses, Flared White Shins & Blue Boots (Images 2, 3, 4)
+                [-1, 1].forEach(side => {
+                    const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+
+                    const megaLeg = new THREE.Group();
+                    megaLeg.userData.isMegaPart = true;
+                    legG.add(megaLeg);
+
+                    // Charcoal Upper Thigh
+                    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 1.35, 12), matHighTideDark);
+                    thigh.position.set(-side * 0.05, -0.5, 0);
+                    thigh.castShadow = true;
+
+                    // Iconic Round Yellow Knee Disc with Cyan Glass Dome Lens (Images 2, 3, 4)
+                    const kneeDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.28, 20).rotateX(Math.PI / 2), matMegaKneeGold);
+                    kneeDisc.position.set(-side * 0.06, -1.15, 0.72);
+
+                    const kneeLens = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.44, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5).rotateX(Math.PI / 2),
+                        matMegaKneeLens
+                    );
+                    kneeLens.position.set(-side * 0.06, -1.15, 0.86);
+                    kneeLens.userData.noOutline = true;
+
+                    // Flared White Heavy Shin Armor
+                    const shin = new THREE.Mesh(new THREE.BoxGeometry(1.68, 2.15, 1.85), matMegaHullWhite);
+                    shin.position.set(-side * 0.08, -1.95, 0.05);
+                    shin.castShadow = true;
+
+                    // Red Inner Calf Scoop Channel
+                    const calfScoop = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.75, 0.95), matMegaDeckRed);
+                    calfScoop.position.set(side * 0.72, -1.95, 0.08);
+
+                    // Massive Royal Blue Naval Boots
+                    const boot = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.55, 2.65), matHighTideBlue);
+                    boot.position.set(-side * 0.08, -2.95, 0.35);
+                    boot.castShadow = true;
+
+                    // Diving Fluke Claws on boot front
+                    [-0.52, 0, 0.52].forEach(tx => {
+                        const claw = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.32, 0.75), matMegaHullWhite);
+                        claw.position.set(-side * 0.08 + tx, -2.98, 1.75);
+                        boot.add(claw);
+                    });
+
+                    megaLeg.add(thigh, kneeDisc, kneeLens, shin, calfScoop, boot);
+                });
+
+                // 6. Megabot Dino Mode: Titan Mosasaur / Leviathan Sea Beast
+                const megaDinoHead = new THREE.Group();
+                megaDinoHead.userData.isMegaPart = true;
+                parts.dinoHead.add(megaDinoHead);
+
+                // Armored Mosasaur Skull
+                const mosasaurSkull = new THREE.Mesh(new THREE.BoxGeometry(1.75, 1.25, 2.85), matMegaHullWhite);
+                mosasaurSkull.position.set(0, 0.2, 0.45);
+                const mosasaurCrest = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.65, 2.1).rotateX(-0.15), matHighTideGold);
+                mosasaurCrest.position.set(0, 0.85, 0.35);
+                const mosasaurVisor = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.38, 0.85), matHighTideCyanGlow);
+                mosasaurVisor.position.set(0, 0.35, 0.95);
+                mosasaurVisor.userData.noOutline = true;
+
+                // Heavy Articulated Lower Jaw with Chrome Teeth
+                const mosasaurJaw = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.58, 2.65), matMegaDeckRed);
+                mosasaurJaw.position.set(0, -0.45, 0.65);
+                megaDinoHead.add(mosasaurSkull, mosasaurCrest, mosasaurVisor, mosasaurJaw);
+
+                // Heavy Naval Hydrofoil Flippers
+                [-1, 1].forEach(side => {
+                    const wingG = side === -1 ? parts.dinoLeftWing : parts.dinoRightWing;
+                    const megaWing = new THREE.Group();
+                    megaWing.userData.isMegaPart = true;
+                    wingG.add(megaWing);
+
+                    const flipper = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.22, 1.35), matHighTideBlue);
+                    flipper.position.set(side * 1.6, 0, 0);
+                    flipper.rotation.y = side * 0.24;
+                    const flipperTrim = new THREE.Mesh(new THREE.BoxGeometry(3.55, 0.25, 0.28), matMegaHullWhite);
+                    flipperTrim.position.set(side * 1.6, 0, 0.55);
+                    flipperTrim.rotation.y = side * 0.24;
+                    megaWing.add(flipper, flipperTrim);
+                });
+
+                // Armored Leviathan Tail Flukes
+                const megaTail = new THREE.Group();
+                megaTail.userData.isMegaPart = true;
+                parts.dinoTail.add(megaTail);
+                const megaTailFin = new THREE.Mesh(new THREE.BoxGeometry(0.24, 2.45, 1.65), matMegaDeckRed);
+                megaTailFin.position.set(0, 0.4, -1.8);
+                const tailKeel = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.85, 2.2), matMegaHullWhite);
+                tailKeel.position.set(0, -0.2, -1.2);
+                megaTail.add(megaTailFin, tailKeel);
+
+                // Initialize rig part visibility to match current docked status
+                const isCurrentMega = Boolean(typeof progression !== 'undefined' && progression.highTideDocked);
+                setHighTideRigMega(parts, isCurrentMega);
             }
 
             else if (botType === 'QUICKSHADOW') {
@@ -14158,6 +14722,27 @@
                 } else if (rig.botType === 'HIGHTIDE') {
                     const propSpin = m > 0.3 ? 0.045 : 0.008;
                     rig.rotors.rotation.z = now * propSpin;
+                    // Megabot articulated yellow crane arms motion!
+                    if (rig.isMega && rig.megaCranes && rig.megaCranes.length > 0) {
+                        const craneSmashLunge = smashOffset * 0.95;
+                        const craneIdleSway = Math.sin(now * 0.0025) * 0.06;
+                        rig.megaCranes.forEach((crane, idx) => {
+                            const sideFactor = idx === 0 ? -1 : 1;
+                            if (m > 0.5) {
+                                // Vehicle (Rescue Ship) mode: deck crane elevated ready for salvage
+                                crane.rotation.x = -0.35 + Math.sin(now * 0.002 + idx) * 0.04;
+                                crane.rotation.z = sideFactor * -0.22;
+                            } else if (d > 0.5) {
+                                // Dino (Leviathan) mode: crane arms reach forward as crushing side mandibles
+                                crane.rotation.x = 0.55 + Math.sin(now * 0.003 + idx) * 0.08;
+                                crane.rotation.z = sideFactor * 0.15;
+                            } else {
+                                // Bot mode: menacing over-shoulder posture with idle sway and smash lunge!
+                                crane.rotation.x = craneIdleSway + craneSmashLunge;
+                                crane.rotation.z = sideFactor * -0.12;
+                            }
+                        });
+                    }
                 }
             }
             if (rig.tailRotor) {
@@ -14764,6 +15349,14 @@
                     "High Tide reporting for duty! Ocean command standing by!",
                     "Attention on deck! Deep-sea rescue specialist ready!"
                 ],
+                DOCK: [
+                    "Megabot Exo-Armor engaged! Ready to take on anything!",
+                    "Neural link synchronized! Cybertronian vessel combined into Megabot mode!"
+                ],
+                UNDOCK: [
+                    "Exo-Armor disengaged. Returning to agile reconnaissance mode.",
+                    "Separating from rescue vessel. Standing by for offshore patrol."
+                ],
                 TO_VEHICLE: [
                     "High Tide, transform! Submarine mode engaged!",
                     "Hydro-thrusters engaged! Submerging into deep water!"
@@ -15013,7 +15606,19 @@
         scene.add(energyNetGroup);
 
         function syncHUDToActiveBot() {
-            const meta = BOT_METADATA[player.botType];
+            let meta = BOT_METADATA[player.botType];
+            if (player.botType === 'HIGHTIDE' && progression.highTideDocked) {
+                meta = {
+                    ...meta,
+                    name: 'HIGH TIDE (MEGABOT)',
+                    role: 'Titan Seafaring Exo-Armor',
+                    vehName: 'RESCUE SHIP',
+                    dinoName: 'TITAN MOSASAUR',
+                    botActionLabel: 'CRANE SMASH',
+                    vehActionLabel: 'HYDRO CANNON',
+                    dinoActionLabel: 'LEVIATHAN CHOMP'
+                };
+            }
             const isVeh = player.mode === 'VEHICLE';
             const isDino = player.mode === 'DINO';
             const modeLabel = isDino ? `${meta.dinoName} MODE` : (isVeh ? `${meta.vehName} MODE` : `BOT MODE`);
@@ -15043,6 +15648,16 @@
             if (btnAction) {
                 const botKey = (player.botType || 'BOULDER').toLowerCase();
                 btnAction.className = `tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-2 flex flex-col items-center justify-center text-white select-none mb-1.5 action-btn-${botKey} bg-gradient-to-b ${meta.btnActionBg || ''}`;
+            }
+
+            // High Tide Megabot Undock Button (Visible only when controlling High Tide in Megabot mode)
+            const btnUndock = document.getElementById('btn-undock');
+            if (btnUndock) {
+                if (player.botType === 'HIGHTIDE' && progression.highTideDocked) {
+                    btnUndock.classList.remove('hidden');
+                } else {
+                    btnUndock.classList.add('hidden');
+                }
             }
 
             // Optional Emergency Siren Toggle Button (Shown for Heatwave & Chase)
@@ -15228,6 +15843,17 @@
                 player.dinoMorph = 0.0;
             }
 
+            // High Tide Megabot Docking Persistence:
+            // If switching to High Tide and player was previously docked in Megabot mode, restore Megabot form!
+            if (newBotType === 'HIGHTIDE') {
+                const isMega = Boolean(progression.highTideDocked);
+                setHighTideRigMega(botRigs['HIGHTIDE'], isMega);
+                if (highTideWorldShip) highTideWorldShip.visible = !isMega;
+            } else if (oldBotType === 'HIGHTIDE') {
+                // When switching away from High Tide, High Tide and his boat both appear in the world!
+                if (highTideWorldShip) highTideWorldShip.visible = true;
+            }
+
             syncVisitingAutobotsVisibility();
             syncHUDToActiveBot();
             showToast("RESCUE BOTS ROSTER", `${BOT_METADATA[newBotType].name} Deployed!`);
@@ -15265,6 +15891,15 @@
 
             Object.keys(botRigs).forEach(botKey => {
                 const rig = botRigs[botKey];
+                if (botKey === 'HIGHTIDE') {
+                    const shouldBeMega = Boolean(
+                        (botKey === player.botType && progression.highTideDocked) ||
+                        (botKey === buddyBot.botType && progression.highTideDocked)
+                    );
+                    if (rig.isMega !== shouldBeMega) {
+                        setHighTideRigMega(rig, shouldBeMega);
+                    }
+                }
                 if (botKey === player.botType) {
                     // Active Bot follows player physics position & heading
                     rig.root.visible = true;
@@ -15403,6 +16038,7 @@
             discoveredAllies: [],
             autoSpawnEmergencies: true,
             buddyBotType: 'HEATWAVE',
+            highTideDocked: false,
             weatherMode: 'SUNNY'
         };
 
@@ -15486,6 +16122,9 @@
                         }
                         if (typeof parsed.weatherMode === 'string') {
                             progression.weatherMode = parsed.weatherMode;
+                        }
+                        if (typeof parsed.highTideDocked === 'boolean') {
+                            progression.highTideDocked = parsed.highTideDocked;
                         }
                     } else {
                         // Schema version mismatch: overwrite with clean release-scoped defaults
@@ -17418,6 +18057,198 @@
             }
         }
 
+        // =====================================================================
+        // HIGH TIDE CYBERTRONIAN OCEANIC RESCUE VESSEL (Reference Images 1 & 3)
+        // =====================================================================
+        let highTideWorldShip = null;
+
+        function createHighTideShipMesh() {
+            const ship = new THREE.Group();
+
+            // 1. Main Naval Hull: White beveled hull with angled bow
+            const hullMid = new THREE.Mesh(new THREE.BoxGeometry(10.5, 3.6, 22.0), matMegaHullWhite);
+            hullMid.position.set(0, 1.2, -1.0);
+            hullMid.castShadow = true;
+            ship.add(hullMid);
+
+            // Angled Bow Wedge: White forward prow
+            const bowProw = new THREE.Mesh(new THREE.BoxGeometry(9.6, 3.8, 10.0), matMegaHullWhite);
+            bowProw.position.set(0, 1.3, 11.0);
+            bowProw.castShadow = true;
+            ship.add(bowProw);
+
+            // Bow Flare Cap / Cutwater Nose
+            const bowNose = new THREE.Mesh(new THREE.ConeGeometry(4.8, 7.5, 4).rotateX(Math.PI / 2).rotateY(Math.PI / 4), matMegaHullWhite);
+            bowNose.position.set(0, 1.2, 16.5);
+            bowNose.scale.set(1.1, 0.72, 1.0);
+            bowNose.castShadow = true;
+            ship.add(bowNose);
+
+            // Slanted Red Hull Flank Markings & Red Autobot Anchor Badges (Images 1 & 3)
+            [-1, 1].forEach(side => {
+                const redStripe = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.4, 11.5), matMegaDeckRed);
+                redStripe.position.set(side * 5.32, 1.8, 3.5);
+                redStripe.rotation.z = side * 0.05;
+                ship.add(redStripe);
+
+                // Circular gold intake / thruster port with fin trim
+                const goldPort = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.85, 0.22, 16).rotateZ(Math.PI / 2), matMegaKneeGold);
+                goldPort.position.set(side * 5.33, 0.6, 8.5);
+                const portCore = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.25, 16).rotateZ(Math.PI / 2), matHighTideCyanGlow);
+                portCore.position.set(side * 5.34, 0.6, 8.5);
+                portCore.userData.noOutline = true;
+
+                const portFin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.28, 4.2), matMegaKneeGold);
+                portFin.position.set(side * 5.33, 0.6, 5.8);
+                ship.add(goldPort, portCore, portFin);
+
+                // Anchor Decal Plate on forward flank
+                const anchorPlate = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.2, 2.2), matMegaHullBadge);
+                anchorPlate.position.set(side * 5.33, 1.5, 12.5);
+                anchorPlate.userData.noOutline = true;
+                ship.add(anchorPlate);
+            });
+
+            // Lower Submarine Blue Keel beneath waterline
+            const keel = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.6, 26.0, 16).rotateX(Math.PI / 2), matHighTideNavy);
+            keel.position.set(0, -0.6, 0.5);
+            keel.scale.set(1.2, 0.65, 1.0);
+            ship.add(keel);
+
+            // Bulbous Bow Sonar Dome
+            const bulbDome = new THREE.Mesh(new THREE.SphereGeometry(2.4, 16, 12), matHighTideNavy);
+            bulbDome.position.set(0, -0.6, 13.8);
+            bulbDome.scale.set(1.1, 0.7, 1.5);
+            ship.add(bulbDome);
+
+            // 2. Command Bridge Superstructure (Autobot Red with Cyan windows and Autobot Crest)
+            const bridgeBase = new THREE.Mesh(new THREE.BoxGeometry(8.2, 1.4, 8.5), matMegaHullWhite);
+            bridgeBase.position.set(0, 3.7, -1.0);
+            ship.add(bridgeBase);
+
+            // Red Command Bridge Tower
+            const bridgeTower = new THREE.Mesh(new THREE.BoxGeometry(7.2, 4.2, 6.8), matMegaDeckRed);
+            bridgeTower.position.set(0, 6.2, -1.0);
+            bridgeTower.castShadow = true;
+            ship.add(bridgeTower);
+
+            // Panoramic Cyan Observation Windows
+            const frontWindow = new THREE.Mesh(new THREE.BoxGeometry(5.8, 1.6, 0.2), matMegaWindowBlue);
+            frontWindow.position.set(0, 7.1, 2.45);
+            frontWindow.userData.noOutline = true;
+            ship.add(frontWindow);
+
+            [-1, 1].forEach(side => {
+                const sideWindow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1.6, 4.2), matMegaWindowBlue);
+                sideWindow.position.set(side * 3.65, 7.1, -0.8);
+                sideWindow.userData.noOutline = true;
+                ship.add(sideWindow);
+            });
+
+            // Autobot Insignia Screen on front face of Bridge Tower
+            const bridgeCrest = new THREE.Mesh(new THREE.BoxGeometry(3.2, 2.4, 0.18), matMegaScreenCyan);
+            bridgeCrest.position.set(0, 5.2, 2.45);
+            bridgeCrest.userData.noOutline = true;
+            ship.add(bridgeCrest);
+
+            // High Tide Helmet Dome at top center of Bridge Roof
+            const helmDome = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 1.5), matHighTideBlue);
+            helmDome.position.set(0, 8.8, -1.0);
+            const helmVisor = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.45, 0.5), matHighTideCyanGlow);
+            helmVisor.position.set(0, 8.8, -0.3);
+            helmVisor.userData.noOutline = true;
+            const helmGoldLamp = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.25, 12).rotateX(Math.PI / 2), matHighTideGold);
+            helmGoldLamp.position.set(0, 9.4, -0.2);
+            ship.add(helmDome, helmVisor, helmGoldLamp);
+
+            // Yellow Catwalk Handrails around Bridge
+            const railMat = matMegaCraneYellow;
+            const frontRail = new THREE.Mesh(new THREE.BoxGeometry(7.6, 0.7, 0.1), railMat);
+            frontRail.position.set(0, 8.5, 2.4);
+            ship.add(frontRail);
+
+            // 3. Twin Heavy Articulated Yellow Deck Crane Arms (Images 1 & 3)
+            const cranes = [];
+            [-1, 1].forEach((side, idx) => {
+                const craneBase = new THREE.Group();
+                craneBase.position.set(side * 4.6, 3.2, 4.5);
+
+                const turret = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 1.6, 1.4, 16), matMegaHullWhite);
+                turret.position.y = 0.7;
+                const turretRing = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.08, 8, 16).rotateX(Math.PI / 2), railMat);
+                turretRing.position.y = 1.4;
+                craneBase.add(turret, turretRing);
+
+                const boomPivot = new THREE.Group();
+                boomPivot.position.set(0, 1.5, 0);
+
+                const lowerBoom = new THREE.Mesh(new THREE.BoxGeometry(0.75, 4.8, 0.85), matMegaCraneYellow);
+                lowerBoom.position.set(0, 2.2, 0);
+                lowerBoom.castShadow = true;
+
+                const hydroCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 3.2, 10), matQuickSilver);
+                hydroCyl.position.set(side * 0.45, 1.8, 0);
+                hydroCyl.userData.noOutline = true;
+
+                const elbowHinge = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.95, 16).rotateZ(Math.PI / 2), matMegaCraneYellow);
+                elbowHinge.position.set(0, 4.6, 0);
+
+                const upperBoom = new THREE.Mesh(new THREE.BoxGeometry(0.68, 4.2, 0.75), matMegaCraneYellow);
+                upperBoom.position.set(0, 6.2, 1.2);
+                upperBoom.rotation.x = 0.55;
+                upperBoom.castShadow = true;
+
+                const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.45, 12), matMegaClawCharcoal);
+                wrist.position.set(0, 7.8, 2.3);
+
+                const clawGroup = new THREE.Group();
+                clawGroup.position.set(0, 8.0, 2.3);
+                for (let j = 0; j < 3; j++) {
+                    const jawAng = (j * Math.PI * 2) / 3;
+                    const clawJaw = new THREE.Mesh(new THREE.BoxGeometry(0.28, 1.4, 0.45), matMegaClawCharcoal);
+                    clawJaw.position.set(Math.cos(jawAng) * 0.6, 0.6, Math.sin(jawAng) * 0.6);
+                    clawJaw.rotation.z = Math.cos(jawAng) * 0.35;
+                    clawJaw.rotation.x = Math.sin(jawAng) * 0.35;
+                    clawGroup.add(clawJaw);
+                }
+
+                boomPivot.add(lowerBoom, hydroCyl, elbowHinge, upperBoom, wrist, clawGroup);
+                boomPivot.rotation.z = side * -0.25;
+                boomPivot.rotation.y = side * 0.35;
+                craneBase.add(boomPivot);
+                ship.add(craneBase);
+                cranes.push({ base: craneBase, boom: boomPivot, claws: clawGroup });
+            });
+            ship.userData.cranes = cranes;
+
+            // 4. Stern Propulsion: Dual Ducted Hydro-Jet Thrusters with Spinning Golden Propellers
+            const thrusters = [];
+            [-2.6, 2.6].forEach(tx => {
+                const duct = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 3.8, 16).rotateX(Math.PI / 2), matMegaHullWhite);
+                duct.position.set(tx, 0.4, -12.5);
+                const goldCowl = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.45, 0.45, 16).rotateX(Math.PI / 2), matMegaKneeGold);
+                goldCowl.position.set(tx, 0.4, -10.6);
+                ship.add(duct, goldCowl);
+
+                const propHub = new THREE.Group();
+                propHub.position.set(tx, 0.4, -14.4);
+                for (let b = 0; b < 4; b++) {
+                    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.1, 0.12), matMegaKneeGold);
+                    blade.rotation.z = (b * Math.PI) / 2;
+                    blade.position.y = 0.5;
+                    propHub.add(blade);
+                }
+                const noseCone = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.7, 12).rotateX(-Math.PI / 2), matHighTideNavy);
+                propHub.add(noseCone);
+                ship.add(propHub);
+                thrusters.push(propHub);
+            });
+            ship.userData.thrusters = thrusters;
+
+            applyCartoonInkOutlines(ship, 1.035, true);
+            return ship;
+        }
+
         function initVisitingAutobots() {
             if (!Array.isArray(progression.discoveredAllies)) {
                 progression.discoveredAllies = [];
@@ -17661,6 +18492,43 @@
                     ally.lastSpeechTime = nowSec;
                     const randomDialogue = ally.dialogues[Math.floor(Math.random() * ally.dialogues.length)];
                     triggerNPCSpeech(ally.name, ally.role, randomDialogue, ally.root, false);
+                }
+            }
+
+            // High Tide Cybertronian Oceanic Rescue Vessel: Gentle water swell bobbing & visibility
+            if (highTideWorldShip) {
+                highTideWorldShip.position.y = -0.45 + Math.sin(nowSec * 1.8) * 0.12;
+                highTideWorldShip.rotation.z = Math.sin(nowSec * 1.2) * 0.02;
+                highTideWorldShip.rotation.x = Math.cos(nowSec * 1.5) * 0.015;
+                if (highTideWorldShip.userData && highTideWorldShip.userData.cranes) {
+                    highTideWorldShip.userData.cranes.forEach((crane, i) => {
+                        crane.boom.rotation.x = Math.sin(nowSec * 2.0 + i * Math.PI) * 0.06;
+                    });
+                }
+                if (highTideWorldShip.userData && highTideWorldShip.userData.thrusters) {
+                    highTideWorldShip.userData.thrusters.forEach(prop => {
+                        prop.rotation.z += dt * 3.5;
+                    });
+                }
+
+                // If player is High Tide AND in Megabot mode, hide the standalone boat!
+                // If player switches to another bot, both High Tide and the boat appear in the world!
+                const isPlayerHighTideMega = (player.botType === 'HIGHTIDE' && Boolean(progression.highTideDocked));
+                highTideWorldShip.visible = !isPlayerHighTideMega;
+            }
+
+            // High Tide Docking Prompt: When controlling High Tide near the boat, show floating [⚓ DOCK MEGABOT] button!
+            const dockPromptEl = document.getElementById('hightide-dock-prompt');
+            if (dockPromptEl && highTideWorldShip) {
+                if (player.botType === 'HIGHTIDE' && !progression.highTideDocked && highTideWorldShip.visible) {
+                    const distToShip = Math.hypot(player.pos.x - highTideWorldShip.position.x, player.pos.z - highTideWorldShip.position.z);
+                    if (distToShip < 34.0) {
+                        dockPromptEl.classList.remove('hidden');
+                    } else {
+                        dockPromptEl.classList.add('hidden');
+                    }
+                } else {
+                    dockPromptEl.classList.add('hidden');
                 }
             }
         }
@@ -18709,7 +19577,7 @@
             }
 
             // Sample terrain for buddy bot smooth suspension & pitch/roll
-            const buddyScale = (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[buddyBot.botType]) || 1.0;
+            const buddyScale = getBotScale(buddyBot.botType);
             const bSinH = Math.sin(buddyBot.heading);
             const bCosH = Math.cos(buddyBot.heading);
             const bFx = buddyBot.pos.x + bSinH * (2.2 * buddyScale);
@@ -21651,6 +22519,65 @@
             syncHUDToActiveBot();
         }
 
+        function dockHighTideMegabot() {
+            if (player.botType !== 'HIGHTIDE' || progression.highTideDocked) return;
+            progression.highTideDocked = true;
+            saveProgression();
+
+            sfx.playTransform(true);
+            if (typeof sfx.playRankUp === 'function') sfx.playRankUp();
+            spawnBurstParticles(player.pos.x, player.pos.y + 4.0, player.pos.z, 0x06b6d4, 32, 2.2);
+            spawnBurstParticles(player.pos.x, player.pos.y + 2.0, player.pos.z, 0xfacc15, 24, 1.8);
+
+            if (highTideWorldShip) {
+                highTideWorldShip.visible = false;
+            }
+
+            const rig = botRigs['HIGHTIDE'];
+            if (rig) {
+                setHighTideRigMega(rig, true);
+            }
+
+            showToast("⚓ MEGABOT EXO-ARMOR ENGAGED!", "High Tide combined with Oceanic Rescue Vessel!");
+            speakBotCatchphrase('HIGHTIDE', 'DOCK');
+            syncHUDToActiveBot();
+        }
+
+        function undockHighTideMegabot() {
+            if (player.botType !== 'HIGHTIDE' || !progression.highTideDocked) return;
+            progression.highTideDocked = false;
+            saveProgression();
+
+            sfx.playTransform(false);
+            spawnBurstParticles(player.pos.x, player.pos.y + 2.5, player.pos.z, 0x38bdf8, 22, 1.6);
+
+            if (highTideWorldShip) {
+                // Return ship to harbor bay mooring or nearby in water
+                if (isNearWater(player.pos.x, player.pos.z, 30.0)) {
+                    const shipAngle = player.heading + Math.PI * 0.5;
+                    highTideWorldShip.position.set(
+                        player.pos.x + Math.sin(shipAngle) * 16.0,
+                        -0.45,
+                        player.pos.z + Math.cos(shipAngle) * 16.0
+                    );
+                    highTideWorldShip.rotation.y = player.heading;
+                } else {
+                    highTideWorldShip.position.set(-96, -0.45, 1480);
+                    highTideWorldShip.rotation.y = Math.PI * 0.5;
+                }
+                highTideWorldShip.visible = true;
+            }
+
+            const rig = botRigs['HIGHTIDE'];
+            if (rig) {
+                setHighTideRigMega(rig, false);
+            }
+
+            showToast("⚓ MEGABOT EXO-ARMOR DISENGAGED", "High Tide returned to Reconnaissance Mode.");
+            speakBotCatchphrase('HIGHTIDE', 'UNDOCK');
+            syncHUDToActiveBot();
+        }
+
         // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot)
         function triggerTransform() {
             const hasDino = BOT_METADATA[player.botType] && BOT_METADATA[player.botType].dinoName;
@@ -21957,31 +22884,33 @@
             }
 
             if (player.botType === 'HIGHTIDE') {
+                const isMega = Boolean(progression.highTideDocked);
+                const clearRadius = isMega ? 38.0 : 24.0;
+                player.smashTimer = isMega ? 0.6 : 0.45;
+
                 if (player.mode === 'DINO') {
-                    // PLESIOSAUR: Plesio Surge Marine Geyser & Tidal Splash!
-                    player.waterTimer = 2.0;
-                    player.smashTimer = 0.45;
+                    player.waterTimer = isMega ? 2.8 : 2.0;
                     sfx.playDinoRoar('HIGHTIDE');
                     sfx.playWaterSpray();
                 } else {
-                    player.waterTimer = 1.8;
+                    player.waterTimer = isMega ? 2.5 : 1.8;
                     sfx.playWaterSpray();
                     sfx.playSmash();
                 }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < clearRadius) {
                             clearHazardNode(beacon, n);
                         }
                     });
                 });
                 spawnBurstParticles(
-                    player.pos.x + Math.sin(player.heading) * 4.0,
-                    player.pos.y + 0.8,
-                    player.pos.z + Math.cos(player.heading) * 4.0,
+                    player.pos.x + Math.sin(player.heading) * (isMega ? 7.0 : 4.0),
+                    player.pos.y + (isMega ? 1.5 : 0.8),
+                    player.pos.z + Math.cos(player.heading) * (isMega ? 7.0 : 4.0),
                     0x38bdf8,
-                    18,
-                    1.6
+                    isMega ? 32 : 18,
+                    isMega ? 2.4 : 1.6
                 );
                 return;
             }
@@ -22101,6 +23030,8 @@
         bindButton('btn-jump-scan', triggerSecondaryAction);
         bindButton('btn-descend', triggerDescendAction);
         bindButton('btn-siren', toggleSiren);
+        bindButton('btn-dock', dockHighTideMegabot);
+        bindButton('btn-undock', undockHighTideMegabot);
 
         // Bind Buddy Bot Cycle Button
         bindButton('btn-buddy-cycle', () => {
@@ -22270,6 +23201,15 @@
             }
             if (e.code === 'KeyH' && !e.repeat) {
                 toggleSiren();
+            }
+            if (e.code === 'KeyX' && !e.repeat) {
+                if (player.botType === 'HIGHTIDE') {
+                    if (progression.highTideDocked) {
+                        undockHighTideMegabot();
+                    } else if (highTideWorldShip && Math.hypot(player.pos.x - highTideWorldShip.position.x, player.pos.z - highTideWorldShip.position.z) < 34.0) {
+                        dockHighTideMegabot();
+                    }
+                }
             }
             if (e.code === 'KeyB' && !e.repeat) {
                 cycleBuddyBot();
@@ -23371,7 +24311,7 @@
 
             // Sample terrain footprint for vehicle suspension & pitch/roll slope conform
             const isVehicleOrDino = player.mode === 'VEHICLE' || player.mode === 'DINO';
-            const currentBotScale = (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[player.botType]) || 1.0;
+            const currentBotScale = getBotScale(player.botType);
             const halfWheelbase = (isVehicleOrDino ? 2.3 : 0.8) * currentBotScale;
             const halfTrack = (isVehicleOrDino ? 1.35 : 0.7) * currentBotScale;
             const noseReach = (isVehicleOrDino ? 3.2 : 1.2) * currentBotScale;
@@ -23908,7 +24848,7 @@
 
             // Camera Distance & Pitch per View Mode (Default Mode 0 is significantly pulled back & elevated)
             let baseDist = isFlyingCopter ? 44.0 : (player.mode === 'VEHICLE' || player.mode === 'DINO' ? 39.0 : 34.0);
-            const botScaleFactor = (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[player.botType]) || 1.0;
+            const botScaleFactor = getBotScale(player.botType);
             baseDist *= (1.0 + (botScaleFactor - 1.0) * 0.75);
             let activePitch = 0.48;
             if (input.camZoomMode === 1) {
