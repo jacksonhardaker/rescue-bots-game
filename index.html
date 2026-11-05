@@ -1,3 +1,10 @@
+<!--
+  GRIFFIN ROCK RESCUE BOTS: 3D OPEN WORLD
+  Unofficial, non-commercial fan tribute project for educational and entertainment purposes.
+  TRANSFORMERS, RESCUE BOTS, and all related character names, vehicle designs, likenesses,
+  and logos are registered trademarks and copyrights of Hasbro, Inc.
+  See LICENSE and NOTICE files in the repository for full open-source license and legal details.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -948,6 +955,15 @@
                     </span>
                     <span id="sound-label">Sounds: ON</span>
                 </button>
+                <button id="btn-about-legal" class="bg-slate-900/80 hover:bg-slate-800/90 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-cyan-400/50 text-white w-full text-left" title="About this fan project & legal notices">
+                    <span class="w-5 h-5 flex items-center justify-center shrink-0 text-cyan-300">
+                        <svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 16v-4M12 8h.01"/>
+                        </svg>
+                    </span>
+                    <span>About & Legal</span>
+                </button>
                 <button id="btn-reset" class="bg-slate-900/80 hover:bg-slate-800/90 active:scale-95 px-3 py-2.5 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm font-bold border border-rose-400/50 text-white w-full text-left">
                     <span class="w-5 h-5 flex items-center justify-center shrink-0 text-rose-400">
                         <svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1254,6 +1270,60 @@
             <span class="text-xs sm:text-sm font-extrabold tracking-tight uppercase mt-0.5">TRANSFORM</span>
             <span class="text-[9px] sm:text-[10px] font-bold bg-slate-950/85 text-yellow-300 px-2 py-0.2 rounded-full mt-0.5" id="transform-sub">TO VEHICLE</span>
         </button>
+    </div>
+
+    <!-- About & Legal Modal (Non-Commercial Fan Tribute Disclaimer) -->
+    <div id="about-legal-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="hud-glass border-2 border-cyan-400 rounded-3xl max-w-lg w-full p-6 text-left shadow-2xl relative max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700/80">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 font-black">
+                        i
+                    </div>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-white leading-tight">About & Legal Notice</h2>
+                        <p class="text-[10px] text-cyan-300 font-mono">Griffin Rock Rescue Bots • Fan Project</p>
+                    </div>
+                </div>
+                <button id="btn-close-about" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg" title="Close">
+                    ✕
+                </button>
+            </div>
+            <div class="overflow-y-auto py-4 space-y-3.5 text-xs text-slate-300 leading-relaxed pr-1">
+                <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-400/40 text-amber-200">
+                    <div class="font-bold text-[11px] uppercase tracking-wide text-amber-300 mb-1 flex items-center gap-1.5">
+                        <span>⚠️</span> Unofficial Fan Tribute
+                    </div>
+                    This is an independent, non-commercial fan game created out of love for the <em>Transformers: Rescue Bots</em> animated series for educational and personal enjoyment.
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-[11px] uppercase tracking-wider mb-1">Trademark & Copyright Notice</h3>
+                    <p>
+                        <strong>TRANSFORMERS</strong>, <strong>RESCUE BOTS</strong>, and all associated character likenesses, names, vehicle designs, logos, and fictional settings (including Optimus Prime, Boulder, Heatwave, Chase, Blades, Bumblebee, Blurr, Salvage, High Tide, Quickshadow, and Griffin Rock) are registered trademarks and copyrights of <strong>Hasbro, Inc.</strong>
+                    </p>
+                    <p class="mt-1">
+                        This project is <strong>not</strong> endorsed, sponsored, authorized, or affiliated with Hasbro, Inc. or any of its subsidiaries.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-[11px] uppercase tracking-wider mb-1">Non-Commercial Guarantee</h3>
+                    <p>
+                        This game is completely free. There are no advertisements, microtransactions, subscriptions, or donations of any kind.
+                    </p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-white text-[11px] uppercase tracking-wider mb-1">Open-Source Code License</h3>
+                    <p>
+                        The underlying game engine, procedural 3D math, and rendering logic are released under the <strong>MIT License</strong>. The license applies solely to the source code and conveys no rights to Hasbro's intellectual property.
+                    </p>
+                </div>
+            </div>
+            <div class="pt-3 border-t border-slate-700/80 flex justify-end">
+                <button id="btn-ack-about" class="tactile-btn bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold px-5 py-2 rounded-xl text-xs sm:text-sm">
+                    Back to Griffin Rock
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Victory Modal -->
@@ -21440,6 +21510,7 @@
                 target.closest('button') ||
                 target.closest('header') ||
                 target.closest('#bot-roster') ||
+                target.closest('#about-legal-modal') ||
                 target.closest('#victory-modal') ||
                 target.closest('#morocco-modal') ||
                 target.closest('#morbot-victory-modal') ||
@@ -22140,6 +22211,21 @@
             showToast("ISLAND RESET", "All 8 Emergencies & Energon Cubes Respawned!");
         });
 
+        // About & Legal Notice Modal Buttons
+        bindButton('btn-about-legal', () => {
+            closeUtilityMenu();
+            const modal = document.getElementById('about-legal-modal');
+            if (modal) modal.classList.remove('hidden');
+        });
+        bindButton('btn-close-about', () => {
+            const modal = document.getElementById('about-legal-modal');
+            if (modal) modal.classList.add('hidden');
+        });
+        bindButton('btn-ack-about', () => {
+            const modal = document.getElementById('about-legal-modal');
+            if (modal) modal.classList.add('hidden');
+        });
+
         bindButton('btn-keep-exploring', () => {
             document.getElementById('victory-modal').classList.add('hidden');
         });
@@ -22205,6 +22291,11 @@
                 }
             }
             if (e.code === 'Escape' && !e.repeat) {
+                const aboutModal = document.getElementById('about-legal-modal');
+                if (aboutModal && !aboutModal.classList.contains('hidden')) {
+                    aboutModal.classList.add('hidden');
+                    return;
+                }
                 const modal = document.getElementById('tactical-map-modal');
                 if (modal && !modal.classList.contains('hidden')) {
                     closeTacticalMap();
