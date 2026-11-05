@@ -22519,6 +22519,9 @@
 
                 // Griffin Rock Express Heavy Train 2D OBB Collision
                 if (typeof islandTrain !== 'undefined' && !onTrainRoof && islandTrain.cars.length > 0) {
+                    if (!player.trainImpactCooldown) player.trainImpactCooldown = 0;
+                    if (player.trainImpactCooldown > 0) player.trainImpactCooldown -= dt;
+
                     for (let i = 0; i < islandTrain.cars.length; i++) {
                         const car = islandTrain.cars[i];
                         const cdx = player.pos.x - car.x;
@@ -22537,15 +22540,24 @@
 
                         const col = testOBBOverlap2D(playerOBB, carOBB);
                         if (col) {
-                            player.pos.x -= col.mtv.x;
-                            player.pos.z -= col.mtv.z;
+                            // Firmly push player out along the collision MTV with safety margin
+                            player.pos.x -= col.mtv.x * 1.06;
+                            player.pos.z -= col.mtv.z * 1.06;
                             playerOBB.x = player.pos.x;
                             playerOBB.z = player.pos.z;
 
-                            sfx.playSmash();
-                            spawnBurstParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 0xfacc15, 14, 1.3);
-                            spawnMagnetSparkParticles(player.pos.x, player.pos.y + 0.9, player.pos.z, 10);
-                            player.speed = -player.speed * 0.35;
+                            // Debounce impact FX: only play audio and spawn particles on initial strike
+                            if (player.trainImpactCooldown <= 0) {
+                                player.trainImpactCooldown = 0.45;
+                                sfx.playSmash();
+                                spawnBurstParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 0xfacc15, 8, 1.2);
+                                spawnMagnetSparkParticles(player.pos.x, player.pos.y + 0.9, player.pos.z, 6);
+                                player.speed = -player.speed * 0.35;
+                            } else {
+                                // Smooth velocity damping while brushing along moving train
+                                player.speed *= 0.88;
+                            }
+                            break;
                         }
                     }
                 }
