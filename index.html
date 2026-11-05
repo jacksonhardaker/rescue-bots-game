@@ -5280,7 +5280,12 @@
                 }
             }
 
-            // 6. Flatten West Tech & Industrial Park (around -1120, 25)
+            // 6. Flatten West Tech Village & Doc Greene's Testing Yard (around -1120, 25 and -1250, 65)
+            const distTestingYard = Math.hypot(x + 1250, z - 65);
+            if (distTestingYard < 110) {
+                const flatFactor = Math.max(0, Math.min(1, (distTestingYard - 68) / 42));
+                h = h * flatFactor + 5.2 * (1 - flatFactor);
+            }
             const distWestHub = Math.hypot(x + 1120, z - 25);
             if (distWestHub < 185) {
                 const flatFactor = Math.max(0, Math.min(1, (distWestHub - 115) / 70));
@@ -5356,8 +5361,8 @@
             // Griffin Rock Island Railway Embankment Corridor (Smooth, solid roadbed along mid-ring railway circuit)
             const rRail = getRailwayRadius(theta);
             const distRail = Math.abs(r - rRail);
-            if (distRail < 32) {
-                const railBlend = Math.max(0, Math.min(1, (distRail - 12.0) / 20.0));
+            if (distRail < 48) {
+                const railBlend = Math.max(0, Math.min(1, (distRail - 22.0) / 26.0));
                 const smoothRailBlend = railBlend * railBlend * (3 - 2 * railBlend);
                 const idealRailH = Math.max(3.8, h * 0.25 + 2.2);
                 h = h * smoothRailBlend + idealRailH * (1 - smoothRailBlend);
@@ -5430,6 +5435,21 @@
             } else if (Math.abs(x - 36) <= 7.8 && z >= 1210 && z <= 1254) {
                 return 5.0;
             }
+            // Doc Greene's Anti-Gravity Testing Yard Platform Deck (X: -1250, Z: 65)
+            if (Math.abs(x - (-1250)) <= 43.0 && Math.abs(z - 65) <= 30.0) {
+                const tyBase = getTerrainHeight(-1250, 65);
+                // On the Supersonic Speed Strip Deck (Z: 80.5 to 87.5, X: -1290 to -1210)
+                if (Math.abs(x - (-1250)) <= 40.0 && Math.abs(z - 84) <= 3.8) {
+                    return tyBase + 0.72;
+                }
+                // On the Super Mega-Bounce Pad Membrane (radius 5.8 around -1250, 58)
+                const distBounce = Math.hypot(x - (-1250), z - 58);
+                if (distBounce <= 5.8) {
+                    return tyBase + 1.15;
+                }
+                // General Testing Yard Plinth Deck
+                return tyBase + 0.5;
+            }
             // Stunt Ramp Surfaces (allows vehicles & bots to smoothly drive and run up the ramp incline)
             for (let i = 0; i < ramps.length; i++) {
                 const rm = ramps[i];
@@ -5491,8 +5511,13 @@
             // Clear trees from Griffin Rock Railway Corridor & Central Station Platform
             const rTree = Math.hypot(x, z);
             const thetaTree = Math.atan2(z, x);
-            if (Math.abs(rTree - getRailwayRadius(thetaTree)) < 9.5) return true;
+            if (Math.abs(rTree - getRailwayRadius(thetaTree)) < 14.0) return true;
             if (Math.hypot(x - 765, z - 75) < 35) return true; // Central Station Depot
+            // Dedicated GroundBridge turnout staging bays
+            if (Math.hypot(x - (-1085), z - 62) < 24) return true;
+            if (Math.hypot(x - 48, z - 1040) < 24) return true;
+            if (Math.hypot(x - (-750), z - (-665)) < 24) return true;
+            if (Math.hypot(x - 1895, z - 492) < 24) return true;
 
             return false;
         }
@@ -5539,14 +5564,15 @@
             if (Math.hypot(x - (-825), z - 825) < 185) return "SUNNY SANDS BOARDWALK";
             if (Math.hypot(x + 110, z - 1150) < 35) return "HARBOR CRANE YARD";
             if (Math.hypot(x + 1250, z - 65) < 55) return "DOC GREENE'S TESTING YARD";
-            if (Math.hypot(x, z + 62) < 22) return "HQ LAUNCH CATAPULT";
-            if (Math.hypot(x + 72, z + 15) < 25) return "FIREHOUSE ROBO-WASH";
+            if (Math.hypot(x - 36, z - (-45)) < 24) return "HQ LAUNCH CATAPULT";
+            if (Math.hypot(x - (-92), z - (-15)) < 26) return "FIREHOUSE ROBO-WASH";
             if (Math.hypot(x - 78, z + 15) < 26) return "GRIFFIN ROCK DINER";
-            if (Math.hypot(x + 1060, z + 42) < 32) return "ENERGON TURBO-CHARGER";
-            if (Math.hypot(x + 1090, z - 25) < 28) return "WEST GROUNDBRIDGE";
-            if (Math.hypot(x, z - 1040) < 28) return "SOUTH GROUNDBRIDGE";
-            if (Math.hypot(x, z - 168) < 28) return "CIVIC GROUNDBRIDGE";
-            if (Math.hypot(x, z) < 85) return "RESCUE BOTS HQ";
+            if (Math.hypot(x - (-1110), z - (-42)) < 32) return "ENERGON TURBO-CHARGER";
+            if (Math.hypot(x - (-1085), z - 62) < 28) return "WEST GROUNDBRIDGE";
+            if (Math.hypot(x - 48, z - 1040) < 28) return "SOUTH GROUNDBRIDGE";
+            if (Math.hypot(x - (-750), z - (-665)) < 28) return "DINO RIDGE GROUNDBRIDGE";
+            if (Math.hypot(x - 1895, z - 492) < 28) return "WAYWARD RUINS GROUNDBRIDGE";
+            if (Math.hypot(x - (-48), z - (-45)) < 55) return "RESCUE BOTS HQ";
             if (Math.hypot(x, z - 25) < 195) return "GRIFFIN TOWN CENTER";
             if (Math.hypot(x, z - 1140) < 220) return "SOUTH HARBOR PORT";
             if (Math.hypot(x + 1120, z - 25) < 190) return "WEST TECH VILLAGE";
@@ -6215,20 +6241,20 @@
             return padG;
         }
 
-        // 1. Grand North-South Highway (North Observatory outpost at Z = -1160 to South Harbor Pier at Z = 1180)
+        // 1. Grand North-South Highway (North Observatory outpost at Z = -1136 to South Harbor Pier at Z = 1180)
         const ptsNS = [];
-        for (let z = -1160; z <= 1180; z += 5) ptsNS.push({ x: 0, z: z });
+        for (let z = -1136; z <= 1180; z += 5) ptsNS.push({ x: 0, z: z });
         scene.add(createRoadRibbon(ptsNS, 18.2, false, -1.0, -4.0));
 
-        // 2. Grand East-West Highway (West Tech Village at X = -1160 to East Coast at X = 1205)
+        // 2. Grand East-West Highway (West Tech Village at X = -1144 to East Coast at X = 1205)
         const ptsEW = [];
-        for (let x = -1160; x <= 1205; x += 5) ptsEW.push({ x: x, z: 25 });
+        for (let x = -1144; x <= 1205; x += 5) ptsEW.push({ x: x, z: 25 });
         scene.add(createRoadRibbon(ptsEW, 18.2, false, -1.05, -4.5));
 
         // 3. Wayward Island Causeway Highway, Suspension Bridge Deck & Ancient Ruins Road
         // Starts directly at Outer Loop junction (X = 1068, Z = 540) to bridge gap completely
         const ptsWayward = [];
-        for (let x = 1068; x <= 1940; x += 5) ptsWayward.push({ x: x, z: 540 });
+        for (let x = 1068; x <= 1915; x += 5) ptsWayward.push({ x: x, z: 540 });
         scene.add(createRoadRibbon(ptsWayward, 18.2, false, -1.1, -5.0));
 
         // 3b. Wayward Island Scenic Coastal Trail Loop (Beaches, Sea Grotto, Pier & Ruins)
@@ -6242,9 +6268,9 @@
         }
         scene.add(createRoadRibbon(ptsWaywardLoop, 14.5, true, -1.05, -4.5));
 
-        // 4. Scenic East Lighthouse Access Road (Connects seamlessly to Outer Loop at X = 1175 to Lighthouse at X = 1320)
+        // 4. Scenic East Lighthouse Access Road (Connects seamlessly to Outer Loop at X = 1175 to Lighthouse Lookout at X = 1300)
         const ptsLighthouse = [];
-        for (let x = 1175; x <= 1320; x += 4) ptsLighthouse.push({ x: x, z: 60 });
+        for (let x = 1175; x <= 1300; x += 4) ptsLighthouse.push({ x: x, z: 60 });
         scene.add(createRoadRibbon(ptsLighthouse, 14.0, false, -1.15, -5.5));
 
         // 4b. Dr. Morocco Lair Access Road (Connects Outer Ring Highway at -619.3, -1083.8 to Lair at -820, -1180)
@@ -6278,19 +6304,26 @@
         scene.add(createRoadRibbon(ptsOuterRing, 18.2, true, -1.25, -6.5));
 
         // 7. Paved Intersection Junction Aprons (Smooths crossings & eliminates line-clipping)
-        createRoadIntersectionPad(0, 0, 19.5);                  // Central Griffin Plaza (NS x EW)
+        createRoadIntersectionPad(0, 25, 19.5);                 // Central Griffin Plaza (NS x EW)
+        createRoadIntersectionPad(-48, -15, 14.5);              // Rescue Bots HQ Forecourt Apron Junction
         createRoadIntersectionPad(0, -1120, 18.5);              // North Outer Junction (NS x Outer Ring)
+        createRoadIntersectionPad(0, -1136, 17.5);              // North Observatory Terminal Apron
         createRoadIntersectionPad(0, 1120, 18.5);               // South Outer Junction (NS x Outer Ring)
         createRoadIntersectionPad(0, -380, 18.0);               // North Inner Junction (NS x Inner Ring)
         createRoadIntersectionPad(0, 380, 18.0);                // South Inner Junction (NS x Inner Ring)
         createRoadIntersectionPad(-1060.8, 25, 18.5);           // West Outer Junction (EW x Outer Ring)
+        createRoadIntersectionPad(-1144, 25, 18.5);             // West Tech Lab Entrance Plaza
         createRoadIntersectionPad(1178.2, 25, 18.5);            // East Outer Junction (EW x Outer Ring)
-        createRoadIntersectionPad(-380, 25, 18.0);              // West Inner Junction (EW x Inner Ring)
-        createRoadIntersectionPad(380, 25, 18.0);               // East Inner Junction (EW x Inner Ring)
+        createRoadIntersectionPad(-355.1, 25, 18.5);            // West Inner Junction (EW x Inner Ring)
+        createRoadIntersectionPad(402.8, 25, 18.5);             // East Inner Junction (EW x Inner Ring)
         createRoadIntersectionPad(1068.9, 540, 17.5);           // Wayward Causeway Junction (Causeway x Outer Ring)
+        createRoadIntersectionPad(1915, 540, 18.5);             // Wayward Causeway Ruins Terminal Apron
         createRoadIntersectionPad(1181.5, 60, 16.5);            // East Lighthouse Junction (Lighthouse Road x Outer Ring)
+        createRoadIntersectionPad(1300, 60, 15.5);              // East Lighthouse Lookout Terminal Apron
         createRoadIntersectionPad(-619.3, -1083.8, 19.5);       // Dr. Morocco Lair Junction (Morocco Road x Outer Ring)
         createRoadIntersectionPad(-820, -1180, 22.0);            // Dr. Morocco Lair Plateau Terminal Apron
+        createRoadIntersectionPad(-1085, 42, 16.0);             // West GroundBridge Turnout Apron (connects EW Highway to Portal A)
+        createRoadIntersectionPad(24, 1040, 16.0);              // South Harbor GroundBridge Turnout Apron (connects NS Highway to Portal B)
 
         /***********************************************************************
          * 5C. GRIFFIN ROCK ISLAND RAILWAY CIRCUIT & CENTRAL STATION
@@ -6314,7 +6347,7 @@
         }
         railwayTotalDist += Math.hypot(ptsRailway[0].x - prevRailPt.x, ptsRailway[0].z - prevRailPt.z);
 
-        const railwayMesh = createRoadRibbon(ptsRailway, 7.6, true, -1.25, -6.0, sharedRailTrackTexture, 4.0, 0.42);
+        const railwayMesh = createRoadRibbon(ptsRailway, 7.6, true, -1.35, -7.0, sharedRailTrackTexture, 4.0, 0.65);
         scene.add(railwayMesh);
 
         function getTrackPointAtDist(targetDist) {
@@ -6353,10 +6386,10 @@
             const padW = isNSHighway ? 19.5 : 8.5;
             const padL = isNSHighway ? 8.5 : 19.5;
             const padMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(padW, 0.48, padL),
+                new THREE.BoxGeometry(padW, 0.58, padL),
                 new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3, polygonOffset: true, polygonOffsetFactor: -1.2, polygonOffsetUnits: -5.0 })
             );
-            padMesh.position.set(0, 0.24, 0);
+            padMesh.position.set(0, 0.35, 0);
             padMesh.receiveShadow = true;
             crossG.add(padMesh);
 
@@ -6503,10 +6536,10 @@
         scene.add(shorelineFoamRing);
 
         // =====================================================================
-        // 5A. ICONIC RESCUE BOTS FIREHOUSE HEADQUARTERS (At X: 0, Z: -45)
+        // 5A. ICONIC RESCUE BOTS FIREHOUSE HEADQUARTERS (At X: -48, Z: -45 - Set safely West of NS Highway)
         // =====================================================================
-        const HQ_POS = { x: 0, z: -45 };
-        const HQ_SWAP_PAD = { x: 0, z: -15, r: 12.5 };
+        const HQ_POS = { x: -48, z: -45 };
+        const HQ_SWAP_PAD = { x: -48, z: -15, r: 12.5 };
         const hqGroup = new THREE.Group();
         const hqY = getTerrainHeight(HQ_POS.x, HQ_POS.z);
         hqGroup.position.set(HQ_POS.x, hqY, HQ_POS.z);
@@ -6517,38 +6550,141 @@
         const matChrome = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGradGlossy });
         const matGlass = new THREE.MeshBasicMaterial({ map: texWindshieldCyan });
 
-        // Main Firehouse 3-Bay Apparatus Hall
-        const hqMainHall = new THREE.Mesh(new THREE.BoxGeometry(38, 15, 24), matBrickRed);
-        hqMainHall.position.set(0, 7.5, 0);
-        hqMainHall.castShadow = true;
-        hqMainHall.receiveShadow = true;
-        hqGroup.add(hqMainHall);
+        // Paved Firehouse Apron & Driveway Forecourt (Connecting HQ bays & Swap Pad seamlessly to NS Highway)
+        const hqApron = new THREE.Mesh(
+            new THREE.BoxGeometry(56, 0.45, 48),
+            new THREE.MeshToonMaterial({
+                color: 0x334155,
+                gradientMap: toonGrad3,
+                polygonOffset: true,
+                polygonOffsetFactor: -1.2,
+                polygonOffsetUnits: -5.0
+            })
+        );
+        hqApron.position.set(6, 0.22, 14);
+        hqApron.receiveShadow = true;
+        hqGroup.add(hqApron);
+
+        // Main Firehouse 3-Bay Apparatus Hall (Hollow interior so parked bots are fully visible inside)
+        // 1. Back Wall
+        const hqBackWall = new THREE.Mesh(new THREE.BoxGeometry(38, 15, 1.6), matBrickRed);
+        hqBackWall.position.set(0, 7.5, -11.2);
+        hqBackWall.castShadow = true;
+        hqBackWall.receiveShadow = true;
+        hqGroup.add(hqBackWall);
+
+        // 2. Left & Right Side Walls
+        const hqLeftWall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 15, 24), matBrickRed);
+        hqLeftWall.position.set(-18.2, 7.5, 0);
+        hqLeftWall.castShadow = true;
+        hqLeftWall.receiveShadow = true;
+        const hqRightWall = new THREE.Mesh(new THREE.BoxGeometry(1.6, 15, 24), matBrickRed);
+        hqRightWall.position.set(18.2, 7.5, 0);
+        hqRightWall.castShadow = true;
+        hqRightWall.receiveShadow = true;
+        hqGroup.add(hqLeftWall, hqRightWall);
+
+        // 3. Hall Ceiling & Concrete Interior Floor
+        const hqCeiling = new THREE.Mesh(new THREE.BoxGeometry(38, 1.2, 24), matBrickRed);
+        hqCeiling.position.set(0, 14.4, 0);
+        hqGroup.add(hqCeiling);
+
+        const hqInteriorFloor = new THREE.Mesh(
+            new THREE.BoxGeometry(36, 0.35, 22),
+            new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 })
+        );
+        hqInteriorFloor.position.set(0, 0.18, 0);
+        hqInteriorFloor.receiveShadow = true;
+        hqGroup.add(hqInteriorFloor);
+
+        // 4. Front Wall Panels (Header Beam & Vertical Brick Pillars between the 3 Bays)
+        const hqFrontHeader = new THREE.Mesh(new THREE.BoxGeometry(38, 4.5, 1.4), matBrickRed);
+        hqFrontHeader.position.set(0, 12.75, 11.3);
+        hqFrontHeader.castShadow = true;
+        hqGroup.add(hqFrontHeader);
+
+        const hqPillarL = new THREE.Mesh(new THREE.BoxGeometry(3.5, 10.5, 1.4), matBrickRed);
+        hqPillarL.position.set(-17.25, 5.25, 11.3);
+        const hqPillarR = new THREE.Mesh(new THREE.BoxGeometry(3.5, 10.5, 1.4), matBrickRed);
+        hqPillarR.position.set(17.25, 5.25, 11.3);
+        hqGroup.add(hqPillarL, hqPillarR);
+
+        const hqDividerL = new THREE.Mesh(new THREE.BoxGeometry(2.4, 10.5, 1.4), matBrickRed);
+        hqDividerL.position.set(-5.5, 5.25, 11.3);
+        const hqDividerR = new THREE.Mesh(new THREE.BoxGeometry(2.4, 10.5, 1.4), matBrickRed);
+        hqDividerR.position.set(5.5, 5.25, 11.3);
+        hqGroup.add(hqDividerL, hqDividerR);
 
         // White Steel Trim Roof Cornice
         const hqRoofTrim = new THREE.Mesh(new THREE.BoxGeometry(40, 1.8, 26), matSteel);
         hqRoofTrim.position.set(0, 15.5, 0);
         hqGroup.add(hqRoofTrim);
 
-        // 3 Illuminated Vehicle Apparatus Bays on South Front Face (Z = +12.1)
+        // Transparent Bay Door Glass Material (Crisp cartoon cyan tint, depthWrite: false so interior bots show clearly)
+        const matBayGlass = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            transparent: true,
+            opacity: 0.28,
+            side: THREE.DoubleSide,
+            depthWrite: false
+        });
+
+        // 3 Illuminated Vehicle Apparatus Bays with Transparent Glass Roll-Up Doors on South Front Face (Z = +12.0)
         [-11, 0, 11].forEach(bayX => {
-            const bayFrame = new THREE.Mesh(new THREE.BoxGeometry(8.6, 10.5, 1.2), matSteel);
-            bayFrame.position.set(bayX, 5.25, 12.0);
-            hqGroup.add(bayFrame);
+            // White Steel Outer Door Jambs & Header Frame (leaving open transparent doorway)
+            const frameL = new THREE.Mesh(new THREE.BoxGeometry(0.7, 10.5, 1.2), matSteel);
+            frameL.position.set(bayX - 3.95, 5.25, 12.0);
+            const frameR = new THREE.Mesh(new THREE.BoxGeometry(0.7, 10.5, 1.2), matSteel);
+            frameR.position.set(bayX + 3.95, 5.25, 12.0);
+            const frameTop = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.7, 1.2), matSteel);
+            frameTop.position.set(bayX, 10.15, 12.0);
+            hqGroup.add(frameL, frameR, frameTop);
 
-            const bayInterior = new THREE.Mesh(
-                new THREE.BoxGeometry(7.4, 9.5, 1.4),
-                new THREE.MeshBasicMaterial({ color: 0x0f172a })
+            // Transparent Glass Roll-Up Garage Door
+            const bayGlass = new THREE.Mesh(
+                new THREE.PlaneGeometry(7.2, 9.6),
+                matBayGlass
             );
-            bayInterior.position.set(bayX, 4.8, 12.1);
-            hqGroup.add(bayInterior);
+            bayGlass.position.set(bayX, 4.9, 12.05);
+            bayGlass.userData.noOutline = true;
+            bayGlass.renderOrder = 1;
+            hqGroup.add(bayGlass);
 
-            // Overhead bay header light
+            // Steel Mullions / Struts across the glass door (Modern 4x2 firehouse glass roll-up panes)
+            [2.4, 4.8, 7.2].forEach(my => {
+                const horizMullion = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.12, 0.14), matSteel);
+                horizMullion.position.set(bayX, my, 12.08);
+                horizMullion.userData.noOutline = true;
+                hqGroup.add(horizMullion);
+            });
+            const vertMullion = new THREE.Mesh(new THREE.BoxGeometry(0.12, 9.4, 0.14), matSteel);
+            vertMullion.position.set(bayX, 4.9, 12.08);
+            vertMullion.userData.noOutline = true;
+            hqGroup.add(vertMullion);
+
+            // Overhead Exterior Bay Header Light (glowing cyan)
             const bayLight = new THREE.Mesh(
-                new THREE.BoxGeometry(6.5, 0.7, 1.5),
+                new THREE.BoxGeometry(6.5, 0.6, 1.4),
                 new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
             );
             bayLight.position.set(bayX, 9.8, 12.15);
             hqGroup.add(bayLight);
+
+            // Interior Overhead Bay Illumination Light Strip
+            const interiorLight = new THREE.Mesh(
+                new THREE.BoxGeometry(3.2, 0.2, 8.0),
+                new THREE.MeshBasicMaterial({ color: 0xfef08a })
+            );
+            interiorLight.position.set(bayX, 14.1, 3.5);
+            hqGroup.add(interiorLight);
+
+            // Interior Rear Diagnostic / Charging Terminal Console on back wall
+            const bayConsole = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.2, 0.6), matDarkSteel);
+            bayConsole.position.set(bayX, 1.6, -10.2);
+            const consoleScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.2), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+            consoleScreen.position.set(bayX, 2.2, -9.88);
+            consoleScreen.userData.noOutline = true;
+            hqGroup.add(bayConsole, consoleScreen);
         });
 
         // Rescue Bots Emblem Sign above Center Bay
@@ -6625,9 +6761,9 @@
 
         // =====================================================================
         // 5A-2. FIREHOUSE ROBO-WASH (Interactive Drive-Through Car Wash Bay)
-        //       Located at X: -72, Z: -15 in West Town Plaza
+        //       Located at X: -92, Z: -15 in West Town Plaza
         // =====================================================================
-        const ROBO_WASH_POS = { x: -72, z: -15 };
+        const ROBO_WASH_POS = { x: -92, z: -15 };
         const roboWashGroup = new THREE.Group();
         const rwY = getTerrainHeight(ROBO_WASH_POS.x, ROBO_WASH_POS.z);
         roboWashGroup.position.set(ROBO_WASH_POS.x, rwY, ROBO_WASH_POS.z);
@@ -7062,9 +7198,9 @@
 
         // =====================================================================
         // 5A-5. DOC GREENE'S ENERGON TURBO-CHARGER STATION
-        //       Located at X: -1060, Z: -42 in West Tech Village
+        //       Located at X: -1110, Z: -42 in West Tech Village
         // =====================================================================
-        const CHARGER_POS = { x: -1060, z: -42 };
+        const CHARGER_POS = { x: -1110, z: -42 };
         const chargerGroup = new THREE.Group();
         const chargerY = getTerrainHeight(CHARGER_POS.x, CHARGER_POS.z);
         chargerGroup.position.set(CHARGER_POS.x, chargerY, CHARGER_POS.z);
@@ -7184,16 +7320,16 @@
 
         // =====================================================================
         // 5A-6. DOC GREENE'S GROUNDBRIDGE TELEPORTER TUNNEL NETWORK
-        //       Portal A: West Tech Highway (-1090, 25) facing East-West (rotY = PI/2)
-        //       Portal B: South Harbor Highway (0, 1040) facing North-South (rotY = 0)
-        //       Portal C: Dino Ridge Sanctuary (-750, -705) facing North-South (rotY = 0)
-        //       Portal D: Wayward Island Ruins (1900, 540) facing East-West (rotY = PI/2)
+        //       Portal A: West Tech Outpost (-1085, 62) facing North-South (rotY = 0)
+        //       Portal B: South Harbor Staging Bay (48, 1040) facing North-South (rotY = 0)
+        //       Portal C: Dino Ridge Sanctuary Gateway (-750, -665) facing North-South (rotY = 0)
+        //       Portal D: Wayward Island Ruins Terrace (1895, 492) facing East-West (rotY = PI/2)
         // =====================================================================
         const GROUNDBRIDGE_CONFIGS = [
-            { id: 'A', name: 'West Tech GroundBridge', x: -1090, z: 25, rotY: Math.PI / 2, dest: { x: -750, z: -695, heading: 0 } },
-            { id: 'B', name: 'South Harbor GroundBridge', x: 0, z: 1040, rotY: 0, dest: { x: 1910, z: 540, heading: Math.PI / 2 } },
-            { id: 'C', name: 'Dino Ridge GroundBridge', x: -750, z: -705, rotY: 0, dest: { x: 0, z: 1048, heading: 0 } },
-            { id: 'D', name: 'Wayward Island GroundBridge', x: 1900, z: 540, rotY: Math.PI / 2, dest: { x: -1098, z: 25, heading: -Math.PI / 2 } }
+            { id: 'A', name: 'West Tech GroundBridge', x: -1085, z: 62, rotY: 0, dest: { x: -750, z: -682, heading: 0 } },
+            { id: 'B', name: 'South Harbor GroundBridge', x: 48, z: 1040, rotY: 0, dest: { x: 1912, z: 492, heading: Math.PI / 2 } },
+            { id: 'C', name: 'Dino Ridge GroundBridge', x: -750, z: -665, rotY: 0, dest: { x: 48, z: 1058, heading: 0 } },
+            { id: 'D', name: 'Wayward Island GroundBridge', x: 1895, z: 492, rotY: Math.PI / 2, dest: { x: -1085, z: 44, heading: Math.PI } }
         ];
 
         const groundBridgePortals = [];
@@ -7203,6 +7339,21 @@
             const gbY = getTerrainHeight(cfg.x, cfg.z);
             gbGroup.position.set(cfg.x, gbY, cfg.z);
             gbGroup.rotation.y = cfg.rotY;
+
+            // Paved GroundBridge Turnout Staging Apron & Access Pad
+            const apronMesh = new THREE.Mesh(
+                new THREE.BoxGeometry(24, 0.45, 28),
+                new THREE.MeshToonMaterial({
+                    color: 0x1e293b,
+                    gradientMap: toonGrad3,
+                    polygonOffset: true,
+                    polygonOffsetFactor: -1.2,
+                    polygonOffsetUnits: -5.0
+                })
+            );
+            apronMesh.position.set(0, 0.22, 0);
+            apronMesh.receiveShadow = true;
+            gbGroup.add(apronMesh);
 
             [-8.5, 8.5].forEach(px => {
                 const pylon = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.2, 4.2), matDarkSteel);
@@ -7375,7 +7526,7 @@
         // 3. West Tech & Industrial Village (around -1120, 25)
         // Set back along north and south tech village plazas, clear of East-West Highway & Outer Ring
         createTownBuilding(-1160, -75, 16, 15, 15, 0x0284c7, 0xffffff, 0.12);
-        createTownBuilding(-1080, -75, 15, 13, 15, 0x9333ea, 0xfaf5ff, -0.1);
+        createTownBuilding(-1120, -75, 15, 13, 15, 0x9333ea, 0xfaf5ff, -0.1);
         createTownBuilding(-1160, 115, 16, 12, 15, 0x16a34a, 0xf8fafc, -0.08);
         createTownBuilding(-1080, 115, 15, 14, 15, 0xf97316, 0xfef08a, 0.14);
 
@@ -7997,23 +8148,77 @@
         testYardGroup.add(pBorder);
 
         const cSignTy = document.createElement('canvas');
-        cSignTy.width = 512;
+        cSignTy.width = 1024;
         cSignTy.height = 128;
         const cCtxTy = cSignTy.getContext('2d');
         cCtxTy.fillStyle = '#0f172a';
-        cCtxTy.fillRect(0, 0, 512, 128);
+        cCtxTy.fillRect(0, 0, 1024, 128);
+        cCtxTy.strokeStyle = '#84cc16';
+        cCtxTy.lineWidth = 6;
+        cCtxTy.strokeRect(6, 6, 1012, 116);
         cCtxTy.fillStyle = '#84cc16';
-        cCtxTy.font = 'bold 36px Arial, sans-serif';
+        cCtxTy.font = 'bold 44px Arial, sans-serif';
         cCtxTy.textAlign = 'center';
         cCtxTy.textBaseline = 'middle';
-        cCtxTy.fillText("DOC GREENE'S TESTING YARD", 256, 64);
+        cCtxTy.fillText("DOC GREENE'S TESTING YARD", 512, 64);
         const texSignTy = new THREE.CanvasTexture(cSignTy);
+
+        // Ground-Supported Signboard Gantry Structure
+        const signGroup = new THREE.Group();
+        signGroup.position.set(0, 0, -28.5);
+
+        // 1. Dual Heavy Structural Steel Support Pylons with Concrete Bases
+        [-10.5, 10.5].forEach(postX => {
+            const footing = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.9, 1.2, 0.6, 8),
+                matDarkSteel
+            );
+            footing.position.set(postX, 0.3, 0);
+            footing.castShadow = true;
+            signGroup.add(footing);
+
+            const post = new THREE.Mesh(
+                new THREE.BoxGeometry(0.7, 8.5, 0.7),
+                matSteel
+            );
+            post.position.set(postX, 4.25, 0);
+            post.castShadow = true;
+            signGroup.add(post);
+
+            // High-Tech Science Beacon Dome
+            const beaconMat = new THREE.MeshBasicMaterial({ color: 0x84cc16 });
+            const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.38, 8, 8), beaconMat);
+            beacon.position.set(postX, 8.7, 0);
+            beacon.userData.noOutline = true;
+            signGroup.add(beacon);
+        });
+
+        // Horizontal Steel Structural Crossbars
+        [4.2, 6.2].forEach(barY => {
+            const crossbar = new THREE.Mesh(new THREE.BoxGeometry(22.6, 0.32, 0.45), matSteel);
+            crossbar.position.set(0, barY, -0.15);
+            signGroup.add(crossbar);
+        });
+
+        // 2. Solid Dark Steel Backing Board Frame
+        const signBackboard = new THREE.Mesh(
+            new THREE.BoxGeometry(23.6, 3.8, 0.45),
+            matDarkSteel
+        );
+        signBackboard.position.set(0, 7.5, 0);
+        signBackboard.castShadow = true;
+        signGroup.add(signBackboard);
+
+        // 3. Wide Front Sign Face (Shows 100% of the text without clipping)
         const tySignFace = new THREE.Mesh(
-            new THREE.PlaneGeometry(16.5, 3.2),
+            new THREE.PlaneGeometry(23.0, 3.4),
             new THREE.MeshBasicMaterial({ map: texSignTy })
         );
-        tySignFace.position.set(0, 7.5, -28.5);
-        testYardGroup.add(tySignFace);
+        tySignFace.position.set(0, 7.5, 0.24);
+        tySignFace.userData.noOutline = true;
+        signGroup.add(tySignFace);
+
+        testYardGroup.add(signGroup);
 
         // 1. Super Mega-Bounce Pad at local (0, -7) => world (-1170, 88)
         const bounceGroup = new THREE.Group();
@@ -9439,8 +9644,13 @@
             // Clear trees from Griffin Rock Railway Corridor & Central Station Platform
             const rTree = Math.hypot(x, z);
             const thetaTree = Math.atan2(z, x);
-            if (Math.abs(rTree - getRailwayRadius(thetaTree)) < 9.5) return true;
+            if (Math.abs(rTree - getRailwayRadius(thetaTree)) < 14.0) return true;
             if (Math.hypot(x - 765, z - 75) < 35) return true; // Central Station Depot
+            // Dedicated GroundBridge turnout staging bays
+            if (Math.hypot(x - (-1085), z - 62) < 24) return true;
+            if (Math.hypot(x - 48, z - 1040) < 24) return true;
+            if (Math.hypot(x - (-750), z - (-665)) < 24) return true;
+            if (Math.hypot(x - 1895, z - 492) < 24) return true;
 
             return false;
         }
@@ -13179,12 +13389,12 @@
         // Add all 4 Rigs to the Scene (1 Active Player, 3 Parked at HQ Command Center)
         Object.values(botRigs).forEach(r => scene.add(r.root));
 
-        // HQ Parking Spots for the 3 Inactive Rescue Bots
+        // HQ Parking Spots for the 3 Inactive Rescue Bots (Inside the 3 Transparent Apparatus Bays & Rooftop Helipad)
         const HQ_PARKING_SLOTS = {
-            BOULDER:  { x: -11, y: hqY + 0.1, z: -38, rotY: 0, morph: 1.0 },
-            HEATWAVE: { x: 0,   y: hqY + 0.1, z: -38, rotY: 0, morph: 1.0 },
-            CHASE:    { x: 11,  y: hqY + 0.1, z: -38, rotY: 0, morph: 1.0 },
-            BLADES:   { x: -8,  y: hqY + 16.8, z: -45, rotY: 0.4, morph: 1.0 } // Parked on Rooftop Helipad!
+            BOULDER:  { x: HQ_POS.x - 11, y: hqY + 0.1, z: HQ_POS.z + 8, rotY: 0, morph: 1.0 },   // Bay 1: X = -59, Z = -37
+            HEATWAVE: { x: HQ_POS.x + 0,  y: hqY + 0.1, z: HQ_POS.z + 8, rotY: 0, morph: 1.0 },   // Bay 2: X = -48, Z = -37
+            CHASE:    { x: HQ_POS.x + 11, y: hqY + 0.1, z: HQ_POS.z + 8, rotY: 0, morph: 1.0 },   // Bay 3: X = -37, Z = -37
+            BLADES:   { x: HQ_POS.x - 8,  y: hqY + 16.8, z: HQ_POS.z,     rotY: 0.4, morph: 1.0 } // Rooftop Helipad: X = -56, Z = -45
         };
 
         // Universal Rig Joint Interpolator (Handles Bot Mode <-> Vehicle Mode m <-> Dinobot Mode d)
@@ -16940,7 +17150,7 @@
                 role: 'Covert Operations Specialist',
                 voicePitch: 1.22,
                 badgeColor: '#0284c7',
-                x: 0,
+                x: 24,
                 y: 6.0,
                 z: -1105,
                 rotY: 3.14,
@@ -19029,7 +19239,7 @@
                 const pitch = Math.atan2(yFwd - yBwd, 5.0);
 
                 car.x = p.x;
-                car.y = groundY + 0.42;
+                car.y = groundY + 0.65;
                 car.z = p.z;
                 car.heading = heading;
                 car.pitch = pitch;
