@@ -648,6 +648,29 @@
             border-color: #38bdf8 !important;
         }
 
+        /* High Tide Megabot Undock & Dock Action Buttons */
+        #btn-undock, .btn-undock {
+            background: linear-gradient(180deg, #0284c7 0%, #1e40af 50%, #0f172a 100%) !important;
+            border-color: #67e8f9 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(2, 132, 199, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.45) !important;
+        }
+        #btn-undock:hover, .btn-undock:hover {
+            background: linear-gradient(180deg, #38bdf8 0%, #2563eb 50%, #1e293b 100%) !important;
+            border-color: #a5f3fc !important;
+        }
+        #btn-undock:active, .btn-undock:active {
+            background: linear-gradient(180deg, #0369a1 0%, #1d4ed8 50%, #020617 100%) !important;
+            transform: translateY(2px) scale(0.96);
+        }
+
+        #btn-dock {
+            background: linear-gradient(90deg, #06b6d4 0%, #2563eb 50%, #312e81 100%) !important;
+            border-color: #67e8f9 !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.4) !important;
+        }
+
         .text-white { color: #ffffff; }
         .text-white\/30 { color: rgba(255, 255, 255, 0.3); }
         .text-white\/70 { color: rgba(255, 255, 255, 0.7); }
@@ -1218,7 +1241,7 @@
     <div class="fixed bottom-6 right-5 sm:bottom-9 sm:right-9 z-20 flex items-end gap-2 sm:gap-3 pointer-events-auto">
         
         <!-- High Tide Megabot Undock Button (Shown when High Tide is in Megabot mode) -->
-        <button id="btn-undock" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-blue-700 via-indigo-800 to-slate-900 border-2 border-cyan-300 flex flex-col items-center justify-center text-white select-none">
+        <button id="btn-undock" class="hidden tactile-btn btn-undock w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-cyan-300 flex flex-col items-center justify-center text-white select-none" style="background: linear-gradient(180deg, #0284c7 0%, #1e40af 50%, #0f172a 100%) !important; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.45) !important;">
             <span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center leading-none" id="undock-icon">
                 <svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="5" r="3"/>
@@ -1287,7 +1310,7 @@
 
     <!-- High Tide Megabot Docking Prompt (Floats when player controls High Tide and approaches his oceanic vessel) -->
     <div id="hightide-dock-prompt" class="hidden fixed bottom-28 sm:bottom-36 right-5 sm:right-9 z-30 flex flex-col items-end pointer-events-auto">
-        <button id="btn-dock" class="tactile-btn px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-800 border-2 border-cyan-300 shadow-2xl flex items-center gap-3 text-white font-extrabold tracking-wider select-none transform hover:scale-105 active:scale-95 transition-transform animate-bounce">
+        <button id="btn-dock" class="tactile-btn px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl border-2 border-cyan-300 shadow-2xl flex items-center gap-3 text-white font-extrabold tracking-wider select-none transform hover:scale-105 active:scale-95 transition-transform animate-bounce" style="background: linear-gradient(90deg, #06b6d4 0%, #2563eb 50%, #312e81 100%) !important; box-shadow: 0 8px 24px rgba(6, 182, 212, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.4) !important;">
             <span class="text-xl sm:text-2xl drop-shadow">⚓</span>
             <div class="flex flex-col text-left">
                 <span class="text-[10px] sm:text-xs uppercase text-cyan-200 tracking-wider">Ocean Rig Ready</span>
@@ -5975,16 +5998,17 @@
         const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.15);
         sunLight.position.set(220, 340, 180);
         sunLight.castShadow = true;
-        sunLight.shadow.mapSize.width = 2048;
-        sunLight.shadow.mapSize.height = 2048;
-        sunLight.shadow.camera.near = 25;
-        sunLight.shadow.camera.far = 750;
-        const shadowD = 180;
+        sunLight.shadow.mapSize.width = 4096;
+        sunLight.shadow.mapSize.height = 4096;
+        sunLight.shadow.camera.near = 20;
+        sunLight.shadow.camera.far = 950;
+        const shadowD = 380; // Extended shadow coverage radius (draw distance) from 180 to 380 units!
         sunLight.shadow.camera.left = -shadowD;
         sunLight.shadow.camera.right = shadowD;
         sunLight.shadow.camera.top = shadowD;
         sunLight.shadow.camera.bottom = -shadowD;
-        sunLight.shadow.bias = -0.0005;
+        sunLight.shadow.bias = -0.0003;
+        sunLight.shadow.normalBias = 0.04; // Eliminates shadow acne and enables sharp contact shadows on rocks & ground features
         scene.add(sunLight);
         scene.add(sunLight.target);
 
@@ -9601,6 +9625,63 @@
         });
 
         // =====================================================================
+        // PERSISTENT PROGRESSION (Release-Version Scoped localStorage)
+        // & DYNAMIC ENDLESS EMERGENCY SPAWNER + RESCUE STAR RANKS
+        // =====================================================================
+        const RELEASE_VERSION = '2026.11.02.6';
+        const PROGRESSION_STORAGE_PREFIX = 'rescue_bots_progression_';
+        const PROGRESSION_STORAGE_KEY = `${PROGRESSION_STORAGE_PREFIX}${RELEASE_VERSION}`;
+        const progression = {
+            releaseVersion: RELEASE_VERSION,
+            totalEmergenciesResolved: 0,
+            totalCitizensRescued: 0,
+            totalEnergonCubes: 0,
+            totalStuntsCompleted: 0,
+            discoveredLandmarks: [],
+            collectedCrests: [],
+            discoveredAllies: [],
+            autoSpawnEmergencies: true,
+            buddyBotType: 'HEATWAVE',
+            highTideDocked: false,
+            weatherMode: 'SUNNY'
+        };
+
+        const RESCUE_STAR_RANKS = [
+            { level: 1, minPts: 0,   title: 'CADET BOT',            nextPts: 10 },
+            { level: 2, minPts: 10,  title: 'JUNIOR RESPONDER',     nextPts: 25 },
+            { level: 3, minPts: 25,  title: 'ISLAND SPECIALIST',    nextPts: 50 },
+            { level: 4, minPts: 50,  title: 'GRIFFIN ROCK CAPTAIN', nextPts: 90 },
+            { level: 5, minPts: 90,  title: 'PRIME RESCUE HERO',    nextPts: null }
+        ];
+        let lastKnownRankLevel = 1;
+
+        function renderStarSVGs(count) {
+            let out = '';
+            for (let i = 0; i < count; i++) {
+                out += SVG_ICONS.STAR;
+            }
+            return out;
+        }
+
+        function getHeroPoints(prog = progression) {
+            const landmarkPts = (Array.isArray(prog.discoveredLandmarks) ? prog.discoveredLandmarks.length * 2 : 0);
+            const crestPts = (Array.isArray(prog.collectedCrests) ? prog.collectedCrests.length * 5 : 0);
+            const allyPts = (Array.isArray(prog.discoveredAllies) ? prog.discoveredAllies.length * 10 : 0);
+            return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts;
+        }
+
+        function getRescueStarRank(prog = progression) {
+            const pts = getHeroPoints(prog);
+            let current = RESCUE_STAR_RANKS[0];
+            for (let i = 0; i < RESCUE_STAR_RANKS.length; i++) {
+                if (pts >= RESCUE_STAR_RANKS[i].minPts) {
+                    current = RESCUE_STAR_RANKS[i];
+                }
+            }
+            return { ...current, pts };
+        }
+
+        // =====================================================================
         // 5D. WEATHER & ISLAND EVENTS (Sunny Day, Rainstorm, Volcano Ash & Night Ops)
         // =====================================================================
         // 1. Procedural Rain Particle System
@@ -10173,6 +10254,8 @@
                 const n = bucket.bushes.length;
                 const iBushes = new THREE.InstancedMesh(bushGeo, matBushToon, n);
                 const iBushOut = new THREE.InstancedMesh(bushGeo, matInkOutline, n);
+                iBushes.castShadow = true;
+                iBushes.receiveShadow = true;
                 for (let i = 0; i < n; i++) {
                     const b = bucket.bushes[i];
                     dummy.position.set(b.x, b.y + 0.55 * b.s, b.z);
@@ -10200,13 +10283,14 @@
                 iRocks.receiveShadow = true;
                 for (let i = 0; i < n; i++) {
                     const r = bucket.rocks[i];
-                    dummy.position.set(r.x, r.y + 0.65 * r.s, r.z);
-                    dummy.scale.set(r.s * 1.3, r.s * 0.85, r.s);
+                    // Position rocks to sit firmly on the terrain and cast prominent 3D shadows
+                    dummy.position.set(r.x, r.y + 0.92 * r.s, r.z);
+                    dummy.scale.set(r.s * 1.35, r.s * 1.15, r.s * 1.25);
                     dummy.rotation.set(r.r1, r.r2, 0);
                     dummy.updateMatrix();
                     iRocks.setMatrixAt(i, dummy.matrix);
 
-                    dummy.scale.set(r.s * 1.3 * 1.08, r.s * 0.85 * 1.08, r.s * 1.08);
+                    dummy.scale.set(r.s * 1.35 * 1.08, r.s * 1.15 * 1.08, r.s * 1.25 * 1.08);
                     dummy.updateMatrix();
                     iRockOut.setMatrixAt(i, dummy.matrix);
 
@@ -10477,7 +10561,7 @@
 
         function getBotScale(botType) {
             if (botType === 'HIGHTIDE' && typeof progression !== 'undefined' && progression.highTideDocked) {
-                return 2.65; // Massive Megabot Exo-Armor: Multiple times standard bot size!
+                return 3.85; // Massive Megabot Exo-Armor: Colossal titan dwarfing normal bots (Reference Images 1-4)
             }
             return (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[botType]) || 1.0;
         }
@@ -10485,7 +10569,7 @@
         function setHighTideRigMega(rig, isMega) {
             if (!rig || rig.botType !== 'HIGHTIDE') return;
             rig.isMega = Boolean(isMega);
-            const scale = rig.isMega ? 2.65 : 1.30;
+            const scale = rig.isMega ? 3.85 : 1.30;
             rig.root.scale.setScalar(scale);
             rig.root.traverse(child => {
                 if (child.userData && child.userData.isStandardPart !== undefined) {
@@ -13725,6 +13809,8 @@
 
                     const megaLeg = new THREE.Group();
                     megaLeg.userData.isMegaPart = true;
+                    // Elevate Megabot leg hierarchy to ensure boot soles rest firmly flush on the terrain surface (no sinking into ground)
+                    megaLeg.position.y = 0.88;
                     legG.add(megaLeg);
 
                     // Charcoal Upper Thigh
@@ -16020,62 +16106,7 @@
         const activeParticles = []; // Unified pool for Rock Debris, Water Cannon Stream & Fire Sparks
         let lastGlobalVoiceTime = -99;
 
-        // =====================================================================
-        // PERSISTENT PROGRESSION (Release-Version Scoped localStorage)
-        // & DYNAMIC ENDLESS EMERGENCY SPAWNER + RESCUE STAR RANKS
-        // =====================================================================
-        const RELEASE_VERSION = '2026.11.02.6';
-        const PROGRESSION_STORAGE_PREFIX = 'rescue_bots_progression_';
-        const PROGRESSION_STORAGE_KEY = `${PROGRESSION_STORAGE_PREFIX}${RELEASE_VERSION}`;
-        const progression = {
-            releaseVersion: RELEASE_VERSION,
-            totalEmergenciesResolved: 0,
-            totalCitizensRescued: 0,
-            totalEnergonCubes: 0,
-            totalStuntsCompleted: 0,
-            discoveredLandmarks: [],
-            collectedCrests: [],
-            discoveredAllies: [],
-            autoSpawnEmergencies: true,
-            buddyBotType: 'HEATWAVE',
-            highTideDocked: false,
-            weatherMode: 'SUNNY'
-        };
 
-        const RESCUE_STAR_RANKS = [
-            { level: 1, minPts: 0,   title: 'CADET BOT',            nextPts: 10 },
-            { level: 2, minPts: 10,  title: 'JUNIOR RESPONDER',     nextPts: 25 },
-            { level: 3, minPts: 25,  title: 'ISLAND SPECIALIST',    nextPts: 50 },
-            { level: 4, minPts: 50,  title: 'GRIFFIN ROCK CAPTAIN', nextPts: 90 },
-            { level: 5, minPts: 90,  title: 'PRIME RESCUE HERO',    nextPts: null }
-        ];
-        let lastKnownRankLevel = 1;
-
-        function renderStarSVGs(count) {
-            let out = '';
-            for (let i = 0; i < count; i++) {
-                out += SVG_ICONS.STAR;
-            }
-            return out;
-        }
-
-        function getHeroPoints(prog = progression) {
-            const landmarkPts = (Array.isArray(prog.discoveredLandmarks) ? prog.discoveredLandmarks.length * 2 : 0);
-            const crestPts = (Array.isArray(prog.collectedCrests) ? prog.collectedCrests.length * 5 : 0);
-            const allyPts = (Array.isArray(prog.discoveredAllies) ? prog.discoveredAllies.length * 10 : 0);
-            return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts;
-        }
-
-        function getRescueStarRank(prog = progression) {
-            const pts = getHeroPoints(prog);
-            let current = RESCUE_STAR_RANKS[0];
-            for (let i = 0; i < RESCUE_STAR_RANKS.length; i++) {
-                if (pts >= RESCUE_STAR_RANKS[i].minPts) {
-                    current = RESCUE_STAR_RANKS[i];
-                }
-            }
-            return { ...current, pts };
-        }
 
         function loadProgression() {
             try {
@@ -18252,6 +18283,16 @@
         function initVisitingAutobots() {
             if (!Array.isArray(progression.discoveredAllies)) {
                 progression.discoveredAllies = [];
+            }
+
+            // High Tide Cybertronian Oceanic Rescue Vessel moored in South Harbor Bay (X: -95, Z: 1480)
+            if (!highTideWorldShip) {
+                highTideWorldShip = createHighTideShipMesh();
+                highTideWorldShip.position.set(-95, -0.45, 1480);
+                highTideWorldShip.rotation.y = 0.35;
+                scene.add(highTideWorldShip);
+                const isPlayerHighTideMega = (player.botType === 'HIGHTIDE' && Boolean(progression.highTideDocked));
+                highTideWorldShip.visible = !isPlayerHighTideMega;
             }
 
             VISITING_AUTOBOTS_CONFIG.forEach(cfg => {
@@ -22562,8 +22603,8 @@
                     );
                     highTideWorldShip.rotation.y = player.heading;
                 } else {
-                    highTideWorldShip.position.set(-96, -0.45, 1480);
-                    highTideWorldShip.rotation.y = Math.PI * 0.5;
+                    highTideWorldShip.position.set(-95, -0.45, 1480);
+                    highTideWorldShip.rotation.y = 0.35;
                 }
                 highTideWorldShip.visible = true;
             }
@@ -24781,8 +24822,8 @@
 
 
             // Dynamic Shadow Tracking across the 10X Island (Texel-snapped to prevent shadow edge swimming)
-            const snapX = Math.round(player.pos.x / 4) * 4;
-            const snapZ = Math.round(player.pos.z / 4) * 4;
+            const snapX = Math.round(player.pos.x / 2) * 2;
+            const snapZ = Math.round(player.pos.z / 2) * 2;
             sunLight.target.position.set(snapX, player.pos.y, snapZ);
             sunLight.position.set(snapX + 160, player.pos.y + 260, snapZ + 130);
             sunLight.target.updateMatrixWorld();
