@@ -10185,9 +10185,26 @@
             return { group: lb, redPod, bluePod };
         }
 
-        // Master Builder returning an articulated Cel-Shaded + Ink-Outlined rig for any of the 4 Bots
+        // Proportional Character Scale Specifications
+        // Optimus Prime (1.25x Autobot Supreme Commander) and High Tide (1.30x Deep-Ocean Titan)
+        const BOT_SCALES = {
+            BOULDER: 1.0,
+            HEATWAVE: 1.0,
+            CHASE: 1.0,
+            BLADES: 1.0,
+            OPTIMUS: 1.25,
+            BUMBLEBEE: 1.0,
+            BLURR: 1.0,
+            SALVAGE: 1.0,
+            HIGHTIDE: 1.30,
+            QUICKSHADOW: 1.0
+        };
+
+        // Master Builder returning an articulated Cel-Shaded + Ink-Outlined rig for any of the Bots
         function buildRescueBotModel(botType) {
             const root = new THREE.Group();
+            const bScale = (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[botType]) || 1.0;
+            root.scale.setScalar(bScale);
             const chassis = new THREE.Group();
             root.add(chassis);
 
@@ -14157,6 +14174,7 @@
             OPTIMUS: {
                 name: 'OPTIMUS PRIME',
                 role: 'Autobot Supreme Commander',
+                scale: 1.25,
                 voicePitch: 0.72,
                 vehName: 'HEAVY CAB TRUCK',
                 dinoName: 'T-REX',
@@ -14221,6 +14239,7 @@
             HIGHTIDE: {
                 name: 'HIGH TIDE',
                 role: 'Deep-Ocean Rescue Commander',
+                scale: 1.30,
                 voicePitch: 0.76,
                 vehName: 'SUBMARINE',
                 dinoName: 'PLESIOSAUR',
@@ -17675,10 +17694,10 @@
                 bot: { halfWidth: 1.8, halfLength: 1.8 }
             },
             OPTIMUS: {
-                mass: 25000, // 25 tons - Semi-Truck Cab Prime / T-Rex
-                vehicle: { halfWidth: 2.1, halfLength: 4.6 },
-                dino: { halfWidth: 2.1, halfLength: 4.4 },
-                bot: { halfWidth: 1.9, halfLength: 1.9 }
+                mass: 32000, // 32 tons - Supreme Commander Heavy Semi-Truck Cab / Primal T-Rex (Scaled 1.25x)
+                vehicle: { halfWidth: 2.5, halfLength: 5.6 },
+                dino: { halfWidth: 2.5, halfLength: 5.4 },
+                bot: { halfWidth: 2.3, halfLength: 2.3 }
             },
             SALVAGE: {
                 mass: 20000, // 20 tons - Heavy Waste & Recycling Truck / Ankylosaur
@@ -17687,10 +17706,10 @@
                 bot: { halfWidth: 1.8, halfLength: 1.8 }
             },
             HIGHTIDE: {
-                mass: 22000, // 22 tons - Armored Submersible / Plesiosaur
-                vehicle: { halfWidth: 2.1, halfLength: 4.0 },
-                dino: { halfWidth: 2.0, halfLength: 3.8 },
-                bot: { halfWidth: 1.8, halfLength: 1.8 }
+                mass: 34000, // 34 tons - Titan Deep-Ocean Armored Submersible / Giant Plesiosaur (Scaled 1.30x)
+                vehicle: { halfWidth: 2.6, halfLength: 5.2 },
+                dino: { halfWidth: 2.5, halfLength: 5.0 },
+                bot: { halfWidth: 2.3, halfLength: 2.3 }
             },
             CHASE: {
                 mass: 4800, // 4.8 tons - Police Interceptor / Stegosaur
@@ -18620,21 +18639,22 @@
             }
 
             // Sample terrain for buddy bot smooth suspension & pitch/roll
+            const buddyScale = (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[buddyBot.botType]) || 1.0;
             const bSinH = Math.sin(buddyBot.heading);
             const bCosH = Math.cos(buddyBot.heading);
-            const bFx = buddyBot.pos.x + bSinH * 2.2;
-            const bFz = buddyBot.pos.z + bCosH * 2.2;
-            const bRx = buddyBot.pos.x - bSinH * 2.2;
-            const bRz = buddyBot.pos.z - bCosH * 2.2;
+            const bFx = buddyBot.pos.x + bSinH * (2.2 * buddyScale);
+            const bFz = buddyBot.pos.z + bCosH * (2.2 * buddyScale);
+            const bRx = buddyBot.pos.x - bSinH * (2.2 * buddyScale);
+            const bRz = buddyBot.pos.z - bCosH * (2.2 * buddyScale);
             const bFrontY = Math.max(0.0, getSurfaceHeight(bFx, bFz));
             const bRearY = Math.max(0.0, getSurfaceHeight(bRx, bRz));
-            const bLeftY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x - bCosH * 1.3, buddyBot.pos.z + bSinH * 1.3));
-            const bRightY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x + bCosH * 1.3, buddyBot.pos.z - bSinH * 1.3));
+            const bLeftY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x - bCosH * (1.3 * buddyScale), buddyBot.pos.z + bSinH * (1.3 * buddyScale)));
+            const bRightY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x + bCosH * (1.3 * buddyScale), buddyBot.pos.z - bSinH * (1.3 * buddyScale)));
             const bCenterY = Math.max(0.0, getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z));
             const bTargetGroundY = Math.max((bFrontY + bRearY) * 0.5, bCenterY);
 
-            const bTargetPitch = Math.max(-0.7, Math.min(0.7, Math.atan2(bFrontY - bRearY, 4.4)));
-            const bTargetRoll = Math.max(-0.45, Math.min(0.45, Math.atan2(bRightY - bLeftY, 2.6)));
+            const bTargetPitch = Math.max(-0.7, Math.min(0.7, Math.atan2(bFrontY - bRearY, 4.4 * buddyScale)));
+            const bTargetRoll = Math.max(-0.45, Math.min(0.45, Math.atan2(bRightY - bLeftY, 2.6 * buddyScale)));
             buddyBot.pitch = THREE.MathUtils.lerp(buddyBot.pitch || 0, bTargetPitch, Math.min(1.0, dt * 14.0));
             buddyBot.roll = THREE.MathUtils.lerp(buddyBot.roll || 0, bTargetRoll, Math.min(1.0, dt * 14.0));
 
@@ -23260,9 +23280,10 @@
 
             // Sample terrain footprint for vehicle suspension & pitch/roll slope conform
             const isVehicleOrDino = player.mode === 'VEHICLE' || player.mode === 'DINO';
-            const halfWheelbase = isVehicleOrDino ? 2.3 : 0.8;
-            const halfTrack = isVehicleOrDino ? 1.35 : 0.7;
-            const noseReach = isVehicleOrDino ? 3.2 : 1.2;
+            const currentBotScale = (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[player.botType]) || 1.0;
+            const halfWheelbase = (isVehicleOrDino ? 2.3 : 0.8) * currentBotScale;
+            const halfTrack = (isVehicleOrDino ? 1.35 : 0.7) * currentBotScale;
+            const noseReach = (isVehicleOrDino ? 3.2 : 1.2) * currentBotScale;
 
             const sinH = Math.sin(player.heading);
             const cosH = Math.cos(player.heading);
@@ -23326,7 +23347,7 @@
                 targetGroundY = Math.max(targetGroundY, waterTargetY);
             } else if (isVehicleOrDino && player.speed > 1.0 && noseY > frontY) {
                 // Moving forward towards an uphill slope: gently elevate front suspension to prevent bumper clipping
-                const leadClimbY = (noseY + rearY) * 0.5 - 0.15;
+                const leadClimbY = (noseY + rearY) * 0.5 - (0.15 * currentBotScale);
                 targetGroundY = Math.max(targetGroundY, leadClimbY);
             }
 
@@ -23796,6 +23817,8 @@
 
             // Camera Distance & Pitch per View Mode (Default Mode 0 is significantly pulled back & elevated)
             let baseDist = isFlyingCopter ? 44.0 : (player.mode === 'VEHICLE' || player.mode === 'DINO' ? 39.0 : 34.0);
+            const botScaleFactor = (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[player.botType]) || 1.0;
+            baseDist *= (1.0 + (botScaleFactor - 1.0) * 0.75);
             let activePitch = 0.48;
             if (input.camZoomMode === 1) {
                 // Extra-Wide Sky Map View
@@ -23828,7 +23851,7 @@
             const lookAheadDist = rearAlignment * 4.5;
             const lookAheadX = player.pos.x + Math.sin(player.heading) * lookAheadDist;
             const lookAheadZ = player.pos.z + Math.cos(player.heading) * lookAheadDist;
-            camera.lookAt(lookAheadX, player.pos.y + 3.2, lookAheadZ);
+            camera.lookAt(lookAheadX, player.pos.y + (3.2 * botScaleFactor), lookAheadZ);
 
             const kmh = Math.round(Math.abs(player.speed) * 2.2);
             document.getElementById('speed-readout').textContent = `${String(kmh).padStart(2, '0')} KM/H`;
