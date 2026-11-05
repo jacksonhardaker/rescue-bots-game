@@ -22518,6 +22518,7 @@
                 }
 
                 // Griffin Rock Express Heavy Train 2D OBB Collision
+                const playerOBB = getPlayerOBB();
                 if (typeof islandTrain !== 'undefined' && !onTrainRoof && islandTrain.cars.length > 0) {
                     if (!player.trainImpactCooldown) player.trainImpactCooldown = 0;
                     if (player.trainImpactCooldown > 0) player.trainImpactCooldown -= dt;
@@ -22553,6 +22554,13 @@
                                 spawnBurstParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 0xfacc15, 8, 1.2);
                                 spawnMagnetSparkParticles(player.pos.x, player.pos.y + 0.9, player.pos.z, 6);
                                 player.speed = -player.speed * 0.35;
+                                console.log('[TRAIN IMPACT]', {
+                                    car: car.name,
+                                    carIdx: i,
+                                    speed: player.speed.toFixed(1),
+                                    mtv: { x: col.mtv.x.toFixed(2), z: col.mtv.z.toFixed(2) },
+                                    pos: { x: player.pos.x.toFixed(1), y: player.pos.y.toFixed(1), z: player.pos.z.toFixed(1) }
+                                });
                             } else {
                                 // Smooth velocity damping while brushing along moving train
                                 player.speed *= 0.88;
@@ -22563,7 +22571,6 @@
                 }
 
                 // Dynamic 2D OBB Collision against Civilian Vehicle NPCs (Weight-based mass separation & impact physics)
-                const playerOBB = getPlayerOBB();
                 for (let i = 0; i < vehicleNPCs.length; i++) {
                     const v = vehicleNPCs[i];
                     const dx = player.pos.x - v.x;
@@ -23769,7 +23776,10 @@
                 }
             });
 
+            const _perfT0 = performance.now();
             updatePhysics(dt, now);
+            const _perfTPhys = performance.now() - _perfT0;
+
             updateBuddyBotAI(dt, now);
             updateEnergonCubes(dt, now);
             updateGoldenCrests(dt, now);
@@ -23778,8 +23788,15 @@
             updateVisitingAutobots(dt, now);
             updateLandmarkDiscovery(player.pos.x, player.pos.z);
             updateAllBotTransforms(dt, now);
+
+            const _perfT1 = performance.now();
             updateIslandTrain(dt, now);
+            const _perfTTrain = performance.now() - _perfT1;
+
+            const _perfT2 = performance.now();
             updateLivingWorldNPCs(dt, now);
+            const _perfTNPC = performance.now() - _perfT2;
+
             updateMorBotBattle(dt, now);
             updateViewportCulling();
 
@@ -23852,7 +23869,27 @@
                 }
             }
 
+            const _perfTRender0 = performance.now();
             renderer.render(scene, camera);
+            const _perfTRender = performance.now() - _perfTRender0;
+
+            const _perfTotalMs = performance.now() - _perfT0;
+            if (_perfTotalMs > 24.0) {
+                let distToTrain = 999;
+                if (typeof islandTrain !== 'undefined' && islandTrain.cars.length > 0) {
+                    distToTrain = Math.hypot(player.pos.x - islandTrain.cars[0].x, player.pos.z - islandTrain.cars[0].z);
+                }
+                console.warn('[FRAME LAG SPIKE]', {
+                    frameMs: _perfTotalMs.toFixed(1),
+                    physicsMs: _perfTPhys.toFixed(1),
+                    trainMs: _perfTTrain.toFixed(1),
+                    npcMs: _perfTNPC.toFixed(1),
+                    renderMs: _perfTRender.toFixed(1),
+                    particles: activeParticles.length,
+                    distToTrain: Math.round(distToTrain),
+                    botSpeed: player.speed ? player.speed.toFixed(1) : 0
+                });
+            }
         }
 
         window.addEventListener('resize', () => {
