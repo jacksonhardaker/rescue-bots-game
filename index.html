@@ -13564,7 +13564,7 @@
                                 prevPlesioTail.add(tailFin);
 
                 // Tag all standard sub-geometry as standard parts
-                [parts.torso, parts.head, parts.backAttachment, parts.leftArm, parts.rightArm, parts.leftForearm, parts.rightForearm, parts.leftLeg, parts.rightLeg, parts.dinoHead, parts.dinoLeftWing, parts.dinoRightWing, parts.dinoGroup, parts.dinoTail].forEach(grp => {
+                [parts.torso, parts.head, parts.frontAttachment, parts.backAttachment, parts.leftArm, parts.rightArm, parts.leftForearm, parts.rightForearm, parts.leftLeg, parts.rightLeg, parts.dinoHead, parts.dinoLeftWing, parts.dinoRightWing, parts.dinoGroup, parts.dinoTail].forEach(grp => {
                     grp.children.forEach(child => {
                         child.userData.isStandardPart = true;
                     });
@@ -13605,6 +13605,15 @@
                     megaTorso.add(intake);
                 });
 
+                // 5 Dorsal Armored Crocodile Scutes / Shark Spines (Mosasaur apex-predator dorsal ridge)
+                for (let s = 0; s < 5; s++) {
+                    const scute = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.72 - s * 0.08, 0.72 - s * 0.08).rotateX(-0.35), matMegaDeckRed);
+                    scute.position.set(0, 1.45 - s * 0.05, 0.65 - s * 0.65);
+                    const scuteTip = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.42, 0.32).rotateX(-0.35), matHighTideGold);
+                    scuteTip.position.set(0, 1.68 - s * 0.05, 0.65 - s * 0.65);
+                    megaTorso.add(scute, scuteTip);
+                }
+
                 // Heavy Royal Blue Waist Ring (Images 2 & 4)
                 const mWaist = new THREE.Mesh(new THREE.CylinderGeometry(1.42, 1.42, 0.68, 24), matHighTideBlue);
                 mWaist.position.set(0, -1.25, 0);
@@ -13614,6 +13623,86 @@
                 const mCod = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.78, 0.48), matMegaHullWhite);
                 mCod.position.set(0, -1.55, 0.88);
                 megaTorso.add(mWaist, mGroin, mCod);
+
+                // 2. Megabot Bow Wedge & Forward Naval Hull on parts.frontAttachment (Reference Images 1 & 3)
+                // In Vehicle Mode, extends forward creating the elongated Cybertronian naval vessel with sharp wedge prow!
+                const megaBow = new THREE.Group();
+                megaBow.userData.isMegaPart = true;
+                parts.frontAttachment.add(megaBow);
+
+                // A. Main Forward Hull Section
+                const bowBlock = new THREE.Mesh(new THREE.BoxGeometry(3.3, 2.55, 3.4), matMegaHullWhite);
+                bowBlock.position.set(0, 0, 1.7);
+                bowBlock.castShadow = true;
+
+                // B. Tapered Prow Wedge
+                const bowWedge = new THREE.Mesh(new THREE.BoxGeometry(2.9, 2.5, 3.2), matMegaHullWhite);
+                bowWedge.position.set(0, 0, 4.8);
+                bowWedge.castShadow = true;
+
+                // C. High Flared Bow Cutwater Nose (Images 1 & 3)
+                const bowProw = new THREE.Mesh(
+                    new THREE.ConeGeometry(1.48, 2.6, 4).rotateX(Math.PI / 2).rotateY(Math.PI / 4),
+                    matMegaHullWhite
+                );
+                bowProw.position.set(0, 0, 7.4);
+                bowProw.castShadow = true;
+
+                // D. Golden Cutwater Anchor Crest & Leading Spine
+                const cutwaterPlate = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.2, 0.8), matHighTideGold);
+                cutwaterPlate.position.set(0, 0.1, 8.5);
+
+                // E. Red Angular Hull Graphics & Gold Side Portholes (Reference Images 1 & 3)
+                [-1, 1].forEach(side => {
+                    // Bold Red Naval Flank Graphic
+                    const redStripe = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.15, 4.4), matMegaDeckRed);
+                    redStripe.position.set(side * 1.68, 0.45, 3.6);
+                    redStripe.rotation.z = side * 0.04;
+
+                    // Gold Thruster / Porthole with Glowing Cyan Core
+                    const goldPort = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.14, 16).rotateZ(Math.PI / 2), matMegaKneeGold);
+                    goldPort.position.set(side * 1.69, -0.35, 4.2);
+                    const portCore = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.16, 16).rotateZ(Math.PI / 2), matHighTideCyanGlow);
+                    portCore.position.set(side * 1.70, -0.35, 4.2);
+                    portCore.userData.noOutline = true;
+
+                    // Horizontal Golden Accent Spar
+                    const portFin = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.18, 2.4), matMegaKneeGold);
+                    portFin.position.set(side * 1.69, -0.35, 2.8);
+
+                    // Anchor Badge Decal on Forward Hull
+                    const anchorPlate = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.95, 0.95), matMegaHullBadge);
+                    anchorPlate.position.set(side * 1.52, 0.25, 5.8);
+                    anchorPlate.userData.noOutline = true;
+
+                    megaBow.add(redStripe, goldPort, portCore, portFin, anchorPlate);
+                });
+
+                // F. Red Bulbous Keel & Sonar Dome
+                const keelBulb = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 7.8, 16).rotateX(Math.PI / 2), matMegaDeckRed);
+                keelBulb.position.set(0, -1.15, 3.8);
+                const sonarDome = new THREE.Mesh(new THREE.SphereGeometry(0.95, 16, 12), matMegaDeckRed);
+                sonarDome.position.set(0, -1.15, 7.6);
+                sonarDome.scale.set(1.0, 0.8, 1.25);
+
+                // G. Forward Observation / Helipad Deck & Yellow Handrails
+                const bowDeck = new THREE.Mesh(new THREE.BoxGeometry(3.15, 0.16, 7.2), matMegaHullWhite);
+                bowDeck.position.set(0, 1.32, 3.6);
+                const bowRailFront = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.35, 0.08), matMegaCraneYellow);
+                bowRailFront.position.set(0, 1.55, 7.1);
+                [-1, 1].forEach(side => {
+                    const bowRailSide = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 6.8), matMegaCraneYellow);
+                    bowRailSide.position.set(side * 1.52, 1.55, 3.6);
+                    megaBow.add(bowRailSide);
+                });
+
+                // H. Deck Windlass Bollards / Mooring Winch
+                const winchBase = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.32, 0.85), matMegaClawCharcoal);
+                winchBase.position.set(0, 1.48, 5.5);
+                const winchSpool = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.95, 12).rotateZ(Math.PI / 2), matHighTideGold);
+                winchSpool.position.set(0, 1.62, 5.5);
+
+                megaBow.add(bowBlock, bowWedge, bowProw, cutwaterPlate, keelBulb, sonarDome, bowDeck, bowRailFront, winchBase, winchSpool);
 
                 // 2. Megabot Head: Blue Helmet, Golden Diving Lamp, Vocoder Chin Beard & Cyan Visor
                 const megaHead = new THREE.Group();
@@ -13853,50 +13942,169 @@
                     megaLeg.add(thigh, kneeDisc, kneeLens, shin, calfScoop, boot);
                 });
 
-                // 6. Megabot Dino Mode: Titan Mosasaur / Leviathan Sea Beast
+                // 6. Megabot Dino Mode: True Prehistoric Mosasaur Apex Predator
                 const megaDinoHead = new THREE.Group();
                 megaDinoHead.userData.isMegaPart = true;
                 parts.dinoHead.add(megaDinoHead);
 
-                // Armored Mosasaur Skull
-                const mosasaurSkull = new THREE.Mesh(new THREE.BoxGeometry(1.75, 1.25, 2.85), matMegaHullWhite);
-                mosasaurSkull.position.set(0, 0.2, 0.45);
-                const mosasaurCrest = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.65, 2.1).rotateX(-0.15), matHighTideGold);
-                mosasaurCrest.position.set(0, 0.85, 0.35);
-                const mosasaurVisor = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.38, 0.85), matHighTideCyanGlow);
-                mosasaurVisor.position.set(0, 0.35, 0.95);
-                mosasaurVisor.userData.noOutline = true;
+                // A. Muscular Cyber-Neck Cowl (connecting skull directly to torso - eliminates slender plesiosaur swan-neck!)
+                const neckCowl = new THREE.Mesh(new THREE.BoxGeometry(2.8, 1.95, 2.2), matMegaHullWhite);
+                neckCowl.position.set(0, 0.1, -0.75);
+                neckCowl.castShadow = true;
+                // Neck Gill Vents / Heat Exchangers
+                [-1.42, 1.42].forEach(gx => {
+                    for (let g = 0; g < 3; g++) {
+                        const vent = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.1, 0.35), matHighTideDark);
+                        vent.position.set(gx, 0.1, -1.2 + g * 0.55);
+                        neckCowl.add(vent);
+                    }
+                });
 
-                // Heavy Articulated Lower Jaw with Chrome Teeth
-                const mosasaurJaw = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.58, 2.65), matMegaDeckRed);
-                mosasaurJaw.position.set(0, -0.45, 0.65);
-                megaDinoHead.add(mosasaurSkull, mosasaurCrest, mosasaurVisor, mosasaurJaw);
+                // B. Skull Base: Broad crocodile temporal cranium
+                const skullBase = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.45, 2.5), matMegaHullWhite);
+                skullBase.position.set(0, 0.22, 1.2);
+                skullBase.castShadow = true;
 
-                // Heavy Naval Hydrofoil Flippers
+                // C. Snout Midsection: Tapered crocodile predatory snout
+                const snoutMid = new THREE.Mesh(new THREE.BoxGeometry(1.95, 1.15, 2.6), matMegaHullWhite);
+                snoutMid.position.set(0, 0.15, 3.4);
+                snoutMid.castShadow = true;
+
+                // D. Snout Tip: Pointed wedge predatory rostrum
+                const snoutTip = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.85, 2.2), matMegaHullWhite);
+                snoutTip.position.set(0, 0.08, 5.4);
+                snoutTip.castShadow = true;
+
+                // E. Cutwater Nose: Sharp armored prow tip
+                const cutwaterNose = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.68, 1.4, 4).rotateX(Math.PI / 2).rotateY(Math.PI / 4),
+                    matHighTideBlue
+                );
+                cutwaterNose.position.set(0, 0.08, 6.9);
+                cutwaterNose.castShadow = true;
+
+                // F. Dorsal Crest: Multi-segmented predatory crest running along the skull
+                const mosasaurCrest = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.55, 4.6).rotateX(-0.06), matHighTideGold);
+                mosasaurCrest.position.set(0, 0.95, 2.8);
+
+                // G. Nostrils / Maritime Blowholes
+                [-0.35, 0.35].forEach(nx => {
+                    const nostril = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.25, 8).rotateX(0.2), matHighTideDark);
+                    nostril.position.set(nx, 0.72, 4.2);
+                    megaDinoHead.add(nostril);
+                });
+
+                // H. Angular Predatory Brow Ridges & Glowing Cyan Visors
+                [-1.15, 1.15].forEach(side => {
+                    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 1.6).rotateZ(side * -0.25), matMegaHullWhite);
+                    brow.position.set(side * 1.05, 0.72, 1.5);
+                    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.36, 1.25).rotateY(side * 0.08), matHighTideCyanGlow);
+                    visor.position.set(side * 1.18, 0.38, 1.4);
+                    visor.userData.noOutline = true;
+                    megaDinoHead.add(brow, visor);
+                });
+
+                // I. Upper Chrome Teeth: Interlocking conical razor teeth along upper jaw margins
+                for (let t = 0; t < 7; t++) {
+                    const toothZ = 2.4 + t * 0.58;
+                    const toothX = 0.92 - t * 0.065;
+                    [-1, 1].forEach(side => {
+                        const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.36, 6).rotateX(Math.PI), matChrome);
+                        tooth.position.set(side * toothX, -0.42, toothZ);
+                        tooth.rotation.z = side * 0.12;
+                        megaDinoHead.add(tooth);
+                    });
+                }
+
+                megaDinoHead.add(neckCowl, skullBase, snoutMid, snoutTip, cutwaterNose, mosasaurCrest);
+
+                // J. Articulated Kinetic Lower Jaw (snaps open on smash / chomp attacks!)
+                const megaLowerJaw = new THREE.Group();
+                megaLowerJaw.position.set(0, -0.42, 0.2); // hinge pivot
+                megaLowerJaw.userData.isMegaPart = true;
+                parts.dinoLowerJaw = megaLowerJaw;
+                megaDinoHead.add(megaLowerJaw);
+
+                const jawBase = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.54, 2.2), matMegaDeckRed);
+                jawBase.position.set(0, 0, 1.0);
+                const jawMid = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.48, 2.5), matMegaDeckRed);
+                jawMid.position.set(0, -0.03, 3.0);
+                const jawTip = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.42, 2.1), matMegaDeckRed);
+                jawTip.position.set(0, -0.06, 5.0);
+                const chinKeel = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.32, 4.2), matHighTideGold);
+                chinKeel.position.set(0, -0.35, 3.2);
+
+                // Lower Chrome Teeth: Interlocking razor teeth pointing upward
+                for (let t = 0; t < 7; t++) {
+                    const toothZ = 2.1 + t * 0.58;
+                    const toothX = 0.78 - t * 0.055;
+                    [-1, 1].forEach(side => {
+                        const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.36, 6), matChrome);
+                        tooth.position.set(side * toothX, 0.26, toothZ);
+                        tooth.rotation.z = side * -0.12;
+                        megaLowerJaw.add(tooth);
+                    });
+                }
+                megaLowerJaw.add(jawBase, jawMid, jawTip, chinKeel);
+
+                // Heavy Mosasaur Hydrofoil Pectoral Flippers with Hyperphalangeal Digits
                 [-1, 1].forEach(side => {
                     const wingG = side === -1 ? parts.dinoLeftWing : parts.dinoRightWing;
                     const megaWing = new THREE.Group();
                     megaWing.userData.isMegaPart = true;
                     wingG.add(megaWing);
 
-                    const flipper = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.22, 1.35), matHighTideBlue);
-                    flipper.position.set(side * 1.6, 0, 0);
-                    flipper.rotation.y = side * 0.24;
-                    const flipperTrim = new THREE.Mesh(new THREE.BoxGeometry(3.55, 0.25, 0.28), matMegaHullWhite);
-                    flipperTrim.position.set(side * 1.6, 0, 0.55);
-                    flipperTrim.rotation.y = side * 0.24;
-                    megaWing.add(flipper, flipperTrim);
+                    // Swept Predatory Hydrofoil
+                    const flipper = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.22, 1.65), matHighTideBlue);
+                    flipper.position.set(side * 2.2, 0, -0.2);
+                    flipper.rotation.y = side * 0.38;
+                    flipper.castShadow = true;
+
+                    // Flared White Leading Edge
+                    const flipperLeading = new THREE.Mesh(new THREE.BoxGeometry(4.45, 0.26, 0.35), matMegaHullWhite);
+                    flipperLeading.position.set(side * 2.2, 0, 0.65);
+                    flipperLeading.rotation.y = side * 0.38;
+
+                    // 4 Golden Hyperphalangeal Digit Spars
+                    for (let d = 0; d < 4; d++) {
+                        const spar = new THREE.Mesh(new THREE.BoxGeometry(3.6 - d * 0.45, 0.25, 0.12), matHighTideGold);
+                        spar.position.set(side * (1.9 + d * 0.1), 0.02, 0.35 - d * 0.38);
+                        spar.rotation.y = side * (0.35 - d * 0.04);
+                        megaWing.add(spar);
+                    }
+
+                    megaWing.add(flipper, flipperLeading);
                 });
 
-                // Armored Leviathan Tail Flukes
+                // Armored Mosasaur Two-Lobed Hypocercal Caudal Crescent Fin (Authentic prehistoric marine lizard tail!)
                 const megaTail = new THREE.Group();
                 megaTail.userData.isMegaPart = true;
                 parts.dinoTail.add(megaTail);
-                const megaTailFin = new THREE.Mesh(new THREE.BoxGeometry(0.24, 2.45, 1.65), matMegaDeckRed);
-                megaTailFin.position.set(0, 0.4, -1.8);
-                const tailKeel = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.85, 2.2), matMegaHullWhite);
-                tailKeel.position.set(0, -0.2, -1.2);
-                megaTail.add(megaTailFin, tailKeel);
+
+                // Thick Muscular Tail Peduncle
+                const peduncle = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.65, 2.4), matHighTideBlue);
+                peduncle.position.set(0, 0, -1.0);
+                peduncle.castShadow = true;
+
+                // Upper Fluke Lobe (sweeps up and back at +42 degrees)
+                const upperLobe = new THREE.Mesh(new THREE.BoxGeometry(0.24, 2.6, 1.4).rotateX(0.42), matMegaDeckRed);
+                upperLobe.position.set(0, 1.45, -2.2);
+                upperLobe.castShadow = true;
+                const upperTrim = new THREE.Mesh(new THREE.BoxGeometry(0.28, 2.65, 0.28).rotateX(0.42), matHighTideGold);
+                upperTrim.position.set(0, 1.45, -1.6);
+
+                // Lower Fluke Lobe (sweeps down and back at -55 degrees - classic hypocercal mosasaur fluke!)
+                const lowerLobe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 3.6, 1.8).rotateX(-0.55), matMegaHullWhite);
+                lowerLobe.position.set(0, -1.25, -2.6);
+                lowerLobe.castShadow = true;
+                const lowerLeadingRed = new THREE.Mesh(new THREE.BoxGeometry(0.28, 3.65, 0.35).rotateX(-0.55), matMegaDeckRed);
+                lowerLeadingRed.position.set(0, -1.25, -1.8);
+
+                // Caudal Keel Fairing
+                const tailKeel = new THREE.Mesh(new THREE.BoxGeometry(0.38, 1.4, 2.6), matHighTideNavy);
+                tailKeel.position.set(0, -0.3, -1.3);
+
+                megaTail.add(peduncle, upperLobe, upperTrim, lowerLobe, lowerLeadingRed, tailKeel);
 
                 // Initialize rig part visibility to match current docked status
                 const isCurrentMega = Boolean(typeof progression !== 'undefined' && progression.highTideDocked);
@@ -14404,6 +14612,22 @@
                     2.15 * (1 - m - d) + 0.38 * m + 1.55 * d,
                     0.95 * (1 - m - d) + 2.35 * m + 1.35 * d
                 );
+            } else if (rig.botType === 'HIGHTIDE') {
+                if (rig.isMega) {
+                    // Megabot Boat Mode: Wedge Bow smoothly extends forward from torso hull
+                    // In Bot Mode (m = 0) and Dino Mode (d = 1), scale to 0.001 to clear chest & mosasaur head
+                    const bowScale = Math.max(0.001, m);
+                    rig.frontAttachment.position.set(
+                        0,
+                        0.55 * (1 - m) + 1.58 * m,
+                        1.2 * (1 - m) + 1.58 * m
+                    );
+                    rig.frontAttachment.rotation.x = 0;
+                    rig.frontAttachment.scale.setScalar(bowScale);
+                } else {
+                    rig.frontAttachment.position.set(0, 0, 0);
+                    rig.frontAttachment.scale.setScalar(0.001);
+                }
             } else {
                 rig.frontAttachment.position.set(
                     0,
@@ -14769,19 +14993,39 @@
                     rig.dinoTail.position.set(0, 1.95, -1.65);
                     rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.35 : Math.sin(now * 0.002) * 0.1) + smashOffset * 1.35;
                 } else if (rig.botType === 'HIGHTIDE') {
-                    // High Tide Plesiosaur: Towering periscope marine neck sway, rhythmic flipper paddle strokes, and rudder tail
-                    rig.dinoHead.position.set(0, 2.75, 1.35);
-                    rig.dinoHead.rotation.x = Math.sin(now * 0.002) * 0.08 + (isMoving ? 0.12 : 0);
-                    rig.dinoHead.rotation.y = Math.sin(now * 0.0015) * 0.14;
-                    if (rig.dinoLeftWing && rig.dinoRightWing) {
-                        const paddleAngle = Math.sin(now * (isMoving ? 0.008 : 0.003)) * 0.45;
-                        rig.dinoLeftWing.rotation.z = paddleAngle;
-                        rig.dinoRightWing.rotation.z = -paddleAngle;
-                        rig.dinoLeftWing.rotation.y = -paddleAngle * 0.5;
-                        rig.dinoRightWing.rotation.y = paddleAngle * 0.5;
+                    if (rig.isMega) {
+                        // High Tide Megabot Titan Mosasaur: Low aggressive predatory stance, snapping chrome jaws, sweeping hydrofoils, and undulating crescent fluke
+                        const chompAngle = smashOffset * 0.65;
+                        rig.dinoHead.position.set(0, 1.85, 2.45);
+                        rig.dinoHead.rotation.x = (isMoving ? Math.sin(walkCycle * 2) * 0.08 : Math.sin(now * 0.0025) * 0.04) - smashOffset * 0.25;
+                        rig.dinoHead.rotation.y = (isMoving ? Math.sin(now * 0.004) * 0.12 : Math.sin(now * 0.0015) * 0.06);
+                        if (rig.dinoLowerJaw) {
+                            rig.dinoLowerJaw.rotation.x = chompAngle + Math.sin(now * 0.004) * 0.06;
+                        }
+                        if (rig.dinoLeftWing && rig.dinoRightWing) {
+                            const paddleSweep = Math.sin(now * (isMoving ? 0.007 : 0.003)) * (isMoving ? 0.48 : 0.25);
+                            rig.dinoLeftWing.rotation.z = paddleSweep;
+                            rig.dinoRightWing.rotation.z = -paddleSweep;
+                            rig.dinoLeftWing.rotation.y = -paddleSweep * 0.45;
+                            rig.dinoRightWing.rotation.y = paddleSweep * 0.45;
+                        }
+                        rig.dinoTail.position.set(0, 1.85, -1.65);
+                        rig.dinoTail.rotation.y = (isMoving ? Math.sin(now * 0.007) * 0.48 : Math.sin(now * 0.0025) * 0.18) + smashOffset * 0.22;
+                    } else {
+                        // High Tide Plesiosaur: Towering periscope marine neck sway, rhythmic flipper paddle strokes, and rudder tail
+                        rig.dinoHead.position.set(0, 2.75, 1.35);
+                        rig.dinoHead.rotation.x = Math.sin(now * 0.002) * 0.08 + (isMoving ? 0.12 : 0);
+                        rig.dinoHead.rotation.y = Math.sin(now * 0.0015) * 0.14;
+                        if (rig.dinoLeftWing && rig.dinoRightWing) {
+                            const paddleAngle = Math.sin(now * (isMoving ? 0.008 : 0.003)) * 0.45;
+                            rig.dinoLeftWing.rotation.z = paddleAngle;
+                            rig.dinoRightWing.rotation.z = -paddleAngle;
+                            rig.dinoLeftWing.rotation.y = -paddleAngle * 0.5;
+                            rig.dinoRightWing.rotation.y = paddleAngle * 0.5;
+                        }
+                        rig.dinoTail.position.set(0, 2.15, -1.55);
+                        rig.dinoTail.rotation.y = isMoving ? Math.sin(now * 0.006) * 0.35 : Math.sin(now * 0.002) * 0.12;
                     }
-                    rig.dinoTail.position.set(0, 2.15, -1.55);
-                    rig.dinoTail.rotation.y = isMoving ? Math.sin(now * 0.006) * 0.35 : Math.sin(now * 0.002) * 0.12;
                 } else if (rig.botType === 'QUICKSHADOW') {
                     // Quickshadow Dilophosaurus: Sleek low prowl, predatory head, articulated jaw, stealth raptor arms, and agile whip tail
                     rig.dinoHead.position.set(0, 2.45 + (isMoving ? Math.sin(walkCycle) * 0.08 : 0), 1.55);
