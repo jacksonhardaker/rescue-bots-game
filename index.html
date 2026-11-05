@@ -239,6 +239,63 @@
         .z-20 { z-index: 20; }
         .z-30 { z-index: 30; }
         .z-40 { z-index: 40; }
+        .z-50 { z-index: 50; }
+        .aspect-square { aspect-ratio: 1 / 1; }
+
+        /* Tactical Island Map Modal Styles */
+        #tactical-map-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 100 !important;
+            background-color: rgba(2, 6, 23, 0.90) !important;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        #tactical-map-modal.hidden {
+            display: none !important;
+        }
+        #tactical-map-dialog {
+            background-color: rgba(15, 23, 42, 0.96) !important;
+            border: 2px solid #22d3ee !important;
+            box-shadow: 0 0 50px rgba(6, 182, 212, 0.4), 0 20px 40px rgba(0, 0, 0, 0.8) !important;
+            border-radius: 1.25rem;
+            width: 100%;
+            max-width: 640px;
+            max-height: 94vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            z-index: 101 !important;
+            box-sizing: border-box;
+        }
+        #tactical-map-canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 540px;
+            height: min(65vh, 540px);
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        #tactical-map-canvas {
+            width: 100% !important;
+            height: 100% !important;
+            aspect-ratio: 1 / 1;
+            display: block;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(34, 211, 238, 0.4);
+            background-color: #041a29;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.2);
+            box-sizing: border-box;
+        }
 
         .pointer-events-none { pointer-events: none; }
         .pointer-events-auto { pointer-events: auto; }
@@ -628,13 +685,17 @@
         <!-- Left: Minimap + Mission Progress -->
         <div class="flex items-start gap-2.5 pointer-events-auto">
             <div class="flex flex-col items-center gap-1 shrink-0">
-                <div id="minimap-container" title="Tap anywhere on the Minimap to Auto-Pilot there!" class="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full hud-glass p-1.5 flex items-center justify-center overflow-hidden border-2 border-amber-400/60 hover:border-cyan-400 shadow-xl cursor-pointer transition-colors">
-                    <canvas id="minimap-canvas" width="160" height="160" class="w-full h-full rounded-full cursor-pointer"></canvas>
+                <div id="minimap-container" role="button" aria-label="Open Tactical Island Map" title="Tap to open Tactical Island Map" class="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full hud-glass p-1.5 flex items-center justify-center overflow-hidden border-2 border-amber-400/60 hover:border-cyan-400 shadow-xl cursor-pointer pointer-events-auto transition-all hover:scale-105 active:scale-95" onclick="openTacticalMap()" ontouchend="if (event.cancelable) event.preventDefault(); event.stopPropagation(); openTacticalMap();">
+                    <canvas id="minimap-canvas" width="160" height="160" class="w-full h-full rounded-full cursor-pointer pointer-events-auto" onclick="openTacticalMap()" ontouchend="if (event.cancelable) event.preventDefault(); event.stopPropagation(); openTacticalMap();"></canvas>
                     <!-- Compass Cardinal Points -->
                     <div class="absolute top-1 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs font-black tracking-wider text-amber-300 drop-shadow pointer-events-none select-none">N</div>
                     <div class="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] sm:text-xs font-black tracking-wider text-amber-300 drop-shadow pointer-events-none select-none">S</div>
                     <div class="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs font-black tracking-wider text-amber-300 drop-shadow pointer-events-none select-none">W</div>
                     <div class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs font-black tracking-wider text-amber-300 drop-shadow pointer-events-none select-none">E</div>
+                    <!-- Hover expand pill -->
+                    <div class="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center justify-center pointer-events-none opacity-80 sm:opacity-90">
+                        <span class="text-[8.5px] sm:text-[9.5px] font-black uppercase tracking-wider text-cyan-300 bg-slate-950/85 px-1.5 py-0.2 rounded-full border border-cyan-400/60 shadow flex items-center gap-1">⛶ MAP</span>
+                    </div>
                 </div>
                 <!-- Region / Zone Badge directly beneath minimap dial, fully readable without truncation -->
                 <div class="px-2 py-0.5 rounded-full bg-slate-950/90 border border-amber-400/40 text-[8.5px] sm:text-[10px] mono-font text-lime-300 font-bold tracking-tight text-center shadow-lg whitespace-nowrap max-w-[136px] sm:max-w-[175px] truncate pointer-events-none select-none" id="zone-label">RESCUE HQ</div>
@@ -1347,7 +1408,115 @@
         </div>
     </div>
 
+    <!-- Tactical Island Map Overlay Modal -->
+    <div id="tactical-map-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 hidden select-none transition-all duration-200">
+        <div id="tactical-map-dialog" onclick="event.stopPropagation();" ontouchend="event.stopPropagation();" class="hud-glass bg-slate-950/95 border-2 border-cyan-400/80 shadow-[0_0_60px_rgba(6,182,212,0.35)] rounded-2xl w-full max-w-2xl sm:max-w-3xl max-h-[96vh] flex flex-col overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-3.5 py-2.5 sm:px-5 sm:py-3 border-b border-cyan-500/30 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900">
+                <div class="flex items-center gap-2.5 sm:gap-3">
+                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-cyan-500/20 border border-cyan-400/60 flex items-center justify-center text-cyan-300 text-lg shadow-inner">🗺️</div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-sm sm:text-lg font-black text-amber-300 tracking-wide font-sans">GRIFFIN ROCK TACTICAL MAP</h2>
+                            <span id="tactical-map-status-pill" class="text-[8.5px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-bold uppercase tracking-wider">LIVE RADAR</span>
+                        </div>
+                        <div class="text-[10px] sm:text-xs text-slate-300 font-medium">Island Aerial Surveillance • Real-Time Positioning System</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-close-tactical-map" onclick="closeTacticalMap()" ontouchend="if (event.cancelable) event.preventDefault(); event.stopPropagation(); closeTacticalMap();" class="tactile-btn px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:bg-slate-900 border border-amber-400/50 hover:border-amber-400 text-amber-300 font-black text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-md">
+                        <span class="text-sm">✕</span>
+                        <span>CLOSE</span>
+                        <kbd class="text-[9px] text-slate-400 bg-slate-900/80 px-1.5 py-0.5 rounded border border-slate-700 ml-0.5 hidden sm:inline-block">ESC</kbd>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Content / Map Viewport -->
+            <div class="relative p-2 sm:p-3 flex-1 flex flex-col items-center justify-center overflow-hidden bg-slate-950">
+                <div id="tactical-map-canvas-container" class="relative w-full max-w-[560px] sm:max-w-[620px] aspect-square flex items-center justify-center">
+                    <canvas id="tactical-map-canvas" width="720" height="720" class="w-full h-full rounded-xl border border-cyan-500/40 shadow-[0_0_35px_rgba(6,182,212,0.2)] bg-[#041a29]"></canvas>
+                    
+                    <!-- Tactical HUD Coordinate Crosshairs & Compass Overlays -->
+                    <div class="absolute top-2.5 left-3.5 text-[9.5px] sm:text-xs font-mono text-cyan-400/80 pointer-events-none drop-shadow flex items-center gap-2">
+                        <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                        <span>GRID: GR-01 // SCALE 1:4000</span>
+                    </div>
+                    <div class="absolute top-2.5 right-3.5 text-[9.5px] sm:text-xs font-mono text-amber-400/90 pointer-events-none drop-shadow flex items-center gap-1.5">
+                        <span id="tactical-active-emergencies-count">EMERGENCIES: --</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legend & Info Bar -->
+            <div class="px-3 py-2 sm:px-4 sm:py-2.5 border-t border-slate-800/80 bg-slate-900/95 flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-xs text-slate-300">
+                <div class="flex flex-wrap items-center gap-x-3.5 gap-y-1.5">
+                    <div class="flex items-center gap-1.5 font-semibold">
+                        <span class="w-2.5 h-2.5 bg-yellow-400 rounded-sm inline-block shadow"></span>
+                        <span class="text-yellow-300">Player Bot</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 font-semibold">
+                        <span class="w-2.5 h-2.5 bg-sky-400 rounded-sm inline-block shadow"></span>
+                        <span class="text-sky-300">Buddy Bot</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 font-semibold">
+                        <span class="w-2.5 h-2.5 bg-rose-500 rounded-full inline-block shadow"></span>
+                        <span class="text-rose-400">Emergency</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 font-semibold">
+                        <span class="w-2.5 h-2.5 bg-emerald-400 rounded-full inline-block shadow"></span>
+                        <span class="text-emerald-300">Resolved</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 font-semibold">
+                        <span class="w-3.5 h-1 border-t-2 border-dashed border-sky-400 inline-block"></span>
+                        <span class="text-slate-300">Railway & Train</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 font-semibold">
+                        <span class="w-2.5 h-2.5 bg-cyan-400 rounded-sm border border-white inline-block"></span>
+                        <span class="text-cyan-300">Rescue HQ</span>
+                    </div>
+                </div>
+                <div class="text-[9px] sm:text-[10px] text-slate-400 font-mono tracking-tight hidden md:block">
+                    Press [ESC] or tap outside to return to game
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        /***********************************************************************
+         * GLOBAL TACTICAL MAP CONTROLLERS (Exposed Early)
+         ***********************************************************************/
+        window.lastTacticalMapToggleTime = 0;
+
+        function openTacticalMap() {
+            const modal = document.getElementById('tactical-map-modal');
+            if (!modal) return;
+            window.lastTacticalMapToggleTime = performance.now();
+            modal.classList.remove('hidden');
+            if (typeof sfx !== 'undefined' && sfx) {
+                if (typeof sfx.playMapOpen === 'function') sfx.playMapOpen();
+                else if (typeof sfx.playWaypointTap === 'function') sfx.playWaypointTap();
+            }
+            if (typeof renderTacticalMap === 'function') {
+                renderTacticalMap();
+            }
+        }
+
+        function closeTacticalMap() {
+            const modal = document.getElementById('tactical-map-modal');
+            if (!modal) return;
+            window.lastTacticalMapToggleTime = performance.now();
+            modal.classList.add('hidden');
+            if (typeof sfx !== 'undefined' && sfx) {
+                if (typeof sfx.playMapClose === 'function') sfx.playMapClose();
+                else if (typeof sfx.playWaypointTap === 'function') sfx.playWaypointTap();
+            }
+        }
+
+        window.openTacticalMap = openTacticalMap;
+        window.closeTacticalMap = closeTacticalMap;
+
         /***********************************************************************
          * 0. CRISP HIGH-FIDELITY VECTOR GRAPHICS & ICON SYSTEM
          ***********************************************************************/
@@ -1942,6 +2111,42 @@
                     gain.connect(this.ctx.destination);
                     osc.start(now + i * 0.055);
                     osc.stop(now + i * 0.055 + 0.17);
+                });
+            }
+            playMapOpen() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [440, 659.25, 880].forEach((n, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(n, now + i * 0.04);
+                    gain.gain.setValueAtTime(0.12, now + i * 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.04);
+                    osc.stop(now + i * 0.04 + 0.19);
+                });
+            }
+            playMapClose() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [880, 587.33].forEach((n, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(n, now + i * 0.04);
+                    gain.gain.setValueAtTime(0.10, now + i * 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.14);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.04);
+                    osc.stop(now + i * 0.04 + 0.15);
                 });
             }
             playEnergonCollect() {
@@ -20892,7 +21097,11 @@
                 target.closest('button') ||
                 target.closest('header') ||
                 target.closest('#bot-roster') ||
-                target.closest('#victory-modal')
+                target.closest('#victory-modal') ||
+                target.closest('#morocco-modal') ||
+                target.closest('#morbot-victory-modal') ||
+                target.closest('#tactical-map-modal') ||
+                target.closest('#minimap-container')
             );
         }
 
@@ -21645,18 +21854,57 @@
                     toggleBumblebeeMorph();
                 }
             }
+            if (e.code === 'KeyM' && !e.repeat) {
+                const modal = document.getElementById('tactical-map-modal');
+                if (modal) {
+                    if (modal.classList.contains('hidden')) openTacticalMap();
+                    else closeTacticalMap();
+                }
+            }
+            if (e.code === 'Escape' && !e.repeat) {
+                const modal = document.getElementById('tactical-map-modal');
+                if (modal && !modal.classList.contains('hidden')) {
+                    closeTacticalMap();
+                }
+            }
         });
         window.addEventListener('keyup', e => {
             input.keys[e.code] = false;
         });
 
         /***********************************************************************
-         * 10. EXPANDED MINIMAP RADAR RENDERER (HQ Icon + 8 Emergencies)
+         * 10. CLEAN MINIMAP RADAR & HIGH-RESOLUTION TACTICAL ISLAND MAP SYSTEM
          ***********************************************************************/
         const minimapCanvas = document.getElementById('minimap-canvas');
-        const mCtx = minimapCanvas.getContext('2d');
+        const mCtx = minimapCanvas ? minimapCanvas.getContext('2d') : null;
 
+        const tacticalMapCanvas = document.getElementById('tactical-map-canvas');
+        const tCtx = tacticalMapCanvas ? tacticalMapCanvas.getContext('2d') : null;
+        const tacticalMapModal = document.getElementById('tactical-map-modal');
+        const btnCloseTacticalMap = document.getElementById('btn-close-tactical-map');
+        const minimapContainer = document.getElementById('minimap-container');
+
+        // Bind Minimap Tap/Click to Tactical Island Map
+        bindButton('minimap-container', openTacticalMap);
+        bindButton('minimap-canvas', openTacticalMap);
+
+        if (btnCloseTacticalMap) {
+            bindButton('btn-close-tactical-map', closeTacticalMap);
+        }
+
+        if (tacticalMapModal) {
+            tacticalMapModal.addEventListener('click', (e) => {
+                if (e.target === tacticalMapModal && (performance.now() - (window.lastTacticalMapToggleTime || 0) > 400)) {
+                    closeTacticalMap();
+                }
+            });
+        }
+
+        // =====================================================================
+        // 10A. CLEAN & UNCLUTTERED HUD MINIMAP (160x160 circular dial)
+        // =====================================================================
         function renderMinimap() {
+            if (!mCtx) return;
             const w = minimapCanvas.width;
             const h = minimapCanvas.height;
             const cx = w / 2;
@@ -21664,7 +21912,7 @@
 
             mCtx.clearRect(0, 0, w, h);
 
-            // Ocean background
+            // Deep Ocean background
             mCtx.fillStyle = '#082f49';
             mCtx.beginPath();
             mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
@@ -21673,7 +21921,7 @@
             const mapScale = (cx * 0.70) / 1950;
 
             // Main Island landmass
-            mCtx.fillStyle = '#365314';
+            mCtx.fillStyle = '#166534';
             mCtx.beginPath();
             mCtx.arc(cx, cy, 1650 * mapScale, 0, Math.PI * 2);
             mCtx.fill();
@@ -21681,23 +21929,43 @@
             // Wayward Island landmass
             const wix = cx + 1960 * mapScale;
             const wiz = cy + 540 * mapScale;
-            mCtx.fillStyle = '#1e3a1e';
+            mCtx.fillStyle = '#14532d';
             mCtx.beginPath();
             mCtx.arc(wix, wiz, 340 * mapScale, 0, Math.PI * 2);
             mCtx.fill();
 
             // Wayward Causeway Highway and Suspension Bridge
             mCtx.strokeStyle = '#f59e0b';
-            mCtx.lineWidth = 3.0;
+            mCtx.lineWidth = 2.4;
             mCtx.beginPath();
             mCtx.moveTo(cx + 1120 * mapScale, cy + 540 * mapScale);
             mCtx.lineTo(cx + 1780 * mapScale, cy + 540 * mapScale);
             mCtx.stroke();
 
-            // Griffin Rock Island Railway Circuit Track on Minimap
+            // Inner & Outer Coastal Highway Loops + Arterials
+            mCtx.strokeStyle = '#475569';
+            mCtx.lineWidth = 2.0;
+            mCtx.beginPath();
+            mCtx.arc(cx, cy, INNER_LOOP_RADIUS * mapScale, 0, Math.PI * 2);
+            mCtx.stroke();
+
+            mCtx.beginPath();
+            mCtx.arc(cx, cy, OUTER_LOOP_RADIUS * mapScale, 0, Math.PI * 2);
+            mCtx.stroke();
+
+            mCtx.beginPath();
+            mCtx.moveTo(cx, cy - 1140 * mapScale);
+            mCtx.lineTo(cx, cy + 1140 * mapScale);
+            mCtx.moveTo(cx - 1120 * mapScale, cy + 25 * mapScale);
+            mCtx.lineTo(cx + 1180 * mapScale, cy + 25 * mapScale);
+            mCtx.moveTo(cx + 1180 * mapScale, cy + 60 * mapScale);
+            mCtx.lineTo(cx + 1320 * mapScale, cy + 60 * mapScale);
+            mCtx.stroke();
+
+            // Griffin Rock Island Railway Circuit Track
             mCtx.save();
             mCtx.strokeStyle = '#94a3b8';
-            mCtx.lineWidth = 1.8;
+            mCtx.lineWidth = 1.6;
             mCtx.setLineDash([4, 3]);
             mCtx.beginPath();
             for (let i = 0; i <= 64; i++) {
@@ -21711,10 +21979,10 @@
             mCtx.stroke();
             mCtx.restore();
 
-            // Moving Griffin Rock Express Train Markers on Minimap
-            if (typeof islandTrain !== 'undefined' && islandTrain.cars.length > 0) {
+            // Moving Griffin Rock Express Train
+            if (typeof islandTrain !== 'undefined' && islandTrain && islandTrain.cars.length > 0) {
                 mCtx.strokeStyle = '#38bdf8';
-                mCtx.lineWidth = 2.4;
+                mCtx.lineWidth = 2.2;
                 mCtx.beginPath();
                 for (let i = 0; i < islandTrain.cars.length; i++) {
                     const car = islandTrain.cars[i];
@@ -21738,266 +22006,17 @@
                 mCtx.fill();
             }
 
-            // Inner & Outer Coastal Highway Loops + N-S / E-W Arterials
-            mCtx.strokeStyle = '#64748b';
-            mCtx.lineWidth = 2.2;
-            mCtx.beginPath();
-            mCtx.arc(cx, cy, INNER_LOOP_RADIUS * mapScale, 0, Math.PI * 2);
-            mCtx.stroke();
-
-            mCtx.beginPath();
-            mCtx.arc(cx, cy, OUTER_LOOP_RADIUS * mapScale, 0, Math.PI * 2);
-            mCtx.stroke();
-
-            mCtx.beginPath();
-            mCtx.moveTo(cx, cy - 1140 * mapScale);
-            mCtx.lineTo(cx, cy + 1140 * mapScale);
-            mCtx.moveTo(cx - 1120 * mapScale, cy + 25 * mapScale);
-            mCtx.lineTo(cx + 1180 * mapScale, cy + 25 * mapScale);
-            mCtx.moveTo(cx + 1180 * mapScale, cy + 60 * mapScale);
-            mCtx.lineTo(cx + 1320 * mapScale, cy + 60 * mapScale);
-            mCtx.stroke();
-
-            // Draw Golden Energon Cubes on Minimap (Sparkling Gold Dots)
-            mCtx.fillStyle = '#facc15';
-            for (let i = 0; i < energonCubes.length; i++) {
-                const ec = energonCubes[i];
-                if (ec.collected) continue;
-                const ex = cx + ec.x * mapScale;
-                const ez = cy + ec.z * mapScale;
-                mCtx.fillRect(ex - 1.6, ez - 1.6, 3.2, 3.2);
-            }
-
-            // Draw Civilian Vehicle NPCs (Moving Amber Dots) & Human NPCs (Cyan Dots)
+            // Rescue Bots HQ
+            const hqx = cx + (typeof HQ_SWAP_PAD !== 'undefined' ? HQ_SWAP_PAD.x : 0) * mapScale;
+            const hqz = cy + (typeof HQ_SWAP_PAD !== 'undefined' ? HQ_SWAP_PAD.z : -15) * mapScale;
             mCtx.fillStyle = '#38bdf8';
-            for (let i = 0; i < humanNPCs.length; i++) {
-                const hx = cx + humanNPCs[i].x * mapScale;
-                const hz = cy + humanNPCs[i].z * mapScale;
-                mCtx.fillRect(hx - 1.2, hz - 1.2, 2.4, 2.4);
-            }
-            mCtx.fillStyle = '#fde047';
-            for (let i = 0; i < vehicleNPCs.length; i++) {
-                const vx = cx + vehicleNPCs[i].x * mapScale;
-                const vz = cy + vehicleNPCs[i].z * mapScale;
-                mCtx.fillRect(vx - 1.5, vz - 1.5, 3.0, 3.0);
-            }
-
-            // Draw Rescue Bots HQ Swap Pad (Cyan Square)
-            OUTPOST_PADS.forEach(pad => {
-                const ox = cx + pad.x * mapScale;
-                const oz = cy + pad.z * mapScale;
-                mCtx.fillStyle = pad.isHQ ? '#38bdf8' : '#22d3ee';
-                const sz = pad.isHQ ? 8 : 6;
-                mCtx.fillRect(ox - sz / 2, oz - sz / 2, sz, sz);
-                mCtx.strokeStyle = '#ffffff';
-                mCtx.lineWidth = 1;
-                mCtx.strokeRect(ox - sz / 2, oz - sz / 2, sz, sz);
-            });
-
-            // Draw Firehouse Robo-Wash Bay
-            const rwx = cx + ROBO_WASH_POS.x * mapScale;
-            const rwz = cy + ROBO_WASH_POS.z * mapScale;
-            mCtx.fillStyle = '#06b6d4';
-            mCtx.fillRect(rwx - 3.5, rwz - 3.5, 7, 7);
+            mCtx.fillRect(hqx - 3.5, hqz - 3.5, 7, 7);
             mCtx.strokeStyle = '#ffffff';
             mCtx.lineWidth = 1;
-            mCtx.strokeRect(rwx - 3.5, rwz - 3.5, 7, 7);
+            mCtx.strokeRect(hqx - 3.5, hqz - 3.5, 7, 7);
 
-            // Draw Firehouse HQ Launch Catapult
-            const catx = cx + CATAPULT_POS.x * mapScale;
-            const catz = cy + CATAPULT_POS.z * mapScale;
-            mCtx.fillStyle = '#f97316';
-            mCtx.fillRect(catx - 3.5, catz - 3.5, 7, 7);
-            mCtx.strokeStyle = '#ffffff';
-            mCtx.lineWidth = 1;
-            mCtx.strokeRect(catx - 3.5, catz - 3.5, 7, 7);
-
-            // Draw Griffin Rock Drive-Thru Diner
-            const dinx = cx + DINER_POS.x * mapScale;
-            const dinz = cy + DINER_POS.z * mapScale;
-            mCtx.fillStyle = '#f59e0b';
-            mCtx.fillRect(dinx - 4.0, dinz - 4.0, 8, 8);
-            mCtx.strokeStyle = '#f43f5e';
-            mCtx.lineWidth = 1.2;
-            mCtx.strokeRect(dinx - 4.0, dinz - 4.0, 8, 8);
-
-            // Draw Doc Greene's Energon Turbo-Charger
-            const chgx = cx + CHARGER_POS.x * mapScale;
-            const chgz = cy + CHARGER_POS.z * mapScale;
-            mCtx.fillStyle = '#38bdf8';
-            mCtx.beginPath();
-            mCtx.moveTo(chgx, chgz - 5);
-            mCtx.lineTo(chgx + 5, chgz);
-            mCtx.lineTo(chgx, chgz + 5);
-            mCtx.lineTo(chgx - 5, chgz);
-            mCtx.closePath();
-            mCtx.fill();
-            mCtx.strokeStyle = '#facc15';
-            mCtx.lineWidth = 1.2;
-            mCtx.stroke();
-
-            // Draw GroundBridge Portals
-            GROUNDBRIDGE_CONFIGS.forEach(gb => {
-                const gbx = cx + gb.x * mapScale;
-                const gbz = cy + gb.z * mapScale;
-                mCtx.strokeStyle = '#c084fc';
-                mCtx.lineWidth = 1.8;
-                mCtx.beginPath();
-                mCtx.arc(gbx, gbz, 4.5, 0, Math.PI * 2);
-                mCtx.stroke();
-                mCtx.fillStyle = '#06b6d4';
-                mCtx.beginPath();
-                mCtx.arc(gbx, gbz, 2.0, 0, Math.PI * 2);
-                mCtx.fill();
-            });
-
-            // Draw Rideable South Harbor Ferry (Live Sailing Position)
-            if (typeof ferryController !== 'undefined' && ferryController && ferryController.currentPos) {
-                const fx = cx + ferryController.currentPos.x * mapScale;
-                const fz = cy + ferryController.currentPos.z * mapScale;
-                mCtx.fillStyle = '#e11d48';
-                mCtx.beginPath();
-                mCtx.arc(fx, fz, 4.2, 0, Math.PI * 2);
-                mCtx.fill();
-                mCtx.strokeStyle = '#ffffff';
-                mCtx.lineWidth = 1.2;
-                mCtx.stroke();
-            }
-
-            // Draw Magnetic Gantry Crane Yard
-            const crx = cx + craneInteractive.padX * mapScale;
-            const crz = cy + craneInteractive.padZ * mapScale;
-            mCtx.fillStyle = '#eab308';
-            mCtx.fillRect(crx - 3.2, crz - 3.2, 6.4, 6.4);
-            mCtx.strokeStyle = '#38bdf8';
-            mCtx.lineWidth = 1.2;
-            mCtx.strokeRect(crx - 3.2, crz - 3.2, 6.4, 6.4);
-
-            // Draw Doc Greene's Anti-Gravity Testing Yard
-            const tyx = cx + testYard.baseX * mapScale;
-            const tyz = cy + testYard.baseZ * mapScale;
-            mCtx.fillStyle = '#84cc16';
-            mCtx.beginPath();
-            mCtx.arc(tyx, tyz, 4.5, 0, Math.PI * 2);
-            mCtx.fill();
-            mCtx.strokeStyle = '#22d3ee';
-            mCtx.lineWidth = 1.2;
-            mCtx.stroke();
-
-            // Draw Sky Stunt Hoops (Purple/Emerald Rings)
-            stuntHoopRigs.forEach(rig => {
-                const hx = cx + rig.def.x * mapScale;
-                const hz = cy + rig.def.z * mapScale;
-                mCtx.strokeStyle = rig.cooldown > 0 ? '#4ade80' : '#c084fc';
-                mCtx.lineWidth = 1.4;
-                mCtx.beginPath();
-                mCtx.arc(hx, hz, 3.8, 0, Math.PI * 2);
-                mCtx.stroke();
-            });
-
-            // Draw Dino Ridge Sanctuary (Green Fossil Icon)
-            const drx = cx + (-750) * mapScale;
-            const drz = cy + (-750) * mapScale;
-            mCtx.fillStyle = '#22c55e';
-            mCtx.beginPath();
-            mCtx.arc(drx, drz, 5.0, 0, Math.PI * 2);
-            mCtx.fill();
-            mCtx.strokeStyle = '#fef08a';
-            mCtx.lineWidth = 1.2;
-            mCtx.stroke();
-
-            // Draw Sunny Sands Boardwalk Ferris Wheel (Red/Yellow Icon)
-            const bwx = cx + bwX * mapScale;
-            const bwz = cy + bwZ * mapScale;
-            mCtx.fillStyle = '#ef4444';
-            mCtx.beginPath();
-            mCtx.arc(bwx, bwz, 5.0, 0, Math.PI * 2);
-            mCtx.fill();
-            mCtx.strokeStyle = '#facc15';
-            mCtx.lineWidth = 1.2;
-            mCtx.stroke();
-
-            // Draw Wayward Island Ruins & Ancient Cavern (Purple Gem Icon)
-            mCtx.fillStyle = '#a855f7';
-            mCtx.beginPath();
-            mCtx.arc(wix, wiz, 5.5, 0, Math.PI * 2);
-            mCtx.fill();
-            mCtx.strokeStyle = '#38bdf8';
-            mCtx.lineWidth = 1.2;
-            mCtx.stroke();
-
-            // Draw East Lighthouse Lookout (Red & White Beacon Icon)
-            const lhx = cx + 1320 * mapScale;
-            const lhz = cy + 60 * mapScale;
-            mCtx.fillStyle = '#ffffff';
-            mCtx.beginPath();
-            mCtx.arc(lhx, lhz, 4.8, 0, Math.PI * 2);
-            mCtx.fill();
-            mCtx.fillStyle = '#ef4444';
-            mCtx.beginPath();
-            mCtx.arc(lhx, lhz, 2.4, 0, Math.PI * 2);
-            mCtx.fill();
-            mCtx.strokeStyle = '#facc15';
-            mCtx.lineWidth = 1.2;
-            mCtx.stroke();
-
-            // Draw Discovered & Hidden Visiting Autobots on Minimap (Autobot Shield Stars)
-            if (typeof visitingAutobots !== 'undefined') {
-                for (let i = 0; i < visitingAutobots.length; i++) {
-                    const ally = visitingAutobots[i];
-                    const isOccupied = (player.botType === ally.id) || (buddyBot && buddyBot.botType === ally.id);
-                    if (isOccupied) continue;
-                    const isDiscovered = Array.isArray(progression.discoveredAllies) && progression.discoveredAllies.includes(ally.id);
-                    const ax = cx + ally.x * mapScale;
-                    const az = cy + ally.z * mapScale;
-
-                    if (isDiscovered) {
-                        mCtx.fillStyle = ally.badgeColor || '#a855f7';
-                        mCtx.beginPath();
-                        mCtx.arc(ax, az, 4.2, 0, Math.PI * 2);
-                        mCtx.fill();
-                        mCtx.strokeStyle = '#ffffff';
-                        mCtx.lineWidth = 1.2;
-                        mCtx.stroke();
-                    } else {
-                        // Mystery glowing star for undiscovered allies
-                        const pulse = 0.45 + Math.sin(performance.now() * 0.005 + i) * 0.35;
-                        mCtx.fillStyle = `rgba(168, 85, 247, ${pulse})`;
-                        mCtx.beginPath();
-                        mCtx.arc(ax, az, 3.2, 0, Math.PI * 2);
-                        mCtx.fill();
-                    }
-                }
-            }
-
-            // Draw Active Long-Distance Waypoint on Minimap
-            if (player.hasWaypoint) {
-                const wpx = cx + player.waypoint.x * mapScale;
-                const wpz = cy + player.waypoint.z * mapScale;
-                mCtx.strokeStyle = '#facc15';
-                mCtx.lineWidth = 1.6;
-                mCtx.beginPath();
-                mCtx.arc(wpx, wpz, 5.5, 0, Math.PI * 2);
-                mCtx.stroke();
-            }
-
-            // Draw Dr. Morocco's Secret Cliffside Lair on Minimap
-            const mlx = cx + (-820) * mapScale;
-            const mlz = cy + (-1180) * mapScale;
-            mCtx.fillStyle = '#581c87';
-            mCtx.beginPath();
-            mCtx.arc(mlx, mlz, 5.2, 0, Math.PI * 2);
-            mCtx.fill();
-            mCtx.strokeStyle = '#c084fc';
-            mCtx.lineWidth = 1.4;
-            mCtx.stroke();
-            mCtx.fillStyle = '#f59e0b';
-            mCtx.beginPath();
-            mCtx.arc(mlx, mlz, 2.0, 0, Math.PI * 2);
-            mCtx.fill();
-
-            // Draw Live MorBot Radar Blip when Boss Battle is Active
-            if (typeof morbotBattle !== 'undefined' && (morbotBattle.state === 'PURSUIT' || morbotBattle.state === 'ROBOT')) {
+            // Live MorBot Radar Blip when Boss Battle is Active
+            if (typeof morbotBattle !== 'undefined' && morbotBattle && (morbotBattle.state === 'PURSUIT' || morbotBattle.state === 'ROBOT')) {
                 const mbx = cx + morbotBattle.pos.x * mapScale;
                 const mbz = cy + morbotBattle.pos.z * mapScale;
                 const pulseRing = 5.0 + Math.sin(performance.now() * 0.008) * 3.0;
@@ -22010,14 +22029,14 @@
 
                 mCtx.fillStyle = '#dc2626';
                 mCtx.beginPath();
-                mCtx.arc(mbx, mbz, 4.2, 0, Math.PI * 2);
+                mCtx.arc(mbx, mbz, 4.0, 0, Math.PI * 2);
                 mCtx.fill();
                 mCtx.strokeStyle = '#ffffff';
                 mCtx.lineWidth = 1.0;
                 mCtx.stroke();
             }
 
-            // Draw 8 Emergency Beacons
+            // Draw 8 Emergency Beacons (High-Contrast, Clean Dots)
             let nearestDist = Infinity;
             let nearestName = "All Clear!";
 
@@ -22035,34 +22054,20 @@
 
                 mCtx.fillStyle = b.restored ? '#4ade80' : (b.type === 'FIRE' ? '#fb923c' : '#f43f5e');
                 mCtx.beginPath();
-                mCtx.arc(bx, bz, b.restored ? 3.5 : 5.0, 0, Math.PI * 2);
+                mCtx.arc(bx, bz, b.restored ? 2.8 : 4.4, 0, Math.PI * 2);
                 mCtx.fill();
                 mCtx.strokeStyle = '#ffffff';
-                mCtx.lineWidth = 1.2;
+                mCtx.lineWidth = 1.0;
                 mCtx.stroke();
             });
 
-            document.getElementById('nearest-hazard-hint').textContent =
-                nearestDist < Infinity ? `Nearest: ${nearestName}` : `All 8 Emergencies Resolved!`;
+            const hintEl = document.getElementById('nearest-hazard-hint');
+            if (hintEl) {
+                hintEl.textContent = nearestDist < Infinity ? `Nearest: ${nearestName}` : `All 8 Emergencies Resolved!`;
+            }
 
-            // Draw Active Player Arrow
-            const px = cx + player.pos.x * mapScale;
-            const pz = cy + player.pos.z * mapScale;
-            mCtx.save();
-            mCtx.translate(px, pz);
-            mCtx.rotate(-player.heading + Math.PI);
-            mCtx.fillStyle = '#facc15';
-            mCtx.beginPath();
-            mCtx.moveTo(0, -7);
-            mCtx.lineTo(5.5, 6);
-            mCtx.lineTo(0, 3);
-            mCtx.lineTo(-5.5, 6);
-            mCtx.closePath();
-            mCtx.fill();
-            mCtx.restore();
-
-            // Draw Buddy Bot Arrow (Cyan Wingman Indicator)
-            if (buddyBot.botType && buddyBot.botType !== player.botType) {
+            // Draw Buddy Bot Arrow (Cyan Wingman Chevron)
+            if (buddyBot && buddyBot.botType && buddyBot.botType !== player.botType) {
                 const bx = cx + buddyBot.pos.x * mapScale;
                 const bz = cy + buddyBot.pos.z * mapScale;
                 mCtx.save();
@@ -22078,104 +22083,644 @@
                 mCtx.fill();
                 mCtx.restore();
             }
+
+            // Draw Active Player Arrow (Bright Gold Chevron)
+            const px = cx + player.pos.x * mapScale;
+            const pz = cy + player.pos.z * mapScale;
+            mCtx.save();
+            mCtx.translate(px, pz);
+            mCtx.rotate(-player.heading + Math.PI);
+            mCtx.fillStyle = '#facc15';
+            mCtx.beginPath();
+            mCtx.moveTo(0, -7);
+            mCtx.lineTo(5.5, 6);
+            mCtx.lineTo(0, 3);
+            mCtx.lineTo(-5.5, 6);
+            mCtx.closePath();
+            mCtx.fill();
+            mCtx.restore();
         }
 
         // =====================================================================
-        // 10B. MINIMAP AUTO-PILOT WAYPOINT INTERACTION
+        // 10B. HIGH-RESOLUTION TACTICAL ISLAND MAP OVERLAY RENDERER (720x720)
         // =====================================================================
-        function handleMinimapTap(clientX, clientY) {
-            sfx.init();
-            const rect = minimapCanvas.getBoundingClientRect();
-            const scaleX = minimapCanvas.width / rect.width;
-            const scaleY = minimapCanvas.height / rect.height;
-            const canvasX = (clientX - rect.left) * scaleX;
-            const canvasY = (clientY - rect.top) * scaleY;
+        function renderTacticalMap() {
+            if (!tCtx || !tacticalMapCanvas) return;
+            const w = tacticalMapCanvas.width;
+            const h = tacticalMapCanvas.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const now = performance.now();
 
-            const cx = minimapCanvas.width / 2;
-            const cy = minimapCanvas.height / 2;
-            const mapScale = (cx * 0.70) / 1950;
+            // Clear Canvas
+            tCtx.clearRect(0, 0, w, h);
 
-            let worldX = (canvasX - cx) / mapScale;
-            let worldZ = (canvasY - cy) / mapScale;
+            // Layer 1: Oceanic Slate Radar Background
+            const oceanGrad = tCtx.createRadialGradient(cx, cy, 60, cx, cy, cx * 1.05);
+            oceanGrad.addColorStop(0, '#09253c');
+            oceanGrad.addColorStop(0.65, '#051827');
+            oceanGrad.addColorStop(1, '#020b12');
+            tCtx.fillStyle = oceanGrad;
+            tCtx.fillRect(0, 0, w, h);
 
-            const maxRadius = 1720;
-            const r = Math.hypot(worldX, worldZ);
-            const isWayward = Math.hypot(worldX - 1960, worldZ - 540) < 360 ||
-                              (worldX >= 1120 && worldX <= 1780 && Math.abs(worldZ - 540) < 40);
-            if (!isWayward && r > maxRadius) {
-                worldX = (worldX / r) * maxRadius;
-                worldZ = (worldZ / r) * maxRadius;
-            }
+            const mapScale = (cx * 0.82) / 2200;
 
-            let destinationLabel = getZoneName(worldX, worldZ);
+            // Layer 2: Tactical Radar Range Rings & Crosshairs
+            const rangeDistances = [500, 1000, 1500, 2000];
+            tCtx.lineWidth = 1.0;
+            rangeDistances.forEach(dist => {
+                const r = dist * mapScale;
+                tCtx.strokeStyle = 'rgba(6, 182, 212, 0.16)';
+                tCtx.setLineDash([4, 6]);
+                tCtx.beginPath();
+                tCtx.arc(cx, cy, r, 0, Math.PI * 2);
+                tCtx.stroke();
 
-            // Magnetically snap waypoint to an active Emergency Beacon or Outpost Pad if tapped nearby on the Minimap
-            let closestBeaconDist = 180;
-            beacons.forEach(b => {
-                if (!b.restored) {
-                    const d = Math.hypot(worldX - b.x, worldZ - b.z);
-                    if (d < closestBeaconDist) {
-                        closestBeaconDist = d;
-                        worldX = b.x;
-                        worldZ = b.z;
-                        destinationLabel = b.name;
-                    }
-                }
+                tCtx.fillStyle = 'rgba(6, 182, 212, 0.45)';
+                tCtx.font = 'bold 9px "JetBrains Mono", monospace';
+                tCtx.textAlign = 'center';
+                tCtx.fillText(`${dist}M`, cx, cy - r - 3);
             });
 
-            if (closestBeaconDist === 180) {
-                let closestPadDist = 160;
-                OUTPOST_PADS.forEach(pad => {
-                    const d = Math.hypot(worldX - pad.x, worldZ - pad.z);
-                    if (d < closestPadDist) {
-                        closestPadDist = d;
-                        worldX = pad.x;
-                        worldZ = pad.z;
-                        destinationLabel = pad.name;
+            // Crosshair Axes (N-S, E-W, 45-degree diagonals)
+            tCtx.strokeStyle = 'rgba(6, 182, 212, 0.10)';
+            tCtx.setLineDash([3, 8]);
+            tCtx.beginPath();
+            tCtx.moveTo(cx, 16); tCtx.lineTo(cx, h - 16);
+            tCtx.moveTo(16, cy); tCtx.lineTo(w - 16, cy);
+            tCtx.moveTo(cx - 240, cy - 240); tCtx.lineTo(cx + 240, cy + 240);
+            tCtx.moveTo(cx - 240, cy + 240); tCtx.lineTo(cx + 240, cy - 240);
+            tCtx.stroke();
+            tCtx.setLineDash([]);
+
+            // Rotating Radar Sweep Beam
+            const sweepAngle = (now * 0.00065) % (Math.PI * 2);
+            tCtx.save();
+            tCtx.translate(cx, cy);
+            tCtx.rotate(sweepAngle);
+            const sweepGrad = tCtx.createRadialGradient(0, 0, 0, 0, 0, cx * 0.95);
+            sweepGrad.addColorStop(0, 'rgba(6, 182, 212, 0.25)');
+            sweepGrad.addColorStop(0.8, 'rgba(6, 182, 212, 0.04)');
+            sweepGrad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
+            tCtx.fillStyle = sweepGrad;
+            tCtx.beginPath();
+            tCtx.moveTo(0, 0);
+            tCtx.arc(0, 0, cx * 0.95, -0.26, 0);
+            tCtx.closePath();
+            tCtx.fill();
+            tCtx.strokeStyle = 'rgba(34, 211, 238, 0.45)';
+            tCtx.lineWidth = 1.2;
+            tCtx.beginPath();
+            tCtx.moveTo(0, 0);
+            tCtx.lineTo(cx * 0.95, 0);
+            tCtx.stroke();
+            tCtx.restore();
+
+            // Layer 3: Island Landmasses & Shaded Relief Contours
+            // Main Island Coastal Shelf
+            tCtx.fillStyle = '#0e4259';
+            tCtx.beginPath();
+            tCtx.arc(cx, cy, 1720 * mapScale, 0, Math.PI * 2);
+            tCtx.fill();
+
+            // Main Island Sandy Beach Rim
+            tCtx.fillStyle = '#ca8a04';
+            tCtx.beginPath();
+            tCtx.arc(cx, cy, 1670 * mapScale, 0, Math.PI * 2);
+            tCtx.fill();
+
+            // Main Island Lush Interior
+            tCtx.fillStyle = '#15803d';
+            tCtx.beginPath();
+            tCtx.arc(cx, cy, 1630 * mapScale, 0, Math.PI * 2);
+            tCtx.fill();
+
+            // Highlands & Mountain Plateau Contours
+            tCtx.fillStyle = '#166534';
+            tCtx.beginPath();
+            tCtx.arc(cx, cy, 1150 * mapScale, 0, Math.PI * 2);
+            tCtx.fill();
+
+            tCtx.fillStyle = '#14532d';
+            tCtx.beginPath();
+            tCtx.arc(cx, cy, 750 * mapScale, 0, Math.PI * 2);
+            tCtx.fill();
+
+            // Volcano Ridge Shaded Massif (NW)
+            tCtx.fillStyle = '#052e16';
+            tCtx.beginPath();
+            tCtx.ellipse(cx - 680 * mapScale, cy - 650 * mapScale, 280 * mapScale, 220 * mapScale, Math.PI / 4, 0, Math.PI * 2);
+            tCtx.fill();
+
+            // Wayward Island (East Off-Coast)
+            const wix = cx + 1960 * mapScale;
+            const wiz = cy + 540 * mapScale;
+            tCtx.fillStyle = '#0e4259';
+            tCtx.beginPath();
+            tCtx.arc(wix, wiz, 380 * mapScale, 0, Math.PI * 2);
+            tCtx.fill();
+
+            tCtx.fillStyle = '#ca8a04';
+            tCtx.beginPath();
+            tCtx.arc(wix, wiz, 355 * mapScale, 0, Math.PI * 2);
+            tCtx.fill();
+
+            tCtx.fillStyle = '#14532d';
+            tCtx.beginPath();
+            tCtx.arc(wix, wiz, 335 * mapScale, 0, Math.PI * 2);
+            tCtx.fill();
+
+            // Wayward Causeway Highway & Suspension Bridge
+            const cbStartX = cx + 1120 * mapScale;
+            const cbEndX = cx + 1780 * mapScale;
+            const cbY = cy + 540 * mapScale;
+            // Bridge deck
+            tCtx.strokeStyle = '#334155';
+            tCtx.lineWidth = 7.0;
+            tCtx.beginPath();
+            tCtx.moveTo(cbStartX, cbY);
+            tCtx.lineTo(cbEndX, cbY);
+            tCtx.stroke();
+
+            // Bridge center line
+            tCtx.strokeStyle = '#f59e0b';
+            tCtx.lineWidth = 1.8;
+            tCtx.beginPath();
+            tCtx.moveTo(cbStartX, cbY);
+            tCtx.lineTo(cbEndX, cbY);
+            tCtx.stroke();
+
+            // Bridge Towers
+            [cbStartX + (cbEndX - cbStartX) * 0.35, cbStartX + (cbEndX - cbStartX) * 0.65].forEach(tx => {
+                tCtx.fillStyle = '#f8fafc';
+                tCtx.fillRect(tx - 2, cbY - 7, 4, 14);
+            });
+
+            // Layer 4: Multi-Ring Highway Network
+            // Outer Highway Ribbon
+            tCtx.strokeStyle = '#334155';
+            tCtx.lineWidth = 6.0;
+            tCtx.beginPath();
+            for (let i = 0; i <= 96; i++) {
+                const theta = (i / 96) * Math.PI * 2;
+                const r = getOuterRoadRadius(theta) * mapScale;
+                const mx = cx + Math.cos(theta) * r;
+                const my = cy + Math.sin(theta) * r;
+                if (i === 0) tCtx.moveTo(mx, my);
+                else tCtx.lineTo(mx, my);
+            }
+            tCtx.stroke();
+
+            // Outer Highway Centerline
+            tCtx.strokeStyle = '#fde047';
+            tCtx.lineWidth = 1.2;
+            tCtx.setLineDash([4, 4]);
+            tCtx.stroke();
+            tCtx.setLineDash([]);
+
+            // Inner Highway Ribbon
+            tCtx.strokeStyle = '#334155';
+            tCtx.lineWidth = 5.0;
+            tCtx.beginPath();
+            for (let i = 0; i <= 64; i++) {
+                const theta = (i / 64) * Math.PI * 2;
+                const r = getInnerRoadRadius(theta) * mapScale;
+                const mx = cx + Math.cos(theta) * r;
+                const my = cy + Math.sin(theta) * r;
+                if (i === 0) tCtx.moveTo(mx, my);
+                else tCtx.lineTo(mx, my);
+            }
+            tCtx.stroke();
+
+            tCtx.strokeStyle = '#fde047';
+            tCtx.lineWidth = 1.0;
+            tCtx.setLineDash([3, 4]);
+            tCtx.stroke();
+            tCtx.setLineDash([]);
+
+            // Cross-Island Arterials
+            tCtx.strokeStyle = '#334155';
+            tCtx.lineWidth = 5.0;
+            tCtx.beginPath();
+            tCtx.moveTo(cx, cy - 1140 * mapScale);
+            tCtx.lineTo(cx, cy + 1140 * mapScale);
+            tCtx.moveTo(cx - 1120 * mapScale, cy + 25 * mapScale);
+            tCtx.lineTo(cx + 1180 * mapScale, cy + 25 * mapScale);
+            tCtx.moveTo(cx + 1180 * mapScale, cy + 60 * mapScale);
+            tCtx.lineTo(cx + 1320 * mapScale, cy + 60 * mapScale);
+            tCtx.stroke();
+
+            tCtx.strokeStyle = '#fde047';
+            tCtx.lineWidth = 1.0;
+            tCtx.setLineDash([3, 4]);
+            tCtx.stroke();
+            tCtx.setLineDash([]);
+
+            // Layer 5: Island Railway Circuit Track
+            // Ballast bed
+            tCtx.strokeStyle = '#1e293b';
+            tCtx.lineWidth = 4.5;
+            tCtx.beginPath();
+            for (let i = 0; i <= 96; i++) {
+                const theta = (i / 96) * Math.PI * 2;
+                const r = getRailwayRadius(theta) * mapScale;
+                const mx = cx + Math.cos(theta) * r;
+                const my = cy + Math.sin(theta) * r;
+                if (i === 0) tCtx.moveTo(mx, my);
+                else tCtx.lineTo(mx, my);
+            }
+            tCtx.stroke();
+
+            // Track rails
+            tCtx.strokeStyle = '#cbd5e1';
+            tCtx.lineWidth = 2.0;
+            tCtx.setLineDash([4, 3]);
+            tCtx.stroke();
+            tCtx.setLineDash([]);
+
+            // The Griffin Rock Express Train (All 7 cars drawn with orientation)
+            if (typeof islandTrain !== 'undefined' && islandTrain && islandTrain.cars.length > 0) {
+                for (let i = 0; i < islandTrain.cars.length; i++) {
+                    const car = islandTrain.cars[i];
+                    const carX = cx + car.x * mapScale;
+                    const carY = cy + car.z * mapScale;
+                    const heading = car.heading || 0;
+
+                    tCtx.save();
+                    tCtx.translate(carX, carY);
+                    tCtx.rotate(-heading + Math.PI / 2);
+
+                    const carW = i === 0 ? 5.5 : 4.5;
+                    const carL = i === 0 ? 9.5 : (i === 1 ? 6.5 : 8.5);
+
+                    if (i === 0) {
+                        // Locomotive: Sky Blue with Gold Cab
+                        tCtx.fillStyle = '#0284c7';
+                        tCtx.fillRect(-carW / 2, -carL / 2, carW, carL);
+                        tCtx.fillStyle = '#facc15';
+                        tCtx.fillRect(-carW / 2, carL / 2 - 3.5, carW, 3.5);
+                        tCtx.strokeStyle = '#ffffff';
+                        tCtx.lineWidth = 1.0;
+                        tCtx.strokeRect(-carW / 2, -carL / 2, carW, carL);
+
+                        // Headlight Beam
+                        tCtx.fillStyle = 'rgba(250, 204, 21, 0.35)';
+                        tCtx.beginPath();
+                        tCtx.moveTo(0, -carL / 2);
+                        tCtx.lineTo(-12, -carL / 2 - 24);
+                        tCtx.lineTo(12, -carL / 2 - 24);
+                        tCtx.closePath();
+                        tCtx.fill();
+                    } else if (i === islandTrain.cars.length - 1) {
+                        // Caboose: Bright Red
+                        tCtx.fillStyle = '#ef4444';
+                        tCtx.fillRect(-carW / 2, -carL / 2, carW, carL);
+                        tCtx.strokeStyle = '#fecaca';
+                        tCtx.lineWidth = 1.0;
+                        tCtx.strokeRect(-carW / 2, -carL / 2, carW, carL);
+                        // Flashing lantern
+                        const flash = Math.sin(now * 0.01) > 0 ? '#facc15' : '#b91c1c';
+                        tCtx.fillStyle = flash;
+                        tCtx.beginPath();
+                        tCtx.arc(0, carL / 2, 2.0, 0, Math.PI * 2);
+                        tCtx.fill();
+                    } else {
+                        // Passenger coaches & tender
+                        tCtx.fillStyle = '#0369a1';
+                        tCtx.fillRect(-carW / 2, -carL / 2, carW, carL);
+                        tCtx.strokeStyle = '#bae6fd';
+                        tCtx.lineWidth = 0.8;
+                        tCtx.strokeRect(-carW / 2, -carL / 2, carW, carL);
                     }
+                    tCtx.restore();
+                }
+
+                // Train Name Banner
+                const loco = islandTrain.cars[0];
+                const lx = cx + loco.x * mapScale;
+                const ly = cy + loco.z * mapScale;
+                tCtx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                tCtx.fillRect(lx - 55, ly - 22, 110, 15);
+                tCtx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+                tCtx.lineWidth = 1;
+                tCtx.strokeRect(lx - 55, ly - 22, 110, 15);
+                tCtx.fillStyle = '#38bdf8';
+                tCtx.font = 'bold 8.5px "JetBrains Mono", monospace';
+                tCtx.textAlign = 'center';
+                tCtx.fillText('GRIFFIN ROCK EXPRESS', lx, ly - 11);
+            }
+
+            // Layer 6: Key Island Landmarks with Badges
+            const landmarks = [
+                { name: "RESCUE BOTS HQ", x: HQ_SWAP_PAD.x, z: HQ_SWAP_PAD.z, color: '#06b6d4', icon: '🏛️' },
+                { name: "DINO RIDGE", x: -750, z: -750, color: '#22c55e', icon: '🦖' },
+                { name: "BOARDWALK", x: bwX, z: bwZ, color: '#f59e0b', icon: '🎡' },
+                { name: "DR. GREENE'S LAB", x: testYard.baseX, z: testYard.baseZ, color: '#38bdf8', icon: '⚡' },
+                { name: "EAST LIGHTHOUSE", x: 1320, z: 60, color: '#f43f5e', icon: '🚨' },
+                { name: "WAYWARD RUINS", x: 1960, z: 540, color: '#c084fc', icon: '🗿' },
+                { name: "MOROCCO'S LAIR", x: -820, z: -1180, color: '#a855f7', icon: '🛸' }
+            ];
+
+            landmarks.forEach(lm => {
+                const lx = cx + lm.x * mapScale;
+                const lz = cy + lm.z * mapScale;
+
+                tCtx.fillStyle = lm.color;
+                tCtx.beginPath();
+                tCtx.arc(lx, lz, 5.0, 0, Math.PI * 2);
+                tCtx.fill();
+                tCtx.strokeStyle = '#ffffff';
+                tCtx.lineWidth = 1.4;
+                tCtx.stroke();
+
+                // Labeled Pill
+                tCtx.font = 'bold 9px Fredoka, sans-serif';
+                const textW = tCtx.measureText(lm.name).width;
+                tCtx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                tCtx.fillRect(lx - textW / 2 - 4, lz + 7, textW + 8, 14);
+                tCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                tCtx.lineWidth = 0.8;
+                tCtx.strokeRect(lx - textW / 2 - 4, lz + 7, textW + 8, 14);
+                tCtx.fillStyle = '#f8fafc';
+                tCtx.textAlign = 'center';
+                tCtx.fillText(lm.name, lx, lz + 17);
+            });
+
+            // Layer 7: Discovered Visiting Autobots
+            if (typeof visitingAutobots !== 'undefined' && visitingAutobots.length > 0) {
+                visitingAutobots.forEach(ally => {
+                    const isOccupied = (player.botType === ally.id) || (buddyBot && buddyBot.botType === ally.id);
+                    if (isOccupied) return;
+                    const isDiscovered = Array.isArray(progression.discoveredAllies) && progression.discoveredAllies.includes(ally.id);
+                    if (!isDiscovered) return;
+
+                    const ax = cx + ally.x * mapScale;
+                    const az = cy + ally.z * mapScale;
+
+                    tCtx.fillStyle = ally.badgeColor || '#a855f7';
+                    tCtx.beginPath();
+                    tCtx.arc(ax, az, 5.5, 0, Math.PI * 2);
+                    tCtx.fill();
+                    tCtx.strokeStyle = '#ffffff';
+                    tCtx.lineWidth = 1.5;
+                    tCtx.stroke();
+
+                    tCtx.font = 'bold 8.5px "JetBrains Mono", monospace';
+                    const nameW = tCtx.measureText(ally.name).width;
+                    tCtx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                    tCtx.fillRect(ax - nameW / 2 - 3, az - 18, nameW + 6, 13);
+                    tCtx.fillStyle = ally.badgeColor || '#a855f7';
+                    tCtx.textAlign = 'center';
+                    tCtx.fillText(ally.name, ax, az - 8);
                 });
             }
 
-            // Ensure ground bots stay on safe land if ocean water is tapped on the Minimap
-            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
-            let ty = getSurfaceHeight(worldX, worldZ);
-            if (!isFlyingCopter && ty < -1.0) {
-                const angle = Math.atan2(worldZ, worldX);
-                for (let testDist = Math.min(r, 1620); testDist > 50; testDist -= 25) {
-                    const tx = Math.cos(angle) * testDist;
-                    const tz = Math.sin(angle) * testDist;
-                    const testY = getSurfaceHeight(tx, tz);
-                    if (testY >= -0.5) {
-                        worldX = tx;
-                        worldZ = tz;
-                        ty = testY;
-                        break;
+            // Layer 8: 8 Emergency Beacons with Pulse Radar Rings & Callout Badges
+            let activeEmergencyCount = 0;
+            let nearestActiveDist = Infinity;
+            let nearestActiveBeacon = null;
+
+            beacons.forEach(b => {
+                const bx = cx + b.x * mapScale;
+                const bz = cy + b.z * mapScale;
+                const distFromPlayer = Math.round(Math.hypot(player.pos.x - b.x, player.pos.z - b.z));
+
+                if (!b.restored) {
+                    activeEmergencyCount++;
+                    if (distFromPlayer < nearestActiveDist) {
+                        nearestActiveDist = distFromPlayer;
+                        nearestActiveBeacon = b;
                     }
+
+                    // Pulsing Radar Rings
+                    const pulse = Math.sin(now * 0.006 + b.id) * 3.5;
+                    const ringColor = b.type === 'FIRE' ? 'rgba(251, 146, 60, 0.45)' : 'rgba(244, 63, 94, 0.45)';
+                    tCtx.strokeStyle = ringColor;
+                    tCtx.lineWidth = 1.8;
+                    tCtx.beginPath();
+                    tCtx.arc(bx, bz, 11 + pulse, 0, Math.PI * 2);
+                    tCtx.stroke();
+
+                    tCtx.strokeStyle = ringColor;
+                    tCtx.lineWidth = 1.0;
+                    tCtx.beginPath();
+                    tCtx.arc(bx, bz, 18 + pulse * 1.5, 0, Math.PI * 2);
+                    tCtx.stroke();
+
+                    // Beacon Core
+                    tCtx.fillStyle = b.type === 'FIRE' ? '#ea580c' : '#e11d48';
+                    tCtx.beginPath();
+                    tCtx.arc(bx, bz, 6.5, 0, Math.PI * 2);
+                    tCtx.fill();
+                    tCtx.strokeStyle = '#ffffff';
+                    tCtx.lineWidth = 1.8;
+                    tCtx.stroke();
+
+                    // Emergency Badge Callout
+                    const labelText = `${b.name} (${distFromPlayer}m)`;
+                    tCtx.font = 'bold 9.5px Fredoka, sans-serif';
+                    const lw = tCtx.measureText(labelText).width;
+                    tCtx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+                    tCtx.fillRect(bx - lw / 2 - 5, bz - 21, lw + 10, 16);
+                    tCtx.strokeStyle = b.type === 'FIRE' ? '#fb923c' : '#f43f5e';
+                    tCtx.lineWidth = 1.2;
+                    tCtx.strokeRect(bx - lw / 2 - 5, bz - 21, lw + 10, 16);
+
+                    tCtx.fillStyle = b.type === 'FIRE' ? '#fdba74' : '#fda4af';
+                    tCtx.textAlign = 'center';
+                    tCtx.fillText(labelText, bx, bz - 9);
+                } else {
+                    // Cleared Beacon (Emerald Dot)
+                    tCtx.fillStyle = '#22c55e';
+                    tCtx.beginPath();
+                    tCtx.arc(bx, bz, 4.2, 0, Math.PI * 2);
+                    tCtx.fill();
+                    tCtx.strokeStyle = '#ffffff';
+                    tCtx.lineWidth = 1.2;
+                    tCtx.stroke();
+
+                    tCtx.font = 'bold 8px Fredoka, sans-serif';
+                    tCtx.fillStyle = '#86efac';
+                    tCtx.textAlign = 'center';
+                    tCtx.fillText(`${b.name} ✓`, bx, bz + 12);
                 }
+            });
+
+            // Update Tactical Emergencies Header Count
+            const emergCountEl = document.getElementById('tactical-active-emergencies-count');
+            if (emergCountEl) {
+                emergCountEl.textContent = activeEmergencyCount === 0 ? 'ALL CLEAR (0 ACTIVE)' : `EMERGENCIES: ${activeEmergencyCount} ACTIVE`;
             }
 
-            const markerY = Math.max(0.0, ty);
-            player.waypoint.set(worldX, markerY, worldZ);
-            player.hasWaypoint = true;
-            player.boostTimer = Math.max(player.boostTimer, 3.5);
-            waypointGroup.position.set(worldX, markerY, worldZ);
-            waypointGroup.visible = true;
-            sfx.playWaypointTap();
-            showToast(`AUTO-PILOT WAYPOINT`, `Steering toward ${destinationLabel}!`, 'amber');
-            renderMinimap();
+            // Layer 9: Dashed Tactical Navigation Vector to Nearest Active Emergency
+            const px = cx + player.pos.x * mapScale;
+            const pz = cy + player.pos.z * mapScale;
+
+            if (nearestActiveBeacon) {
+                const nbx = cx + nearestActiveBeacon.x * mapScale;
+                const nbz = cy + nearestActiveBeacon.z * mapScale;
+
+                tCtx.save();
+                tCtx.strokeStyle = 'rgba(250, 204, 21, 0.65)';
+                tCtx.lineWidth = 1.6;
+                tCtx.setLineDash([5, 4]);
+                tCtx.beginPath();
+                tCtx.moveTo(px, pz);
+                tCtx.lineTo(nbx, nbz);
+                tCtx.stroke();
+                tCtx.restore();
+
+                // Distance readout along vector
+                const midX = (px + nbx) / 2;
+                const midY = (pz + nbz) / 2;
+                tCtx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+                tCtx.fillRect(midX - 22, midY - 8, 44, 15);
+                tCtx.strokeStyle = '#facc15';
+                tCtx.lineWidth = 1.0;
+                tCtx.strokeRect(midX - 22, midY - 8, 44, 15);
+                tCtx.fillStyle = '#fde047';
+                tCtx.font = 'bold 8.5px "JetBrains Mono", monospace';
+                tCtx.textAlign = 'center';
+                tCtx.fillText(`${nearestActiveDist}m`, midX, midY + 3);
+            }
+
+            // Layer 10: Buddy Bot (Cyan Wingman Chevron + Callout)
+            if (buddyBot && buddyBot.botType && buddyBot.botType !== player.botType) {
+                const bx = cx + buddyBot.pos.x * mapScale;
+                const bz = cy + buddyBot.pos.z * mapScale;
+
+                tCtx.save();
+                tCtx.translate(bx, bz);
+                tCtx.rotate(-buddyBot.heading + Math.PI);
+                tCtx.fillStyle = '#38bdf8';
+                tCtx.beginPath();
+                tCtx.moveTo(0, -9);
+                tCtx.lineTo(7.5, 8);
+                tCtx.lineTo(0, 3.5);
+                tCtx.lineTo(-7.5, 8);
+                tCtx.closePath();
+                tCtx.fill();
+                tCtx.strokeStyle = '#ffffff';
+                tCtx.lineWidth = 1.4;
+                tCtx.stroke();
+                tCtx.restore();
+
+                // Buddy Label Pill
+                const bLabel = `${buddyBot.botType} (BUDDY)`;
+                tCtx.font = 'bold 9px "JetBrains Mono", monospace';
+                const bw = tCtx.measureText(bLabel).width;
+                tCtx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                tCtx.fillRect(bx - bw / 2 - 4, bz + 11, bw + 8, 14);
+                tCtx.strokeStyle = '#38bdf8';
+                tCtx.lineWidth = 1.0;
+                tCtx.strokeRect(bx - bw / 2 - 4, bz + 11, bw + 8, 14);
+                tCtx.fillStyle = '#7dd3fc';
+                tCtx.textAlign = 'center';
+                tCtx.fillText(bLabel, bx, bz + 21);
+            }
+
+            // Layer 11: Active Player Bot (Golden Chevron + Pulsing Ring + HUD Label)
+            tCtx.save();
+            // Pulsing aura ring
+            const pPulse = Math.sin(now * 0.008) * 3.5;
+            tCtx.strokeStyle = 'rgba(250, 204, 21, 0.55)';
+            tCtx.lineWidth = 2.0;
+            tCtx.beginPath();
+            tCtx.arc(px, pz, 13 + pPulse, 0, Math.PI * 2);
+            tCtx.stroke();
+
+            // Player Chevron
+            tCtx.translate(px, pz);
+            tCtx.rotate(-player.heading + Math.PI);
+            tCtx.fillStyle = '#facc15';
+            tCtx.beginPath();
+            tCtx.moveTo(0, -11);
+            tCtx.lineTo(9.0, 9.5);
+            tCtx.lineTo(0, 4.5);
+            tCtx.lineTo(-9.0, 9.5);
+            tCtx.closePath();
+            tCtx.fill();
+            tCtx.strokeStyle = '#ffffff';
+            tCtx.lineWidth = 1.6;
+            tCtx.stroke();
+            tCtx.restore();
+
+            // Player Label Pill with Speed
+            const pSpeedKmH = Math.round(Math.abs(player.speed) * 3.6);
+            const pLabel = `${player.botType} (YOU) • ${pSpeedKmH} km/h`;
+            tCtx.font = 'bold 9.5px "JetBrains Mono", monospace';
+            const pw = tCtx.measureText(pLabel).width;
+            tCtx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+            tCtx.fillRect(px - pw / 2 - 5, pz - 25, pw + 10, 15);
+            tCtx.strokeStyle = '#facc15';
+            tCtx.lineWidth = 1.2;
+            tCtx.strokeRect(px - pw / 2 - 5, pz - 25, pw + 10, 15);
+            tCtx.fillStyle = '#fef08a';
+            tCtx.textAlign = 'center';
+            tCtx.fillText(pLabel, px, pz - 14);
+
+            // Layer 12: Tactical Compass Rose (Upper Right)
+            const compassX = w - 52;
+            const compassY = 52;
+            tCtx.save();
+            tCtx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
+            tCtx.lineWidth = 1.5;
+            tCtx.beginPath();
+            tCtx.arc(compassX, compassY, 26, 0, Math.PI * 2);
+            tCtx.stroke();
+
+            // North Arrow Pointer
+            tCtx.fillStyle = '#facc15';
+            tCtx.beginPath();
+            tCtx.moveTo(compassX, compassY - 22);
+            tCtx.lineTo(compassX + 5, compassY - 5);
+            tCtx.lineTo(compassX, compassY);
+            tCtx.lineTo(compassX - 5, compassY - 5);
+            tCtx.closePath();
+            tCtx.fill();
+
+            // South Pointer
+            tCtx.fillStyle = '#64748b';
+            tCtx.beginPath();
+            tCtx.moveTo(compassX, compassY + 22);
+            tCtx.lineTo(compassX + 4, compassY + 5);
+            tCtx.lineTo(compassX, compassY);
+            tCtx.lineTo(compassX - 4, compassY + 5);
+            tCtx.closePath();
+            tCtx.fill();
+
+            tCtx.fillStyle = '#facc15';
+            tCtx.font = 'bold 10px "JetBrains Mono", monospace';
+            tCtx.textAlign = 'center';
+            tCtx.fillText('N', compassX, compassY - 28);
+            tCtx.fillStyle = '#94a3b8';
+            tCtx.fillText('S', compassX, compassY + 37);
+            tCtx.fillText('W', compassX - 35, compassY + 3.5);
+            tCtx.fillText('E', compassX + 35, compassY + 3.5);
+            tCtx.restore();
+
+            // Layer 13: Tactical Scale Bar (Lower Left)
+            const sbX = 28;
+            const sbY = h - 26;
+            const barLength = 500 * mapScale;
+            tCtx.strokeStyle = '#38bdf8';
+            tCtx.lineWidth = 2.0;
+            tCtx.beginPath();
+            tCtx.moveTo(sbX, sbY);
+            tCtx.lineTo(sbX + barLength, sbY);
+            tCtx.moveTo(sbX, sbY - 4);
+            tCtx.lineTo(sbX, sbY + 4);
+            tCtx.moveTo(sbX + barLength, sbY - 4);
+            tCtx.lineTo(sbX + barLength, sbY + 4);
+            tCtx.stroke();
+
+            tCtx.fillStyle = '#38bdf8';
+            tCtx.font = 'bold 9px "JetBrains Mono", monospace';
+            tCtx.textAlign = 'left';
+            tCtx.fillText('0', sbX - 2, sbY - 6);
+            tCtx.textAlign = 'right';
+            tCtx.fillText('500M', sbX + barLength + 2, sbY - 6);
         }
-
-        minimapCanvas.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleMinimapTap(e.clientX, e.clientY);
-        });
-        minimapCanvas.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            if (e.touches.length > 0) {
-                handleMinimapTap(e.touches[0].clientX, e.touches[0].clientY);
-            }
-        }, { passive: false });
 
         /***********************************************************************
          * 11. MAIN PHYSICS, AUTO-PILOT WAYPOINT STEERING & WIDE CAMERA LOOP
@@ -22938,7 +23483,11 @@
                 document.getElementById('fps-counter').textContent = `${fps} FPS`;
                 frameCount = 0;
                 fpsTimer = 0;
-                renderMinimap();
+            }
+
+            renderMinimap();
+            if (typeof tacticalMapModal !== 'undefined' && tacticalMapModal && !tacticalMapModal.classList.contains('hidden')) {
+                renderTacticalMap();
             }
 
             // Animate 3D Tap Waypoint Marker (Pulsing Ring & Bouncing Arrow)
