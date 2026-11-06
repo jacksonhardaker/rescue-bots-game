@@ -140,6 +140,9 @@ import { buildEnergonCubes } from '../world/collectibles.js';
             if (!sfx.enabled) {
                 sfx.stopContinuousLoops();
             }
+            if (typeof sfx.applySettingsVolumes === 'function') {
+                sfx.applySettingsVolumes();
+            }
             const soundIconEl = document.getElementById('sound-icon');
             if (soundIconEl) soundIconEl.innerHTML = sfx.enabled ? SVG_ICONS.SOUND_ON : SVG_ICONS.SOUND_OFF;
             const soundLabel = document.getElementById('sound-label');

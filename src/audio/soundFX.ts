@@ -24,7 +24,7 @@ class RescueSoundFX {
 
                         this.sfxBus.connect(this.masterBus);
                         this.engineBus.connect(this.masterBus);
-                        this.masterBus.connect(this.getSfxDest());
+                        this.masterBus.connect(this.ctx.destination);
                         this.applySettingsVolumes();
                     } catch (e) {
                         console.warn("Audio bus creation failed:", e);
@@ -1367,4 +1367,19 @@ class RescueSoundFX {
         }
 
 export const sfx = new RescueSoundFX();
+
+if (typeof window !== 'undefined') {
+    const unlockAudio = () => {
+        if (sfx) {
+            sfx.init();
+            if (sfx.ctx && sfx.ctx.state === 'suspended') {
+                sfx.ctx.resume();
+            }
+        }
+    };
+    ['pointerdown', 'keydown', 'touchstart'].forEach(evt => {
+        window.addEventListener(evt, unlockAudio, { passive: true });
+    });
+}
+
 export default sfx;
