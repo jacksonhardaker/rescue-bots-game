@@ -1,12 +1,25 @@
 // Visual Check Studio for Ground Clearance, Morph Inspection & TV-Show Proportions
 import * as THREE from 'three';
 import { renderer } from '../rendering/scene.js';
-import { buildRescueBotModel, applyBotRigMorph, setHighTideRigMega, setOptimusRigMega } from '../bots/botRigs.js';
+import { buildRescueBotModel, applyBotRigMorph, setBotRigMega } from '../bots/botRigs.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
+import { toonGrad3 } from '../rendering/materials.js';
+import { SVG_ICONS } from '../ui/icons.js';
 
         export function startBotCheck() {
             const params = new URLSearchParams(location.search);
-            const BOT_IDS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'OPTIMUS_MEGA', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'HIGHTIDE_MEGA', 'QUICKSHADOW'];
+            const BOT_IDS = [
+                'BOULDER', 'BOULDER_MEGA',
+                'HEATWAVE', 'HEATWAVE_MEGA',
+                'CHASE', 'CHASE_MEGA',
+                'BLADES', 'BLADES_MEGA',
+                'OPTIMUS', 'OPTIMUS_MEGA',
+                'BUMBLEBEE', 'BUMBLEBEE_MEGA',
+                'BLURR', 'BLURR_MEGA',
+                'SALVAGE', 'SALVAGE_MEGA',
+                'HIGHTIDE', 'HIGHTIDE_MEGA',
+                'QUICKSHADOW', 'QUICKSHADOW_MEGA'
+            ];
             const MODES = ['bot', 'vehicle', 'dino'];
 
             // Hide every game HUD element; keep only the WebGL canvas
@@ -46,22 +59,23 @@ import { BOT_METADATA } from '../bots/botMeta.js';
             bcScene.add(bcSun);
 
             const ground = new THREE.Mesh(
-                new THREE.PlaneGeometry(600, 600).rotateX(-Math.PI / 2),
+                new THREE.PlaneGeometry(1200, 1200).rotateX(-Math.PI / 2),
                 new THREE.MeshToonMaterial({ color: 0xf1f5f9, gradientMap: toonGrad3 })
             );
             ground.receiveShadow = true;
             bcScene.add(ground);
-            const grid = new THREE.GridHelper(600, 300, 0x94a3b8, 0xcbd5e1);
+            const grid = new THREE.GridHelper(1200, 240, 0x94a3b8, 0xcbd5e1);
             grid.position.y = 0.01;
             bcScene.add(grid);
 
-            const bcCamera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.5, 2000);
+            const bcCamera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.5, 4000);
 
             // --- Build fresh rigs: one per (bot, mode) cell ---
             function makeRig(id) {
-                const rig = buildRescueBotModel(id === 'HIGHTIDE_MEGA' ? 'HIGHTIDE' : (id === 'OPTIMUS_MEGA' ? 'OPTIMUS' : id));
-                if (rig.botType === 'HIGHTIDE') setHighTideRigMega(rig, id === 'HIGHTIDE_MEGA');
-                if (rig.botType === 'OPTIMUS') setOptimusRigMega(rig, id === 'OPTIMUS_MEGA');
+                const isMega = id.endsWith('_MEGA');
+                const baseType = isMega ? id.replace('_MEGA', '') : id;
+                const rig = buildRescueBotModel(baseType);
+                setBotRigMega(rig, isMega);
                 rig.root.traverse(o => { if (o.isMesh && !o.userData.isOutline) o.castShadow = true; });
                 return rig;
             }
@@ -70,12 +84,13 @@ import { BOT_METADATA } from '../bots/botMeta.js';
             labelLayer.style.cssText = 'position:fixed;inset:0;pointer-events:none;font:600 11px/1.2 system-ui,sans-serif;z-index:20;';
             document.body.appendChild(labelLayer);
 
-            // Grid layout: rows = bots, columns = modes. Mega row gets extra room.
+            // Grid layout: rows = bots, columns = modes. Mega rows get proportional room.
             let rowZ = 0;
             BOT_IDS.forEach(id => {
-                const isMega = id === 'HIGHTIDE_MEGA' || id === 'OPTIMUS_MEGA';
-                const colGap = isMega ? 58 : 16;
-                const rowGap = isMega ? 62 : 16;
+                const isMega = id.endsWith('_MEGA');
+                const isHighTideMega = id === 'HIGHTIDE_MEGA';
+                const colGap = isHighTideMega ? 58 : (isMega ? 28 : 16);
+                const rowGap = isHighTideMega ? 62 : (isMega ? 28 : 16);
                 rowZ += rowGap / 2;
                 MODES.forEach((mode, ci) => {
                     const rig = makeRig(id);
@@ -114,7 +129,10 @@ import { BOT_METADATA } from '../bots/botMeta.js';
             const panel = document.createElement('div');
             panel.style.cssText = 'position:fixed;top:12px;left:12px;z-index:30;width:270px;padding:12px;border-radius:12px;background:rgba(15,23,42,.9);color:#e2e8f0;font:13px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25);';
             panel.innerHTML = `
-                <div style="font-weight:700;font-size:15px;margin-bottom:8px;">🔧 Bot Visual Check</div>
+                <div style="font-weight:700;font-size:15px;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                    <span style="width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;">${SVG_ICONS.BOLT}</span>
+                    <span>Bot Visual Check</span>
+                </div>
                 <label style="display:block;margin-bottom:6px;">View
                     <select data-k="view" style="width:100%;color:#0f172a;border-radius:6px;padding:3px;">
                         <option value="grid">Grid (all bots × modes)</option>
@@ -123,7 +141,7 @@ import { BOT_METADATA } from '../bots/botMeta.js';
                 <div data-focus>
                     <label style="display:block;margin-bottom:6px;">Bot
                         <select data-k="bot" style="width:100%;color:#0f172a;border-radius:6px;padding:3px;">
-                            ${BOT_IDS.map(b => `<option value="${b}">${b === 'HIGHTIDE_MEGA' ? 'HIGH TIDE (MEGABOT)' : (b === 'OPTIMUS_MEGA' ? 'OPTIMUS PRIME (MEGA)' : b)}</option>`).join('')}
+                            ${BOT_IDS.map(b => `<option value="${b}">${b.endsWith('_MEGA') ? `${b.replace('_MEGA', '')} (MEGA)` : b}</option>`).join('')}
                         </select></label>
                     <label style="display:block;margin-bottom:6px;">Target mode
                         <select data-k="mode" style="width:100%;color:#0f172a;border-radius:6px;padding:3px;">
@@ -223,7 +241,8 @@ import { BOT_METADATA } from '../bots/botMeta.js';
                     // Ground-contact check (vehicles/dinos should rest on y≈0; bots stand on feet)
                     const b = visibleBounds(c.holder);
                     const minY = b.isEmpty() ? 0 : b.min.y;
-                    const flag = minY < -0.15 ? '⚠ sinks' : (minY > 0.6 && !(c.id === 'BLADES' && c.mode === 'vehicle') ? '⚠ floats' : '');
+                    const isFlightVehicle = (c.id === 'BLADES' || c.id === 'BLADES_MEGA' || c.id === 'QUICKSHADOW_MEGA') && (state.view === 'grid' ? c.mode === 'vehicle' : state.mode === 'vehicle');
+                    const flag = minY < -0.15 ? '⚠ sinks' : (minY > 0.6 && !isFlightVehicle ? '⚠ floats' : '');
                     if (flag) issues.push(`${c.id} ${state.view === 'grid' ? c.mode : state.mode}: minY ${minY.toFixed(2)} ${flag}`);
                     c._minY = minY; c._flag = flag;
                     b.getCenter(_center); b.getSize(_size);
@@ -261,7 +280,8 @@ import { BOT_METADATA } from '../bots/botMeta.js';
                     c.label.style.left = ((_v.x + 1) / 2 * window.innerWidth) + 'px';
                     c.label.style.top = ((1 - _v.y) / 2 * window.innerHeight) + 'px';
                     const modeName = state.view === 'grid' ? c.mode : `${state.mode} ${state.morph.toFixed(2)}`;
-                    c.label.textContent = `${c.id === 'HIGHTIDE_MEGA' ? 'MEGA HIGH TIDE' : (c.id === 'OPTIMUS_MEGA' ? 'MEGA OPTIMUS' : c.id)} · ${modeName}${c._flag ? ' ' + c._flag : ''}`;
+                    const displayName = c.id.endsWith('_MEGA') ? `${c.id.replace('_MEGA', '')} (MEGA)` : c.id;
+                    c.label.textContent = `${displayName} · ${modeName}${c._flag ? ' ' + c._flag : ''}`;
                     c.label.style.background = c._flag ? 'rgba(220,38,38,.9)' : 'rgba(15,23,42,.78)';
                 });
 
@@ -271,7 +291,7 @@ import { BOT_METADATA } from '../bots/botMeta.js';
                     console.log('[BOTCHECK_REPORT]', JSON.stringify(issues));
                     q('[data-report]').innerHTML = issues.length
                         ? `<div style="color:#fca5a5;font-weight:700;">${issues.length} ground-contact issue(s):</div>` + issues.map(s => `<div>${s}</div>`).join('')
-                        : '<div style="color:#86efac;">✔ No ground-contact issues in view</div>';
+                        : '<div style="color:#86efac;">✓ No ground-contact issues in view</div>';
                     window.__botCheckIssues = issues.slice();
                 }
 

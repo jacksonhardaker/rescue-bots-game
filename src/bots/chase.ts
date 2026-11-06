@@ -390,14 +390,14 @@ export function buildChase(parts, materials = {}, textures = {}) {
                 parts.leftForearm.add(megaShield);
 
                 const shieldMount = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 1.0), matDarkSteel);
-                shieldMount.position.set(0, -0.5, 0.5);
+                shieldMount.position.set(0, 0.35, 0.5);
                 const shieldPlate = new THREE.Mesh(new THREE.BoxGeometry(0.22, 3.6, 2.2), matBlue);
-                shieldPlate.position.set(-0.6, -0.5, 0.6);
+                shieldPlate.position.set(-0.6, 0.35, 0.6);
                 shieldPlate.castShadow = true;
                 const shieldCenterWhite = new THREE.Mesh(new THREE.BoxGeometry(0.24, 3.0, 0.9), matWhite);
-                shieldCenterWhite.position.set(-0.62, -0.5, 0.6);
+                shieldCenterWhite.position.set(-0.62, 0.35, 0.6);
                 const shieldStrobe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.25, 1.6), matSirenBlue);
-                shieldStrobe.position.set(-0.64, 1.15, 0.6);
+                shieldStrobe.position.set(-0.64, 2.0, 0.6);
                 shieldStrobe.userData.noOutline = true;
                 megaShield.add(shieldMount, shieldPlate, shieldCenterWhite, shieldStrobe);
 

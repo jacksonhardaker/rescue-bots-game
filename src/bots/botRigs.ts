@@ -414,14 +414,14 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 );
                 rig.backAttachment.rotation.x = -0.35 * (1 - m - d);
                 rig.backAttachment.scale.setScalar(THREE.MathUtils.lerp(1.0, 0.45, d));
-            } else if (rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') {
+            } else if (rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE' || rig.botType === 'CHASE') {
                 rig.backAttachment.position.set(
                     0,
                     3.85 * (1 - m - d) + 1.65 * m + 2.05 * d,
                     -1.15 * (1 - m - d) - 1.25 * m - 0.45 * d
                 );
                 rig.backAttachment.rotation.x = 0;
-            } else if (rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') {
+            } else if (rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE' || rig.botType === 'BLURR') {
                 rig.backAttachment.position.set(
                     0,
                     3.85 * (1 - m - d) + 1.45 * m + 2.05 * d,
