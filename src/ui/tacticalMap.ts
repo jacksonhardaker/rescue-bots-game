@@ -14,8 +14,22 @@ import { showToast } from './dialogs.js';
 
 import { islandTrain } from '../world/railway.js';
 import { HQ_SWAP_PAD, bwX, bwZ, testYard } from '../world/buildings.js';
-import { visitingAutobots } from '../world/allies.js';
+import { visitingAutobots, WORLD_MEGA_LOCATIONS } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
+import { isBotDocked } from '../progression/progression.js';
+
+const MEGA_ATTACHMENT_META: Record<string, { name: string, icon: string, color: string }> = {
+    HEATWAVE:    { name: 'HEATWAVE LADDER',    icon: '🚒', color: '#ef4444' },
+    OPTIMUS:     { name: 'OPTIMUS SUPER RIG',  icon: '🚛', color: '#dc2626' },
+    BOULDER:     { name: 'BOULDER BUCKET',     icon: '🚜', color: '#84cc16' },
+    CHASE:       { name: 'CHASE TRAILER',      icon: '🚓', color: '#3b82f6' },
+    BLADES:      { name: 'BLADES SKY-CRANE',   icon: '🚁', color: '#f97316' },
+    BUMBLEBEE:   { name: 'BUMBLEBEE MONSTER',  icon: '🐝', color: '#facc15' },
+    BLURR:       { name: 'BLURR SPEED RIG',    icon: '⚡', color: '#a855f7' },
+    SALVAGE:     { name: 'SALVAGE DUMPSTER',   icon: '♻️', color: '#65a30d' },
+    QUICKSHADOW: { name: 'QUICKSHADOW BOMBER', icon: '✈️', color: '#0ea5e9' },
+    HIGHTIDE:    { name: 'HIGH TIDE RIG',      icon: '🚢', color: '#06b6d4' }
+};
 window.lastTacticalMapToggleTime = 0;
 
 export let minimapCanvas = null;
@@ -257,6 +271,23 @@ export function handleTacticalMapTap(clientX, clientY) {
             const hintEl = document.getElementById('nearest-hazard-hint');
             if (hintEl) {
                 hintEl.textContent = nearestDist < Infinity ? `Nearest: ${nearestName}` : `All 8 Emergencies Resolved!`;
+            }
+
+            // Draw Undocked Mega Mode Attachments on Minimap
+            if (typeof WORLD_MEGA_LOCATIONS !== 'undefined') {
+                Object.entries(WORLD_MEGA_LOCATIONS).forEach(([botKey, loc]) => {
+                    if (!loc || isBotDocked(botKey)) return;
+                    const mx = cx + loc.x * mapScale;
+                    const mz = cy + loc.z * mapScale;
+                    const meta = MEGA_ATTACHMENT_META[botKey];
+                    mCtx.fillStyle = meta ? meta.color : '#f59e0b';
+                    mCtx.beginPath();
+                    mCtx.arc(mx, mz, 2.8, 0, Math.PI * 2);
+                    mCtx.fill();
+                    mCtx.strokeStyle = '#ffffff';
+                    mCtx.lineWidth = 0.9;
+                    mCtx.stroke();
+                });
             }
 
             // Draw Buddy Bot Arrow (Cyan Wingman Chevron)
@@ -666,6 +697,48 @@ export function handleTacticalMapTap(clientX, clientY) {
                     tCtx.fillStyle = ally.badgeColor || '#a855f7';
                     tCtx.textAlign = 'center';
                     tCtx.fillText(ally.name, ax, az - 8);
+                });
+            }
+
+            // Layer 7.5: Undocked Mega Mode Attachments Across Griffin Rock
+            if (typeof WORLD_MEGA_LOCATIONS !== 'undefined') {
+                Object.entries(WORLD_MEGA_LOCATIONS).forEach(([botKey, loc]) => {
+                    if (!loc || isBotDocked(botKey)) return;
+                    const ax = cx + loc.x * mapScale;
+                    const az = cy + loc.z * mapScale;
+                    const meta = MEGA_ATTACHMENT_META[botKey] || { name: `${botKey} RIG`, icon: '⭐', color: '#f59e0b' };
+
+                    // Radar pulse halo
+                    const aPulse = Math.sin(now * 0.005 + loc.x * 0.01) * 2.2;
+                    tCtx.strokeStyle = meta.color;
+                    tCtx.lineWidth = 1.2;
+                    tCtx.beginPath();
+                    tCtx.arc(ax, az, 7.5 + aPulse, 0, Math.PI * 2);
+                    tCtx.stroke();
+
+                    // Central diamond / circle badge
+                    tCtx.fillStyle = meta.color;
+                    tCtx.beginPath();
+                    tCtx.arc(ax, az, 5.2, 0, Math.PI * 2);
+                    tCtx.fill();
+                    tCtx.strokeStyle = '#ffffff';
+                    tCtx.lineWidth = 1.4;
+                    tCtx.stroke();
+
+                    // Label callout badge
+                    const isCurrentBot = player.botType === botKey;
+                    const labelText = `${meta.icon} ${meta.name}`;
+                    tCtx.font = isCurrentBot ? 'bold 9.2px "JetBrains Mono", monospace' : 'bold 8.2px "JetBrains Mono", monospace';
+                    const lw = tCtx.measureText(labelText).width;
+                    tCtx.fillStyle = isCurrentBot ? 'rgba(30, 41, 59, 0.96)' : 'rgba(15, 23, 42, 0.88)';
+                    tCtx.fillRect(ax - lw / 2 - 4, az + 8, lw + 8, 14);
+                    tCtx.strokeStyle = isCurrentBot ? '#facc15' : meta.color;
+                    tCtx.lineWidth = isCurrentBot ? 1.4 : 0.9;
+                    tCtx.strokeRect(ax - lw / 2 - 4, az + 8, lw + 8, 14);
+
+                    tCtx.fillStyle = isCurrentBot ? '#facc15' : '#f8fafc';
+                    tCtx.textAlign = 'center';
+                    tCtx.fillText(labelText, ax, az + 18);
                 });
             }
 

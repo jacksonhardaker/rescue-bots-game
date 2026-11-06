@@ -683,6 +683,14 @@ export function syncVisitingAutobotsVisibility() {
                 });
             });
 
+            [-1.0, 1.0].forEach(lx => {
+                const legPost = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.76, 8), matDarkSteel);
+                legPost.position.set(lx, 0.42, 3.8);
+                const legFoot = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.08, 0.35), matDarkSteel);
+                legFoot.position.set(lx, 0.04, 3.8);
+                trailer.add(legPost, legFoot);
+            });
+
             applyCartoonInkOutlines(trailer, 1.035, true);
             return trailer;
         }
@@ -889,15 +897,15 @@ export function syncVisitingAutobotsVisibility() {
         };
 
         export const WORLD_MEGA_LOCATIONS = {
-            BOULDER:     { x: -380, z: -120, rotY: 0.5 },
-            HEATWAVE:    { x: -36,  z: -55,  rotY: 0 },
-            CHASE:       { x: -80,  z: -50,  rotY: 0 },
+            BOULDER:     { x: -74,  z: -16,  rotY: 0.2 },
+            HEATWAVE:    { x: -64,  z: -28,  rotY: 0.0 },
+            CHASE:       { x: -80,  z: -50,  rotY: 0.0 },
             BLADES:      { x: -70,  z: 80,   rotY: 0.4 },
-            OPTIMUS:     { x: -22,  z: -38,  rotY: 0 },
-            BUMBLEBEE:   { x: 180,  z: 120,  rotY: -0.4 },
-            BLURR:       { x: -250, z: 420,  rotY: 1.2 },
-            SALVAGE:     { x: -120, z: -320, rotY: 0.8 },
-            QUICKSHADOW: { x: 420,  z: -350, rotY: -0.6 },
+            OPTIMUS:     { x: -22,  z: -38,  rotY: 0.0 },
+            BUMBLEBEE:   { x: 1980, z: 505,  rotY: 1.57 },
+            BLURR:       { x: -1160,z: 80,   rotY: 1.57 },
+            SALVAGE:     { x: -68,  z: 1135, rotY: 0.4 },
+            QUICKSHADOW: { x: 42,   z: -1100,rotY: 3.14 },
             HIGHTIDE:    { x: -95,  z: 1480, rotY: 0.35 }
         };
 
