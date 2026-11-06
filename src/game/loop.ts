@@ -44,6 +44,28 @@ let minimapTimer = 0;
 let hudUpdateTimer = 0;
 let lightningFlashTimer = 0;
 let lightningTimer = 0;
+let positionSaveTimer = 0;
+let lastSavedPos = { x: 0, y: 0, z: 0, heading: 0 };
+
+export function savePlayerMapPosition(force = false) {
+    if (!player || !player.pos) return;
+    const px = Math.round(player.pos.x * 10) / 10;
+    const py = Math.round(player.pos.y * 10) / 10;
+    const pz = Math.round(player.pos.z * 10) / 10;
+    const pHead = Math.round(player.heading * 100) / 100;
+
+    const dist = Math.hypot(px - lastSavedPos.x, pz - lastSavedPos.z);
+    const dHead = Math.abs(pHead - lastSavedPos.heading);
+
+    if (force || dist > 0.3 || dHead > 0.05) {
+        lastSavedPos = { x: px, y: py, z: pz, heading: pHead };
+        progression.playerPosition = { x: px, y: py, z: pz, heading: pHead };
+        progression.playerBotType = player.botType;
+        progression.playerMode = player.mode;
+        progression.buddyBotType = buddyBot.botType;
+        saveProgression();
+    }
+}
 
         export function animate(now) {
             requestAnimationFrame(animate);
@@ -60,6 +82,12 @@ let lightningTimer = 0;
                 document.getElementById('fps-counter').textContent = `${fps} FPS`;
                 frameCount = 0;
                 fpsTimer = 0;
+            }
+
+            positionSaveTimer += dt;
+            if (positionSaveTimer >= 1.0) {
+                positionSaveTimer = 0;
+                savePlayerMapPosition();
             }
 
             renderMinimap();
@@ -1045,4 +1073,7 @@ let lightningTimer = 0;
 
 if (typeof window !== 'undefined') {
     window.animate = animate;
+    window.savePlayerMapPosition = savePlayerMapPosition;
+    window.addEventListener('beforeunload', () => savePlayerMapPosition(true));
+    window.addEventListener('pagehide', () => savePlayerMapPosition(true));
 }

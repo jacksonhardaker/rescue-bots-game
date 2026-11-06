@@ -30,7 +30,7 @@ import { buildLivingWorldNPCs } from './world/npcs.js';
 
 // Bot Rigs & Player Controls
 import { initBotRigs } from './bots/botRigs.js';
-import { syncHUDToActiveBot, switchRescueBot } from './physics/player.js';
+import { syncHUDToActiveBot, switchRescueBot, restoreSessionState } from './physics/player.js';
 import { updatePhysics } from './physics/movement.js';
 
 // UI Systems
@@ -106,7 +106,8 @@ export function initGame() {
     initTacticalMap();
     initSettingsModal();
 
-    // 7. Sync Initial State
+    // 7. Sync Initial State & Restore Session
+    restoreSessionState();
     syncHUDToActiveBot();
     syncVisitingAutobotsVisibility();
     renderMinimap();

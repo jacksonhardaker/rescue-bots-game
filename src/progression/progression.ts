@@ -19,10 +19,14 @@ export const progression: Record<string, any> = {
     collectedCrests: [],
     discoveredAllies: [],
     autoSpawnEmergencies: true,
+    playerBotType: 'BOULDER',
     buddyBotType: 'HEATWAVE',
+    playerMode: 'BOT',
     highTideDocked: false,
     optimusDocked: false,
-    weatherMode: 'SUNNY'
+    weatherMode: 'SUNNY',
+    playerPosition: null,
+    completedMissions: []
 };
 
 export const RESCUE_STAR_RANKS = [
@@ -124,8 +128,14 @@ export function loadProgression(options: Record<string, any> = {}) {
         if (typeof data.autoSpawnEmergencies === 'boolean' && target.autoSpawnEmergencies === undefined) {
             target.autoSpawnEmergencies = data.autoSpawnEmergencies;
         }
+        if (typeof data.playerBotType === 'string' && (BOT_METADATA[data.playerBotType] || !target.playerBotType)) {
+            target.playerBotType = data.playerBotType;
+        }
         if (typeof data.buddyBotType === 'string' && BOT_METADATA[data.buddyBotType] && !target.buddyBotType) {
             target.buddyBotType = data.buddyBotType;
+        }
+        if (typeof data.playerMode === 'string' && !target.playerMode) {
+            target.playerMode = data.playerMode;
         }
         if (typeof data.weatherMode === 'string' && !target.weatherMode) {
             target.weatherMode = data.weatherMode;
@@ -135,6 +145,16 @@ export function loadProgression(options: Record<string, any> = {}) {
         }
         if (typeof data.optimusDocked === 'boolean' && target.optimusDocked === undefined) {
             target.optimusDocked = data.optimusDocked;
+        }
+        if (data.playerPosition && typeof data.playerPosition === 'object' && !target.playerPosition) {
+            target.playerPosition = data.playerPosition;
+        }
+        if (Array.isArray(data.completedMissions)) {
+            const s = new Set(target.completedMissions || []);
+            data.completedMissions.forEach(x => {
+                if (typeof x === 'number') s.add(x);
+            });
+            target.completedMissions = Array.from(s);
         }
     });
 
@@ -162,8 +182,15 @@ export function loadProgression(options: Record<string, any> = {}) {
     if (typeof target.autoSpawnEmergencies === 'boolean') {
         progression.autoSpawnEmergencies = target.autoSpawnEmergencies;
     }
-    if (typeof target.buddyBotType === 'string' && BOT_METADATA[target.buddyBotType]) {
+    const VALID_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'];
+    if (typeof target.playerBotType === 'string' && (BOT_METADATA[target.playerBotType] || VALID_BOTS.includes(target.playerBotType))) {
+        progression.playerBotType = target.playerBotType;
+    }
+    if (typeof target.buddyBotType === 'string' && (BOT_METADATA[target.buddyBotType] || VALID_BOTS.includes(target.buddyBotType))) {
         progression.buddyBotType = target.buddyBotType;
+    }
+    if (typeof target.playerMode === 'string' && ['BOT', 'VEHICLE', 'DINO'].includes(target.playerMode)) {
+        progression.playerMode = target.playerMode;
     }
     if (typeof target.weatherMode === 'string') {
         progression.weatherMode = target.weatherMode;
@@ -173,6 +200,19 @@ export function loadProgression(options: Record<string, any> = {}) {
     }
     if (typeof target.optimusDocked === 'boolean') {
         progression.optimusDocked = target.optimusDocked;
+    }
+    if (target.playerPosition && typeof target.playerPosition === 'object') {
+        if (Number.isFinite(target.playerPosition.x) && Number.isFinite(target.playerPosition.z)) {
+            progression.playerPosition = {
+                x: target.playerPosition.x,
+                y: Number.isFinite(target.playerPosition.y) ? target.playerPosition.y : 5.0,
+                z: target.playerPosition.z,
+                heading: Number.isFinite(target.playerPosition.heading) ? target.playerPosition.heading : 0
+            };
+        }
+    }
+    if (Array.isArray(target.completedMissions)) {
+        progression.completedMissions = target.completedMissions.filter(x => typeof x === 'number');
     }
 
     progression.saveVersion = CURRENT_SAVE_VERSION;
@@ -310,6 +350,11 @@ export function resetCareerProgress(onComplete) {
         progression.discoveredAllies = [];
         progression.highTideDocked = false;
         progression.optimusDocked = false;
+        progression.playerBotType = 'BOULDER';
+        progression.buddyBotType = 'HEATWAVE';
+        progression.playerMode = 'BOT';
+        progression.playerPosition = null;
+        progression.completedMissions = [];
         saveProgression();
         if (onComplete) onComplete();
         else window.location.reload();

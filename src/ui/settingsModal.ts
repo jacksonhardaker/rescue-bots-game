@@ -195,8 +195,26 @@ function _localImport(file) {
                         ['discoveredLandmarks', 'collectedCrests', 'discoveredAllies'].forEach(f => {
                             if (Array.isArray(parsed[f])) progression[f] = parsed[f];
                         });
+                        if (typeof parsed.playerBotType === 'string' && BOT_METADATA[parsed.playerBotType]) {
+                            progression.playerBotType = parsed.playerBotType;
+                        }
                         if (typeof parsed.buddyBotType === 'string' && BOT_METADATA[parsed.buddyBotType]) {
                             progression.buddyBotType = parsed.buddyBotType;
+                        }
+                        if (typeof parsed.playerMode === 'string' && ['BOT', 'VEHICLE', 'DINO'].includes(parsed.playerMode)) {
+                            progression.playerMode = parsed.playerMode;
+                        }
+                        if (typeof parsed.highTideDocked === 'boolean') {
+                            progression.highTideDocked = parsed.highTideDocked;
+                        }
+                        if (typeof parsed.optimusDocked === 'boolean') {
+                            progression.optimusDocked = parsed.optimusDocked;
+                        }
+                        if (parsed.playerPosition && typeof parsed.playerPosition === 'object') {
+                            progression.playerPosition = parsed.playerPosition;
+                        }
+                        if (Array.isArray(parsed.completedMissions)) {
+                            progression.completedMissions = parsed.completedMissions;
                         }
                         saveProgression();
                         showToast('SAVE IMPORTED!', 'Career progression loaded successfully!');
@@ -222,6 +240,11 @@ function _localReset() {
                 progression.discoveredAllies = [];
                 progression.highTideDocked = false;
                 progression.optimusDocked = false;
+                progression.playerBotType = 'BOULDER';
+                progression.buddyBotType = 'HEATWAVE';
+                progression.playerMode = 'BOT';
+                progression.playerPosition = null;
+                progression.completedMissions = [];
                 saveProgression();
                 showToast('CAREER RESET', 'Griffin Rock progress reset to Cadet Bot.');
                 setTimeout(() => window.location.reload(), 800);

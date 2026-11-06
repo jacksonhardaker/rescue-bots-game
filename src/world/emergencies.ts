@@ -137,6 +137,10 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
         export function respawnSingleBeacon(beacon, announceToast = true) {
             if (!beacon) return;
+            if (Array.isArray(progression.completedMissions)) {
+                progression.completedMissions = progression.completedMissions.filter(id => id !== beacon.id);
+                saveProgression();
+            }
             beacon.nodes.forEach(n => scene.remove(n.mesh));
             const site = EMERGENCY_SITES[beacon.id] || EMERGENCY_SITES[0];
             beacon.nodes = spawnHazardNodesForSite(site, beacon.id);
@@ -160,27 +164,38 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
         export function buildHazardSites(scene?: any) {
             clearTimeout(window._endlessWaveTimeout);
+            const activeScene = scene || (typeof window !== "undefined" ? window.scene : null);
             beacons.forEach(b => {
-                scene.remove(b.group);
-                b.nodes.forEach(n => scene.remove(n.mesh));
-                if (b.strandedCitizens) {
-                    b.strandedCitizens.forEach(sc => scene.remove(sc.rig.root));
+                if (activeScene) {
+                    activeScene.remove(b.group);
+                    b.nodes.forEach(n => activeScene.remove(n.mesh));
+                    if (b.strandedCitizens) {
+                        b.strandedCitizens.forEach(sc => activeScene.remove(sc.rig.root));
+                    }
                 }
             });
             beacons.length = 0;
 
+            if (Array.isArray(progression.completedMissions) && progression.completedMissions.length >= EMERGENCY_SITES.length) {
+                progression.completedMissions = [];
+                saveProgression();
+            }
+
             // Initialize 8 HUD Pip indicators spanning full width
             const pipsContainer = document.getElementById('beacon-pips');
-            pipsContainer.innerHTML = '';
-            for (let i = 0; i < EMERGENCY_SITES.length; i++) {
-                const site = EMERGENCY_SITES[i];
-                const pip = document.createElement('div');
-                const isFire = site.type === 'FIRE';
-                pip.className = `mission-pip ${isFire ? 'mission-pip-fire' : 'mission-pip-hazard'}`;
-                pipsContainer.appendChild(pip);
+            if (pipsContainer) {
+                pipsContainer.innerHTML = '';
+                for (let i = 0; i < EMERGENCY_SITES.length; i++) {
+                    const site = EMERGENCY_SITES[i];
+                    const pip = document.createElement('div');
+                    const isFire = site.type === 'FIRE';
+                    pip.className = `mission-pip ${isFire ? 'mission-pip-fire' : 'mission-pip-hazard'}`;
+                    pipsContainer.appendChild(pip);
+                }
             }
 
             EMERGENCY_SITES.forEach((site, idx) => {
+                const isCompleted = Array.isArray(progression.completedMissions) && progression.completedMissions.includes(site.id);
                 const gy = getTerrainHeight(site.x, site.z);
                 const group = new THREE.Group();
                 group.position.set(site.x, gy, site.z);
@@ -195,7 +210,7 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
                 const orb = new THREE.Mesh(
                     new THREE.SphereGeometry(1.5, 12, 12),
-                    site.type === 'FIRE' ? matBeaconOrange : matBeaconRed
+                    isCompleted ? matBeaconGreen : (site.type === 'FIRE' ? matBeaconOrange : matBeaconRed)
                 );
                 orb.position.y = 10.0;
                 group.add(orb);
@@ -203,19 +218,25 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                 const skyBeam = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.9, 0.9, 95, 8, 1, true),
                     new THREE.MeshBasicMaterial({
-                        color: site.type === 'FIRE' ? 0xf97316 : 0xf43f5e,
+                        color: isCompleted ? 0x22c55e : (site.type === 'FIRE' ? 0xf97316 : 0xf43f5e),
                         transparent: true,
-                        opacity: 0.28,
+                        opacity: isCompleted ? 0.15 : 0.28,
                         side: THREE.DoubleSide
                     })
                 );
                 skyBeam.position.y = 52;
                 group.add(skyBeam);
 
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(group);
+                if (activeScene) activeScene.add(group);
 
                 // Spawn 6 Interactive Hazard Nodes around the Beacon (Boulders or Roaring Flames)
                 const siteNodes = spawnHazardNodesForSite(site, idx);
+                if (isCompleted) {
+                    siteNodes.forEach(n => {
+                        n.cleared = true;
+                        if (activeScene) activeScene.remove(n.mesh);
+                    });
+                }
 
                 // Spawn 2 Stranded Citizens at the Emergency Site waving & calling out for rescue!
                 const strandedCitizens = [];
@@ -229,10 +250,10 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                         pantsColor: 0x1e293b,
                         hairColor: site.hairColor,
                         hasVisorHat: c === 0,
-                        indicatorColor: 0xff1e42
+                        indicatorColor: isCompleted ? 0x22c55e : 0xff1e42
                     });
                     cRig.root.position.set(cx, cy, cz);
-                    (scene || (typeof window !== "undefined" ? window.scene : null)).add(cRig.root);
+                    if (activeScene) activeScene.add(cRig.root);
                     strandedCitizens.push({
                         name: site.citizenName,
                         role: site.citizenRole,
@@ -257,8 +278,8 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                     skyBeam,
                     nodes: siteNodes,
                     strandedCitizens,
-                    restored: false,
-                    restoredAtTime: -1
+                    restored: isCompleted,
+                    restoredAtTime: isCompleted ? 0 : -1
                 });
             });
 
@@ -614,6 +635,8 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                 if (progression.autoSpawnEmergencies) {
                     clearTimeout(window._endlessWaveTimeout);
                     window._endlessWaveTimeout = setTimeout(() => {
+                        progression.completedMissions = [];
+                        saveProgression();
                         buildHazardSites();
                         sfx.playSirenPulse();
                         showToast("ENDLESS DISPATCH!", "8 New Island Emergencies Active!");
@@ -653,6 +676,12 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                 const rescuedHere = (beacon.strandedCitizens && beacon.strandedCitizens.length > 0) ? beacon.strandedCitizens.length : 2;
                 progression.totalEmergenciesResolved += 1;
                 progression.totalCitizensRescued += rescuedHere;
+                if (!Array.isArray(progression.completedMissions)) {
+                    progression.completedMissions = [];
+                }
+                if (!progression.completedMissions.includes(beacon.id)) {
+                    progression.completedMissions.push(beacon.id);
+                }
                 saveProgression();
 
                 // Pop out 3 Bonus Golden Energon Cubes around the resolved emergency site!

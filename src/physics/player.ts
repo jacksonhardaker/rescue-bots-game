@@ -18,6 +18,8 @@ import { isNearWater, isPointInWater, getSurfaceHeight } from '../world/terrain.
 import { spawnEnergonLightningParticles, spawnSparkleGlints } from '../world/emergencies.js';
 import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
+import { camera } from '../rendering/scene.js';
+import { renderMinimap } from '../ui/tacticalMap.js';
         export const BOT_CATCHPHRASES = {
             BOULDER: {
                 DEPLOY: [
@@ -797,6 +799,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             syncVisitingAutobotsVisibility();
             syncHUDToActiveBot();
+            progression.playerBotType = newBotType;
+            saveProgression();
             showToast("RESCUE BOTS ROSTER", `${BOT_METADATA[newBotType].name} Deployed!`);
             speakBotCatchphrase(newBotType, 'DEPLOY');
         }
@@ -963,6 +967,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 speakBotCatchphrase(player.botType, 'TO_BOT');
             }
             syncHUDToActiveBot();
+            progression.playerMode = player.mode;
+            saveProgression();
         }
 
         export function dockHighTideMegabot() {
@@ -1548,6 +1554,131 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             syncHUDToActiveBot();
         }
 
+        export function restoreSessionState() {
+            const unlockedBots = getUnlockedPlayableBots();
+
+            // 1. Restore Player Bot Selection
+            const savedBot = progression.playerBotType;
+            if (savedBot && BOT_METADATA[savedBot] && unlockedBots.includes(savedBot)) {
+                player.botType = savedBot;
+            } else {
+                player.botType = 'BOULDER';
+                progression.playerBotType = 'BOULDER';
+            }
+
+            // 2. Restore Buddy Bot Selection
+            const savedBuddy = progression.buddyBotType;
+            if (savedBuddy && BOT_METADATA[savedBuddy] && unlockedBots.includes(savedBuddy) && savedBuddy !== player.botType) {
+                buddyBot.botType = savedBuddy;
+            } else {
+                const fallbacks = unlockedBots.filter(b => b !== player.botType);
+                buddyBot.botType = fallbacks.length > 0 ? fallbacks[0] : (player.botType === 'BOULDER' ? 'HEATWAVE' : 'BOULDER');
+                progression.buddyBotType = buddyBot.botType;
+            }
+
+            // 3. Restore Mega Rig Docking
+            if (player.botType === 'HIGHTIDE') {
+                const isMega = Boolean(progression.highTideDocked);
+                if (botRigs['HIGHTIDE']) setHighTideRigMega(botRigs['HIGHTIDE'], isMega);
+                if (highTideWorldShip) highTideWorldShip.visible = !isMega;
+            }
+            if (player.botType === 'OPTIMUS') {
+                const isMega = Boolean(progression.optimusDocked);
+                if (botRigs['OPTIMUS']) setOptimusRigMega(botRigs['OPTIMUS'], isMega);
+                if (optimusWorldTrailer) optimusWorldTrailer.visible = !isMega;
+            }
+
+            // 4. Restore Player Mode & Morph Values
+            const savedMode = progression.playerMode || 'BOT';
+            if (savedMode === 'VEHICLE') {
+                player.mode = 'VEHICLE';
+                player.morph = 1.0;
+                player.targetMorph = 1.0;
+                player.dinoMorph = 0.0;
+                player.targetDinoMorph = 0.0;
+                buddyBot.mode = 'VEHICLE';
+                buddyBot.morph = 1.0;
+                buddyBot.targetMorph = 1.0;
+                buddyBot.dinoMorph = 0.0;
+                buddyBot.targetDinoMorph = 0.0;
+                if (player.botType === 'BLADES') {
+                    player.flightAlt = 16;
+                    player.grounded = false;
+                }
+            } else if (savedMode === 'DINO') {
+                player.mode = 'DINO';
+                player.morph = 0.0;
+                player.targetMorph = 0.0;
+                player.dinoMorph = 1.0;
+                player.targetDinoMorph = 1.0;
+                buddyBot.mode = 'DINO';
+                buddyBot.morph = 0.0;
+                buddyBot.targetMorph = 0.0;
+                buddyBot.dinoMorph = 1.0;
+                buddyBot.targetDinoMorph = 1.0;
+                if (player.botType === 'BLADES') {
+                    player.flightAlt = 18;
+                    player.grounded = false;
+                }
+            } else {
+                player.mode = 'BOT';
+                player.morph = 0.0;
+                player.targetMorph = 0.0;
+                player.dinoMorph = 0.0;
+                player.targetDinoMorph = 0.0;
+                buddyBot.mode = 'BOT';
+                buddyBot.morph = 0.0;
+                buddyBot.targetMorph = 0.0;
+                buddyBot.dinoMorph = 0.0;
+                buddyBot.targetDinoMorph = 0.0;
+            }
+
+            // 5. Restore Map Position & Heading
+            if (progression.playerPosition && Number.isFinite(progression.playerPosition.x) && Number.isFinite(progression.playerPosition.z)) {
+                const px = Math.max(-2300, Math.min(2300, progression.playerPosition.x));
+                const pz = Math.max(-2300, Math.min(2300, progression.playerPosition.z));
+                const groundY = getSurfaceHeight(px, pz);
+                const py = Math.max(groundY + 0.1, Number.isFinite(progression.playerPosition.y) ? progression.playerPosition.y : groundY + 0.1);
+                const heading = Number.isFinite(progression.playerPosition.heading) ? progression.playerPosition.heading : 0;
+
+                player.pos.set(px, py, pz);
+                player.heading = heading;
+
+                const backDist = 7.5;
+                const sideDist = 4.2;
+                buddyBot.heading = heading;
+                buddyBot.pos.set(
+                    px - Math.sin(heading) * backDist - Math.cos(heading) * sideDist,
+                    py,
+                    pz - Math.cos(heading) * backDist + Math.sin(heading) * sideDist
+                );
+
+                if (camera) {
+                    camera.position.set(
+                        px + Math.sin(heading) * 16,
+                        py + 8,
+                        pz + Math.cos(heading) * 16
+                    );
+                    camera.lookAt(px, py + 3.2, pz);
+                }
+            }
+
+            // 6. Update bot rigs visual transforms immediately
+            const now = performance.now();
+            const rig = botRigs[player.botType];
+            if (rig) {
+                applyBotRigMorph(rig, player.morph, player.dinoMorph, 0, 0, 0, now, 0);
+            }
+            const bRig = botRigs[buddyBot.botType];
+            if (bRig) {
+                applyBotRigMorph(bRig, buddyBot.morph, buddyBot.dinoMorph, 0, 0, 0, now, 0);
+            }
+
+            updateBotRosterUI();
+            syncVisitingAutobotsVisibility();
+            syncHUDToActiveBot();
+            renderMinimap();
+        }
 
 if (typeof window !== 'undefined') {
     window.speakBotCatchphrase = speakBotCatchphrase;
@@ -1569,4 +1700,5 @@ if (typeof window !== 'undefined') {
     window.triggerSecondaryAction = triggerSecondaryAction;
     window.triggerDescendAction = triggerDescendAction;
     window.toggleSiren = toggleSiren;
+    window.restoreSessionState = restoreSessionState;
 }
