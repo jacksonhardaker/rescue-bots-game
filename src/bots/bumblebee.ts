@@ -386,6 +386,111 @@ export function buildBumblebee(parts, materials = {}, textures = {}) {
                     prevTail.add(seg);
                     prevTail = seg;
                 }
+
+                // =============================================================
+                // MEGA BOT: BUMBLEBEE OFF-ROAD MONSTER TRUCK CONVERSION
+                // =============================================================
+                // 1. Vehicle Mode: Lifted Tubular Roll Cage & 4 Giant 2.6m Monster Tires
+                const megaMonsterShell = new THREE.Group();
+                megaMonsterShell.userData.isMegaPart = true;
+                megaMonsterShell.visible = false;
+                parts.megaMonsterShell = megaMonsterShell;
+                parts.chassis.add(megaMonsterShell);
+
+                // Heavy Lift Subframe Chassis
+                const liftChassis = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.65, 4.2), matBeeBlack);
+                liftChassis.position.set(0, -0.2, 0);
+                liftChassis.castShadow = true;
+                megaMonsterShell.add(liftChassis);
+
+                // Raised Tubular Roll Cage with Roof KC Fog Spotlights
+                const rollCage = new THREE.Group();
+                rollCage.position.set(0, 0.4, 0);
+                megaMonsterShell.add(rollCage);
+
+                [-1.25, 1.25].forEach(rx => {
+                    const barA = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 8).rotateX(0.25), matBeeYellow);
+                    barA.position.set(rx, 1.2, 0.6);
+                    const barB = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 2.8, 8).rotateX(-0.25), matBeeYellow);
+                    barB.position.set(rx, 1.2, -0.8);
+                    rollCage.add(barA, barB);
+                });
+
+                // Roof Light Bar with 4 Large Round KC Spotlights
+                [-0.9, -0.3, 0.3, 0.9].forEach(lx => {
+                    const lightHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.2, 10).rotateX(Math.PI / 2), matChrome);
+                    lightHousing.position.set(lx, 2.4, 0.5);
+                    const lightLens = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.08, 10).rotateX(Math.PI / 2), matVisorGold);
+                    lightLens.position.set(lx, 2.4, 0.62);
+                    lightLens.userData.noOutline = true;
+                    rollCage.add(lightHousing, lightLens);
+                });
+
+                // 4 Giant 2.6m Off-Road Monster Truck Tires with Yellow Beadlock Hubs
+                [[-1.85, 1.45], [1.85, 1.45], [-1.85, -1.55], [1.85, -1.55]].forEach(([wx, wz]) => {
+                    const wheelGroup = new THREE.Group();
+                    wheelGroup.position.set(wx, -0.35, wz);
+
+                    // Massive 2.6m tire (radius 1.3, width 1.1)
+                    const tireMesh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(1.3, 1.3, 1.1, 18).rotateZ(Math.PI / 2),
+                        matTire
+                    );
+                    tireMesh.castShadow = true;
+
+                    // Bold Yellow Beadlock Hub
+                    const hubMesh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.72, 0.72, 1.14, 12).rotateZ(Math.PI / 2),
+                        matBeeYellow
+                    );
+                    const centerCap = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.35, 0.35, 1.2, 10).rotateZ(Math.PI / 2),
+                        matChrome
+                    );
+
+                    // Heavy Duty Yellow Coilover Suspension Shock
+                    const shockSpring = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.18, 0.18, 1.8, 8),
+                        matBeeYellow
+                    );
+                    shockSpring.position.set(-Math.sign(wx) * 0.45, 0.8, 0);
+
+                    wheelGroup.add(tireMesh, hubMesh, centerCap, shockSpring);
+                    megaMonsterShell.add(wheelGroup);
+                    parts.wheels.push(wheelGroup);
+                });
+
+                // 2. Bot Mode: High-Output Monster Power Pack on Back
+                const megaBackPack = new THREE.Group();
+                megaBackPack.userData.isMegaPart = true;
+                megaBackPack.visible = false;
+                parts.megaBackPack = megaBackPack;
+                parts.backAttachment.add(megaBackPack);
+
+                const engineBlock = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.6, 1.2), matBeeBlack);
+                engineBlock.position.set(0, 0.2, 0.2);
+                engineBlock.castShadow = true;
+                const chromeHeaders = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.8, 0.8), matChrome);
+                chromeHeaders.position.set(0, 0.8, 0.4);
+                megaBackPack.add(engineBlock, chromeHeaders);
+
+                // 3. Dino Mode: Raptor Titan Roll-Cage Armor
+                const megaDinoArmor = new THREE.Group();
+                megaDinoArmor.userData.isMegaPart = true;
+                megaDinoArmor.visible = false;
+                parts.megaDinoArmor = megaDinoArmor;
+                parts.dinoGroup.add(megaDinoArmor);
+
+                const raptorRollCage = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.4, 2.6), matBeeBlack);
+                raptorRollCage.position.set(0, 2.8, 0.2);
+                raptorRollCage.castShadow = true;
+                megaDinoArmor.add(raptorRollCage);
+
+                // Initialize visibility matching current docked status
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.bumblebeeDocked);
+                if (typeof (window as any).setBotRigMega === 'function') {
+                    (window as any).setBotRigMega(parts, isCurrentMega);
+                }
 }
 
 export default buildBumblebee;

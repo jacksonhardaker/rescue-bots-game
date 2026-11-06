@@ -154,10 +154,17 @@ declare global {
   var optimusWorldTrailer: any;
   var setHighTideRigMega: any;
   var setOptimusRigMega: any;
+  var setBotRigMega: any;
   var dockHighTideMegabot: any;
   var undockHighTideMegabot: any;
   var dockOptimusMegabot: any;
   var undockOptimusMegabot: any;
+  var dockBotMegabot: any;
+  var undockBotMegabot: any;
+  var dockActiveBotMegabot: any;
+  var undockActiveBotMegabot: any;
+  var WORLD_MEGA_ATTACHMENTS: any;
+  var WORLD_MEGA_LOCATIONS: any;
 }
 
 declare module 'three' {

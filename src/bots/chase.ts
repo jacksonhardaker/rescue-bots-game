@@ -315,6 +315,128 @@ export function buildChase(parts, materials = {}, textures = {}) {
                         parts.dinoTail.add(spike);
                     });
                 });
+
+                // =============================================================
+                // MEGA BOT: CHASE POLICE MOBILE COMMAND TRAILER & SEMI CONVERSION
+                // =============================================================
+                // 1. Vehicle Mode: Tactical Police Command Trailer with Articulated Hitch
+                const trailerHitch = new THREE.Group();
+                trailerHitch.userData.isMegaPart = true;
+                parts.trailerHitch = trailerHitch;
+                parts.backAttachment.add(trailerHitch);
+
+                const megaTrailer = new THREE.Group();
+                megaTrailer.userData.isMegaPart = true;
+                megaTrailer.visible = false;
+                parts.megaTrailer = megaTrailer;
+                trailerHitch.add(megaTrailer);
+
+                // Main Tactical Trailer Hull (10.5m long, 2.75m wide, 3.1m high)
+                const trHull = new THREE.Mesh(new THREE.BoxGeometry(2.75, 3.1, 10.5), matBlue);
+                trHull.position.set(0, 0.9, -6.0);
+                trHull.castShadow = true;
+                megaTrailer.add(trHull);
+
+                // Crisp White Flank Center Panels with Police Decal
+                [-1.39, 1.39].forEach(sx => {
+                    const whitePanel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.6, 9.8), matWhite);
+                    whitePanel.position.set(sx, 0.9, -6.0);
+                    const goldBadge = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.9, 0.9), matGold);
+                    goldBadge.position.set(sx * 1.01, 0.9, -4.0);
+                    goldBadge.userData.noOutline = true;
+                    megaTrailer.add(whitePanel, goldBadge);
+                });
+
+                // Tactical Roof Radar Dish & Communications Mast
+                const radarBase = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.3, 12), matDarkSteel);
+                radarBase.position.set(0, 2.6, -3.5);
+                const radarDish = new THREE.Mesh(new THREE.SphereGeometry(0.85, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.45).rotateX(-Math.PI * 0.4), matChrome);
+                radarDish.position.set(0, 3.1, -3.5);
+                megaTrailer.add(radarBase, radarDish);
+
+                // Dual Emergency Police Lightbars on Trailer Roof
+                [-2.0, -9.5].forEach(lz => {
+                    const lb = createLightbar(1.85);
+                    lb.group.position.set(0, 2.6, lz);
+                    megaTrailer.add(lb.group);
+                });
+
+                // Rear Step Bumper & Taillights
+                const rBumper = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.4, 0.3), matDarkSteel);
+                rBumper.position.set(0, -0.45, -11.35);
+                megaTrailer.add(rBumper);
+                [-1.0, 1.0].forEach(tx => {
+                    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.18, 0.1), matRedTail);
+                    tail.position.set(tx, -0.45, -11.52);
+                    tail.userData.noOutline = true;
+                    megaTrailer.add(tail);
+                });
+
+                // Tandem Heavy Wheels (Functional Wheel Assemblies)
+                [-7.8, -9.6].forEach(wz => {
+                    [-1.42, 1.42].forEach(wx => {
+                        const trWheel = createWheelAssembly(0.74, 0.48);
+                        trWheel.position.set(wx, -0.9, wz);
+                        megaTrailer.add(trWheel);
+                        parts.wheels.push(trWheel);
+                    });
+                });
+
+                // 2. Bot Mode: Heavy Tactical Ballistic Riot Shield on Left Forearm
+                const megaShield = new THREE.Group();
+                megaShield.userData.isMegaPart = true;
+                megaShield.visible = false;
+                parts.megaShield = megaShield;
+                parts.leftForearm.add(megaShield);
+
+                const shieldMount = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 1.0), matDarkSteel);
+                shieldMount.position.set(0, -0.5, 0.5);
+                const shieldPlate = new THREE.Mesh(new THREE.BoxGeometry(0.22, 3.6, 2.2), matBlue);
+                shieldPlate.position.set(-0.6, -0.5, 0.6);
+                shieldPlate.castShadow = true;
+                const shieldCenterWhite = new THREE.Mesh(new THREE.BoxGeometry(0.24, 3.0, 0.9), matWhite);
+                shieldCenterWhite.position.set(-0.62, -0.5, 0.6);
+                const shieldStrobe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.25, 1.6), matSirenBlue);
+                shieldStrobe.position.set(-0.64, 1.15, 0.6);
+                shieldStrobe.userData.noOutline = true;
+                megaShield.add(shieldMount, shieldPlate, shieldCenterWhite, shieldStrobe);
+
+                // 3. Bot Mode: Tactical Back Communications Pack
+                const megaBackPack = new THREE.Group();
+                megaBackPack.userData.isMegaPart = true;
+                megaBackPack.visible = false;
+                parts.megaBackPack = megaBackPack;
+                parts.backAttachment.add(megaBackPack);
+
+                const commPack = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.8, 1.2), matBlue);
+                commPack.position.set(0, 0.2, 0.2);
+                commPack.castShadow = true;
+                const commAntenna = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 2.4, 8), matChrome);
+                commAntenna.position.set(0.9, 1.8, 0.2);
+                megaBackPack.add(commPack, commAntenna);
+
+                // 4. Dino Mode: Glowing Police Siren Stego Dorsal Plates & Thagomizer Enhancements
+                const megaDinoArmor = new THREE.Group();
+                megaDinoArmor.userData.isMegaPart = true;
+                megaDinoArmor.visible = false;
+                parts.megaDinoArmor = megaDinoArmor;
+                parts.dinoGroup.add(megaDinoArmor);
+
+                // 4 Alternating Flashing Red/Blue Stego Spine Scutes
+                for (let i = 0; i < 4; i++) {
+                    const scuteMat = i % 2 === 0 ? matSirenBlue : matSirenRed;
+                    const scute = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.4 - i * 0.1, 1.1).rotateX(0.25), scuteMat);
+                    const sideX = (i % 2 === 0 ? -0.45 : 0.45);
+                    scute.position.set(sideX, 3.2 - i * 0.12, 0.6 - i * 0.95);
+                    scute.userData.noOutline = true;
+                    megaDinoArmor.add(scute);
+                }
+
+                // Initialize visibility matching current docked status
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.chaseDocked);
+                if (typeof (window as any).setBotRigMega === 'function') {
+                    (window as any).setBotRigMega(parts, isCurrentMega);
+                }
 }
 
 export default buildChase;

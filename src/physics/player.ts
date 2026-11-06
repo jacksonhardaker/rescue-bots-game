@@ -2,11 +2,11 @@
 import * as THREE from 'three';
 import { player, buddyBot, botRigs, botPhraseCounters } from '../state/gameState.js';
 import { BOT_METADATA, HQ_PARKING_SLOTS } from '../bots/botMeta.js';
-import { applyBotRigMorph, getBotScale, setHighTideRigMega, setOptimusRigMega } from '../bots/botRigs.js';
+import { applyBotRigMorph, getBotScale, setHighTideRigMega, setOptimusRigMega, setBotRigMega } from '../bots/botRigs.js';
 import { sfx } from '../audio/soundFX.js';
 import { triggerNPCSpeech, showToast } from '../ui/dialogs.js';
-import { progression, saveProgression } from '../progression/progression.js';
-import { syncVisitingAutobotsVisibility } from '../world/allies.js';
+import { progression, saveProgression, isBotDocked, setBotDocked, ALL_PLAYABLE_BOTS } from '../progression/progression.js';
+import { syncVisitingAutobotsVisibility, WORLD_MEGA_ATTACHMENTS, WORLD_MEGA_LOCATIONS } from '../world/allies.js';
 export { syncVisitingAutobotsVisibility };
 import { spawnWaterCannonStream, spawnBurstParticles } from '../world/emergencies.js';
 import { SVG_ICONS } from '../ui/icons.js';
@@ -541,8 +541,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     vehActionLabel: 'HYDRO CANNON',
                     dinoActionLabel: 'LEVIATHAN CHOMP'
                 };
-            } else if (player.botType === 'OPTIMUS' && progression.optimusDocked) {
-                meta = BOT_METADATA.OPTIMUS_MEGA || meta;
+            } else if (isBotDocked(player.botType)) {
+                meta = BOT_METADATA[`${player.botType}_MEGA`] || meta;
             }
             const isVeh = player.mode === 'VEHICLE';
             const isDino = player.mode === 'DINO';
@@ -589,8 +589,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             // Megabot / Super Rig Undock Button
             const btnUndock = document.getElementById('btn-undock');
             if (btnUndock) {
-                const isMegaActive = (player.botType === 'HIGHTIDE' && progression.highTideDocked) ||
-                                     (player.botType === 'OPTIMUS' && progression.optimusDocked);
+                const isMegaActive = isBotDocked(player.botType);
                 if (isMegaActive) {
                     btnUndock.classList.remove('hidden');
                 } else {
@@ -836,23 +835,12 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             Object.keys(botRigs).forEach(botKey => {
                 const rig = botRigs[botKey];
-                if (botKey === 'HIGHTIDE') {
-                    const shouldBeMega = Boolean(
-                        (botKey === player.botType && progression.highTideDocked) ||
-                        (botKey === buddyBot.botType && progression.highTideDocked)
-                    );
-                    if (rig.isMega !== shouldBeMega) {
-                        setHighTideRigMega(rig, shouldBeMega);
-                    }
-                }
-                if (botKey === 'OPTIMUS') {
-                    const shouldBeMega = Boolean(
-                        (botKey === player.botType && progression.optimusDocked) ||
-                        (botKey === buddyBot.botType && progression.optimusDocked)
-                    );
-                    if (rig.isMega !== shouldBeMega) {
-                        setOptimusRigMega(rig, shouldBeMega);
-                    }
+                const shouldBeMega = Boolean(
+                    (botKey === player.botType && isBotDocked(botKey)) ||
+                    (botKey === buddyBot.botType && isBotDocked(botKey))
+                );
+                if (rig.isMega !== shouldBeMega) {
+                    setBotRigMega(rig, shouldBeMega);
                 }
                 if (botKey === player.botType) {
                     // Active Bot follows player physics position & heading
@@ -1087,6 +1075,91 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             showToast("🚚 MEGABOT DISENGAGED", "Optimus Prime decoupled from Command Trailer.");
             speakBotCatchphrase('OPTIMUS', 'UNDOCK');
             syncHUDToActiveBot();
+        }
+
+        export function dockBotMegabot(botType = player.botType) {
+            if (botType === 'HIGHTIDE') {
+                dockHighTideMegabot();
+                return;
+            }
+            if (botType === 'OPTIMUS') {
+                dockOptimusMegabot();
+                return;
+            }
+            if (isBotDocked(botType)) return;
+            setBotDocked(botType, true);
+            saveProgression();
+
+            sfx.playTransform(true);
+            if (typeof sfx.playRankUp === 'function') sfx.playRankUp();
+            spawnBurstParticles(player.pos.x, player.pos.y + 3.0, player.pos.z, 0x38bdf8, 30, 2.0);
+
+            const worldMesh = WORLD_MEGA_ATTACHMENTS && WORLD_MEGA_ATTACHMENTS[botType];
+            if (worldMesh) {
+                worldMesh.visible = false;
+            }
+
+            const rig = botRigs ? botRigs[botType] : null;
+            if (rig) {
+                setBotRigMega(rig, true);
+            }
+
+            const meta = BOT_METADATA[`${botType}_MEGA`] || BOT_METADATA[botType];
+            showToast(`⭐ ${meta.name} ENGAGED!`, `${meta.name} equipped ${meta.vehName} mega module!`);
+            speakBotCatchphrase(botType, 'DEPLOY');
+            syncHUDToActiveBot();
+        }
+
+        export function undockBotMegabot(botType = player.botType) {
+            if (botType === 'HIGHTIDE') {
+                undockHighTideMegabot();
+                return;
+            }
+            if (botType === 'OPTIMUS') {
+                undockOptimusMegabot();
+                return;
+            }
+            if (!isBotDocked(botType)) return;
+            setBotDocked(botType, false);
+            saveProgression();
+
+            sfx.playTransform(false);
+            spawnBurstParticles(player.pos.x, player.pos.y + 2.0, player.pos.z, 0x94a3b8, 20, 1.5);
+
+            const worldMesh = WORLD_MEGA_ATTACHMENTS && WORLD_MEGA_ATTACHMENTS[botType];
+            const defaultLoc = WORLD_MEGA_LOCATIONS && (WORLD_MEGA_LOCATIONS as any)[botType];
+            if (worldMesh) {
+                if (defaultLoc && Math.hypot(player.pos.x - defaultLoc.x, player.pos.z - defaultLoc.z) < 35.0) {
+                    const gy = getSurfaceHeight(defaultLoc.x, defaultLoc.z);
+                    worldMesh.position.set(defaultLoc.x, gy, defaultLoc.z);
+                    worldMesh.rotation.y = defaultLoc.rotY || 0;
+                } else {
+                    const trailerAngle = player.heading + Math.PI;
+                    const tx = player.pos.x + Math.sin(trailerAngle) * 12.0;
+                    const tz = player.pos.z + Math.cos(trailerAngle) * 12.0;
+                    const gy = getSurfaceHeight(tx, tz);
+                    worldMesh.position.set(tx, gy, tz);
+                    worldMesh.rotation.y = player.heading;
+                }
+                worldMesh.visible = true;
+            }
+
+            const rig = botRigs ? botRigs[botType] : null;
+            if (rig) {
+                setBotRigMega(rig, false);
+            }
+
+            const meta = BOT_METADATA[botType];
+            showToast(`⭐ MEGABOT DISENGAGED`, `${meta.name} returned to standard form.`);
+            syncHUDToActiveBot();
+        }
+
+        export function dockActiveBotMegabot() {
+            dockBotMegabot(player.botType);
+        }
+
+        export function undockActiveBotMegabot() {
+            undockBotMegabot(player.botType);
         }
 
         // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot)
@@ -1333,9 +1406,18 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     player.boostTimer = 1.4;
                     sfx.playDinoRoar('BUMBLEBEE');
                 } else if (player.mode === 'VEHICLE') {
-                    player.boostTimer = 1.8;
-                    player.speed = Math.max(player.speed, 42.0);
-                    sfx.playStuntChime();
+                    if (isBotDocked('BUMBLEBEE')) {
+                        player.vy = 28.0;
+                        player.grounded = false;
+                        sfx.playBoingSound();
+                        sfx.playStuntChime();
+                        spawnBurstParticles(player.pos.x, player.pos.y + 0.5, player.pos.z, 0xfacc15, 24, 1.8);
+                        showToast("🚜 MONSTER TRUCK BOUNCE!", "Bumblebee launched a mega monster jump!");
+                    } else {
+                        player.boostTimer = 1.8;
+                        player.speed = Math.max(player.speed, 42.0);
+                        sfx.playStuntChime();
+                    }
                 } else {
                     player.smashTimer = 0.4;
                     sfx.playSirenPulse();
@@ -1573,16 +1655,13 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             // 3. Restore Mega Rig Docking
-            if (player.botType === 'HIGHTIDE') {
-                const isMega = Boolean(progression.highTideDocked);
-                if (botRigs['HIGHTIDE']) setHighTideRigMega(botRigs['HIGHTIDE'], isMega);
-                if (highTideWorldShip) highTideWorldShip.visible = !isMega;
-            }
-            if (player.botType === 'OPTIMUS') {
-                const isMega = Boolean(progression.optimusDocked);
-                if (botRigs['OPTIMUS']) setOptimusRigMega(botRigs['OPTIMUS'], isMega);
-                if (optimusWorldTrailer) optimusWorldTrailer.visible = !isMega;
-            }
+            ALL_PLAYABLE_BOTS.forEach(b => {
+                const isMega = isBotDocked(b);
+                if (botRigs && botRigs[b]) setBotRigMega(botRigs[b], isMega);
+                if (WORLD_MEGA_ATTACHMENTS && WORLD_MEGA_ATTACHMENTS[b]) {
+                    WORLD_MEGA_ATTACHMENTS[b].visible = !(player.botType === b && isMega);
+                }
+            });
 
             // 4. Restore Player Mode & Morph Values
             const savedMode = progression.playerMode || 'BOT';
@@ -1691,6 +1770,10 @@ if (typeof window !== 'undefined') {
     window.undockHighTideMegabot = undockHighTideMegabot;
     window.dockOptimusMegabot = dockOptimusMegabot;
     window.undockOptimusMegabot = undockOptimusMegabot;
+    window.dockBotMegabot = dockBotMegabot;
+    window.undockBotMegabot = undockBotMegabot;
+    window.dockActiveBotMegabot = dockActiveBotMegabot;
+    window.undockActiveBotMegabot = undockActiveBotMegabot;
     window.triggerTransform = triggerTransform;
     window.triggerPrimaryAction = triggerPrimaryAction;
     window.triggerSecondaryAction = triggerSecondaryAction;

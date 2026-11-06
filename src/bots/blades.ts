@@ -325,6 +325,73 @@ export function buildBlades(parts, materials = {}, textures = {}) {
                 const pteroTailVane = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.18, 1.25), matOrange);
                 pteroTailVane.position.set(0, 0, -1.95);
                 parts.dinoTail.add(pteroTailVane);
+
+                // =============================================================
+                // MEGA BOT: BLADES TANDEM SKY-CRANE & CARGO POD CONVERSION
+                // =============================================================
+                // 1. Vehicle Mode: Heavy Sky-Crane Fuselage Extension & Underslung Cargo Pod
+                const megaCargoPod = new THREE.Group();
+                megaCargoPod.userData.isMegaPart = true;
+                megaCargoPod.visible = false;
+                parts.megaCargoPod = megaCargoPod;
+                parts.backAttachment.add(megaCargoPod);
+
+                // Main Sky-Crane Fuselage Spine
+                const spineBoom = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.2, 6.2), matOrange);
+                spineBoom.position.set(0, 0.8, -3.2);
+                spineBoom.castShadow = true;
+                megaCargoPod.add(spineBoom);
+
+                // Underslung Evac Rescue Cargo Container Pod
+                const cargoBox = new THREE.Mesh(new THREE.BoxGeometry(2.6, 1.8, 4.6), matWhite);
+                cargoBox.position.set(0, -0.6, -3.0);
+                cargoBox.castShadow = true;
+                const evacStripe = new THREE.Mesh(new THREE.BoxGeometry(2.66, 0.45, 4.4), matOrange);
+                evacStripe.position.set(0, -0.6, -3.0);
+                megaCargoPod.add(cargoBox, evacStripe);
+
+                // Forward Tandem Rotor Pylon & Counter-rotating Rotor
+                const forwardPylon = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.55, 1.4, 10), matWhite);
+                forwardPylon.position.set(0, 1.9, -0.8);
+                const rotorHub2 = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.25, 12), matChrome);
+                rotorHub2.position.set(0, 2.6, -0.8);
+                [-1, 1].forEach(side => {
+                    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.08, 4.8), matDarkSteel);
+                    blade.position.set(0, 2.6, -0.8 + side * 2.2);
+                    megaCargoPod.add(blade);
+                });
+                megaCargoPod.add(forwardPylon, rotorHub2);
+
+                // 2. Bot Mode: High-Altitude Turbine Evac Pack
+                const megaBackPack = new THREE.Group();
+                megaBackPack.userData.isMegaPart = true;
+                megaBackPack.visible = false;
+                parts.megaBackPack = megaBackPack;
+                parts.backAttachment.add(megaBackPack);
+
+                const bpUnit = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.8, 1.2), matOrange);
+                bpUnit.position.set(0, 0.2, 0.2);
+                bpUnit.castShadow = true;
+                megaBackPack.add(bpUnit);
+
+                // 3. Dino Mode: Pterosaur Titan Wing Turbines & Flight Harness
+                const megaDinoArmor = new THREE.Group();
+                megaDinoArmor.userData.isMegaPart = true;
+                megaDinoArmor.visible = false;
+                parts.megaDinoArmor = megaDinoArmor;
+                parts.dinoGroup.add(megaDinoArmor);
+
+                [-1.8, 1.8].forEach(tx => {
+                    const turbine = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 1.8, 12).rotateX(Math.PI / 2), matOrange);
+                    turbine.position.set(tx, 2.8, -0.2);
+                    megaDinoArmor.add(turbine);
+                });
+
+                // Initialize visibility matching current docked status
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.bladesDocked);
+                if (typeof (window as any).setBotRigMega === 'function') {
+                    (window as any).setBotRigMega(parts, isCurrentMega);
+                }
 }
 
 export default buildBlades;

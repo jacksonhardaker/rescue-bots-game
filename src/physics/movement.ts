@@ -538,11 +538,16 @@ export let wpArrowCone = null;
                 player.speed = maxSpeed;
             }
 
-            // Articulated Semi-Trailer Kinematics (Mega Optimus)
+            // Articulated Semi-Trailer Kinematics (Mega Optimus, Mega Chase, Mega Heatwave)
             if (player.trailerAngle === undefined) {
                 player.trailerAngle = player.heading;
             }
-            if (player.botType === 'OPTIMUS' && (player.mode === 'VEHICLE' || player.morph > 0.05)) {
+            const hasTrailer = (
+                (player.botType === 'OPTIMUS' && Boolean(progression.optimusDocked)) ||
+                (player.botType === 'CHASE' && Boolean(progression.chaseDocked)) ||
+                (player.botType === 'HEATWAVE' && Boolean(progression.heatwaveDocked))
+            );
+            if (hasTrailer && (player.mode === 'VEHICLE' || player.morph > 0.05)) {
                 const L = 8.5; // Effective distance from hitch pin to trailer rear tandem axles (meters)
                 let headingDiff = player.heading - player.trailerAngle;
                 while (headingDiff < -Math.PI) headingDiff += Math.PI * 2;
@@ -1156,8 +1161,13 @@ export let wpArrowCone = null;
             let baseDist = isFlyingCopter ? 44.0 : (player.mode === 'VEHICLE' || player.mode === 'DINO' ? 39.0 : 34.0);
             const botScaleFactor = getBotScale(player.botType);
             baseDist *= (1.0 + (botScaleFactor - 1.0) * 0.75);
-            if (player.botType === 'OPTIMUS' && (player.mode === 'VEHICLE' || player.morph > 0.5)) {
-                baseDist += 6.0; // Comfortably frame semi-cab + 12.5m trailer
+            const hasVehTrailer = (
+                (player.botType === 'OPTIMUS' && Boolean(progression.optimusDocked)) ||
+                (player.botType === 'CHASE' && Boolean(progression.chaseDocked)) ||
+                (player.botType === 'HEATWAVE' && Boolean(progression.heatwaveDocked))
+            );
+            if (hasVehTrailer && (player.mode === 'VEHICLE' || player.morph > 0.5)) {
+                baseDist += 6.0; // Comfortably frame semi-cab + trailer
             }
             let activePitch = 0.48;
             if (input.camZoomMode === 1) {

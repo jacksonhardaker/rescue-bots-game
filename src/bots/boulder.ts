@@ -1,6 +1,7 @@
 // 3D Cel-Shaded Model & Morph Builder for BOULDER
 import * as THREE from 'three';
 import { texFaceBoulder } from '../rendering/textures.js';
+import { createWheelAssembly } from './botHelpers.js';
 
 export function buildBoulder(parts, materials = {}, textures = {}) {
     const {
@@ -376,6 +377,139 @@ export function buildBoulder(parts, materials = {}, textures = {}) {
                 );
                 triTailTip.position.set(0, -0.05, -2.35);
                 parts.dinoTail.add(triTailTip);
+
+                // =============================================================
+                // MEGA BOT: BOULDER HEAVY MINING DUMP TRUCK CONVERSION
+                // =============================================================
+                // 1. Vehicle Mode: Heavy Duty Mining Dump Truck Bucket & Sub-chassis
+                const megaDumpBucket = new THREE.Group();
+                megaDumpBucket.userData.isMegaPart = true;
+                megaDumpBucket.visible = false;
+                parts.megaDumpBucket = megaDumpBucket;
+                parts.backAttachment.add(megaDumpBucket);
+
+                // Subframe chassis extending back
+                const subframe = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.45, 5.0), matDarkSteel);
+                subframe.position.set(0, 0.1, -2.4);
+                subframe.castShadow = true;
+                megaDumpBucket.add(subframe);
+
+                // Main Dump Bed Box
+                const bedGroup = new THREE.Group();
+                bedGroup.position.set(0, 0.5, -2.5);
+                megaDumpBucket.add(bedGroup);
+
+                // Dump Bed Floor
+                const bedFloor = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.35, 4.8), matYellow);
+                bedFloor.position.set(0, 0, 0);
+                bedFloor.castShadow = true;
+                bedGroup.add(bedFloor);
+
+                // Headboard (front wall) with Cab Protector Overhang
+                const headboard = new THREE.Mesh(new THREE.BoxGeometry(2.9, 1.85, 0.35), matYellow);
+                headboard.position.set(0, 0.85, 2.3);
+                const cabOverhang = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.28, 1.8), matGreen);
+                cabOverhang.position.set(0, 1.75, 1.5);
+                cabOverhang.rotation.x = -0.15;
+                bedGroup.add(headboard, cabOverhang);
+
+                // Left and Right Flank Walls with Structural Steel Ribs
+                [-1.35, 1.35].forEach(sideX => {
+                    const wall = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.6, 4.8), matYellow);
+                    wall.position.set(sideX, 0.75, 0);
+                    wall.castShadow = true;
+                    bedGroup.add(wall);
+
+                    // Reinforcing ribs
+                    for (let r = -1.8; r <= 1.8; r += 0.9) {
+                        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.5, 0.22), matDarkSteel);
+                        rib.position.set(sideX * 1.06, 0.75, r);
+                        bedGroup.add(rib);
+                    }
+                });
+
+                // Tailgate with Hazard Stripes
+                const tailgate = new THREE.Mesh(new THREE.BoxGeometry(2.7, 1.5, 0.28), matYellow);
+                tailgate.position.set(0, 0.75, -2.35);
+                const hazardPlate = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.45, 0.12), matHazardMat);
+                hazardPlate.position.set(0, 0.35, -2.48);
+                hazardPlate.userData.noOutline = true;
+                bedGroup.add(tailgate, hazardPlate);
+
+                // Hydraulic Lift Cylinders
+                [-0.65, 0.65].forEach(hx => {
+                    const ramCase = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.4, 10).rotateX(0.25), matDarkSteel);
+                    ramCase.position.set(hx, -0.2, 0.5);
+                    const ramShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1.2, 10).rotateX(0.25), matChrome);
+                    ramShaft.position.set(hx, 0.2, 0.4);
+                    bedGroup.add(ramCase, ramShaft);
+                });
+
+                // Tandem Heavy Dump Truck Wheels on Rear Subframe
+                [-1.8, -3.4].forEach(wz => {
+                    [-1.55, 1.55].forEach(wx => {
+                        const wheel = createWheelAssembly(0.85, 0.58);
+                        wheel.position.set(wx, 0.05, wz);
+                        megaDumpBucket.add(wheel);
+                        parts.wheels.push(wheel);
+                    });
+                });
+
+                // 2. Bot Mode: Heavy Demolition Siege Bucklers on Forearms
+                const megaLeftShield = new THREE.Group();
+                megaLeftShield.userData.isMegaPart = true;
+                megaLeftShield.visible = false;
+                parts.leftForearm.add(megaLeftShield);
+
+                const megaRightShield = new THREE.Group();
+                megaRightShield.userData.isMegaPart = true;
+                megaRightShield.visible = false;
+                parts.rightForearm.add(megaRightShield);
+
+                parts.megaBotShields = [megaLeftShield, megaRightShield];
+
+                [-1, 1].forEach(side => {
+                    const sGroup = side === -1 ? megaLeftShield : megaRightShield;
+                    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.4, 1.8), matYellow);
+                    plate.position.set(side * 0.75, -0.2, 0.3);
+                    plate.castShadow = true;
+                    const edgeStripe = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.4, 1.8), matHazardMat);
+                    edgeStripe.position.set(side * 0.77, -0.2, 0.3);
+                    edgeStripe.userData.noOutline = true;
+                    const tooth = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.65, 4).rotateZ(side * -Math.PI / 2), matDarkSteel);
+                    tooth.position.set(side * 0.95, -0.2, 1.1);
+                    sGroup.add(plate, edgeStripe, tooth);
+                });
+
+                // 3. Dino Mode: Spiked Triceratops Titan Dorsal Armor & Frill Plating
+                const megaDinoArmor = new THREE.Group();
+                megaDinoArmor.userData.isMegaPart = true;
+                megaDinoArmor.visible = false;
+                parts.megaDinoArmor = megaDinoArmor;
+                parts.dinoGroup.add(megaDinoArmor);
+
+                const dinoShell = new THREE.Mesh(new THREE.BoxGeometry(2.9, 1.2, 3.4), matYellow);
+                dinoShell.position.set(0, 2.85, -0.2);
+                dinoShell.castShadow = true;
+                megaDinoArmor.add(dinoShell);
+
+                for (let sp = -1.2; sp <= 1.2; sp += 0.8) {
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.32, 1.1, 4), matChrome);
+                    spike.position.set(0, 3.85, sp);
+                    megaDinoArmor.add(spike);
+                }
+
+                // Wide Flared Titanium Crest Plating on Dino Frill
+                const frillArmor = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.32, 1.6), matGreen);
+                frillArmor.position.set(0, 3.4, 1.2);
+                frillArmor.rotation.x = -0.42;
+                megaDinoArmor.add(frillArmor);
+
+                // Initialize visibility matching current docked status
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.boulderDocked);
+                if (typeof (window as any).setBotRigMega === 'function') {
+                    (window as any).setBotRigMega(parts, isCurrentMega);
+                }
 }
 
 export default buildBoulder;

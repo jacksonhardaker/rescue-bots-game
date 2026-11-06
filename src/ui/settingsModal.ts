@@ -8,15 +8,15 @@ import { sfx } from '../audio/soundFX.js';
 import { bindButton } from './hud.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
 
-import { getRescueStarRank, CURRENT_SAVE_VERSION, saveProgression } from '../progression/progression.js';
+import { getRescueStarRank, CURRENT_SAVE_VERSION, saveProgression, ALL_PLAYABLE_BOTS, getBotDockedKey, isBotDocked } from '../progression/progression.js';
 import { showToast } from './dialogs.js';
 import { DEFAULT_SETTINGS, matchesAction } from '../settings/settings.js';
 import { applyWeatherMode, currentWeatherIdx } from '../world/weather.js';
-import { visitingAutobots } from '../world/allies.js';
+import { visitingAutobots, WORLD_MEGA_ATTACHMENTS } from '../world/allies.js';
 import { openTacticalMap, closeTacticalMap } from './tacticalMap.js';
 import { closeUtilityMenu } from '../physics/movement.js';
 import { buildHazardSites } from '../world/emergencies.js';
-import { switchRescueBot, unlockAndSwitchBot, triggerTransform, triggerPrimaryAction, triggerSecondaryAction, triggerDescendAction, toggleSiren, undockHighTideMegabot, dockHighTideMegabot, undockOptimusMegabot, dockOptimusMegabot, cycleBuddyBot } from '../physics/player.js';
+import { switchRescueBot, unlockAndSwitchBot, triggerTransform, triggerPrimaryAction, triggerSecondaryAction, triggerDescendAction, toggleSiren, undockHighTideMegabot, dockHighTideMegabot, undockOptimusMegabot, dockOptimusMegabot, dockActiveBotMegabot, undockActiveBotMegabot, cycleBuddyBot } from '../physics/player.js';
 import { toggleBumblebeeMorph } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
 import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
@@ -204,12 +204,12 @@ function _localImport(file) {
                         if (typeof parsed.playerMode === 'string' && ['BOT', 'VEHICLE', 'DINO'].includes(parsed.playerMode)) {
                             progression.playerMode = parsed.playerMode;
                         }
-                        if (typeof parsed.highTideDocked === 'boolean') {
-                            progression.highTideDocked = parsed.highTideDocked;
-                        }
-                        if (typeof parsed.optimusDocked === 'boolean') {
-                            progression.optimusDocked = parsed.optimusDocked;
-                        }
+                        ALL_PLAYABLE_BOTS.forEach(b => {
+                            const k = getBotDockedKey(b);
+                            if (typeof parsed[k] === 'boolean') {
+                                progression[k] = parsed[k];
+                            }
+                        });
                         if (parsed.playerPosition && typeof parsed.playerPosition === 'object') {
                             progression.playerPosition = parsed.playerPosition;
                         }
@@ -238,8 +238,10 @@ function _localReset() {
                 progression.discoveredLandmarks = [];
                 progression.collectedCrests = [];
                 progression.discoveredAllies = [];
-                progression.highTideDocked = false;
-                progression.optimusDocked = false;
+                ALL_PLAYABLE_BOTS.forEach(b => {
+                    const k = getBotDockedKey(b);
+                    progression[k] = false;
+                });
                 progression.playerBotType = 'BOULDER';
                 progression.buddyBotType = 'HEATWAVE';
                 progression.playerMode = 'BOT';
@@ -474,17 +476,12 @@ function _localReset() {
                 toggleSiren();
             }
             if (matchesAction(e.code, 'dock') && !e.repeat) {
-                if (player.botType === 'HIGHTIDE') {
-                    if (progression.highTideDocked) {
-                        undockHighTideMegabot();
-                    } else if (highTideWorldShip && Math.hypot(player.pos.x - highTideWorldShip.position.x, player.pos.z - highTideWorldShip.position.z) < 34.0) {
-                        dockHighTideMegabot();
-                    }
-                } else if (player.botType === 'OPTIMUS') {
-                    if (progression.optimusDocked) {
-                        undockOptimusMegabot();
-                    } else if (optimusWorldTrailer && Math.hypot(player.pos.x - optimusWorldTrailer.position.x, player.pos.z - optimusWorldTrailer.position.z) < 34.0) {
-                        dockOptimusMegabot();
+                if (isBotDocked(player.botType)) {
+                    undockActiveBotMegabot();
+                } else {
+                    const targetWorldMesh = WORLD_MEGA_ATTACHMENTS && WORLD_MEGA_ATTACHMENTS[player.botType];
+                    if (targetWorldMesh && targetWorldMesh.visible && Math.hypot(player.pos.x - targetWorldMesh.position.x, player.pos.z - targetWorldMesh.position.z) < 34.0) {
+                        dockActiveBotMegabot();
                     }
                 }
             }

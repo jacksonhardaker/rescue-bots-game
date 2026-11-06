@@ -19,6 +19,23 @@ export const BOT_METADATA = {
         dinoActionIcon: 'TRICERA_CHARGE',
         dinoActionLabel: 'TRICERA CHARGE'
     },
+    BOULDER_MEGA: {
+        name: 'BOULDER (MEGA)',
+        role: 'Heavy Demolition Titan',
+        scale: 1.65,
+        voicePitch: 0.80,
+        vehName: 'HEAVY DUMP TRUCK',
+        dinoName: 'MEGA TRICERATOPS TITAN',
+        colorClass: 'text-lime-300',
+        dotClass: 'bg-lime-400',
+        btnActionBg: 'from-lime-500 via-emerald-600 to-green-700 border-lime-300',
+        botActionIcon: 'QUAKE_SMASH',
+        botActionLabel: 'MEGA QUAKE SMASH',
+        vehActionIcon: 'DOZER_SCOOP',
+        vehActionLabel: 'DUMP BED SMASH',
+        dinoActionIcon: 'TRICERA_CHARGE',
+        dinoActionLabel: 'TITAN HORN RAM'
+    },
     HEATWAVE: {
         name: 'HEATWAVE',
         role: 'Fire Rescue Leader',
@@ -34,6 +51,23 @@ export const BOT_METADATA = {
         vehActionLabel: 'HYDRO DELUGE',
         dinoActionIcon: 'DINO_HYDRO_JET',
         dinoActionLabel: 'DINO HYDRO JET'
+    },
+    HEATWAVE_MEGA: {
+        name: 'HEATWAVE (MEGA)',
+        role: 'Apex Fire Aerial Commander',
+        scale: 1.65,
+        voicePitch: 0.86,
+        vehName: 'SEMI LADDER FIRE ENGINE',
+        dinoName: 'MEGA BRACHIOSAUR TITAN',
+        colorClass: 'text-rose-300',
+        dotClass: 'bg-rose-500',
+        btnActionBg: 'from-rose-500 via-red-600 to-orange-700 border-red-300',
+        botActionIcon: 'WATER_CANNON',
+        botActionLabel: 'DELUGE TURRET PACK',
+        vehActionIcon: 'HYDRO_DELUGE',
+        vehActionLabel: 'AERIAL DELUGE CANNON',
+        dinoActionIcon: 'DINO_HYDRO_JET',
+        dinoActionLabel: 'GIGA HYDRO CANNON'
     },
     CHASE: {
         name: 'CHASE',
@@ -51,6 +85,23 @@ export const BOT_METADATA = {
         dinoActionIcon: 'TAIL_SPIKE_EMP',
         dinoActionLabel: 'TAIL SPIKE EMP'
     },
+    CHASE_MEGA: {
+        name: 'CHASE (MEGA)',
+        role: 'Tactical Interceptor Commander',
+        scale: 1.65,
+        voicePitch: 0.96,
+        vehName: 'POLICE COMMAND SEMI',
+        dinoName: 'MEGA STEGOSAURUS TITAN',
+        colorClass: 'text-sky-300',
+        dotClass: 'bg-sky-400',
+        btnActionBg: 'from-sky-500 via-blue-600 to-indigo-800 border-sky-300',
+        botActionIcon: 'ENERGY_NET',
+        botActionLabel: 'TACTICAL RIOT SHIELD',
+        vehActionIcon: 'TOW_WINCH_NET',
+        vehActionLabel: 'COMMAND PULSE NET',
+        dinoActionIcon: 'TAIL_SPIKE_EMP',
+        dinoActionLabel: 'STEGO EMP SHOCKWAVE'
+    },
     BLADES: {
         name: 'BLADES',
         role: 'Air Rescue Copter',
@@ -66,6 +117,23 @@ export const BOT_METADATA = {
         vehActionLabel: 'RESCUE WINCH',
         dinoActionIcon: 'WING_GALE',
         dinoActionLabel: 'WING GALE'
+    },
+    BLADES_MEGA: {
+        name: 'BLADES (MEGA)',
+        role: 'Sky-Crane Evacuation Titan',
+        scale: 1.65,
+        voicePitch: 1.12,
+        vehName: 'HEAVY SKY-CRANE',
+        dinoName: 'MEGA PTEROSAUR TITAN',
+        colorClass: 'text-amber-300',
+        dotClass: 'bg-amber-400',
+        btnActionBg: 'from-amber-400 via-orange-500 to-red-600 border-amber-200',
+        botActionIcon: 'ROTOR_CYCLONE',
+        botActionLabel: 'CYCLONE ROTOR SHIELDS',
+        vehActionIcon: 'RESCUE_WINCH',
+        vehActionLabel: 'HEAVY RESCUE WINCH',
+        dinoActionIcon: 'WING_GALE',
+        dinoActionLabel: 'SUPERSONIC GALE'
     },
     OPTIMUS: {
         name: 'OPTIMUS PRIME',
@@ -117,6 +185,23 @@ export const BOT_METADATA = {
         dinoActionIcon: 'RAPTOR_LEAP',
         dinoActionLabel: 'RAPTOR LEAP'
     },
+    BUMBLEBEE_MEGA: {
+        name: 'BUMBLEBEE (MEGA)',
+        role: 'Monster Off-Road Scout',
+        scale: 1.65,
+        voicePitch: 1.10,
+        vehName: 'MONSTER TRUCK SPEEDSTER',
+        dinoName: 'MEGA RAPTOR TITAN',
+        colorClass: 'text-yellow-300',
+        dotClass: 'bg-yellow-400',
+        btnActionBg: 'from-yellow-400 via-amber-500 to-yellow-600 border-yellow-200',
+        botActionIcon: 'STINGER_PULSE',
+        botActionLabel: 'MEGA STINGER SHOCK',
+        vehActionIcon: 'NITRO_TURBO',
+        vehActionLabel: 'MONSTER BOUNCE SLAM',
+        dinoActionIcon: 'RAPTOR_LEAP',
+        dinoActionLabel: 'TITAN RAPTOR POUNCE'
+    },
     BLURR: {
         name: 'BLURR',
         role: 'Hyper-Speed Rescue Specialist',
@@ -133,6 +218,23 @@ export const BOT_METADATA = {
         dinoActionIcon: 'SUPERSONIC_DASH',
         dinoActionLabel: 'SONIC STRIDE'
     },
+    BLURR_MEGA: {
+        name: 'BLURR (MEGA)',
+        role: 'Speed Monster Specialist',
+        scale: 1.65,
+        voicePitch: 1.24,
+        vehName: 'SPEED MONSTER TRUCK',
+        dinoName: 'MEGA GALLIMIMUS TITAN',
+        colorClass: 'text-purple-300',
+        dotClass: 'bg-purple-500',
+        btnActionBg: 'from-purple-500 via-violet-600 to-fuchsia-800 border-purple-300',
+        botActionIcon: 'HYPER_BLUR',
+        botActionLabel: 'HYPER MONSTER BLUR',
+        vehActionIcon: 'SUPERSONIC_DASH',
+        vehActionLabel: 'NITRO MONSTER BOOST',
+        dinoActionIcon: 'SUPERSONIC_DASH',
+        dinoActionLabel: 'HYPER SONIC STRIDE'
+    },
     SALVAGE: {
         name: 'SALVAGE',
         role: 'Reclamation & Recycling Hero',
@@ -148,6 +250,23 @@ export const BOT_METADATA = {
         vehActionLabel: 'COMPACTOR SMASH',
         dinoActionIcon: 'COMPACTOR_SMASH',
         dinoActionLabel: 'TAIL SMASH'
+    },
+    SALVAGE_MEGA: {
+        name: 'SALVAGE (MEGA)',
+        role: 'Industrial Reclamation Titan',
+        scale: 1.65,
+        voicePitch: 0.80,
+        vehName: 'INDUSTRIAL GARBAGE TRUCK',
+        dinoName: 'MEGA ANKYLOSAUR TITAN',
+        colorClass: 'text-lime-300',
+        dotClass: 'bg-lime-400',
+        btnActionBg: 'from-lime-500 via-blue-600 to-slate-800 border-lime-300',
+        botActionIcon: 'SCRAP_MAGNET',
+        botActionLabel: 'CRUSHER COMPACTOR SHIELD',
+        vehActionIcon: 'COMPACTOR_SMASH',
+        vehActionLabel: 'COMPACTOR HYDRAULIC SMASH',
+        dinoActionIcon: 'COMPACTOR_SMASH',
+        dinoActionLabel: 'TITAN MACE CRUSH'
     },
     HIGHTIDE: {
         name: 'HIGH TIDE',
@@ -181,6 +300,23 @@ export const BOT_METADATA = {
         vehActionLabel: 'TURBO OVERDRIVE',
         dinoActionIcon: 'STEALTH_CLOAK',
         dinoActionLabel: 'SHADOW AMBUSH'
+    },
+    QUICKSHADOW_MEGA: {
+        name: 'QUICKSHADOW (MEGA)',
+        role: 'Supersonic Stealth Infiltrator',
+        scale: 1.65,
+        voicePitch: 1.18,
+        vehName: 'STEALTH BOMBER',
+        dinoName: 'MEGA DILOPHOSAUR TITAN',
+        colorClass: 'text-sky-300',
+        dotClass: 'bg-sky-400',
+        btnActionBg: 'from-slate-100 via-sky-600 to-slate-900 border-sky-300',
+        botActionIcon: 'STEALTH_CLOAK',
+        botActionLabel: 'DELTA GLIDER AMBUSH',
+        vehActionIcon: 'TURBO_OVERDRIVE',
+        vehActionLabel: 'MACH 3 SUPERSONIC DIVE',
+        dinoActionIcon: 'STEALTH_CLOAK',
+        dinoActionLabel: 'SHADOW DELTA STRIKE'
     }
 };
 
@@ -196,18 +332,26 @@ export const HQ_PARKING_SLOTS = {
 
 // Calibrated Ground Clearance Offsets
 export const BOT_GROUND_OFFSETS = {
-    BOULDER:       { bot: 0.36, veh: 0.00, dino: 0.79 },
-    HEATWAVE:      { bot: 0.53, veh: 0.00, dino: 0.68 },
-    CHASE:         { bot: 0.40, veh: 0.00, dino: 0.50 },
-    BLADES:        { bot: 1.28, veh: 0.00, dino: 0.84 },
-    OPTIMUS:       { bot: 0.552, veh: 0.544, dino: 0.648 },
-    OPTIMUS_MEGA:  { bot: 0.552, veh: 0.544, dino: 0.648 },
-    BUMBLEBEE:     { bot: 0.41, veh: 0.58, dino: 0.51 },
-    BLURR:         { bot: 0.73, veh: 0.63, dino: 0.83 },
-    SALVAGE:       { bot: 0.46, veh: 0.15, dino: 0.56 },
-    HIGHTIDE:      { bot: 0.692, veh: 0.808, dino: 0.792 },
-    HIGHTIDE_MEGA: { bot: 0.00, veh: 1.226, dino: 1.405 },
-    QUICKSHADOW:   { bot: 0.72, veh: 0.37, dino: 0.82 }
+    BOULDER:          { bot: 0.36, veh: 0.00, dino: 0.79 },
+    BOULDER_MEGA:     { bot: 0.36, veh: 0.00, dino: 0.79 },
+    HEATWAVE:         { bot: 0.53, veh: 0.00, dino: 0.68 },
+    HEATWAVE_MEGA:    { bot: 0.53, veh: 0.00, dino: 0.68 },
+    CHASE:            { bot: 0.40, veh: 0.00, dino: 0.50 },
+    CHASE_MEGA:       { bot: 0.40, veh: 0.00, dino: 0.50 },
+    BLADES:           { bot: 1.28, veh: 0.00, dino: 0.84 },
+    BLADES_MEGA:      { bot: 1.28, veh: 0.00, dino: 0.84 },
+    OPTIMUS:          { bot: 0.552, veh: 0.544, dino: 0.648 },
+    OPTIMUS_MEGA:     { bot: 0.552, veh: 0.544, dino: 0.648 },
+    BUMBLEBEE:        { bot: 0.41, veh: 0.58, dino: 0.51 },
+    BUMBLEBEE_MEGA:   { bot: 0.41, veh: 0.58, dino: 0.51 },
+    BLURR:            { bot: 0.73, veh: 0.63, dino: 0.83 },
+    BLURR_MEGA:       { bot: 0.73, veh: 0.63, dino: 0.83 },
+    SALVAGE:          { bot: 0.46, veh: 0.15, dino: 0.56 },
+    SALVAGE_MEGA:     { bot: 0.46, veh: 0.15, dino: 0.56 },
+    HIGHTIDE:         { bot: 0.692, veh: 0.808, dino: 0.792 },
+    HIGHTIDE_MEGA:    { bot: 0.00, veh: 1.226, dino: 1.405 },
+    QUICKSHADOW:      { bot: 0.72, veh: 0.37, dino: 0.82 },
+    QUICKSHADOW_MEGA: { bot: 0.72, veh: 0.37, dino: 0.82 }
 };
 
 if (typeof window !== 'undefined') {

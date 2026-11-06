@@ -320,6 +320,109 @@ export function buildQuickshadow(parts, materials = {}, textures = {}) {
                     prevDiloTail.add(seg);
                     prevDiloTail = seg;
                 }
+
+                // =============================================================
+                // MEGA BOT: QUICKSHADOW SUPERSONIC STEALTH BOMBER CONVERSION
+                // =============================================================
+                // 1. Vehicle Mode: Stealth Bomber Airframe Shell with Open Center Docking Cockpit
+                const megaBomberShell = new THREE.Group();
+                megaBomberShell.userData.isMegaPart = true;
+                megaBomberShell.visible = false;
+                parts.megaBomberShell = megaBomberShell;
+                parts.backAttachment.add(megaBomberShell);
+
+                // Main Flying-Wing Center Section (Center slot cut out for Quickshadow's coupe cab)
+                const centerFuselage = new THREE.Mesh(new THREE.BoxGeometry(4.2, 0.65, 3.8), matQuickDark);
+                centerFuselage.position.set(0, 0.25, -0.8);
+                centerFuselage.castShadow = true;
+                megaBomberShell.add(centerFuselage);
+
+                // Twin Swept Delta Wings (spanning 14m total wingspan)
+                [-1, 1].forEach(side => {
+                    const wingGroup = new THREE.Group();
+                    wingGroup.position.set(side * 2.1, 0.25, -0.8);
+
+                    // Swept delta main wing plank
+                    const wing = new THREE.Mesh(
+                        new THREE.BoxGeometry(4.5, 0.22, 2.8).rotateY(side * 0.35),
+                        matQuickDark
+                    );
+                    wing.position.set(side * 2.2, 0, -0.4);
+                    wing.castShadow = true;
+
+                    // Leading edge cyan stealth glow stripe
+                    const leadingEdge = new THREE.Mesh(
+                        new THREE.BoxGeometry(4.6, 0.12, 0.25).rotateY(side * 0.35),
+                        matQuickCyan
+                    );
+                    leadingEdge.position.set(side * 2.2, 0.05, 0.9);
+                    leadingEdge.userData.noOutline = true;
+
+                    // Top stealth jet intake cowl
+                    const intake = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.85, 0.45, 1.8),
+                        matQuickSilver
+                    );
+                    intake.position.set(side * 0.8, 0.35, -0.2);
+
+                    // Rear thrust vector exhaust nozzle with cyan glow
+                    const exhaust = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.35, 0.42, 0.8, 8).rotateX(Math.PI / 2),
+                        matDarkSteel
+                    );
+                    exhaust.position.set(side * 0.8, 0.35, -1.5);
+                    const afterburner = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.28, 0.28, 0.15, 8).rotateX(Math.PI / 2),
+                        matQuickVisor
+                    );
+                    afterburner.position.set(side * 0.8, 0.35, -1.9);
+                    afterburner.userData.noOutline = true;
+
+                    wingGroup.add(wing, leadingEdge, intake, exhaust, afterburner);
+                    megaBomberShell.add(wingGroup);
+                });
+
+                // 2. Bot Mode: High-Altitude Delta Glider Cape & Booster Pack
+                const megaBackPack = new THREE.Group();
+                megaBackPack.userData.isMegaPart = true;
+                megaBackPack.visible = false;
+                parts.megaBackPack = megaBackPack;
+                parts.backAttachment.add(megaBackPack);
+
+                const gliderPack = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 0.6), matQuickDark);
+                gliderPack.position.set(0, 0.2, 0.2);
+                gliderPack.castShadow = true;
+                [-1, 1].forEach(side => {
+                    const wingBlade = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.12, 3.2, 1.2).rotateZ(side * 0.25),
+                        matQuickSilver
+                    );
+                    wingBlade.position.set(side * 1.35, -0.2, 0.1);
+                    gliderPack.add(wingBlade);
+                });
+                megaBackPack.add(gliderPack);
+
+                // 3. Dino Mode: Delta Stealth Frills & Tail Control Fins
+                const megaDinoArmor = new THREE.Group();
+                megaDinoArmor.userData.isMegaPart = true;
+                megaDinoArmor.visible = false;
+                parts.megaDinoArmor = megaDinoArmor;
+                parts.dinoGroup.add(megaDinoArmor);
+
+                [-1, 1].forEach(side => {
+                    const frillWing = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.6, 0.12, 1.2).rotateZ(side * 0.42),
+                        matQuickDark
+                    );
+                    frillWing.position.set(side * 1.2, 2.6, 0.8);
+                    megaDinoArmor.add(frillWing);
+                });
+
+                // Initialize visibility matching current docked status
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.quickshadowDocked);
+                if (typeof (window as any).setBotRigMega === 'function') {
+                    (window as any).setBotRigMega(parts, isCurrentMega);
+                }
 }
 
 export default buildQuickshadow;

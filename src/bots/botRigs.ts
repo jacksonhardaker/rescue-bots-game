@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { BOT_GROUND_OFFSETS, HQ_PARKING_SLOTS } from "./botMeta.js";
 import { applyCartoonInkOutlines } from "../rendering/materials.js";
 import { player, buddyBot } from "../state/gameState.js";
+import { isBotDocked } from "../progression/progression.js";
 
 import { buildBoulder } from "./boulder.js";
 import { buildHeatwave } from "./heatwave.js";
@@ -17,26 +18,36 @@ import { buildQuickshadow } from "./quickshadow.js";
 
 export const BOT_SCALES = {
     BOULDER: 1.0,
+    BOULDER_MEGA: 1.65,
     HEATWAVE: 1.0,
+    HEATWAVE_MEGA: 1.65,
     CHASE: 1.0,
+    CHASE_MEGA: 1.65,
     BLADES: 1.0,
+    BLADES_MEGA: 1.65,
     OPTIMUS: 1.25,
     OPTIMUS_MEGA: 1.65,
     BUMBLEBEE: 1.0,
+    BUMBLEBEE_MEGA: 1.65,
     BLURR: 1.0,
+    BLURR_MEGA: 1.65,
     SALVAGE: 1.0,
+    SALVAGE_MEGA: 1.65,
     HIGHTIDE: 1.30,
     HIGHTIDE_MEGA: 3.85,
-    QUICKSHADOW: 1.0
+    QUICKSHADOW: 1.0,
+    QUICKSHADOW_MEGA: 1.65
 };
 
 export function getBotScale(botType) {
     if (botType === "HIGHTIDE" && typeof window !== "undefined" && window.progression && window.progression.highTideDocked) {
         return 3.85;
     }
-    if (botType === "OPTIMUS" && typeof window !== "undefined" && window.progression && window.progression.optimusDocked) {
-        const isVeh = (typeof player !== 'undefined' && player && player.botType === 'OPTIMUS' && (player.mode === 'VEHICLE' || player.morph > 0.5));
-        return isVeh ? 1.25 : 1.65;
+    const isDocked = (typeof window !== "undefined" && window.progression && isBotDocked(botType));
+    if (isDocked) {
+        const isVeh = (typeof player !== 'undefined' && player && player.botType === botType && (player.mode === 'VEHICLE' || player.morph > 0.5));
+        const base = (botType === 'OPTIMUS' ? 1.25 : 1.0);
+        return isVeh ? base : 1.65;
     }
     return BOT_SCALES[botType] || 1.0;
 }
@@ -57,19 +68,43 @@ export function setOptimusRigMega(rig, isMega) {
 }
 
 export function setHighTideRigMega(rig, isMega) {
-            if (!rig || rig.botType !== 'HIGHTIDE') return;
-            rig.isMega = Boolean(isMega);
-            const scale = rig.isMega ? 3.85 : 1.30;
-            rig.root.scale.setScalar(scale);
-            rig.root.traverse(child => {
-                if (child.userData && child.userData.isStandardPart !== undefined) {
-                    child.visible = !rig.isMega;
-                }
-                if (child.userData && child.userData.isMegaPart !== undefined) {
-                    child.visible = rig.isMega;
-                }
-            });
+    if (!rig || rig.botType !== 'HIGHTIDE') return;
+    rig.isMega = Boolean(isMega);
+    const scale = rig.isMega ? 3.85 : 1.30;
+    rig.root.scale.setScalar(scale);
+    rig.root.traverse(child => {
+        if (child.userData && child.userData.isStandardPart !== undefined) {
+            child.visible = !rig.isMega;
         }
+        if (child.userData && child.userData.isMegaPart !== undefined) {
+            child.visible = rig.isMega;
+        }
+    });
+}
+
+export function setBotRigMega(rig, isMega) {
+    if (!rig) return;
+    if (rig.botType === 'HIGHTIDE') {
+        setHighTideRigMega(rig, isMega);
+        return;
+    }
+    if (rig.botType === 'OPTIMUS') {
+        setOptimusRigMega(rig, isMega);
+        return;
+    }
+    rig.isMega = Boolean(isMega);
+    const base = BOT_SCALES[rig.botType] || 1.0;
+    const scale = rig.isMega ? 1.65 : base;
+    rig.root.scale.setScalar(scale);
+    rig.root.traverse(child => {
+        if (child.userData && child.userData.isStandardPart !== undefined) {
+            child.visible = !rig.isMega;
+        }
+        if (child.userData && child.userData.isMegaPart !== undefined) {
+            child.visible = rig.isMega;
+        }
+    });
+}
 
 export function buildRescueBotModel(botType) {
     const root = new THREE.Group();
@@ -155,20 +190,21 @@ export function buildRescueBotModel(botType) {
 
 export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0) {
             // Apply mode-dependent ground elevation so the bot's ground contact surface stays flush on terrain
-            const bKey = (rig.botType === 'HIGHTIDE' && rig.isMega) ? 'HIGHTIDE_MEGA' : (rig.botType === 'OPTIMUS' && rig.isMega) ? 'OPTIMUS_MEGA' : rig.botType;
-            const gOffsets = BOT_GROUND_OFFSETS[bKey] || { bot: 0, veh: 0, dino: 0 };
+            const bKey = rig.isMega ? `${rig.botType}_MEGA` : rig.botType;
+            const gOffsets = BOT_GROUND_OFFSETS[bKey] || BOT_GROUND_OFFSETS[rig.botType] || { bot: 0, veh: 0, dino: 0 };
             const groundLiftY = gOffsets.bot * (1 - m - d) + gOffsets.veh * m + gOffsets.dino * d;
             if (rig.chassis) {
                 rig.chassis.position.y = groundLiftY;
             }
 
-            // Dynamic Optimus scale: normal semi scale (1.25) in vehicle mode (+ trailer); Mega scale (1.65) in bot and dino modes (+32%, well under 50% limit)
-            if (rig.botType === 'OPTIMUS') {
+            // Dynamic scale: normal vehicle scale in vehicle mode (+ attachment); Mega scale (1.65) in bot and dino modes (+32%, well under 50% limit)
+            if (rig.botType !== 'HIGHTIDE') {
+                const baseScale = (rig.botType === 'OPTIMUS' ? 1.25 : 1.0);
                 if (rig.isMega) {
-                    const targetScale = THREE.MathUtils.lerp(1.65, 1.25, m);
+                    const targetScale = THREE.MathUtils.lerp(1.65, baseScale, m);
                     rig.root.scale.setScalar(targetScale);
                 } else {
-                    rig.root.scale.setScalar(1.25);
+                    rig.root.scale.setScalar(baseScale);
                 }
             }
 
@@ -806,23 +842,45 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 rig.lightbar.bluePod.scale.setScalar(!flash ? highScale : lowScale);
             }
 
-            if (rig.botType === 'OPTIMUS') {
-                if (rig.trailerHitch) {
-                    const isPlayer = (typeof player !== 'undefined' && player && rig === (botRigs ? botRigs[player.botType] : null));
-                    const isBuddy = (typeof buddyBot !== 'undefined' && buddyBot && rig === (botRigs ? botRigs[buddyBot.botType] : null));
-                    const artic = rig.trailerArticAngle !== undefined ? rig.trailerArticAngle :
-                        (isPlayer ? (player.trailerArticAngle || 0) : (isBuddy ? (buddyBot.trailerArticAngle || 0) : 0));
-                    rig.trailerHitch.rotation.y = artic * m;
+            // Articulated Trailer Hitch (Optimus, Chase, Heatwave)
+            if (rig.trailerHitch) {
+                const isPlayer = (typeof player !== 'undefined' && player && rig === (botRigs ? botRigs[player.botType] : null));
+                const isBuddy = (typeof buddyBot !== 'undefined' && buddyBot && rig === (botRigs ? botRigs[buddyBot.botType] : null));
+                const artic = rig.trailerArticAngle !== undefined ? rig.trailerArticAngle :
+                    (isPlayer ? (player.trailerArticAngle || 0) : (isBuddy ? (buddyBot.trailerArticAngle || 0) : 0));
+                rig.trailerHitch.rotation.y = artic * m;
+            }
+
+            // Universal Mega Parts Visibility Morph System
+            if (rig.isMega) {
+                const inVeh = m > 0.05;
+                const inBot = (m < 0.2 && d < 0.2);
+                const inDino = d > 0.05;
+
+                // Vehicle Attachments
+                if (rig.trailerHitch) rig.trailerHitch.visible = inVeh;
+                if (rig.megaTrailer) rig.megaTrailer.visible = inVeh;
+                if (rig.megaDumpBucket) rig.megaDumpBucket.visible = inVeh;
+                if (rig.megaBomberShell) rig.megaBomberShell.visible = inVeh;
+                if (rig.megaMonsterShell) rig.megaMonsterShell.visible = inVeh;
+                if (rig.megaDumpster) rig.megaDumpster.visible = inVeh;
+                if (rig.megaCargoPod) rig.megaCargoPod.visible = inVeh;
+
+                // Bot Weapons & Gear
+                if (rig.megaAxe) rig.megaAxe.visible = inBot;
+                if (rig.megaShield) rig.megaShield.visible = inBot;
+                if (rig.megaBotShields) {
+                    if (Array.isArray(rig.megaBotShields)) {
+                        rig.megaBotShields.forEach(s => { s.visible = inBot; });
+                    } else {
+                        rig.megaBotShields.visible = inBot;
+                    }
                 }
-                if (rig.isMega) {
-                    if (rig.megaAxe) rig.megaAxe.visible = Boolean(rig.isMega) && (m < 0.2 && d < 0.2);
-                    if (rig.megaShield) rig.megaShield.visible = Boolean(rig.isMega) && (m < 0.2 && d < 0.2);
-                    if (rig.megaBackPack) rig.megaBackPack.visible = Boolean(rig.isMega) && (m < 0.5 && d < 0.5);
-                    if (rig.trailerHitch) rig.trailerHitch.visible = Boolean(rig.isMega) && m > 0.05;
-                    if (rig.megaTrailer) rig.megaTrailer.visible = Boolean(rig.isMega) && m > 0.05;
-                    if (rig.megaDinoArmor) rig.megaDinoArmor.visible = Boolean(rig.isMega) && d > 0.05;
-                    if (rig.megaDinoTail) rig.megaDinoTail.visible = Boolean(rig.isMega) && d > 0.05;
-                }
+                if (rig.megaBackPack) rig.megaBackPack.visible = (m < 0.5 && d < 0.5);
+
+                // Dino Mode Armor
+                if (rig.megaDinoArmor) rig.megaDinoArmor.visible = inDino;
+                if (rig.megaDinoTail) rig.megaDinoTail.visible = inDino;
             }
         }
 
@@ -855,6 +913,7 @@ if (typeof window !== 'undefined') {
         applyBotRigMorph,
         setHighTideRigMega,
         setOptimusRigMega,
+        setBotRigMega,
         getBotScale
     });
 }

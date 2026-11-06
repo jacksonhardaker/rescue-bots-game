@@ -24,10 +24,38 @@ export const progression: Record<string, any> = {
     playerMode: 'BOT',
     highTideDocked: false,
     optimusDocked: false,
+    boulderDocked: false,
+    heatwaveDocked: false,
+    chaseDocked: false,
+    bladesDocked: false,
+    bumblebeeDocked: false,
+    blurrDocked: false,
+    salvageDocked: false,
+    quickshadowDocked: false,
     weatherMode: 'SUNNY',
     playerPosition: null,
     completedMissions: []
 };
+
+export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'];
+
+export function getBotDockedKey(botType: string): string {
+    if (botType === 'HIGHTIDE') return 'highTideDocked';
+    if (botType === 'OPTIMUS') return 'optimusDocked';
+    if (botType === 'QUICKSHADOW') return 'quickshadowDocked';
+    if (botType === 'BUMBLEBEE') return 'bumblebeeDocked';
+    return `${botType.toLowerCase()}Docked`;
+}
+
+export function isBotDocked(botType: string): boolean {
+    const k = getBotDockedKey(botType);
+    return Boolean(progression[k]);
+}
+
+export function setBotDocked(botType: string, val: boolean) {
+    const k = getBotDockedKey(botType);
+    progression[k] = Boolean(val);
+}
 
 export const RESCUE_STAR_RANKS = [
     { level: 1, minPts: 0,   title: 'CADET BOT',            nextPts: 10 },
@@ -140,12 +168,12 @@ export function loadProgression(options: Record<string, any> = {}) {
         if (typeof data.weatherMode === 'string' && !target.weatherMode) {
             target.weatherMode = data.weatherMode;
         }
-        if (typeof data.highTideDocked === 'boolean' && target.highTideDocked === undefined) {
-            target.highTideDocked = data.highTideDocked;
-        }
-        if (typeof data.optimusDocked === 'boolean' && target.optimusDocked === undefined) {
-            target.optimusDocked = data.optimusDocked;
-        }
+        ALL_PLAYABLE_BOTS.forEach(b => {
+            const k = getBotDockedKey(b);
+            if (typeof data[k] === 'boolean' && target[k] === undefined) {
+                target[k] = data[k];
+            }
+        });
         if (data.playerPosition && typeof data.playerPosition === 'object' && !target.playerPosition) {
             target.playerPosition = data.playerPosition;
         }
@@ -195,12 +223,12 @@ export function loadProgression(options: Record<string, any> = {}) {
     if (typeof target.weatherMode === 'string') {
         progression.weatherMode = target.weatherMode;
     }
-    if (typeof target.highTideDocked === 'boolean') {
-        progression.highTideDocked = target.highTideDocked;
-    }
-    if (typeof target.optimusDocked === 'boolean') {
-        progression.optimusDocked = target.optimusDocked;
-    }
+    ALL_PLAYABLE_BOTS.forEach(b => {
+        const k = getBotDockedKey(b);
+        if (typeof target[k] === 'boolean') {
+            progression[k] = target[k];
+        }
+    });
     if (target.playerPosition && typeof target.playerPosition === 'object') {
         if (Number.isFinite(target.playerPosition.x) && Number.isFinite(target.playerPosition.z)) {
             progression.playerPosition = {
@@ -348,8 +376,10 @@ export function resetCareerProgress(onComplete) {
         progression.discoveredLandmarks = [];
         progression.collectedCrests = [];
         progression.discoveredAllies = [];
-        progression.highTideDocked = false;
-        progression.optimusDocked = false;
+        ALL_PLAYABLE_BOTS.forEach(b => {
+            const k = getBotDockedKey(b);
+            progression[k] = false;
+        });
         progression.playerBotType = 'BOULDER';
         progression.buddyBotType = 'HEATWAVE';
         progression.playerMode = 'BOT';
@@ -359,4 +389,17 @@ export function resetCareerProgress(onComplete) {
         if (onComplete) onComplete();
         else window.location.reload();
     }
+}
+
+if (typeof window !== 'undefined') {
+    Object.assign(window, {
+        progression,
+        loadProgression,
+        saveProgression,
+        getRescueStarRank,
+        getBotDockedKey,
+        isBotDocked,
+        setBotDocked,
+        ALL_PLAYABLE_BOTS
+    });
 }

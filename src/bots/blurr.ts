@@ -282,6 +282,122 @@ export function buildBlurr(parts, materials = {}, textures = {}) {
                     prevTail.add(seg);
                     prevTail = seg;
                 }
+
+                // =============================================================
+                // MEGA BOT: BLURR AERO SPEED MONSTER TRUCK CONVERSION
+                // =============================================================
+                // 1. Vehicle Mode: Aero Speed Monster Chassis with Chrome Blower & Giant Turbine Monster Tires
+                const megaMonsterShell = new THREE.Group();
+                megaMonsterShell.userData.isMegaPart = true;
+                megaMonsterShell.visible = false;
+                parts.megaMonsterShell = megaMonsterShell;
+                parts.chassis.add(megaMonsterShell);
+
+                // Lifted Aero Frame Chassis
+                const speedFrame = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.65, 4.4), matBlurrViolet);
+                speedFrame.position.set(0, -0.2, 0);
+                speedFrame.castShadow = true;
+                megaMonsterShell.add(speedFrame);
+
+                // Chrome High-Rise Supercharger Blower with Cyan Butterflies
+                const blowerBase = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 1.4), matChrome);
+                blowerBase.position.set(0, 1.4, 1.2);
+                blowerBase.castShadow = true;
+                const scoop = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.45, 0.9), matBlurrPurple);
+                scoop.position.set(0, 1.95, 1.1);
+                [-0.4, 0, 0.4].forEach(bx => {
+                    const butterfly = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.08, 10).rotateX(Math.PI / 2), matBlurrCyanGlow);
+                    butterfly.position.set(bx, 1.95, 1.58);
+                    butterfly.userData.noOutline = true;
+                    megaMonsterShell.add(butterfly);
+                });
+                megaMonsterShell.add(blowerBase, scoop);
+
+                // High-Downforce Carbon GT Mega Wing at Rear
+                const wingGroup = new THREE.Group();
+                wingGroup.position.set(0, 1.6, -2.4);
+                [-1.1, 1.1].forEach(px => {
+                    const pylon = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.2, 0.6).rotateX(0.2), matDarkSteel);
+                    pylon.position.set(px, 0.4, 0);
+                    wingGroup.add(pylon);
+                });
+                const mainWing = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.15, 1.2), matBlurrPurple);
+                mainWing.position.set(0, 1.0, -0.15);
+                const wingEndL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 1.4), matBlurrNeonGreen);
+                wingEndL.position.set(-1.8, 1.0, -0.15);
+                const wingEndR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.6, 1.4), matBlurrNeonGreen);
+                wingEndR.position.set(1.8, 1.0, -0.15);
+                wingGroup.add(mainWing, wingEndL, wingEndR);
+                megaMonsterShell.add(wingGroup);
+
+                // 4 Giant 2.6m Speed Monster Tires with Neon-Green Turbine Beadlocks
+                [[-1.85, 1.45], [1.85, 1.45], [-1.85, -1.55], [1.85, -1.55]].forEach(([wx, wz]) => {
+                    const wheelGroup = new THREE.Group();
+                    wheelGroup.position.set(wx, -0.35, wz);
+
+                    const tireMesh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(1.3, 1.3, 1.1, 18).rotateZ(Math.PI / 2),
+                        matTire
+                    );
+                    tireMesh.castShadow = true;
+
+                    const hubMesh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.72, 0.72, 1.14, 12).rotateZ(Math.PI / 2),
+                        matBlurrNeonGreen
+                    );
+                    const centerCap = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.35, 0.35, 1.2, 10).rotateZ(Math.PI / 2),
+                        matBlurrCyanGlow
+                    );
+                    centerCap.userData.noOutline = true;
+
+                    const shockSpring = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.18, 0.18, 1.8, 8),
+                        matBlurrPurple
+                    );
+                    shockSpring.position.set(-Math.sign(wx) * 0.45, 0.8, 0);
+
+                    wheelGroup.add(tireMesh, hubMesh, centerCap, shockSpring);
+                    megaMonsterShell.add(wheelGroup);
+                    parts.wheels.push(wheelGroup);
+                });
+
+                // 2. Bot Mode: High-Velocity Supersonic Turbine Back Pack
+                const megaBackPack = new THREE.Group();
+                megaBackPack.userData.isMegaPart = true;
+                megaBackPack.visible = false;
+                parts.megaBackPack = megaBackPack;
+                parts.backAttachment.add(megaBackPack);
+
+                const turbinePod = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.6, 1.2), matBlurrPurple);
+                turbinePod.position.set(0, 0.2, 0.2);
+                turbinePod.castShadow = true;
+                [-0.8, 0.8].forEach(tx => {
+                    const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.4, 12).rotateX(Math.PI / 2), matDarkSteel);
+                    nozzle.position.set(tx, 0.2, 0.9);
+                    const flame = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.2, 10).rotateX(Math.PI / 2), matBlurrCyanGlow);
+                    flame.position.set(tx, 0.2, 1.6);
+                    flame.userData.noOutline = true;
+                    turbinePod.add(nozzle, flame);
+                });
+                megaBackPack.add(turbinePod);
+
+                // 3. Dino Mode: Gallimimus Aerodynamic Fin Armor
+                const megaDinoArmor = new THREE.Group();
+                megaDinoArmor.userData.isMegaPart = true;
+                megaDinoArmor.visible = false;
+                parts.megaDinoArmor = megaDinoArmor;
+                parts.dinoGroup.add(megaDinoArmor);
+
+                const galliFin = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.8, 2.8), matBlurrNeonGreen);
+                galliFin.position.set(0, 3.2, -0.4);
+                megaDinoArmor.add(galliFin);
+
+                // Initialize visibility matching current docked status
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.blurrDocked);
+                if (typeof (window as any).setBotRigMega === 'function') {
+                    (window as any).setBotRigMega(parts, isCurrentMega);
+                }
 }
 
 export default buildBlurr;

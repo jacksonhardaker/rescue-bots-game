@@ -286,6 +286,123 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                 );
                 brachTailTip.position.set(0, -0.1, -2.85);
                 parts.dinoTail.add(brachTailTip);
+
+                // =============================================================
+                // MEGA BOT: HEATWAVE SEMI LADDER FIRE ENGINE TRAILER CONVERSION
+                // =============================================================
+                // 1. Vehicle Mode: Articulated Aerial Ladder Fire Trailer
+                const trailerHitch = new THREE.Group();
+                trailerHitch.userData.isMegaPart = true;
+                parts.trailerHitch = trailerHitch;
+                parts.backAttachment.add(trailerHitch);
+
+                const megaTrailer = new THREE.Group();
+                megaTrailer.userData.isMegaPart = true;
+                megaTrailer.visible = false;
+                parts.megaTrailer = megaTrailer;
+                trailerHitch.add(megaTrailer);
+
+                // Main Fire Apparatus Body (11.5m long, 2.85m wide, 3.0m high)
+                const trHull = new THREE.Mesh(new THREE.BoxGeometry(2.85, 2.8, 11.5), matRed);
+                trHull.position.set(0, 0.9, -6.5);
+                trHull.castShadow = true;
+                megaTrailer.add(trHull);
+
+                // White Side Rescue Stripes & Chrome Diamond Plate Compartments
+                [-1.44, 1.44].forEach(sx => {
+                    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.45, 10.8), matChrome);
+                    stripe.position.set(sx, 1.35, -6.5);
+                    const compLower = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.2, 10.5), matDarkSteel);
+                    compLower.position.set(sx, 0.35, -6.5);
+                    megaTrailer.add(stripe, compLower);
+                });
+
+                // Heavy 360-Degree Aerial Ladder Turntable Platform
+                const turntable = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.35, 0.45, 16), matDarkSteel);
+                turntable.position.set(0, 2.45, -3.2);
+                megaTrailer.add(turntable);
+
+                // Massive 8.5m Chrome Aerial Rescue Ladder Bed
+                const megaLadderBoom = new THREE.Group();
+                megaLadderBoom.position.set(0, 2.75, -3.2);
+                megaTrailer.add(megaLadderBoom);
+
+                [-0.48, 0.48].forEach(lx => {
+                    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.28, 8.5), matChrome);
+                    rail.position.set(lx, 0.15, -3.8);
+                    megaLadderBoom.add(rail);
+                    for (let r = -7.5; r <= 0; r += 0.85) {
+                        const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.96, 6).rotateZ(Math.PI / 2), matChrome);
+                        rung.position.set(0, 0.15, r);
+                        megaLadderBoom.add(rung);
+                    }
+                });
+
+                // Tip Water Cannons on Ladder Boom
+                [-0.32, 0.32].forEach(nx => {
+                    const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 1.2, 8).rotateX(Math.PI / 2), matGold);
+                    nozzle.position.set(nx, 0.35, -8.2);
+                    megaLadderBoom.add(nozzle);
+                });
+
+                // Rear Step Tailgate & Strobe Lights
+                const rBumper = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.45, 0.35), matDarkSteel);
+                rBumper.position.set(0, -0.35, -12.35);
+                megaTrailer.add(rBumper);
+                [-1.1, 1.1].forEach(tx => {
+                    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.1), matSirenRed);
+                    tail.position.set(tx, -0.35, -12.52);
+                    tail.userData.noOutline = true;
+                    megaTrailer.add(tail);
+                });
+
+                // Tandem Heavy Wheels (Functional Wheel Assemblies)
+                [-8.6, -10.5].forEach(wz => {
+                    [-1.48, 1.48].forEach(wx => {
+                        const trWheel = createWheelAssembly(0.76, 0.52);
+                        trWheel.position.set(wx, -0.9, wz);
+                        megaTrailer.add(trWheel);
+                        parts.wheels.push(trWheel);
+                    });
+                });
+
+                // 2. Bot Mode: Heavy Over-Shoulder Deluge Turret Backpack
+                const megaBackPack = new THREE.Group();
+                megaBackPack.userData.isMegaPart = true;
+                megaBackPack.visible = false;
+                parts.megaBackPack = megaBackPack;
+                parts.backAttachment.add(megaBackPack);
+
+                const bpBase = new THREE.Mesh(new THREE.BoxGeometry(3.2, 3.2, 1.6), matRed);
+                bpBase.position.set(0, 0.2, 0.2);
+                bpBase.castShadow = true;
+                megaBackPack.add(bpBase);
+
+                [-1.4, 1.4].forEach(cx => {
+                    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.35, 3.2, 10).rotateX(Math.PI / 2), matChrome);
+                    barrel.position.set(cx, 1.9, 1.1);
+                    barrel.castShadow = true;
+                    const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.28, 0.5, 10).rotateX(Math.PI / 2), matGold);
+                    tip.position.set(cx, 1.9, 2.8);
+                    megaBackPack.add(barrel, tip);
+                });
+
+                // 3. Dino Mode: Aerial Ladder Spine Armor for Brachiosaurus
+                const megaDinoArmor = new THREE.Group();
+                megaDinoArmor.userData.isMegaPart = true;
+                megaDinoArmor.visible = false;
+                parts.megaDinoArmor = megaDinoArmor;
+                parts.dinoGroup.add(megaDinoArmor);
+
+                const spineArmor = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.35, 4.2), matChrome);
+                spineArmor.position.set(0, 3.4, -0.4);
+                megaDinoArmor.add(spineArmor);
+
+                // Initialize visibility matching current docked status
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.heatwaveDocked);
+                if (typeof (window as any).setBotRigMega === 'function') {
+                    (window as any).setBotRigMega(parts, isCurrentMega);
+                }
 }
 
 export default buildHeatwave;

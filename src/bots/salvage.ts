@@ -1,5 +1,6 @@
 // 3D Cel-Shaded Model & Morph Builder for SALVAGE
 import * as THREE from 'three';
+import { createWheelAssembly } from './botHelpers.js';
 
 export function buildSalvage(parts, materials = {}, textures = {}) {
     const {
@@ -289,6 +290,99 @@ export function buildSalvage(parts, materials = {}, textures = {}) {
                 const clubCenter = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1.25, 8).rotateZ(Math.PI / 2), matSalvageLightSteel);
                 clubGroup.add(clubCenter);
                 prevAnkyTail.add(clubGroup);
+
+                // =============================================================
+                // MEGA BOT: SALVAGE INDUSTRIAL GARBAGE TRUCK & DUMPSTER CONVERSION
+                // =============================================================
+                // 1. Vehicle Mode: Heavy Duty Industrial Roll-Off Dumpster & Compactor
+                const megaDumpster = new THREE.Group();
+                megaDumpster.userData.isMegaPart = true;
+                megaDumpster.visible = false;
+                parts.megaDumpster = megaDumpster;
+                parts.backAttachment.add(megaDumpster);
+
+                // Main Industrial Dumpster Body (5.4m long, 3.1m wide, 2.2m tall)
+                const dumpsterBox = new THREE.Mesh(new THREE.BoxGeometry(3.1, 2.2, 5.4), matSalvageSteel);
+                dumpsterBox.position.set(0, 1.2, -2.8);
+                dumpsterBox.castShadow = true;
+                megaDumpster.add(dumpsterBox);
+
+                // Flank Corrugated Stiffeners
+                [-1.56, 1.56].forEach(sx => {
+                    for (let z = -4.8; z <= -0.8; z += 1.0) {
+                        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.0, 0.22), matSalvageLightSteel);
+                        rib.position.set(sx, 1.2, z);
+                        megaDumpster.add(rib);
+                    }
+                });
+
+                // Front Heavy Hydraulic Loading Forks in Safety Orange
+                [-1.62, 1.62].forEach(fx => {
+                    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.35, 2.8), matSalvageOrange);
+                    arm.position.set(fx, 0.4, 0.6);
+                    const fork = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 0.2), matSalvageOrange);
+                    fork.position.set(fx, 0.8, 1.8);
+                    megaDumpster.add(arm, fork);
+                });
+
+                // Rear Hydraulic Compactor Blade with Hazard Chevrons
+                const compactorDoor = new THREE.Mesh(new THREE.BoxGeometry(2.9, 2.0, 0.35), matSalvageLime);
+                compactorDoor.position.set(0, 1.2, -5.6);
+                const hazardStrip = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.45, 0.12), matHazardMat);
+                hazardStrip.position.set(0, 0.45, -5.8);
+                hazardStrip.userData.noOutline = true;
+                megaDumpster.add(compactorDoor, hazardStrip);
+
+                // Tandem Industrial Wheels (Functional Wheel Assemblies)
+                [-2.2, -4.2].forEach(wz => {
+                    [-1.65, 1.65].forEach(wx => {
+                        const trWheel = createWheelAssembly(0.82, 0.55);
+                        trWheel.position.set(wx, 0.15, wz);
+                        megaDumpster.add(trWheel);
+                        parts.wheels.push(trWheel);
+                    });
+                });
+
+                // 2. Bot Mode: Industrial Compactor Gauntlet Bucklers
+                const megaLeftShield = new THREE.Group();
+                megaLeftShield.userData.isMegaPart = true;
+                megaLeftShield.visible = false;
+                parts.leftForearm.add(megaLeftShield);
+
+                const megaRightShield = new THREE.Group();
+                megaRightShield.userData.isMegaPart = true;
+                megaRightShield.visible = false;
+                parts.rightForearm.add(megaRightShield);
+
+                parts.megaBotShields = [megaLeftShield, megaRightShield];
+
+                [-1, 1].forEach(side => {
+                    const sGroup = side === -1 ? megaLeftShield : megaRightShield;
+                    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.32, 2.4, 1.8), matSalvageSteel);
+                    plate.position.set(side * 0.72, -0.2, 0.3);
+                    plate.castShadow = true;
+                    const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.4, 1.6), matSalvageOrange);
+                    jaw.position.set(side * 0.74, -0.2, 1.1);
+                    sGroup.add(plate, jaw);
+                });
+
+                // 3. Dino Mode: Armored Ankylosaur Compactor Carapace & Titan Club
+                const megaDinoArmor = new THREE.Group();
+                megaDinoArmor.userData.isMegaPart = true;
+                megaDinoArmor.visible = false;
+                parts.megaDinoArmor = megaDinoArmor;
+                parts.dinoGroup.add(megaDinoArmor);
+
+                const carapace = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.2, 3.8), matSalvageSteel);
+                carapace.position.set(0, 2.7, -0.3);
+                carapace.castShadow = true;
+                megaDinoArmor.add(carapace);
+
+                // Initialize visibility matching current docked status
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.salvageDocked);
+                if (typeof (window as any).setBotRigMega === 'function') {
+                    (window as any).setBotRigMega(parts, isCurrentMega);
+                }
 }
 
 export default buildSalvage;
