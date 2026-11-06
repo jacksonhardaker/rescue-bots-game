@@ -149,6 +149,12 @@ export const matMegaKneeLens = new THREE.MeshToonMaterial({ color: 0x06b6d4, gra
 export const matMegaShoulderChevron = new THREE.MeshBasicMaterial({ map: texMegaShoulderChevron });
 export const matMegaHullBadge = new THREE.MeshBasicMaterial({ map: texMegaShipHull });
 
+// Optimus Prime Mega Apex Rig & Command Trailer Materials
+export const matMegaTrailerSilver = new THREE.MeshToonMaterial({ color: 0xe2e8f0, gradientMap: toonGrad4 });
+export const matMegaTrailerStripe = new THREE.MeshToonMaterial({ color: 0x2563eb, gradientMap: toonGrad3 });
+export const matEnergonAxeCyan = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
+export const matEnergonAxeGlow = new THREE.MeshBasicMaterial({ color: 0x67e8f9 });
+
 export const matQuickWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
 export const matQuickCyan = new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad4 });
 export const matQuickDark = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
@@ -219,6 +225,7 @@ if (typeof window !== 'undefined') {
         matSalvageLime, matSalvageBlue, matSalvageOrange, matSalvageSteel, matSalvageLightSteel, matSalvageAqua, matAqua, matSalvageRecycle, matSalvageFace,
         matHighTideNavy, matHighTideBlue, matHighTideWhite, matHighTideGold, matHighTideDark, matHighTideCanopy, matHighTideCyanGlow, matHighTideLamp, matHighTideFace, matHighTideChest, matHighTideShoulder,
         matMegaHullWhite, matMegaDeckRed, matMegaCraneYellow, matMegaClawCharcoal, matMegaScreenCyan, matMegaWindowBlue, matMegaKneeGold, matMegaKneeLens, matMegaShoulderChevron, matMegaHullBadge,
+        matMegaTrailerSilver, matMegaTrailerStripe, matEnergonAxeCyan, matEnergonAxeGlow,
         matQuickWhite, matQuickCyan, matQuickDark, matQuickSilver, matQuickFace, matQuickChest, matQuickVisor, matQuickCyanGlow, matQuickLightSteel,
         matMorBotBlack, matMorBotCrimson, matMorBotDarkCrimson, matMorBotDarkSteel, matMorBotSilver, matMorBotRedGlow, matMorBotCore,
         matMoroccoPurple, matMoroccoPurpleGlow, matMoroccoPurpleDark, matMoroccoGold, matMorBotGoldGlow, matMorBotGoldDark, matMorBotCyanVisor,

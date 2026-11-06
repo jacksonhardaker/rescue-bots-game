@@ -21,6 +21,7 @@ export const progression: Record<string, any> = {
     autoSpawnEmergencies: true,
     buddyBotType: 'HEATWAVE',
     highTideDocked: false,
+    optimusDocked: false,
     weatherMode: 'SUNNY'
 };
 
@@ -132,6 +133,9 @@ export function loadProgression(options: Record<string, any> = {}) {
         if (typeof data.highTideDocked === 'boolean' && target.highTideDocked === undefined) {
             target.highTideDocked = data.highTideDocked;
         }
+        if (typeof data.optimusDocked === 'boolean' && target.optimusDocked === undefined) {
+            target.optimusDocked = data.optimusDocked;
+        }
     });
 
     if (Number.isFinite(target.totalEmergenciesResolved) && target.totalEmergenciesResolved >= 0) {
@@ -166,6 +170,9 @@ export function loadProgression(options: Record<string, any> = {}) {
     }
     if (typeof target.highTideDocked === 'boolean') {
         progression.highTideDocked = target.highTideDocked;
+    }
+    if (typeof target.optimusDocked === 'boolean') {
+        progression.optimusDocked = target.optimusDocked;
     }
 
     progression.saveVersion = CURRENT_SAVE_VERSION;
@@ -302,6 +309,7 @@ export function resetCareerProgress(onComplete) {
         progression.collectedCrests = [];
         progression.discoveredAllies = [];
         progression.highTideDocked = false;
+        progression.optimusDocked = false;
         saveProgression();
         if (onComplete) onComplete();
         else window.location.reload();

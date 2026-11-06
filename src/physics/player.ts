@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { player, buddyBot, botRigs, botPhraseCounters } from '../state/gameState.js';
 import { BOT_METADATA, HQ_PARKING_SLOTS } from '../bots/botMeta.js';
-import { applyBotRigMorph, getBotScale, setHighTideRigMega } from '../bots/botRigs.js';
+import { applyBotRigMorph, getBotScale, setHighTideRigMega, setOptimusRigMega } from '../bots/botRigs.js';
 import { sfx } from '../audio/soundFX.js';
 import { triggerNPCSpeech, showToast } from '../ui/dialogs.js';
 import { progression, saveProgression } from '../progression/progression.js';
@@ -16,7 +16,7 @@ import { visitingAutobots } from '../world/allies.js';
 import { beacons } from '../world/emergencies.js';
 import { isNearWater, isPointInWater } from '../world/terrain.js';
 import { spawnEnergonLightningParticles, spawnSparkleGlints } from '../world/emergencies.js';
-import { highTideWorldShip } from '../world/allies.js';
+import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
         export const BOT_CATCHPHRASES = {
             BOULDER: {
@@ -320,6 +320,14 @@ import { morbotBattle } from '../world/morbot.js';
                     "Optimus Prime deployed. Autobots, roll to the rescue!",
                     "Freedom is the right of all sentient beings. Rescue Bots, proceed!"
                 ],
+                DOCK: [
+                    "Autobots, roll out! Super Rig command trailer combined into Apex Mega mode!",
+                    "Apex Battle Rig fully engaged! Energon systems at maximum output!"
+                ],
+                UNDOCK: [
+                    "Trailer decoupled. Returning to agile command mode.",
+                    "Disengaging Super Rig. Autobots, maintain positions!"
+                ],
                 TO_VEHICLE: [
                     "Optimus Prime, transform! Heavy cab truck mode!",
                     "Cab engine engaged! Leading the convoy!"
@@ -531,6 +539,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     vehActionLabel: 'HYDRO CANNON',
                     dinoActionLabel: 'LEVIATHAN CHOMP'
                 };
+            } else if (player.botType === 'OPTIMUS' && progression.optimusDocked) {
+                meta = BOT_METADATA.OPTIMUS_MEGA || meta;
             }
             const isVeh = player.mode === 'VEHICLE';
             const isDino = player.mode === 'DINO';
@@ -574,10 +584,12 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 btnAction.className = `tactile-btn w-20 h-20 sm:w-24 sm:h-24 rounded-3xl border-2 flex flex-col items-center justify-center text-white select-none mb-1.5 action-btn-${botKey} bg-gradient-to-b ${meta.btnActionBg || ''}`;
             }
 
-            // High Tide Megabot Undock Button (Visible only when controlling High Tide in Megabot mode)
+            // Megabot / Super Rig Undock Button
             const btnUndock = document.getElementById('btn-undock');
             if (btnUndock) {
-                if (player.botType === 'HIGHTIDE' && progression.highTideDocked) {
+                const isMegaActive = (player.botType === 'HIGHTIDE' && progression.highTideDocked) ||
+                                     (player.botType === 'OPTIMUS' && progression.optimusDocked);
+                if (isMegaActive) {
                     btnUndock.classList.remove('hidden');
                 } else {
                     btnUndock.classList.add('hidden');
@@ -774,6 +786,15 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 if (highTideWorldShip) highTideWorldShip.visible = true;
             }
 
+            // Optimus Prime Mega Docking Persistence:
+            if (newBotType === 'OPTIMUS') {
+                const isMega = Boolean(progression.optimusDocked);
+                setOptimusRigMega(botRigs['OPTIMUS'], isMega);
+                if (optimusWorldTrailer) optimusWorldTrailer.visible = !isMega;
+            } else if (oldBotType === 'OPTIMUS') {
+                if (optimusWorldTrailer) optimusWorldTrailer.visible = true;
+            }
+
             syncVisitingAutobotsVisibility();
             syncHUDToActiveBot();
             showToast("RESCUE BOTS ROSTER", `${BOT_METADATA[newBotType].name} Deployed!`);
@@ -818,6 +839,15 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     );
                     if (rig.isMega !== shouldBeMega) {
                         setHighTideRigMega(rig, shouldBeMega);
+                    }
+                }
+                if (botKey === 'OPTIMUS') {
+                    const shouldBeMega = Boolean(
+                        (botKey === player.botType && progression.optimusDocked) ||
+                        (botKey === buddyBot.botType && progression.optimusDocked)
+                    );
+                    if (rig.isMega !== shouldBeMega) {
+                        setOptimusRigMega(rig, shouldBeMega);
                     }
                 }
                 if (botKey === player.botType) {
@@ -994,6 +1024,65 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             syncHUDToActiveBot();
         }
 
+        export function dockOptimusMegabot() {
+            if (player.botType !== 'OPTIMUS' || progression.optimusDocked) return;
+            progression.optimusDocked = true;
+            saveProgression();
+
+            sfx.playTransform(true);
+            if (typeof sfx.playRankUp === 'function') sfx.playRankUp();
+            spawnBurstParticles(player.pos.x, player.pos.y + 4.0, player.pos.z, 0xdc2626, 32, 2.2);
+            spawnBurstParticles(player.pos.x, player.pos.y + 2.0, player.pos.z, 0x06b6d4, 28, 2.0);
+
+            if (optimusWorldTrailer) {
+                optimusWorldTrailer.visible = false;
+            }
+
+            const rig = botRigs['OPTIMUS'];
+            if (rig) {
+                setOptimusRigMega(rig, true);
+            }
+
+            showToast("🚚 APEX SUPER RIG ENGAGED!", "Optimus Prime docked with Heavy Command Trailer!");
+            speakBotCatchphrase('OPTIMUS', 'DOCK');
+            syncHUDToActiveBot();
+        }
+
+        export function undockOptimusMegabot() {
+            if (player.botType !== 'OPTIMUS' || !progression.optimusDocked) return;
+            progression.optimusDocked = false;
+            saveProgression();
+
+            sfx.playTransform(false);
+            spawnBurstParticles(player.pos.x, player.pos.y + 2.5, player.pos.z, 0xdc2626, 22, 1.6);
+
+            if (optimusWorldTrailer) {
+                const hqDist = Math.hypot(player.pos.x - (-22), player.pos.z - (-38));
+                if (hqDist < 35.0) {
+                    optimusWorldTrailer.position.set(-22, 0.1, -38);
+                    optimusWorldTrailer.rotation.y = 0;
+                } else {
+                    const trailerAngle = player.heading + Math.PI;
+                    optimusWorldTrailer.position.set(
+                        player.pos.x + Math.sin(trailerAngle) * 14.0,
+                        0.1,
+                        player.pos.z + Math.cos(trailerAngle) * 14.0
+                    );
+                    optimusWorldTrailer.rotation.y = player.heading;
+                }
+                optimusWorldTrailer.visible = true;
+            }
+
+            const rig = botRigs['OPTIMUS'];
+            if (rig) {
+                setOptimusRigMega(rig, false);
+            }
+
+            showToast("🚚 SUPER RIG DISENGAGED", "Optimus Prime decoupled from Command Trailer.");
+            speakBotCatchphrase('OPTIMUS', 'UNDOCK');
+            syncHUDToActiveBot();
+        }
+
         // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot)
         export function triggerTransform() {
             const hasDino = BOT_METADATA[player.botType] && BOT_METADATA[player.botType].dinoName;
@@ -1141,68 +1230,93 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             if (player.botType === 'OPTIMUS') {
+                const isMega = Boolean(progression.optimusDocked);
+                const clearRadius = isMega ? 38.0 : 25.0;
+
                 if (player.mode === 'DINO') {
                     // T-REX DINOBOT MODE: Primal T-Rex Roar & Seismic Ground Stomp!
-                    player.smashTimer = 0.65;
+                    player.smashTimer = isMega ? 0.75 : 0.65;
                     sfx.playDinoRoar('OPTIMUS');
                     sfx.playSmash();
                     spawnBurstParticles(
-                        player.pos.x + Math.sin(player.heading) * 3.8,
+                        player.pos.x + Math.sin(player.heading) * (isMega ? 6.5 : 3.8),
                         player.pos.y + 0.8,
-                        player.pos.z + Math.cos(player.heading) * 3.8,
+                        player.pos.z + Math.cos(player.heading) * (isMega ? 6.5 : 3.8),
                         0xdc2626,
-                        18,
-                        1.8
+                        isMega ? 28 : 18,
+                        isMega ? 2.6 : 1.8
                     );
                     spawnBurstParticles(
-                        player.pos.x + Math.sin(player.heading) * 3.8,
+                        player.pos.x + Math.sin(player.heading) * (isMega ? 6.5 : 3.8),
                         player.pos.y + 0.8,
-                        player.pos.z + Math.cos(player.heading) * 3.8,
+                        player.pos.z + Math.cos(player.heading) * (isMega ? 6.5 : 3.8),
                         0x2563eb,
-                        14,
-                        1.5
+                        isMega ? 24 : 14,
+                        isMega ? 2.2 : 1.5
                     );
                     spawnBurstParticles(
                         player.pos.x,
                         player.pos.y + 0.2,
                         player.pos.z,
                         0xfacc15,
-                        16,
-                        2.0
+                        isMega ? 28 : 16,
+                        isMega ? 2.8 : 2.0
                     );
                     beacons.forEach(beacon => {
                         beacon.nodes.forEach(n => {
-                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 25.0) {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < clearRadius) {
                                 clearHazardNode(beacon, n);
                             }
                         });
                     });
-                    showToast("🦖 PRIMAL T-REX ROAR!", "Optimus Prime unleashes a seismic dinosaur shockwave!");
+                    showToast(
+                        isMega ? "🦖 PRIMAL EARTHQUAKE!" : "🦖 PRIMAL T-REX ROAR!",
+                        isMega ? "Mega Optimus unleashes a devastating seismic titan shockwave!" : "Optimus Prime unleashes a seismic dinosaur shockwave!"
+                    );
                     return;
                 } else if (player.mode === 'VEHICLE') {
-                    player.boostTimer = 1.6;
-                    player.speed = Math.max(player.speed, 36.0);
+                    player.boostTimer = isMega ? 2.4 : 1.6;
+                    player.speed = Math.max(player.speed, isMega ? 46.0 : 36.0);
+                    if (isMega) {
+                        player.waterTimer = 2.2;
+                        sfx.playWaterSpray();
+                    }
                     sfx.playSmash();
                 } else {
-                    player.smashTimer = 0.55;
-                    sfx.playEnergonCollect();
-                    sfx.playBeaconRestore();
+                    player.smashTimer = isMega ? 0.7 : 0.55;
+                    if (isMega) {
+                        sfx.playSmash();
+                        sfx.playEnergonCollect();
+                    } else {
+                        sfx.playEnergonCollect();
+                        sfx.playBeaconRestore();
+                    }
                 }
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
-                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < clearRadius) {
                             clearHazardNode(beacon, n);
                         }
                     });
                 });
                 spawnBurstParticles(
-                    player.pos.x + Math.sin(player.heading) * 3.5,
-                    player.pos.y + 1.2,
-                    player.pos.z + Math.cos(player.heading) * 3.5,
-                    0x38bdf8,
-                    16,
-                    1.6
+                    player.pos.x + Math.sin(player.heading) * (isMega ? 6.0 : 3.5),
+                    player.pos.y + (isMega ? 1.8 : 1.2),
+                    player.pos.z + Math.cos(player.heading) * (isMega ? 6.0 : 3.5),
+                    isMega ? 0x06b6d4 : 0x38bdf8,
+                    isMega ? 28 : 16,
+                    isMega ? 2.4 : 1.6
                 );
+                if (isMega) {
+                    spawnBurstParticles(
+                        player.pos.x + Math.sin(player.heading) * 6.0,
+                        player.pos.y + 1.8,
+                        player.pos.z + Math.cos(player.heading) * 6.0,
+                        0xdc2626,
+                        20,
+                        2.0
+                    );
+                }
                 return;
             }
 
@@ -1448,6 +1562,8 @@ if (typeof window !== 'undefined') {
     window.setPlayerMode = setPlayerMode;
     window.dockHighTideMegabot = dockHighTideMegabot;
     window.undockHighTideMegabot = undockHighTideMegabot;
+    window.dockOptimusMegabot = dockOptimusMegabot;
+    window.undockOptimusMegabot = undockOptimusMegabot;
     window.triggerTransform = triggerTransform;
     window.triggerPrimaryAction = triggerPrimaryAction;
     window.triggerSecondaryAction = triggerSecondaryAction;

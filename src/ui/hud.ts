@@ -2,8 +2,10 @@
 import {
     triggerTransform, triggerPrimaryAction, triggerSecondaryAction,
     triggerDescendAction, toggleSiren, dockHighTideMegabot, undockHighTideMegabot,
+    dockOptimusMegabot, undockOptimusMegabot,
     cycleBuddyBot, switchRescueBot
 } from '../physics/player.js';
+import { player } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { SVG_ICONS } from './icons.js';
 
@@ -38,8 +40,14 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('btn-jump-scan', triggerSecondaryAction);
         bindButton('btn-descend', triggerDescendAction);
         bindButton('btn-siren', toggleSiren);
-        bindButton('btn-dock', dockHighTideMegabot);
-        bindButton('btn-undock', undockHighTideMegabot);
+        bindButton('btn-dock', () => {
+            if (player.botType === 'OPTIMUS') dockOptimusMegabot();
+            else dockHighTideMegabot();
+        });
+        bindButton('btn-undock', () => {
+            if (player.botType === 'OPTIMUS') undockOptimusMegabot();
+            else undockHighTideMegabot();
+        });
 
         // Bind Buddy Bot Cycle Button
         bindButton('btn-buddy-cycle', () => {

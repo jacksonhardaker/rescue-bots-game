@@ -104,6 +104,10 @@ declare global {
   var matMegaKneeLens: any;
   var matMegaShoulderChevron: any;
   var matMegaHullBadge: any;
+  var matMegaTrailerSilver: any;
+  var matMegaTrailerStripe: any;
+  var matEnergonAxeCyan: any;
+  var matEnergonAxeGlow: any;
 
   var matQuickWhite: any;
   var matQuickCyan: any;
@@ -146,6 +150,14 @@ declare global {
   var registerCullableObject: any;
   var getSurfaceHeight: any;
   var getTerrainHeight: any;
+  var highTideWorldShip: any;
+  var optimusWorldTrailer: any;
+  var setHighTideRigMega: any;
+  var setOptimusRigMega: any;
+  var dockHighTideMegabot: any;
+  var undockHighTideMegabot: any;
+  var dockOptimusMegabot: any;
+  var undockOptimusMegabot: any;
 }
 
 declare module 'three' {

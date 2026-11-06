@@ -16,10 +16,10 @@ import { visitingAutobots } from '../world/allies.js';
 import { openTacticalMap, closeTacticalMap } from './tacticalMap.js';
 import { closeUtilityMenu } from '../physics/movement.js';
 import { buildHazardSites } from '../world/emergencies.js';
-import { switchRescueBot, unlockAndSwitchBot, triggerTransform, triggerPrimaryAction, triggerSecondaryAction, triggerDescendAction, toggleSiren, undockHighTideMegabot, dockHighTideMegabot, cycleBuddyBot } from '../physics/player.js';
+import { switchRescueBot, unlockAndSwitchBot, triggerTransform, triggerPrimaryAction, triggerSecondaryAction, triggerDescendAction, toggleSiren, undockHighTideMegabot, dockHighTideMegabot, undockOptimusMegabot, dockOptimusMegabot, cycleBuddyBot } from '../physics/player.js';
 import { toggleBumblebeeMorph } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
-import { highTideWorldShip } from '../world/allies.js';
+import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
 let activeRebindAction = null;
 
         export function renderSettingsControlsList() {
@@ -221,6 +221,7 @@ function _localReset() {
                 progression.collectedCrests = [];
                 progression.discoveredAllies = [];
                 progression.highTideDocked = false;
+                progression.optimusDocked = false;
                 saveProgression();
                 showToast('CAREER RESET', 'Griffin Rock progress reset to Cadet Bot.');
                 setTimeout(() => window.location.reload(), 800);
@@ -455,6 +456,12 @@ function _localReset() {
                         undockHighTideMegabot();
                     } else if (highTideWorldShip && Math.hypot(player.pos.x - highTideWorldShip.position.x, player.pos.z - highTideWorldShip.position.z) < 34.0) {
                         dockHighTideMegabot();
+                    }
+                } else if (player.botType === 'OPTIMUS') {
+                    if (progression.optimusDocked) {
+                        undockOptimusMegabot();
+                    } else if (optimusWorldTrailer && Math.hypot(player.pos.x - optimusWorldTrailer.position.x, player.pos.z - optimusWorldTrailer.position.z) < 34.0) {
+                        dockOptimusMegabot();
                     }
                 }
             }

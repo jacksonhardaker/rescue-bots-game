@@ -7,7 +7,10 @@ export function buildOptimus(parts, materials = {}, textures = {}) {
         toonGrad3, toonGrad4, toonGradGlossy,
         matChrome, matDarkSteel, matTire, matCabGlass,
         matVisorCyan, matVisorGold, matSirenRed, matSirenBlue,
-        matEmblem, matHazardMat, matGrille, matInkOutline
+        matEmblem, matHazardMat, matGrille, matInkOutline,
+        matOptimusRed, matOptimusBlue, matOptimusGold, matOptimusFace,
+        matMegaTrailerSilver, matMegaTrailerStripe,
+        matEnergonAxeCyan, matEnergonAxeGlow
     } = ((typeof window !== 'undefined' ? window : {}) as any);
 
     // TV Show Optimus Prime: Supreme Commander Heavy Cab-over Semi-Truck
@@ -75,6 +78,7 @@ export function buildOptimus(parts, materials = {}, textures = {}) {
 
                 // Back: Dual Chrome Smokestacks & Fifth Wheel
                 const fifthWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.95, 0.35, 12), matChrome);
+                fifthWheel.userData.isStandardOnlyPart = true;
                 parts.backAttachment.add(fifthWheel);
 
                 [-1.25, 1.25].forEach(sx => {
@@ -399,6 +403,224 @@ export function buildOptimus(parts, materials = {}, textures = {}) {
                     rearClaw.position.set(0, -0.15, -1.65);
                     talonsGroup.add(rearClaw);
                 });
+
+                // =============================================================
+                // MEGA BOT: OPTIMUS PRIME APEX SUPER RIG & COMMAND TRAILER
+                // =============================================================
+
+                // 1. Bot Mode: Heavy Back Battle Platform with Over-Shoulder Water Cannons
+                const megaBackPack = new THREE.Group();
+                megaBackPack.userData.isMegaPart = true;
+                megaBackPack.visible = false;
+                parts.megaBackPack = megaBackPack;
+                parts.backAttachment.add(megaBackPack);
+
+                const bpBase = new THREE.Mesh(new THREE.BoxGeometry(3.6, 3.4, 1.8), matMegaTrailerSilver);
+                bpBase.position.set(0, 0.2, 0.2);
+                bpBase.castShadow = true;
+                megaBackPack.add(bpBase);
+
+                const bpPlate = new THREE.Mesh(new THREE.BoxGeometry(3.8, 1.8, 0.4), matOptimusRed);
+                bpPlate.position.set(0, 0.2, 1.05);
+                const bpStar = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 0.2), matOptimusGold);
+                bpStar.position.set(0, 0.2, 1.26);
+                bpStar.userData.noOutline = true;
+                megaBackPack.add(bpPlate, bpStar);
+
+                // Twin Over-Shoulder Heavy Deluge Cannons
+                [-1.55, 1.55].forEach(cx => {
+                    const cMount = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 1.2), matDarkSteel);
+                    cMount.position.set(cx, 1.6, -0.1);
+                    const cBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.38, 3.6, 12).rotateX(Math.PI / 2), matChrome);
+                    cBarrel.position.set(cx, 2.1, 1.2);
+                    cBarrel.castShadow = true;
+                    const cMuzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.34, 0.6, 12).rotateX(Math.PI / 2), matDarkSteel);
+                    cMuzzle.position.set(cx, 2.1, 3.1);
+                    const cEmitter = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.15, 12).rotateX(Math.PI / 2), matEnergonAxeCyan);
+                    cEmitter.position.set(cx, 2.1, 3.38);
+                    cEmitter.userData.noOutline = true;
+                    megaBackPack.add(cMount, cBarrel, cMuzzle, cEmitter);
+
+                    // Side Stabilizer Wings
+                    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.6, 1.4), matMegaTrailerStripe);
+                    wing.position.set(cx * 1.25, 0.15, -0.2);
+                    megaBackPack.add(wing);
+                });
+
+                // 2. Bot Mode Weapon: Glowing Cyan Energon Battle Axe (Mounted on Right Forearm)
+                const megaAxe = new THREE.Group();
+                megaAxe.userData.isMegaPart = true;
+                megaAxe.visible = false;
+                parts.megaAxe = megaAxe;
+                parts.rightForearm.add(megaAxe);
+
+                const axeSocket = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.1, 1.1), matDarkSteel);
+                axeSocket.position.set(0, -0.65, 0.6);
+                const axeCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.6, 10), matChrome);
+                axeCollar.position.set(0, -0.65, 1.1);
+                axeCollar.rotation.x = Math.PI / 2;
+
+                const axeCore = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.8, 2.2), matEnergonAxeCyan);
+                axeCore.position.set(0, -0.65, 2.1);
+                axeCore.userData.noOutline = true;
+
+                const axeEdge = new THREE.Mesh(new THREE.BoxGeometry(0.12, 3.3, 2.6), matEnergonAxeGlow);
+                axeEdge.position.set(0, -0.65, 2.2);
+                axeEdge.userData.noOutline = true;
+
+                const axeTopSpike = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.9, 4).rotateX(Math.PI / 2), matChrome);
+                axeTopSpike.position.set(0, -0.65, 3.7);
+
+                megaAxe.add(axeSocket, axeCollar, axeCore, axeEdge, axeTopSpike);
+
+                // 3. Bot Mode Weapon: Command Riot Shield (Mounted on Left Forearm)
+                const megaShield = new THREE.Group();
+                megaShield.userData.isMegaPart = true;
+                megaShield.visible = false;
+                parts.megaShield = megaShield;
+                parts.leftForearm.add(megaShield);
+
+                const shieldMount = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.6, 1.1), matDarkSteel);
+                shieldMount.position.set(0, -0.5, 0.5);
+                const shieldPlate = new THREE.Mesh(new THREE.BoxGeometry(0.24, 3.8, 2.4), matMegaTrailerSilver);
+                shieldPlate.position.set(-0.65, -0.5, 0.6);
+                shieldPlate.castShadow = true;
+
+                const shieldChevron = new THREE.Mesh(new THREE.BoxGeometry(0.28, 3.2, 0.8), matOptimusRed);
+                shieldChevron.position.set(-0.67, -0.5, 0.6);
+
+                const shieldViewport = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.45, 1.4), matEnergonAxeCyan);
+                shieldViewport.position.set(-0.68, 0.65, 0.6);
+                shieldViewport.userData.noOutline = true;
+
+                const shieldInsignia = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.8, 0.8), matOptimusGold);
+                shieldInsignia.position.set(-0.69, -0.65, 0.6);
+                shieldInsignia.userData.noOutline = true;
+
+                megaShield.add(shieldMount, shieldPlate, shieldChevron, shieldViewport, shieldInsignia);
+
+                // 4. Vehicle Mode: Elongated 14.5m Command Trailer with Dual Tandem Rear Axles & Roof Deluge Turrets
+                const megaTrailer = new THREE.Group();
+                megaTrailer.userData.isMegaPart = true;
+                megaTrailer.visible = false;
+                parts.megaTrailer = megaTrailer;
+                parts.backAttachment.add(megaTrailer);
+
+                // Main Trailer Hull Box
+                const trHull = new THREE.Mesh(new THREE.BoxGeometry(3.2, 3.6, 14.5), matMegaTrailerSilver);
+                trHull.position.set(0, 0.35, -7.25);
+                trHull.castShadow = true;
+                megaTrailer.add(trHull);
+
+                // Flank Blue Racing Stripes & Underbody Hazard Skirts
+                [-1.62, 1.62].forEach(sx => {
+                    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.72, 14.0), matMegaTrailerStripe);
+                    stripe.position.set(sx, 0.35, -7.25);
+                    const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 13.8), matDarkSteel);
+                    skirt.position.set(sx, -1.25, -7.25);
+                    const starDecal = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.1, 1.1), matOptimusGold);
+                    starDecal.position.set(sx * 1.01, 0.35, -4.5);
+                    starDecal.userData.noOutline = true;
+                    megaTrailer.add(stripe, skirt, starDecal);
+                });
+
+                // Dual Heavy Roof Deluge Water Cannon Turrets
+                [-2.8, -8.2].forEach(tz => {
+                    const tBase = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.75, 0.35, 14), matDarkSteel);
+                    tBase.position.set(0, 2.25, tz);
+                    const tBoom = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.45, 1.6), matMegaTrailerSilver);
+                    tBoom.position.set(0, 2.55, tz + 0.3);
+                    [-0.22, 0.22].forEach(nx => {
+                        const tNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 1.8, 10).rotateX(Math.PI / 2), matChrome);
+                        tNozzle.position.set(nx, 2.55, tz + 1.2);
+                        megaTrailer.add(tNozzle);
+                    });
+                    megaTrailer.add(tBase, tBoom);
+                });
+
+                // Rear Bumper & Dual Taillights
+                const trBumper = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.48, 0.4), matDarkSteel);
+                trBumper.position.set(0, -1.2, -14.55);
+                megaTrailer.add(trBumper);
+                [-1.15, 1.15].forEach(tx => {
+                    const tailL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.22, 0.15), matSirenRed);
+                    tailL.position.set(tx, -1.2, -14.76);
+                    tailL.userData.noOutline = true;
+                    megaTrailer.add(tailL);
+                });
+
+                // 4 Heavy Tandem Rear Wheels (Functional Wheel Assemblies in parts.wheels!)
+                [-10.2, -12.6].forEach(wz => {
+                    [-1.68, 1.68].forEach(wx => {
+                        const trWheel = createWheelAssembly(0.82, 0.55);
+                        trWheel.position.set(wx, -1.18, wz);
+                        megaTrailer.add(trWheel);
+                        parts.wheels.push(trWheel);
+                    });
+                });
+
+                // 5. Dino Mode: Heavy Dorsal Scute Armor & Neck Assault Cannons
+                const megaDinoArmor = new THREE.Group();
+                megaDinoArmor.userData.isMegaPart = true;
+                megaDinoArmor.visible = false;
+                parts.megaDinoArmor = megaDinoArmor;
+                parts.dinoGroup.add(megaDinoArmor);
+
+                // 4 Folded Trailer Scute Plates along Spine
+                for (let s = 0; s < 4; s++) {
+                    const scute = new THREE.Mesh(new THREE.BoxGeometry(0.44, 1.15 - s * 0.12, 1.25).rotateX(0.35), matMegaTrailerSilver);
+                    scute.position.set(0, 3.65 - s * 0.1, 0.8 - s * 1.05);
+                    scute.castShadow = true;
+                    const scuteCrest = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.35, 1.05).rotateX(0.35), matOptimusRed);
+                    scuteCrest.position.set(0, 3.9 - s * 0.1, 0.8 - s * 1.05);
+                    megaDinoArmor.add(scute, scuteCrest);
+                }
+
+                // Twin Flanking Neck Assault Cannons
+                [-1.65, 1.65].forEach(cx => {
+                    const cannonMount = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.68, 1.2), matDarkSteel);
+                    cannonMount.position.set(cx, 3.35, 0.85);
+                    const cannonPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 2.6, 12).rotateX(Math.PI / 2), matChrome);
+                    cannonPipe.position.set(cx, 3.35, 2.15);
+                    cannonPipe.castShadow = true;
+                    const cannonTip = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.24, 0.5, 12).rotateX(Math.PI / 2), matOptimusRed);
+                    cannonTip.position.set(cx, 3.35, 3.45);
+                    megaDinoArmor.add(cannonMount, cannonPipe, cannonTip);
+                });
+
+                // 6. Dino Mode: Spiked Titanium Seismic Mace Tail Tip
+                const megaDinoTail = new THREE.Group();
+                megaDinoTail.userData.isMegaPart = true;
+                megaDinoTail.visible = false;
+                parts.megaDinoTail = megaDinoTail;
+                prevOptTail.add(megaDinoTail);
+
+                const maceCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.65, 0.8, 10).rotateX(Math.PI / 2), matMegaTrailerSilver);
+                maceCollar.position.set(0, 0, -1.05);
+                const maceBall = new THREE.Mesh(new THREE.SphereGeometry(0.85, 12, 10), matDarkSteel);
+                maceBall.position.set(0, 0, -1.85);
+                maceBall.castShadow = true;
+
+                const maceCore = new THREE.Mesh(new THREE.SphereGeometry(0.48, 8, 8), matEnergonAxeCyan);
+                maceCore.position.set(0, 0, -1.85);
+                maceCore.userData.noOutline = true;
+
+                megaDinoTail.add(maceCollar, maceBall, maceCore);
+
+                // 6 Spikes radiating out around the mace
+                for (let i = 0; i < 6; i++) {
+                    const ang = (i / 6) * Math.PI * 2;
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.72, 5).rotateZ(ang + Math.PI / 2), matChrome);
+                    spike.position.set(Math.cos(ang) * 0.95, Math.sin(ang) * 0.95, -1.85);
+                    spike.castShadow = true;
+                    megaDinoTail.add(spike);
+                }
+
+                // Initialize rig part visibility to match current docked status
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.optimusDocked);
+                if (typeof (window as any).setOptimusRigMega === 'function') {
+                    (window as any).setOptimusRigMega(parts, isCurrentMega);
+                }
 }
 
 export default buildOptimus;

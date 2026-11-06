@@ -20,10 +20,12 @@ export const BOT_SCALES = {
     CHASE: 1.0,
     BLADES: 1.0,
     OPTIMUS: 1.25,
+    OPTIMUS_MEGA: 3.5,
     BUMBLEBEE: 1.0,
     BLURR: 1.0,
     SALVAGE: 1.0,
     HIGHTIDE: 1.30,
+    HIGHTIDE_MEGA: 3.85,
     QUICKSHADOW: 1.0
 };
 
@@ -31,7 +33,25 @@ export function getBotScale(botType) {
     if (botType === "HIGHTIDE" && typeof window !== "undefined" && window.progression && window.progression.highTideDocked) {
         return 3.85;
     }
+    if (botType === "OPTIMUS" && typeof window !== "undefined" && window.progression && window.progression.optimusDocked) {
+        return 3.5;
+    }
     return BOT_SCALES[botType] || 1.0;
+}
+
+export function setOptimusRigMega(rig, isMega) {
+    if (!rig || rig.botType !== 'OPTIMUS') return;
+    rig.isMega = Boolean(isMega);
+    const scale = rig.isMega ? 3.5 : 1.25;
+    rig.root.scale.setScalar(scale);
+    rig.root.traverse(child => {
+        if (child.userData && child.userData.isStandardPart !== undefined) {
+            child.visible = !rig.isMega;
+        }
+        if (child.userData && child.userData.isMegaPart !== undefined) {
+            child.visible = rig.isMega;
+        }
+    });
 }
 
 export function setHighTideRigMega(rig, isMega) {
@@ -133,7 +153,7 @@ export function buildRescueBotModel(botType) {
 
 export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0) {
             // Apply mode-dependent ground elevation so the bot's ground contact surface stays flush on terrain
-            const bKey = (rig.botType === 'HIGHTIDE' && rig.isMega) ? 'HIGHTIDE_MEGA' : rig.botType;
+            const bKey = (rig.botType === 'HIGHTIDE' && rig.isMega) ? 'HIGHTIDE_MEGA' : (rig.botType === 'OPTIMUS' && rig.isMega) ? 'OPTIMUS_MEGA' : rig.botType;
             const gOffsets = BOT_GROUND_OFFSETS[bKey] || { bot: 0, veh: 0, dino: 0 };
             const groundLiftY = gOffsets.bot * (1 - m - d) + gOffsets.veh * m + gOffsets.dino * d;
             if (rig.chassis) {
@@ -347,12 +367,21 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 rig.backAttachment.rotation.x = -0.35 * (1 - m - d);
                 rig.backAttachment.scale.setScalar(THREE.MathUtils.lerp(1.0, 0.45, d));
             } else if (rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') {
-                rig.backAttachment.position.set(
-                    0,
-                    3.85 * (1 - m - d) + 1.65 * m + 2.05 * d,
-                    -1.15 * (1 - m - d) - 1.25 * m - 0.45 * d
-                );
-                rig.backAttachment.rotation.x = 0;
+                if (rig.botType === 'OPTIMUS' && rig.isMega) {
+                    rig.backAttachment.position.set(
+                        0,
+                        3.85 * (1 - m - d) + 1.45 * m + 2.35 * d,
+                        -1.15 * (1 - m - d) - 7.5 * m - 0.6 * d
+                    );
+                    rig.backAttachment.rotation.x = 0;
+                } else {
+                    rig.backAttachment.position.set(
+                        0,
+                        3.85 * (1 - m - d) + 1.65 * m + 2.05 * d,
+                        -1.15 * (1 - m - d) - 1.25 * m - 0.45 * d
+                    );
+                    rig.backAttachment.rotation.x = 0;
+                }
             } else if (rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') {
                 rig.backAttachment.position.set(
                     0,
@@ -773,6 +802,15 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 rig.lightbar.redPod.scale.setScalar(flash ? highScale : lowScale);
                 rig.lightbar.bluePod.scale.setScalar(!flash ? highScale : lowScale);
             }
+
+            if (rig.botType === 'OPTIMUS' && rig.isMega) {
+                if (rig.megaAxe) rig.megaAxe.visible = Boolean(rig.isMega) && (m < 0.2 && d < 0.2);
+                if (rig.megaShield) rig.megaShield.visible = Boolean(rig.isMega) && (m < 0.2 && d < 0.2);
+                if (rig.megaBackPack) rig.megaBackPack.visible = Boolean(rig.isMega) && (m < 0.5 && d < 0.5);
+                if (rig.megaTrailer) rig.megaTrailer.visible = Boolean(rig.isMega) && m > 0.05;
+                if (rig.megaDinoArmor) rig.megaDinoArmor.visible = Boolean(rig.isMega) && d > 0.05;
+                if (rig.megaDinoTail) rig.megaDinoTail.visible = Boolean(rig.isMega) && d > 0.05;
+            }
         }
 
 export let botRigs = null;
@@ -803,6 +841,7 @@ if (typeof window !== 'undefined') {
         buildRescueBotModel,
         applyBotRigMorph,
         setHighTideRigMega,
+        setOptimusRigMega,
         getBotScale
     });
 }

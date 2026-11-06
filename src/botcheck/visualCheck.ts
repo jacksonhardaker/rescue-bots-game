@@ -1,12 +1,12 @@
 // Visual Check Studio for Ground Clearance, Morph Inspection & TV-Show Proportions
 import * as THREE from 'three';
 import { renderer } from '../rendering/scene.js';
-import { buildRescueBotModel, applyBotRigMorph, setHighTideRigMega } from '../bots/botRigs.js';
+import { buildRescueBotModel, applyBotRigMorph, setHighTideRigMega, setOptimusRigMega } from '../bots/botRigs.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
 
         export function startBotCheck() {
             const params = new URLSearchParams(location.search);
-            const BOT_IDS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'HIGHTIDE_MEGA', 'QUICKSHADOW'];
+            const BOT_IDS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'OPTIMUS_MEGA', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'HIGHTIDE_MEGA', 'QUICKSHADOW'];
             const MODES = ['bot', 'vehicle', 'dino'];
 
             // Hide every game HUD element; keep only the WebGL canvas
@@ -59,8 +59,9 @@ import { BOT_METADATA } from '../bots/botMeta.js';
 
             // --- Build fresh rigs: one per (bot, mode) cell ---
             function makeRig(id) {
-                const rig = buildRescueBotModel(id === 'HIGHTIDE_MEGA' ? 'HIGHTIDE' : id);
+                const rig = buildRescueBotModel(id === 'HIGHTIDE_MEGA' ? 'HIGHTIDE' : (id === 'OPTIMUS_MEGA' ? 'OPTIMUS' : id));
                 if (rig.botType === 'HIGHTIDE') setHighTideRigMega(rig, id === 'HIGHTIDE_MEGA');
+                if (rig.botType === 'OPTIMUS') setOptimusRigMega(rig, id === 'OPTIMUS_MEGA');
                 rig.root.traverse(o => { if (o.isMesh && !o.userData.isOutline) o.castShadow = true; });
                 return rig;
             }
@@ -72,7 +73,7 @@ import { BOT_METADATA } from '../bots/botMeta.js';
             // Grid layout: rows = bots, columns = modes. Mega row gets extra room.
             let rowZ = 0;
             BOT_IDS.forEach(id => {
-                const isMega = id === 'HIGHTIDE_MEGA';
+                const isMega = id === 'HIGHTIDE_MEGA' || id === 'OPTIMUS_MEGA';
                 const colGap = isMega ? 58 : 16;
                 const rowGap = isMega ? 62 : 16;
                 rowZ += rowGap / 2;
@@ -122,7 +123,7 @@ import { BOT_METADATA } from '../bots/botMeta.js';
                 <div data-focus>
                     <label style="display:block;margin-bottom:6px;">Bot
                         <select data-k="bot" style="width:100%;color:#0f172a;border-radius:6px;padding:3px;">
-                            ${BOT_IDS.map(b => `<option value="${b}">${b === 'HIGHTIDE_MEGA' ? 'HIGH TIDE (MEGABOT)' : b}</option>`).join('')}
+                            ${BOT_IDS.map(b => `<option value="${b}">${b === 'HIGHTIDE_MEGA' ? 'HIGH TIDE (MEGABOT)' : (b === 'OPTIMUS_MEGA' ? 'OPTIMUS PRIME (MEGA)' : b)}</option>`).join('')}
                         </select></label>
                     <label style="display:block;margin-bottom:6px;">Target mode
                         <select data-k="mode" style="width:100%;color:#0f172a;border-radius:6px;padding:3px;">
@@ -260,7 +261,7 @@ import { BOT_METADATA } from '../bots/botMeta.js';
                     c.label.style.left = ((_v.x + 1) / 2 * window.innerWidth) + 'px';
                     c.label.style.top = ((1 - _v.y) / 2 * window.innerHeight) + 'px';
                     const modeName = state.view === 'grid' ? c.mode : `${state.mode} ${state.morph.toFixed(2)}`;
-                    c.label.textContent = `${c.id === 'HIGHTIDE_MEGA' ? 'MEGA HIGH TIDE' : c.id} · ${modeName}${c._flag ? ' ' + c._flag : ''}`;
+                    c.label.textContent = `${c.id === 'HIGHTIDE_MEGA' ? 'MEGA HIGH TIDE' : (c.id === 'OPTIMUS_MEGA' ? 'MEGA OPTIMUS' : c.id)} · ${modeName}${c._flag ? ' ' + c._flag : ''}`;
                     c.label.style.background = c._flag ? 'rgba(220,38,38,.9)' : 'rgba(15,23,42,.78)';
                 });
 

@@ -84,6 +84,23 @@ export const BOT_METADATA = {
         dinoActionIcon: 'T_REX_ROAR',
         dinoActionLabel: 'T-REX ROAR'
     },
+    OPTIMUS_MEGA: {
+        name: 'OPTIMUS PRIME (MEGA)',
+        role: 'Supreme Commander Apex Rig',
+        scale: 3.5,
+        voicePitch: 0.70,
+        vehName: 'SUPER RIG TRANSPORTER',
+        dinoName: 'MEGA T-REX TITAN',
+        colorClass: 'text-red-400',
+        dotClass: 'bg-red-600',
+        btnActionBg: 'from-blue-600 via-red-600 to-blue-900 border-red-300',
+        botActionIcon: 'MATRIX_PULSE',
+        botActionLabel: 'APEX ENERGON AXE',
+        vehActionIcon: 'CAB_BOOST',
+        vehActionLabel: 'MEGA WATER CANNON',
+        dinoActionIcon: 'T_REX_ROAR',
+        dinoActionLabel: 'PRIMAL EARTHQUAKE'
+    },
     BUMBLEBEE: {
         name: 'BUMBLEBEE',
         role: 'Autobot Scout & Dinobot Ally',
@@ -181,6 +198,7 @@ export const BOT_GROUND_OFFSETS = {
     CHASE:         { bot: 0.40, veh: 0.00, dino: 0.50 },
     BLADES:        { bot: 1.28, veh: 0.00, dino: 0.84 },
     OPTIMUS:       { bot: 0.552, veh: 0.544, dino: 0.648 },
+    OPTIMUS_MEGA:  { bot: 0.552, veh: 0.548, dino: 0.648 },
     BUMBLEBEE:     { bot: 0.41, veh: 0.58, dino: 0.51 },
     BLURR:         { bot: 0.73, veh: 0.63, dino: 0.83 },
     SALVAGE:       { bot: 0.46, veh: 0.15, dino: 0.56 },
