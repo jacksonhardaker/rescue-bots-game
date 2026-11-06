@@ -1300,18 +1300,18 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     });
                 });
                 spawnBurstParticles(
-                    player.pos.x + Math.sin(player.heading) * (isMega ? 6.0 : 3.5),
-                    player.pos.y + (isMega ? 1.8 : 1.2),
-                    player.pos.z + Math.cos(player.heading) * (isMega ? 6.0 : 3.5),
+                    player.pos.x + Math.sin(player.heading) * (isMega ? 4.5 : 3.5),
+                    player.pos.y + (isMega ? 1.5 : 1.2),
+                    player.pos.z + Math.cos(player.heading) * (isMega ? 4.5 : 3.5),
                     isMega ? 0x06b6d4 : 0x38bdf8,
                     isMega ? 28 : 16,
-                    isMega ? 2.4 : 1.6
+                    isMega ? 2.2 : 1.6
                 );
                 if (isMega) {
                     spawnBurstParticles(
-                        player.pos.x + Math.sin(player.heading) * 6.0,
-                        player.pos.y + 1.8,
-                        player.pos.z + Math.cos(player.heading) * 6.0,
+                        player.pos.x + Math.sin(player.heading) * 4.5,
+                        player.pos.y + 1.5,
+                        player.pos.z + Math.cos(player.heading) * 4.5,
                         0xdc2626,
                         20,
                         2.0

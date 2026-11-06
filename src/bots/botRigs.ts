@@ -21,7 +21,7 @@ export const BOT_SCALES = {
     CHASE: 1.0,
     BLADES: 1.0,
     OPTIMUS: 1.25,
-    OPTIMUS_MEGA: 3.5,
+    OPTIMUS_MEGA: 1.65,
     BUMBLEBEE: 1.0,
     BLURR: 1.0,
     SALVAGE: 1.0,
@@ -36,7 +36,7 @@ export function getBotScale(botType) {
     }
     if (botType === "OPTIMUS" && typeof window !== "undefined" && window.progression && window.progression.optimusDocked) {
         const isVeh = (typeof player !== 'undefined' && player && player.botType === 'OPTIMUS' && (player.mode === 'VEHICLE' || player.morph > 0.5));
-        return isVeh ? 1.25 : 3.5;
+        return isVeh ? 1.25 : 1.65;
     }
     return BOT_SCALES[botType] || 1.0;
 }
@@ -44,7 +44,7 @@ export function getBotScale(botType) {
 export function setOptimusRigMega(rig, isMega) {
     if (!rig || rig.botType !== 'OPTIMUS') return;
     rig.isMega = Boolean(isMega);
-    const scale = rig.isMega ? 3.5 : 1.25;
+    const scale = rig.isMega ? 1.65 : 1.25;
     rig.root.scale.setScalar(scale);
     rig.root.traverse(child => {
         if (child.userData && child.userData.isStandardPart !== undefined) {
@@ -162,10 +162,10 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 rig.chassis.position.y = groundLiftY;
             }
 
-            // Dynamic Optimus scale: normal semi scale (1.25) in vehicle mode (+ trailer); Mega scale (3.5) in bot and dino modes
+            // Dynamic Optimus scale: normal semi scale (1.25) in vehicle mode (+ trailer); Mega scale (1.65) in bot and dino modes (+32%, well under 50% limit)
             if (rig.botType === 'OPTIMUS') {
                 if (rig.isMega) {
-                    const targetScale = THREE.MathUtils.lerp(3.5, 1.25, m);
+                    const targetScale = THREE.MathUtils.lerp(1.65, 1.25, m);
                     rig.root.scale.setScalar(targetScale);
                 } else {
                     rig.root.scale.setScalar(1.25);

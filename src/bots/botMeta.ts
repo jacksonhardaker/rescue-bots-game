@@ -87,7 +87,7 @@ export const BOT_METADATA = {
     OPTIMUS_MEGA: {
         name: 'OPTIMUS PRIME (MEGA)',
         role: 'Supreme Commander Apex Rig',
-        scale: 3.5,
+        scale: 1.65,
         voicePitch: 0.70,
         vehName: 'SUPER RIG TRANSPORTER',
         dinoName: 'MEGA T-REX TITAN',
