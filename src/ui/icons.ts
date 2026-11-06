@@ -51,6 +51,56 @@ export const SVG_ICONS = {
                 <path d="M1 13V19" stroke="#f97316" stroke-width="2" stroke-linecap="round"/>
                 <path d="M8 26H24M11 22V26M21 22V26" stroke="#e2e8f0" stroke-width="1.8" stroke-linecap="round"/>
             </svg>`,
+            OPTIMUS: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="10" width="22" height="14" rx="2" fill="#ef4444" stroke="#991b1b" stroke-width="1.2"/>
+                <rect x="7" y="12" width="7" height="5" rx="1" fill="#38bdf8"/>
+                <rect x="18" y="12" width="7" height="5" rx="1" fill="#38bdf8"/>
+                <rect x="11" y="18" width="10" height="5" fill="#cbd5e1" stroke="#475569" stroke-width="1"/>
+                <rect x="3" y="6" width="2" height="10" fill="#cbd5e1"/>
+                <rect x="27" y="6" width="2" height="10" fill="#cbd5e1"/>
+                <circle cx="9" cy="25" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+                <circle cx="23" cy="25" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+            </svg>`,
+            BUMBLEBEE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 21L7 13C8 11 10 10 12 10H20C22 10 24 11 25 13L28 21V25H4V21Z" fill="#facc15" stroke="#ca8a04" stroke-width="1.2"/>
+                <rect x="14" y="10" width="4" height="15" fill="#0f172a"/>
+                <path d="M10 12L8 18H13L13 12H10Z" fill="#38bdf8"/>
+                <path d="M22 12L24 18H19L19 12H22Z" fill="#38bdf8"/>
+                <circle cx="8" cy="25" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+                <circle cx="24" cy="25" r="2.8" fill="#0f172a" stroke="#cbd5e1" stroke-width="1.2"/>
+            </svg>`,
+            BLURR: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 23L7 14H25L30 23V26H2V23Z" fill="#7c3aed" stroke="#581c87" stroke-width="1.2"/>
+                <path d="M11 15L16 11L21 15V22H11V15Z" fill="#38bdf8"/>
+                <rect x="14" y="11" width="4" height="15" fill="#f8fafc"/>
+                <rect x="6" y="9" width="20" height="2" fill="#0f172a"/>
+                <circle cx="7" cy="25" r="2.8" fill="#0f172a" stroke="#22c55e" stroke-width="1.4"/>
+                <circle cx="25" cy="25" r="2.8" fill="#0f172a" stroke="#22c55e" stroke-width="1.4"/>
+            </svg>`,
+            SALVAGE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="10" width="24" height="15" rx="2" fill="#1d4ed8" stroke="#1e3a8a" stroke-width="1.2"/>
+                <rect x="6" y="8" width="20" height="10" rx="1.5" fill="#cbf827" stroke="#84cc16" stroke-width="1.2"/>
+                <rect x="9" y="10" width="6" height="5" rx="1" fill="#38bdf8"/>
+                <rect x="17" y="10" width="6" height="5" rx="1" fill="#38bdf8"/>
+                <text x="16" y="21" font-size="7" font-weight="bold" fill="#15803d" text-anchor="middle">♻</text>
+                <circle cx="8" cy="25" r="3" fill="#0f172a" stroke="#94a3b8" stroke-width="1.2"/>
+                <circle cx="24" cy="25" r="3" fill="#0f172a" stroke="#94a3b8" stroke-width="1.2"/>
+            </svg>`,
+            HIGHTIDE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 17C4 17 8 13 16 13C24 13 28 17 28 17L27 22H5L4 17Z" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+                <rect x="13" y="8" width="6" height="6" rx="1" fill="#f8fafc"/>
+                <rect x="15" y="4" width="2" height="4" fill="#38bdf8"/>
+                <circle cx="16" cy="11" r="1.5" fill="#0284c7"/>
+                <path d="M2 19L5 24H27L30 19" stroke="#38bdf8" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>`,
+            QUICKSHADOW: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 22L7 14L12 11H20L25 14L28 22H4Z" fill="#f8fafc" stroke="#38bdf8" stroke-width="1.2"/>
+                <path d="M9 14L13 12H19L23 14H9Z" fill="#0f172a"/>
+                <rect x="25" y="10" width="2" height="5" fill="#0f172a"/>
+                <line x1="24" y1="10" x2="28" y2="10" stroke="#0284c7" stroke-width="1.5"/>
+                <circle cx="8" cy="22" r="3" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+                <circle cx="24" cy="22" r="3" fill="#0f172a" stroke="#38bdf8" stroke-width="1.2"/>
+            </svg>`,
             BUDDY: `<svg viewBox="0 0 24 24" width="14" height="14" style="width:14px;height:14px;display:inline-block;" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 11l2 2a2.8 2.8 0 004 0 2.8 2.8 0 000-4l-3-3a3 3 0 00-4.2 0L12 9"/>
                 <path d="M8 13l-2-2a2.8 2.8 0 00-4 0 2.8 2.8 0 000 4l3 3a3 3 0 004.2 0L12 15"/>

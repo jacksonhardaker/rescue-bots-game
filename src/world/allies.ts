@@ -22,6 +22,7 @@ import { syncProgressionHUD } from '../progression/progression.js';
 import { spawnSparkleGlints } from './emergencies.js';
 import { updateBotRosterUI, syncHUDToActiveBot } from '../physics/player.js';
 import { texHelipad } from '../rendering/textures.js';
+import { SVG_ICONS } from '../ui/icons.js';
 export let visitingAutobots = [];
 export let servoPupRig = null;
 
@@ -1248,22 +1249,15 @@ export function syncVisitingAutobotsVisibility() {
                     Math.hypot(player.pos.x - targetWorldMesh.position.x, player.pos.z - targetWorldMesh.position.z) < 34.0);
 
                 if (isNearAttachment) {
-                    const dockIcon = document.getElementById('dock-icon') || dockPromptEl.querySelector('span.text-xl');
+                    const dockIcon = document.getElementById('dock-icon') || dockPromptEl.querySelector('#dock-icon');
                     const dockSub = document.getElementById('dock-sub') || dockPromptEl.querySelector('div span:first-child');
                     const dockMain = document.getElementById('dock-main') || dockPromptEl.querySelector('div span:last-child');
-                    const ICONS: Record<string, string> = {
-                        BOULDER: '🚜',
-                        HEATWAVE: '🚒',
-                        CHASE: '🚓',
-                        BLADES: '🚁',
-                        OPTIMUS: '🚚',
-                        BUMBLEBEE: '🛞',
-                        BLURR: '⚡',
-                        SALVAGE: '♻️',
-                        QUICKSHADOW: '✈️',
-                        HIGHTIDE: '⚓'
-                    };
-                    if (dockIcon) dockIcon.textContent = ICONS[player.botType] || '⚡';
+                    if (dockIcon) {
+                        const iconSvg = SVG_ICONS[player.botType] || SVG_ICONS.BOLT || '';
+                        if (dockIcon.innerHTML !== iconSvg) {
+                            dockIcon.innerHTML = iconSvg;
+                        }
+                    }
                     if (dockSub) dockSub.textContent = 'MEGA MODE READY';
                     if (dockMain) dockMain.textContent = 'DOCK MEGABOT';
                     dockPromptEl.classList.remove('hidden');
