@@ -44,7 +44,9 @@ export const player: Record<string, any> = {
     craneTimer: 0,
     craneCooldown: 0,
     bounceCooldown: 0,    // Anti-gravity bounce pad cooldown
-    lastSplatTime: 0
+    lastSplatTime: 0,
+    trailerAngle: 0,
+    trailerArticAngle: 0
 };
 
 export const buddyBot: Record<string, any> = {
@@ -63,7 +65,9 @@ export const buddyBot: Record<string, any> = {
     scoopTimer: 0,
     waterTimer: 0,
     actionCooldown: 0,
-    inCarWash: false
+    inCarWash: false,
+    trailerAngle: 0,
+    trailerArticAngle: 0
 };
 
 export const input: Record<string, any> = {

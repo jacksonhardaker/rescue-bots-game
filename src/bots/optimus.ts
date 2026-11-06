@@ -499,61 +499,66 @@ export function buildOptimus(parts, materials = {}, textures = {}) {
 
                 megaShield.add(shieldMount, shieldPlate, shieldChevron, shieldViewport, shieldInsignia);
 
-                // 4. Vehicle Mode: Elongated 14.5m Command Trailer with Dual Tandem Rear Axles & Roof Deluge Turrets
+                // 4. Vehicle Mode: Elongated 12.5m Command Trailer with Articulated Fifth-Wheel Hitch
+                const trailerHitch = new THREE.Group();
+                trailerHitch.userData.isMegaPart = true;
+                parts.trailerHitch = trailerHitch;
+                parts.backAttachment.add(trailerHitch);
+
                 const megaTrailer = new THREE.Group();
                 megaTrailer.userData.isMegaPart = true;
                 megaTrailer.visible = false;
                 parts.megaTrailer = megaTrailer;
-                parts.backAttachment.add(megaTrailer);
+                trailerHitch.add(megaTrailer);
 
-                // Main Trailer Hull Box
-                const trHull = new THREE.Mesh(new THREE.BoxGeometry(3.2, 3.6, 14.5), matMegaTrailerSilver);
-                trHull.position.set(0, 0.35, -7.25);
+                // Main Trailer Hull Box: 12.5m length, 2.92m width, 3.25m height
+                const trHull = new THREE.Mesh(new THREE.BoxGeometry(2.92, 3.25, 12.5), matMegaTrailerSilver);
+                trHull.position.set(0, 0.975, -7.05);
                 trHull.castShadow = true;
                 megaTrailer.add(trHull);
 
                 // Flank Blue Racing Stripes & Underbody Hazard Skirts
-                [-1.62, 1.62].forEach(sx => {
-                    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.72, 14.0), matMegaTrailerStripe);
-                    stripe.position.set(sx, 0.35, -7.25);
-                    const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 13.8), matDarkSteel);
-                    skirt.position.set(sx, -1.25, -7.25);
-                    const starDecal = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.1, 1.1), matOptimusGold);
-                    starDecal.position.set(sx * 1.01, 0.35, -4.5);
+                [-1.48, 1.48].forEach(sx => {
+                    const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.65, 12.2), matMegaTrailerStripe);
+                    stripe.position.set(sx, 0.975, -7.05);
+                    const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 12.0), matDarkSteel);
+                    skirt.position.set(sx, -0.45, -7.05);
+                    const starDecal = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 1.0), matOptimusGold);
+                    starDecal.position.set(sx * 1.01, 0.975, -4.5);
                     starDecal.userData.noOutline = true;
                     megaTrailer.add(stripe, skirt, starDecal);
                 });
 
                 // Dual Heavy Roof Deluge Water Cannon Turrets
-                [-2.8, -8.2].forEach(tz => {
-                    const tBase = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.75, 0.35, 14), matDarkSteel);
-                    tBase.position.set(0, 2.25, tz);
-                    const tBoom = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.45, 1.6), matMegaTrailerSilver);
-                    tBoom.position.set(0, 2.55, tz + 0.3);
-                    [-0.22, 0.22].forEach(nx => {
-                        const tNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 1.8, 10).rotateX(Math.PI / 2), matChrome);
-                        tNozzle.position.set(nx, 2.55, tz + 1.2);
+                [-3.5, -9.0].forEach(tz => {
+                    const tBase = new THREE.Mesh(new THREE.CylinderGeometry(0.60, 0.70, 0.30, 14), matDarkSteel);
+                    tBase.position.set(0, 2.75, tz);
+                    const tBoom = new THREE.Mesh(new THREE.BoxGeometry(0.60, 0.40, 1.5), matMegaTrailerSilver);
+                    tBoom.position.set(0, 3.0, tz + 0.3);
+                    [-0.20, 0.20].forEach(nx => {
+                        const tNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.20, 1.6, 10).rotateX(Math.PI / 2), matChrome);
+                        tNozzle.position.set(nx, 3.0, tz + 1.1);
                         megaTrailer.add(tNozzle);
                     });
                     megaTrailer.add(tBase, tBoom);
                 });
 
                 // Rear Bumper & Dual Taillights
-                const trBumper = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.48, 0.4), matDarkSteel);
-                trBumper.position.set(0, -1.2, -14.55);
+                const trBumper = new THREE.Mesh(new THREE.BoxGeometry(2.96, 0.45, 0.35), matDarkSteel);
+                trBumper.position.set(0, -0.45, -13.35);
                 megaTrailer.add(trBumper);
-                [-1.15, 1.15].forEach(tx => {
-                    const tailL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.22, 0.15), matSirenRed);
-                    tailL.position.set(tx, -1.2, -14.76);
+                [-1.05, 1.05].forEach(tx => {
+                    const tailL = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.20, 0.12), matSirenRed);
+                    tailL.position.set(tx, -0.45, -13.52);
                     tailL.userData.noOutline = true;
                     megaTrailer.add(tailL);
                 });
 
                 // 4 Heavy Tandem Rear Wheels (Functional Wheel Assemblies in parts.wheels!)
-                [-10.2, -12.6].forEach(wz => {
-                    [-1.68, 1.68].forEach(wx => {
-                        const trWheel = createWheelAssembly(0.82, 0.55);
-                        trWheel.position.set(wx, -1.18, wz);
+                [-9.2, -11.2].forEach(wz => {
+                    [-1.52, 1.52].forEach(wx => {
+                        const trWheel = createWheelAssembly(0.76, 0.52);
+                        trWheel.position.set(wx, -1.434, wz);
                         megaTrailer.add(trWheel);
                         parts.wheels.push(trWheel);
                     });

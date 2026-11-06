@@ -198,7 +198,7 @@ export const BOT_GROUND_OFFSETS = {
     CHASE:         { bot: 0.40, veh: 0.00, dino: 0.50 },
     BLADES:        { bot: 1.28, veh: 0.00, dino: 0.84 },
     OPTIMUS:       { bot: 0.552, veh: 0.544, dino: 0.648 },
-    OPTIMUS_MEGA:  { bot: 0.552, veh: 0.548, dino: 0.648 },
+    OPTIMUS_MEGA:  { bot: 0.552, veh: 0.544, dino: 0.648 },
     BUMBLEBEE:     { bot: 0.41, veh: 0.58, dino: 0.51 },
     BLURR:         { bot: 0.73, veh: 0.63, dino: 0.83 },
     SALVAGE:       { bot: 0.46, veh: 0.15, dino: 0.56 },

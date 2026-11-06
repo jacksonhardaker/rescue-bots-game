@@ -538,6 +538,40 @@ export let wpArrowCone = null;
                 player.speed = maxSpeed;
             }
 
+            // Articulated Semi-Trailer Kinematics (Mega Optimus)
+            if (player.trailerAngle === undefined) {
+                player.trailerAngle = player.heading;
+            }
+            if (player.botType === 'OPTIMUS' && (player.mode === 'VEHICLE' || player.morph > 0.05)) {
+                const L = 8.5; // Effective distance from hitch pin to trailer rear tandem axles (meters)
+                let headingDiff = player.heading - player.trailerAngle;
+                while (headingDiff < -Math.PI) headingDiff += Math.PI * 2;
+                while (headingDiff > Math.PI) headingDiff -= Math.PI * 2;
+
+                // Turn rate: d(theta)/dt = (v / L) * sin(heading - trailerAngle)
+                const turnStep = (player.speed / L) * Math.sin(headingDiff) * dt;
+                player.trailerAngle += turnStep;
+
+                let artic = player.trailerAngle - player.heading;
+                while (artic < -Math.PI) artic += Math.PI * 2;
+                while (artic > Math.PI) artic -= Math.PI * 2;
+
+                // Angular jackknife safety clamp (~72 degrees / 1.25 rad)
+                const maxArtic = 1.25;
+                if (artic > maxArtic) {
+                    artic = maxArtic;
+                    player.trailerAngle = player.heading + maxArtic;
+                } else if (artic < -maxArtic) {
+                    artic = -maxArtic;
+                    player.trailerAngle = player.heading - maxArtic;
+                }
+
+                player.trailerArticAngle = artic;
+            } else {
+                player.trailerAngle = THREE.MathUtils.lerp(player.trailerAngle ?? player.heading, player.heading, Math.min(1.0, dt * 6.0));
+                player.trailerArticAngle = THREE.MathUtils.lerp(player.trailerArticAngle ?? 0, 0, Math.min(1.0, dt * 6.0));
+            }
+
             if (Math.abs(player.speed) > 0.4) {
                 player.walkCycle += dt * Math.abs(player.speed) * 0.55;
             }
@@ -1122,6 +1156,9 @@ export let wpArrowCone = null;
             let baseDist = isFlyingCopter ? 44.0 : (player.mode === 'VEHICLE' || player.mode === 'DINO' ? 39.0 : 34.0);
             const botScaleFactor = getBotScale(player.botType);
             baseDist *= (1.0 + (botScaleFactor - 1.0) * 0.75);
+            if (player.botType === 'OPTIMUS' && (player.mode === 'VEHICLE' || player.morph > 0.5)) {
+                baseDist += 6.0; // Comfortably frame semi-cab + 12.5m trailer
+            }
             let activePitch = 0.48;
             if (input.camZoomMode === 1) {
                 // Extra-Wide Sky Map View

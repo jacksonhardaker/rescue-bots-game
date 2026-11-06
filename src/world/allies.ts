@@ -467,70 +467,70 @@ export function syncVisitingAutobotsVisibility() {
         export function createOptimusTrailerMesh() {
             const trailer = new THREE.Group();
 
-            // Main Trailer Hull Box (Dimensions: 14.5m long, 3.2m wide, 3.6m tall)
-            const hull = new THREE.Mesh(new THREE.BoxGeometry(3.2, 3.6, 14.5), matMegaTrailerSilver);
-            hull.position.set(0, 2.35, 0);
+            // Main Trailer Hull Box (Dimensions: 12.5m long, 2.92m wide, 3.25m tall)
+            const hull = new THREE.Mesh(new THREE.BoxGeometry(2.92, 3.25, 12.5), matMegaTrailerSilver);
+            hull.position.set(0, 2.385, 0);
             hull.castShadow = true;
             trailer.add(hull);
 
             // Flank Blue Command Stripes & Skirts
-            [-1.62, 1.62].forEach(sx => {
-                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.72, 14.0), matMegaTrailerStripe);
-                stripe.position.set(sx, 2.35, 0);
-                const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 13.8), matDarkSteel);
-                skirt.position.set(sx, 0.75, 0);
-                const starDecal = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.1, 1.1), matOptimusGold);
-                starDecal.position.set(sx * 1.01, 2.35, 2.75);
+            [-1.48, 1.48].forEach(sx => {
+                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.65, 12.2), matMegaTrailerStripe);
+                stripe.position.set(sx, 2.385, 0);
+                const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.35, 12.0), matDarkSteel);
+                skirt.position.set(sx, 0.96, 0);
+                const starDecal = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.0, 1.0), matOptimusGold);
+                starDecal.position.set(sx * 1.01, 2.385, 2.55);
                 starDecal.userData.noOutline = true;
                 trailer.add(stripe, skirt, starDecal);
             });
 
             // Dual Heavy Roof Deluge Water Cannon Turrets
-            [4.45, -1.0].forEach(tz => {
-                const tBase = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.75, 0.35, 14), matDarkSteel);
-                tBase.position.set(0, 4.25, tz);
-                const tBoom = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.45, 1.6), matMegaTrailerSilver);
-                tBoom.position.set(0, 4.55, tz + 0.3);
-                [-0.22, 0.22].forEach(nx => {
-                    const tNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.22, 1.8, 10).rotateX(Math.PI / 2), matChrome);
-                    tNozzle.position.set(nx, 4.55, tz + 1.2);
+            [3.55, -1.95].forEach(tz => {
+                const tBase = new THREE.Mesh(new THREE.CylinderGeometry(0.60, 0.70, 0.30, 14), matDarkSteel);
+                tBase.position.set(0, 4.16, tz);
+                const tBoom = new THREE.Mesh(new THREE.BoxGeometry(0.60, 0.40, 1.5), matMegaTrailerSilver);
+                tBoom.position.set(0, 4.41, tz + 0.3);
+                [-0.20, 0.20].forEach(nx => {
+                    const tNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.20, 1.6, 10).rotateX(Math.PI / 2), matChrome);
+                    tNozzle.position.set(nx, 4.41, tz + 1.1);
                     trailer.add(tNozzle);
                 });
                 trailer.add(tBase, tBoom);
             });
 
             // Rear Bumper & Dual Taillights
-            const trBumper = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.48, 0.4), matDarkSteel);
-            trBumper.position.set(0, 0.8, -7.3);
+            const trBumper = new THREE.Mesh(new THREE.BoxGeometry(2.96, 0.45, 0.35), matDarkSteel);
+            trBumper.position.set(0, 0.96, -6.3);
             trailer.add(trBumper);
-            [-1.15, 1.15].forEach(tx => {
-                const tailL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.22, 0.15), matSirenRed);
-                tailL.position.set(tx, 0.8, -7.51);
+            [-1.05, 1.05].forEach(tx => {
+                const tailL = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.20, 0.12), matSirenRed);
+                tailL.position.set(tx, 0.96, -6.47);
                 tailL.userData.noOutline = true;
                 trailer.add(tailL);
             });
 
             // 4 Tandem Rear Wheels
-            [-3.0, -5.4].forEach(wz => {
-                [-1.68, 1.68].forEach(wx => {
-                    const wheel = createWheelAssembly(0.82, 0.55);
-                    wheel.position.set(wx, 0.82, wz);
+            [-2.15, -4.15].forEach(wz => {
+                [-1.52, 1.52].forEach(wx => {
+                    const wheel = createWheelAssembly(0.76, 0.52);
+                    wheel.position.set(wx, 0.76, wz);
                     trailer.add(wheel);
                 });
             });
 
             // Front Landing Gear / Support Legs (when uncoupled and parked)
-            [-1.1, 1.1].forEach(lx => {
-                const legPost = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.8, 8), matDarkSteel);
-                legPost.position.set(lx, 0.45, 4.5);
+            [-1.05, 1.05].forEach(lx => {
+                const legPost = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.74, 8), matDarkSteel);
+                legPost.position.set(lx, 0.43, 3.8);
                 const legFoot = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.12, 0.48), matDarkSteel);
-                legFoot.position.set(lx, 0.06, 4.5);
+                legFoot.position.set(lx, 0.06, 3.8);
                 trailer.add(legPost, legFoot);
             });
 
             // Kingpin Hitch at front
             const kingpin = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.45, 10), matChrome);
-            kingpin.position.set(0, 0.65, 6.2);
+            kingpin.position.set(0, 0.65, 5.2);
             trailer.add(kingpin);
 
             applyCartoonInkOutlines(trailer, 1.035, true);

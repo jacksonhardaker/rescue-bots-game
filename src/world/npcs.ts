@@ -1140,6 +1140,38 @@ import { spawnWaterCannonStream } from './emergencies.js';
 
             buddyBot.speed = THREE.MathUtils.lerp(buddyBot.speed, targetSpeed, Math.min(1, dt * 7.0));
 
+            // Articulated Semi-Trailer Kinematics (Buddy Bot Mega Optimus)
+            if (buddyBot.trailerAngle === undefined) {
+                buddyBot.trailerAngle = buddyBot.heading;
+            }
+            if (buddyBot.botType === 'OPTIMUS' && (buddyBot.targetMorph > 0.1 || buddyBot.morph > 0.1)) {
+                const L = 8.5;
+                let bHeadingDiff = buddyBot.heading - buddyBot.trailerAngle;
+                while (bHeadingDiff < -Math.PI) bHeadingDiff += Math.PI * 2;
+                while (bHeadingDiff > Math.PI) bHeadingDiff -= Math.PI * 2;
+
+                const bTurnStep = (buddyBot.speed / L) * Math.sin(bHeadingDiff) * dt;
+                buddyBot.trailerAngle += bTurnStep;
+
+                let bArtic = buddyBot.trailerAngle - buddyBot.heading;
+                while (bArtic < -Math.PI) bArtic += Math.PI * 2;
+                while (bArtic > Math.PI) bArtic -= Math.PI * 2;
+
+                const maxArtic = 1.25;
+                if (bArtic > maxArtic) {
+                    bArtic = maxArtic;
+                    buddyBot.trailerAngle = buddyBot.heading + maxArtic;
+                } else if (bArtic < -maxArtic) {
+                    bArtic = -maxArtic;
+                    buddyBot.trailerAngle = buddyBot.heading - maxArtic;
+                }
+
+                buddyBot.trailerArticAngle = bArtic;
+            } else {
+                buddyBot.trailerAngle = THREE.MathUtils.lerp(buddyBot.trailerAngle ?? buddyBot.heading, buddyBot.heading, Math.min(1.0, dt * 6.0));
+                buddyBot.trailerArticAngle = THREE.MathUtils.lerp(buddyBot.trailerArticAngle ?? 0, 0, Math.min(1.0, dt * 6.0));
+            }
+
             const nextBx = buddyBot.pos.x + Math.sin(buddyBot.heading) * buddyBot.speed * dt;
             const nextBz = buddyBot.pos.z + Math.cos(buddyBot.heading) * buddyBot.speed * dt;
             const nextInWater = isPointInWater(nextBx, nextBz) || getSurfaceHeight(nextBx, nextBz) < 0.45;
