@@ -1281,8 +1281,6 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     );
                     return;
                 } else if (player.mode === 'VEHICLE') {
-                    player.boostTimer = isMega ? 2.4 : 1.6;
-                    player.speed = Math.max(player.speed, isMega ? 46.0 : 36.0);
                     if (isMega) {
                         player.waterTimer = 2.2;
                         sfx.playWaterSpray();
@@ -1495,10 +1493,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             player.scoopTimer = 0.85;
             player.smashTimer = 0.45;
             if (player.mode === 'DINO') {
-                player.boostTimer = 1.25;
                 sfx.playDinoRoar('BOULDER');
             } else {
-                if (player.mode === 'VEHICLE') player.boostTimer = 1.15;
                 sfx.playSmash();
             }
             beacons.forEach(beacon => {

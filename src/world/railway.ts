@@ -137,13 +137,13 @@ export function getTrackPointAtDist(targetDist) {
             crossG.position.set(cx, gy, cz);
 
             // 1. Rubberized Asphalt Level Crossing Pad
-            const padW = isNSHighway ? 19.5 : 8.5;
-            const padL = isNSHighway ? 8.5 : 19.5;
+            const padW = isNSHighway ? 20.0 : 16.0;
+            const padL = isNSHighway ? 16.0 : 20.0;
             const padMesh = new THREE.Mesh(
-                new THREE.BoxGeometry(padW, 0.58, padL),
+                new THREE.BoxGeometry(padW, 0.40, padL),
                 new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3, polygonOffset: true, polygonOffsetFactor: -1.2, polygonOffsetUnits: -5.0 })
             );
-            padMesh.position.set(0, 0.35, 0);
+            padMesh.position.set(0, 0.18, 0);
             padMesh.receiveShadow = true;
             crossG.add(padMesh);
 
@@ -988,15 +988,18 @@ export function initRailway(scene) {
     const s = scene || (typeof window !== 'undefined' ? window.scene : null);
     if (!s) return;
 
-    // Build tracks
+    // Build tracks with dense vertex sampling (~4.8m per segment) to closely follow
+    // terrain curvature and grade crossings, preventing tracks from clipping beneath terrain
     const ptsRail = [];
-    for (let a = 0; a <= Math.PI * 2 + 0.05; a += 0.04) {
+    const railSteps = 960;
+    for (let i = 0; i < railSteps; i++) {
+        const a = (i / railSteps) * Math.PI * 2;
         const r = getRailwayRadius(a);
         ptsRail.push({ x: Math.cos(a) * r, z: Math.sin(a) * r });
     }
     sharedRailTrackTexture = makeProceduralRailTrackTexture();
     const railTex = sharedRailTrackTexture;
-    railwayLoopMesh = createRoadRibbon(ptsRail, 14.8, true, -1.25, -5.5, railTex, 8.0, 0.16);
+    railwayLoopMesh = createRoadRibbon(ptsRail, 14.8, true, -1.25, -5.5, railTex, 8.0, 0.22);
     s.add(railwayLoopMesh);
 
     // 4 Grade Crossings
