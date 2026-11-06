@@ -1,6 +1,6 @@
 // Visiting Autobot Allies (Optimus Prime, Bumblebee, Blurr, Salvage, High Tide & Servo)
 import * as THREE from 'three';
-import { getTerrainHeight } from './terrain.js';
+import { getTerrainHeight, getSurfaceHeight } from './terrain.js';
 import {
     toonGrad3, toonGrad4, matHighTideWhite, matHighTideNavy, matHighTideGold,
     matMegaTrailerSilver, matMegaTrailerStripe, matChrome, matDarkSteel,
@@ -556,7 +556,8 @@ export function syncVisitingAutobotsVisibility() {
             // Optimus Prime Apex Command Trailer parked at Rescue HQ swap pad area (X: -22, Z: -38)
             if (!optimusWorldTrailer) {
                 optimusWorldTrailer = createOptimusTrailerMesh();
-                optimusWorldTrailer.position.set(-22, 0.1, -38);
+                const trailerGroundY = getSurfaceHeight(-22, -38);
+                optimusWorldTrailer.position.set(-22, trailerGroundY, -38);
                 optimusWorldTrailer.rotation.y = 0;
                 (scene || (typeof window !== "undefined" ? window.scene : null)).add(optimusWorldTrailer);
                 const isPlayerOptimusMega = (player.botType === 'OPTIMUS' && Boolean(progression.optimusDocked));
@@ -827,10 +828,13 @@ export function syncVisitingAutobotsVisibility() {
                 highTideWorldShip.visible = !isPlayerHighTideMega;
             }
 
-            // Optimus Prime Trailer Visibility
+            // Optimus Prime Trailer Visibility & Ground Height Sync
             if (optimusWorldTrailer) {
                 const isPlayerOptimusMega = (player.botType === 'OPTIMUS' && Boolean(progression.optimusDocked));
                 optimusWorldTrailer.visible = !isPlayerOptimusMega;
+                if (optimusWorldTrailer.position.y < 1.0) {
+                    optimusWorldTrailer.position.y = getSurfaceHeight(optimusWorldTrailer.position.x, optimusWorldTrailer.position.z);
+                }
             }
 
             // Megabot / Super Rig Docking Prompt

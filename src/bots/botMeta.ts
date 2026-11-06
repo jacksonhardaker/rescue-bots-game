@@ -184,11 +184,14 @@ export const BOT_METADATA = {
     }
 };
 
+export const HQ_GROUND_Y = 4.68;
+export const HQ_ROOF_Y = 21.30;
+
 export const HQ_PARKING_SLOTS = {
-    BOULDER:  { x: HQ_POS.x - 11, y: 0.1, z: HQ_POS.z + 8, rotY: 0, morph: 1.0 },
-    HEATWAVE: { x: HQ_POS.x + 0,  y: 0.1, z: HQ_POS.z + 8, rotY: 0, morph: 1.0 },
-    CHASE:    { x: HQ_POS.x + 11, y: 0.1, z: HQ_POS.z + 8, rotY: 0, morph: 1.0 },
-    BLADES:   { x: HQ_POS.x - 8,  y: 16.8, z: HQ_POS.z,     rotY: 0.4, morph: 1.0 }
+    BOULDER:  { x: HQ_POS.x - 11, y: HQ_GROUND_Y, z: HQ_POS.z + 8, rotY: 0, morph: 1.0 },
+    HEATWAVE: { x: HQ_POS.x + 0,  y: HQ_GROUND_Y, z: HQ_POS.z + 8, rotY: 0, morph: 1.0 },
+    CHASE:    { x: HQ_POS.x + 11, y: HQ_GROUND_Y, z: HQ_POS.z + 8, rotY: 0, morph: 1.0 },
+    BLADES:   { x: HQ_POS.x - 8,  y: HQ_ROOF_Y,   z: HQ_POS.z,     rotY: 0.4, morph: 1.0 }
 };
 
 // Calibrated Ground Clearance Offsets

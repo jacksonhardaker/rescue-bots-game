@@ -14,7 +14,7 @@ import { SVG_ICONS } from '../ui/icons.js';
 import { waypointGroup } from './movement.js';
 import { visitingAutobots } from '../world/allies.js';
 import { beacons } from '../world/emergencies.js';
-import { isNearWater, isPointInWater } from '../world/terrain.js';
+import { isNearWater, isPointInWater, getSurfaceHeight } from '../world/terrain.js';
 import { spawnEnergonLightningParticles, spawnSparkleGlints } from '../world/emergencies.js';
 import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
@@ -1059,15 +1059,15 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             if (optimusWorldTrailer) {
                 const hqDist = Math.hypot(player.pos.x - (-22), player.pos.z - (-38));
                 if (hqDist < 35.0) {
-                    optimusWorldTrailer.position.set(-22, 0.1, -38);
+                    const trailerGroundY = getSurfaceHeight(-22, -38);
+                    optimusWorldTrailer.position.set(-22, trailerGroundY, -38);
                     optimusWorldTrailer.rotation.y = 0;
                 } else {
                     const trailerAngle = player.heading + Math.PI;
-                    optimusWorldTrailer.position.set(
-                        player.pos.x + Math.sin(trailerAngle) * 14.0,
-                        0.1,
-                        player.pos.z + Math.cos(trailerAngle) * 14.0
-                    );
+                    const tx = player.pos.x + Math.sin(trailerAngle) * 14.0;
+                    const tz = player.pos.z + Math.cos(trailerAngle) * 14.0;
+                    const trailerGroundY = getSurfaceHeight(tx, tz);
+                    optimusWorldTrailer.position.set(tx, trailerGroundY, tz);
                     optimusWorldTrailer.rotation.y = player.heading;
                 }
                 optimusWorldTrailer.visible = true;
