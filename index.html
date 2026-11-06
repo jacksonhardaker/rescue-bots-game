@@ -664,11 +664,27 @@
             transform: translateY(2px) scale(0.96);
         }
 
+        /* Megabot Docking Prompt - Floating in Middle of Screen */
+        #hightide-dock-prompt, #megabot-dock-prompt {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 35 !important;
+            pointer-events: auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+        }
+        #hightide-dock-prompt.hidden, #megabot-dock-prompt.hidden {
+            display: none !important;
+        }
+
         #btn-dock {
             background: linear-gradient(90deg, #06b6d4 0%, #2563eb 50%, #312e81 100%) !important;
             border-color: #67e8f9 !important;
             color: #ffffff !important;
-            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.4) !important;
+            box-shadow: 0 8px 28px rgba(6, 182, 212, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.45) !important;
         }
 
         .text-white { color: #ffffff; }
@@ -1317,14 +1333,15 @@
         </button>
     </div>
 
-    <!-- High Tide Megabot Docking Prompt (Floats when player controls High Tide and approaches his oceanic vessel) -->
-    <div id="hightide-dock-prompt" class="hidden fixed bottom-28 sm:bottom-36 right-5 sm:right-9 z-30 flex flex-col items-end pointer-events-auto">
-        <button id="btn-dock" class="tactile-btn px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl border-2 border-cyan-300 shadow-2xl flex items-center gap-3 text-white font-extrabold tracking-wider select-none transform hover:scale-105 active:scale-95 transition-transform animate-bounce" style="background: linear-gradient(90deg, #06b6d4 0%, #2563eb 50%, #312e81 100%) !important; box-shadow: 0 8px 24px rgba(6, 182, 212, 0.5), inset 0 2px 2px rgba(255, 255, 255, 0.4) !important;">
-            <span class="text-xl sm:text-2xl drop-shadow">⚓</span>
+    <!-- Megabot Docking Prompt (Floats in the middle of the screen when approaching High Tide vessel or Optimus trailer) -->
+    <div id="hightide-dock-prompt" class="hidden">
+        <button id="btn-dock" class="tactile-btn px-5 py-3 sm:px-6 sm:py-3.5 rounded-2xl border-2 border-cyan-300 shadow-2xl flex items-center gap-3.5 text-white font-extrabold tracking-wider select-none transform hover:scale-105 active:scale-95 transition-transform animate-bounce cursor-pointer" style="background: linear-gradient(90deg, #06b6d4 0%, #2563eb 50%, #312e81 100%) !important; box-shadow: 0 8px 28px rgba(6, 182, 212, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.45) !important;">
+            <span id="dock-icon" class="text-2xl sm:text-3xl drop-shadow leading-none">⚡</span>
             <div class="flex flex-col text-left">
-                <span class="text-[10px] sm:text-xs uppercase text-cyan-200 tracking-wider">Ocean Rig Ready</span>
-                <span class="text-xs sm:text-sm font-black drop-shadow tracking-wide">DOCK MEGABOT</span>
+                <span id="dock-sub" class="text-[10.5px] sm:text-xs uppercase text-cyan-200 tracking-wider font-extrabold">MEGA MODE READY</span>
+                <span id="dock-main" class="text-sm sm:text-base font-black drop-shadow tracking-wide text-white">DOCK MEGABOT</span>
             </div>
+            <span class="ml-1 text-[9px] sm:text-[10px] font-bold bg-white/20 text-cyan-200 px-2 py-0.5 rounded-md border border-cyan-300/40 hidden sm:inline-block">X</span>
         </button>
     </div>
 

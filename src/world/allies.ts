@@ -837,35 +837,22 @@ export function syncVisitingAutobotsVisibility() {
                 }
             }
 
-            // Megabot / Super Rig Docking Prompt
+            // Megabot Docking Prompt (Floats in middle of screen when near High Tide ship or Optimus trailer)
             const dockPromptEl = document.getElementById('hightide-dock-prompt');
             if (dockPromptEl) {
-                if (player.botType === 'HIGHTIDE' && !progression.highTideDocked && highTideWorldShip && highTideWorldShip.visible) {
-                    const distToShip = Math.hypot(player.pos.x - highTideWorldShip.position.x, player.pos.z - highTideWorldShip.position.z);
-                    if (distToShip < 34.0) {
-                        const dockIcon = dockPromptEl.querySelector('span.text-xl');
-                        const dockSub = dockPromptEl.querySelector('div span:first-child');
-                        const dockMain = dockPromptEl.querySelector('div span:last-child');
-                        if (dockIcon) dockIcon.textContent = '⚓';
-                        if (dockSub) dockSub.textContent = 'Ocean Rig Ready';
-                        if (dockMain) dockMain.textContent = 'DOCK MEGABOT';
-                        dockPromptEl.classList.remove('hidden');
-                    } else {
-                        dockPromptEl.classList.add('hidden');
-                    }
-                } else if (player.botType === 'OPTIMUS' && !progression.optimusDocked && optimusWorldTrailer && optimusWorldTrailer.visible) {
-                    const distToTrailer = Math.hypot(player.pos.x - optimusWorldTrailer.position.x, player.pos.z - optimusWorldTrailer.position.z);
-                    if (distToTrailer < 32.0) {
-                        const dockIcon = dockPromptEl.querySelector('span.text-xl');
-                        const dockSub = dockPromptEl.querySelector('div span:first-child');
-                        const dockMain = dockPromptEl.querySelector('div span:last-child');
-                        if (dockIcon) dockIcon.textContent = '🚚';
-                        if (dockSub) dockSub.textContent = 'Super Rig Ready';
-                        if (dockMain) dockMain.textContent = 'DOCK SUPER RIG';
-                        dockPromptEl.classList.remove('hidden');
-                    } else {
-                        dockPromptEl.classList.add('hidden');
-                    }
+                const isNearHighTideShip = (player.botType === 'HIGHTIDE' && !progression.highTideDocked && highTideWorldShip && highTideWorldShip.visible &&
+                    Math.hypot(player.pos.x - highTideWorldShip.position.x, player.pos.z - highTideWorldShip.position.z) < 34.0);
+                const isNearOptimusTrailer = (player.botType === 'OPTIMUS' && !progression.optimusDocked && optimusWorldTrailer && optimusWorldTrailer.visible &&
+                    Math.hypot(player.pos.x - optimusWorldTrailer.position.x, player.pos.z - optimusWorldTrailer.position.z) < 32.0);
+
+                if (isNearHighTideShip || isNearOptimusTrailer) {
+                    const dockIcon = document.getElementById('dock-icon') || dockPromptEl.querySelector('span.text-xl');
+                    const dockSub = document.getElementById('dock-sub') || dockPromptEl.querySelector('div span:first-child');
+                    const dockMain = document.getElementById('dock-main') || dockPromptEl.querySelector('div span:last-child');
+                    if (dockIcon) dockIcon.textContent = isNearOptimusTrailer ? '🚚' : '⚓';
+                    if (dockSub) dockSub.textContent = 'MEGA MODE READY';
+                    if (dockMain) dockMain.textContent = 'DOCK MEGABOT';
+                    dockPromptEl.classList.remove('hidden');
                 } else {
                     dockPromptEl.classList.add('hidden');
                 }

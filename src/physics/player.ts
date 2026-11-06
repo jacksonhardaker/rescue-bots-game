@@ -1049,7 +1049,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 setOptimusRigMega(rig, true);
             }
 
-            showToast("🚚 APEX SUPER RIG ENGAGED!", "Optimus Prime docked with Heavy Command Trailer!");
+            showToast("🚚 APEX MEGABOT ENGAGED!", "Optimus Prime docked with Heavy Command Trailer!");
             speakBotCatchphrase('OPTIMUS', 'DOCK');
             syncHUDToActiveBot();
         }
@@ -1084,7 +1084,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 setOptimusRigMega(rig, false);
             }
 
-            showToast("🚚 SUPER RIG DISENGAGED", "Optimus Prime decoupled from Command Trailer.");
+            showToast("🚚 MEGABOT DISENGAGED", "Optimus Prime decoupled from Command Trailer.");
             speakBotCatchphrase('OPTIMUS', 'UNDOCK');
             syncHUDToActiveBot();
         }

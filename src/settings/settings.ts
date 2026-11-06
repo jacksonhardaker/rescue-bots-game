@@ -45,7 +45,7 @@ export const ACTION_LABELS = {
     secondaryAction: 'Secondary Action / Ascend Flight',
     descendAction: 'Descend Flight (Helicopter)',
     siren: 'Toggle Siren & Beacons',
-    dock: 'Dock / Undock High Tide Megabot',
+    dock: 'Dock / Undock Megabot (Optimus & High Tide)',
     buddyCycle: 'Switch Partner Buddy Bot',
     weatherCycle: 'Cycle Island Weather',
     map: 'Open Island Tactical Map'
