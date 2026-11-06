@@ -13,6 +13,7 @@ import { triggerNPCSpeech } from '../ui/dialogs.js';
 import { applyBotRigMorph, BOT_SCALES } from '../bots/botRigs.js';
 import { WEATHER_MODES, currentWeatherIdx } from './weather.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
+import { isBotDocked } from '../progression/progression.js';
 
 import { beacons } from './emergencies.js';
 import { railroadCrossings } from './railway.js';
@@ -1074,7 +1075,8 @@ import { spawnWaterCannonStream } from './emergencies.js';
             if (!bRig) return;
 
             const isBlades = buddyBot.botType === 'BLADES';
-            const isFlying = isBlades && (player.mode === 'VEHICLE' || player.mode === 'DINO');
+            const isFlying = (isBlades && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                             (buddyBot.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
 
             // High Tide in water check: Buddy bot must remain stuck safely on dry land!
             const isPlayerHighTideInWater = (

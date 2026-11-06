@@ -616,8 +616,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 }
             }
 
-            // Helicopter & Pterosaur Flight UI vs Ground Bot UI
-            const isFlyingCopter = (player.botType === 'BLADES' && (isVeh || isDino));
+            // Helicopter, Pterosaur & Stealth Bomber Flight UI vs Ground Bot UI
+            const isFlyingCopter = (player.botType === 'BLADES' && (isVeh || isDino)) ||
+                                   (player.botType === 'QUICKSHADOW' && isVeh && isBotDocked('QUICKSHADOW'));
             const btnDescend = document.getElementById('btn-descend');
             const altSep = document.getElementById('altitude-sep');
             const altReadout = document.getElementById('altitude-readout');
@@ -760,10 +761,13 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 saveProgression();
             }
 
-            // If switching to Blades while already in vehicle or dino mode, lift into flight
-            if (newBotType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
+            // If switching to Blades or docked Quickshadow while already in flight mode, lift into flight
+            const isNewBotFlying = (newBotType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                                   (newBotType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+            if (isNewBotFlying) {
                 player.flightAlt = Math.max(player.flightAlt, 14);
-            } else if (newBotType !== 'BLADES') {
+                player.grounded = false;
+            } else {
                 player.flightAlt = 0;
             }
 
@@ -921,7 +925,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.targetMorph = 1.0;
                 player.targetDinoMorph = 0.0;
                 sfx.playTransform(true);
-                if (player.botType === 'BLADES') {
+                if (player.botType === 'BLADES' || (player.botType === 'QUICKSHADOW' && isBotDocked('QUICKSHADOW'))) {
                     player.flightAlt = Math.max(player.flightAlt, 16);
                     player.grounded = false;
                 }
@@ -1104,6 +1108,11 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 setBotRigMega(rig, true);
             }
 
+            if (botType === 'QUICKSHADOW' && player.mode === 'VEHICLE') {
+                player.flightAlt = Math.max(player.flightAlt, 16);
+                player.grounded = false;
+            }
+
             const meta = BOT_METADATA[`${botType}_MEGA`] || BOT_METADATA[botType];
             showToast(`⭐ ${meta.name} ENGAGED!`, `${meta.name} equipped ${meta.vehName} mega module!`);
             speakBotCatchphrase(botType, 'DEPLOY');
@@ -1121,6 +1130,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
             if (!isBotDocked(botType)) return;
             setBotDocked(botType, false);
+            if (botType === 'QUICKSHADOW') {
+                player.flightAlt = 0;
+            }
             saveProgression();
 
             sfx.playTransform(false);
@@ -1597,10 +1609,12 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
         export function triggerSecondaryAction() {
-            if (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
+            const isFlying = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+            if (isFlying) {
                 player.flightAlt = Math.min(95, player.flightAlt + 12);
                 sfx.playFlightAscend();
-                checkHitMorBotWithSpecialAbility(48.0, "ROTOR GALE");
+                checkHitMorBotWithSpecialAbility(48.0, player.botType === 'QUICKSHADOW' ? "STEALTH BOMBER STRIKE" : "ROTOR GALE");
                 return;
             }
             if ((player.mode === 'BOT' || player.mode === 'DINO') && player.grounded) {
@@ -1616,7 +1630,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
         export function triggerDescendAction() {
-            if (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
+            const isFlying = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+            if (isFlying) {
                 player.flightAlt = Math.max(2, player.flightAlt - 12);
                 sfx.playFlightDescend();
             }
@@ -1676,7 +1692,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 buddyBot.targetMorph = 1.0;
                 buddyBot.dinoMorph = 0.0;
                 buddyBot.targetDinoMorph = 0.0;
-                if (player.botType === 'BLADES') {
+                if (player.botType === 'BLADES' || (player.botType === 'QUICKSHADOW' && isBotDocked('QUICKSHADOW'))) {
                     player.flightAlt = 16;
                     player.grounded = false;
                 }

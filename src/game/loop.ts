@@ -18,7 +18,7 @@ import {
 } from '../world/buildings.js';
 import { getTerrainHeight } from '../world/terrain.js';
 import { triggerNPCSpeech, showToast, activeSpeech } from '../ui/dialogs.js';
-import { progression, saveProgression, getRescueStarRank, lastKnownRankLevel, setLastKnownRankLevel } from '../progression/progression.js';
+import { progression, saveProgression, getRescueStarRank, lastKnownRankLevel, setLastKnownRankLevel, isBotDocked } from '../progression/progression.js';
 import {
     spawnSoapSudsParticles, spawnSparkleGlints, spawnRocketExhaustParticles,
     spawnDinerFoodParticles, spawnEnergonLightningParticles, spawnWarpVortexParticles,
@@ -73,7 +73,8 @@ export function savePlayerMapPosition(force = false) {
             const dt = Math.min(0.05, (now - lastTime) / 1000);
             lastTime = now;
 
-            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                                   (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
 
             frameCount++;
             fpsTimer += dt;

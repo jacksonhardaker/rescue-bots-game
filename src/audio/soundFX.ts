@@ -1025,9 +1025,10 @@ class RescueSoundFX {
                 const absSpeed = Math.abs(speed);
                 const speedNorm = Math.min(1.0, absSpeed / 65.0);
 
-                // A. Ground Vehicle Engine vs Blades Helicopter Rotor Chop
+                // A. Ground Vehicle Engine vs Aircraft Flight vs Helicopter Rotor Chop
                 const isBladesAir = botType === 'BLADES' && (mode === 'VEHICLE' || mode === 'DINO');
-                const isGroundVehicle = botType !== 'BLADES' && mode === 'VEHICLE';
+                const isQuickshadowAir = botType === 'QUICKSHADOW' && mode === 'VEHICLE' && (typeof window !== 'undefined' && (window as any).isBotDocked && (window as any).isBotDocked('QUICKSHADOW'));
+                const isGroundVehicle = !isBladesAir && !isQuickshadowAir && mode === 'VEHICLE';
 
                 if (isGroundVehicle) {
                     // Gentle speed-reactive engine volume (soft idle purr when parked in Vehicle mode, richer purr when driving)
@@ -1074,6 +1075,18 @@ class RescueSoundFX {
                     this.rotorLfo.frequency.setTargetAtTime(bladePassHz, t, 0.07);
                     this.rotorBandpass.frequency.setTargetAtTime(190 + speedNorm * 115, t, 0.07);
                     this.rotorThumpOsc.frequency.setTargetAtTime(45 + speedNorm * 20, t, 0.07);
+                } else if (isQuickshadowAir) {
+                    // Quickshadow Stealth Bomber Supersonic Jet Turbine Loop
+                    this.rotorGain.gain.setTargetAtTime(0.0001, t, 0.08);
+                    const targetJetVol = 0.022 + speedNorm * 0.038;
+                    this.engineGain.gain.setTargetAtTime(targetJetVol, t, 0.08);
+                    const baseFreq = 95 + speedNorm * 110;
+                    this.engineOsc1.frequency.setTargetAtTime(baseFreq, t, 0.07);
+                    this.engineOsc2.frequency.setTargetAtTime(baseFreq * 2.0, t, 0.07);
+                    this.engineFilter.frequency.setTargetAtTime(380 + speedNorm * 520, t, 0.07);
+                    this.engineLfo.frequency.setTargetAtTime(4.0 + speedNorm * 8.0, t, 0.07);
+                    this.engineLfoFilterGain.gain.setTargetAtTime(65 + speedNorm * 45, t, 0.07);
+                    this.engineLfoPitchGain.gain.setTargetAtTime(2.2 + speedNorm * 2.0, t, 0.07);
                 } else {
                     // Quiet when walking in Bot or ground Dino mode
                     this.engineGain.gain.setTargetAtTime(0.0001, t, 0.08);

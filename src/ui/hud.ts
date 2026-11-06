@@ -12,7 +12,7 @@ import { SVG_ICONS } from './icons.js';
 import { HQ_SWAP_PAD } from '../world/buildings.js';
 import { waypointGroup } from '../physics/movement.js';
 import { showToast } from './dialogs.js';
-import { saveProgression } from '../progression/progression.js';
+import { saveProgression, isBotDocked } from '../progression/progression.js';
 import { beacons } from '../world/emergencies.js';
 import { applyWeatherMode, currentWeatherIdx } from '../world/weather.js';
 import { closeUtilityMenu } from '../physics/movement.js';
@@ -85,7 +85,9 @@ import { buildEnergonCubes } from '../world/collectibles.js';
             player.speed = 0;
             player.hasWaypoint = false;
             waypointGroup.visible = false;
-            player.flightAlt = player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO') ? 16 : 0;
+            const isFlying = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+            player.flightAlt = isFlying ? 16 : 0;
             input.camYaw = 0; // Greet player facing the bot heroically in front of HQ
             closeUtilityMenu();
             showToast("COMMAND CENTER WARP", "Arrived at Rescue Bots Firehouse HQ!");

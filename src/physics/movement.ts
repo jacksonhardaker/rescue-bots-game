@@ -5,7 +5,7 @@ import { getTerrainHeight, getSurfaceHeight, isPointInWater, isNearWater, isPoin
 import { player, buddyBot, botRigs, input, ramps, stateHolder, worldColliders } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { isActionActive } from '../settings/settings.js';
-import { progression, saveProgression } from '../progression/progression.js';
+import { progression, saveProgression, isBotDocked } from '../progression/progression.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
 import { spawnBurstParticles, spawnSoapSudsParticles, spawnSparkleGlints, spawnRocketExhaustParticles, spawnDinerFoodParticles, spawnEnergonLightningParticles, spawnWarpVortexParticles, spawnWaterWakeParticles, spawnMagnetSparkParticles, spawnPaintSplatParticles } from '../world/emergencies.js';
 import { activeMorBot } from '../world/morbot.js';
@@ -272,9 +272,10 @@ export let wpArrowCone = null;
                 }
             });
 
-            // High Tide submarine and plesiosaur move in water; Blades flies freely; other bots stay on land
+            // High Tide submarine and plesiosaur move in water; Blades and docked Quickshadow fly freely; other bots stay on land
             const isHighTideWaterMode = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
-            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                                   (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
             let ty = getSurfaceHeight(hitPoint.x, hitPoint.z);
             if (isHighTideWaterMode) {
                 // High Tide submarine and plesiosaur move in water: if tapped on dry land, find nearest water point along line towards player
@@ -461,7 +462,8 @@ export let wpArrowCone = null;
                 }
             }
 
-            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                                   (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
             const isHighTideWaterVeh = (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE');
             const isHighTideAmphibiousDino = (player.botType === 'HIGHTIDE' && player.mode === 'DINO');
             const onRoad = isPointOnRoad(player.pos.x, player.pos.z);
@@ -471,7 +473,7 @@ export let wpArrowCone = null;
             const hasBoost = (player.boostTimer > 0 || player.energonBoostTimer > 0);
             if (player.mode === 'VEHICLE') {
                 if (player.botType === 'BLURR') maxSpeed = hasBoost ? 88 : (onRoad ? 72 : 54);
-                else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 84 : (onRoad ? 68 : 50);
+                else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 86 : (isFlyingCopter ? 74 : (onRoad ? 68 : 50));
                 else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 82 : 62; // Hydro-thruster submarine
                 else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 74 : (onRoad ? 58 : 44);
                 else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 78 : 62;
@@ -696,7 +698,12 @@ export let wpArrowCone = null;
             // Target pitch & roll angles
             let targetPitch = 0;
             let targetRoll = 0;
-            if (isVehicleOrDino) {
+            if (isFlyingCopter && player.pos.y > centerGroundY + 2.5) {
+                // In flight, roll banks with turn steering, pitch tilts slightly with forward/reverse
+                const turnSteer = input.left ? 0.32 : (input.right ? -0.32 : 0);
+                targetRoll = turnSteer;
+                targetPitch = Math.max(-0.25, Math.min(0.25, (frontY - rearY) * 0.12));
+            } else if (isVehicleOrDino) {
                 targetPitch = Math.atan2(frontY - rearY, halfWheelbase * 2.0);
                 targetRoll = Math.atan2(rightY - leftY, halfTrack * 2.0);
                 targetPitch = Math.max(-0.7, Math.min(0.7, targetPitch));
