@@ -231,7 +231,8 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 : (rig.botType === 'CHASE') ? 1.42
                 : (rig.botType === 'HIGHTIDE') ? 1.58 : 1.72;
             const vehTorsoZ = (rig.botType === 'BOULDER') ? -0.18
-                : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.15
+                : (rig.botType === 'HEATWAVE') ? (1.15 * (1 - boatMorph) - 0.15 * boatMorph)
+                : (rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.15
                 : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') ? 0.35
                 : (rig.botType === 'CHASE') ? -0.42
                 : (rig.botType === 'HIGHTIDE') ? 0.35 : 0.95;

@@ -413,43 +413,101 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                 const matThruster = new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 });
                 const matJetGlow = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
 
-                // 1. Dual Catamaran Outrigger Sponsons
+                // 1. Dual Catamaran Outrigger Sponsons (Authentic Sleek Fireboat Hulls)
+                const createPontoonGeometries = () => {
+                    const w = 0.54;
+                    // Pontoon Hull Shape in (X, Z) plane where shape Y maps to 3D Z
+                    const hullShape = new THREE.Shape();
+                    hullShape.moveTo(-w, -2.8);
+                    hullShape.lineTo(-w, 1.1);
+                    hullShape.quadraticCurveTo(-w * 0.65, 2.55, -0.12, 3.32);
+                    hullShape.quadraticCurveTo(0.0, 3.42, 0.12, 3.32);
+                    hullShape.quadraticCurveTo(w * 0.65, 2.55, w, 1.1);
+                    hullShape.lineTo(w, -2.8);
+                    hullShape.closePath();
+
+                    const hullGeo = new THREE.ExtrudeGeometry(hullShape, { steps: 1, depth: 0.88, bevelEnabled: false });
+                    hullGeo.rotateX(Math.PI / 2);
+                    hullGeo.translate(0, 0.44, 0);
+
+                    // Continuous Cyan Deck Perimeter Rub Rail (Wraps around the pontoon deck)
+                    const outerShape = new THREE.Shape();
+                    const ow = w + 0.05;
+                    outerShape.moveTo(-ow, -2.85);
+                    outerShape.lineTo(-ow, 1.1);
+                    outerShape.quadraticCurveTo(-ow * 0.65, 2.6, -0.14, 3.38);
+                    outerShape.quadraticCurveTo(0.0, 3.48, 0.14, 3.38);
+                    outerShape.quadraticCurveTo(ow * 0.65, 2.6, ow, 1.1);
+                    outerShape.lineTo(ow, -2.85);
+                    outerShape.closePath();
+
+                    const innerShape = new THREE.Shape();
+                    const iw = w - 0.06;
+                    innerShape.moveTo(-iw, -2.75);
+                    innerShape.lineTo(-iw, 1.02);
+                    innerShape.quadraticCurveTo(-iw * 0.65, 2.48, -0.09, 3.24);
+                    innerShape.quadraticCurveTo(0.0, 3.34, 0.09, 3.24);
+                    innerShape.quadraticCurveTo(iw * 0.65, 2.48, iw, 1.02);
+                    innerShape.lineTo(iw, -2.75);
+                    innerShape.closePath();
+
+                    outerShape.holes.push(innerShape);
+
+                    const trimGeo = new THREE.ExtrudeGeometry(outerShape, { steps: 1, depth: 0.12, bevelEnabled: false });
+                    trimGeo.rotateX(Math.PI / 2);
+                    trimGeo.translate(0, 0.49, 0);
+
+                    return { hullGeo, trimGeo };
+                };
+
+                const { hullGeo: sharedPontoonHullGeo, trimGeo: sharedPontoonTrimGeo } = createPontoonGeometries();
+
                 [-1.72, 1.72].forEach((sx, idx) => {
                     const sponsonGroup = new THREE.Group();
                     sponsonGroup.position.set(sx, 0.82, 0.1);
 
-                    // Main Sponson Hull
-                    const spHull = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.92, 5.6), matRed);
+                    // Sleek Integrated Sponson Hull (Parallel, Smooth Tapered Bow)
+                    const spHull = new THREE.Mesh(sharedPontoonHullGeo, matRed);
                     spHull.castShadow = true;
                     sponsonGroup.add(spHull);
 
-                    // Wave-Piercing Angled Bow Wedge
-                    const bowWedge = new THREE.Mesh(
-                        new THREE.ConeGeometry(0.72, 1.8, 4).rotateX(-Math.PI / 2).rotateY(Math.PI / 4),
-                        matRed
-                    );
-                    bowWedge.position.set(0, -0.05, 3.5);
-                    bowWedge.scale.set(1.1, 0.8, 1.2);
-                    bowWedge.castShadow = true;
-                    sponsonGroup.add(bowWedge);
+                    // Continuous Cyan Deck Gunwale Trim
+                    const deckTrim = new THREE.Mesh(sharedPontoonTrimGeo, matCyanTrim);
+                    deckTrim.userData.noOutline = true;
+                    sponsonGroup.add(deckTrim);
 
-                    // Vibrant Cyan Chine Bumper Trim running along outer edge
-                    const chineTrim = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.18, 6.8), matCyanTrim);
-                    chineTrim.position.set(Math.sign(sx) * 0.58, 0.28, 0.4);
-                    chineTrim.userData.noOutline = true;
-                    sponsonGroup.add(chineTrim);
+                    // Canonical Chrome Nose Plate on the rounded prow
+                    const prowPlate = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.74, 0.16), matChrome);
+                    prowPlate.position.set(0, 0.02, 3.38);
+                    sponsonGroup.add(prowPlate);
 
-                    // Sponson Upper Deck Accent (Gold / Yellow Fire Striping)
-                    const deckStripe = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.08, 3.8), matGold);
-                    deckStripe.position.set(0, 0.48, 0.6);
-                    sponsonGroup.add(deckStripe);
+                    // 3 Stacked Yellow Porthole / Sonar Indicator Lights on Bow
+                    [-0.22, 0.02, 0.26].forEach(py => {
+                        const bezel = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.14, 0.14, 0.04, 10).rotateX(Math.PI / 2),
+                            matDarkSteel
+                        );
+                        bezel.position.set(0, py, 3.46);
+                        bezel.userData.noOutline = true;
 
-                    // Sponson Side Portals / Indicator Nodes
-                    [-0.8, 0.2, 1.2].forEach(pz => {
-                        const portal = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.08, 8).rotateZ(Math.PI / 2), matVisorGold);
-                        portal.position.set(Math.sign(sx) * 0.58, 0.05, pz);
+                        const portal = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.10, 0.10, 0.06, 10).rotateX(Math.PI / 2),
+                            matVisorGold
+                        );
+                        portal.position.set(0, py, 3.48);
                         portal.userData.noOutline = true;
-                        sponsonGroup.add(portal);
+                        sponsonGroup.add(bezel, portal);
+                    });
+
+                    // Outer Hull Flank Marker Lights
+                    [-1.1, 0.0, 1.1].forEach(pz => {
+                        const sideLight = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.14, 0.14, 0.08, 8).rotateZ(Math.PI / 2),
+                            matVisorGold
+                        );
+                        sideLight.position.set(Math.sign(sx) * 0.56, 0.05, pz);
+                        sideLight.userData.noOutline = true;
+                        sponsonGroup.add(sideLight);
                     });
 
                     // Rear High-Power Waterjet Thruster Cowling & Exhaust
@@ -465,18 +523,21 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                     sponsonGroup.add(jetCowling, jetNozzle, jetGlow);
 
                     // High-Pressure Yellow Deck Deluge Cannon
-                    const cannonBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.35, 0.4, 10), matGold);
-                    cannonBase.position.set(0, 0.65, 1.5);
+                    const cannonBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.35, 0.35, 10), matGold);
+                    cannonBase.position.set(0, 0.60, 1.4);
                     const cannonPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.8, 8).rotateX(Math.PI / 2), matGold);
-                    cannonPipe.position.set(0, 0.95, 2.1);
-                    const cannonNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.18, 0.45, 8).rotateX(Math.PI / 2), matChrome);
-                    cannonNozzle.position.set(0, 0.95, 3.1);
+                    cannonPipe.position.set(0, 0.88, 2.05);
+                    const cannonNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.18, 0.45, 8).rotateX(Math.PI / 2), matGold);
+                    cannonNozzle.position.set(0, 0.88, 3.0);
                     cannonNozzle.userData.noOutline = true;
-                    sponsonGroup.add(cannonBase, cannonPipe, cannonNozzle);
+                    const cannonBore = new THREE.Mesh(new THREE.CircleGeometry(0.16, 8), matDarkSteel);
+                    cannonBore.position.set(0, 0.88, 3.23);
+                    cannonBore.userData.noOutline = true;
+                    sponsonGroup.add(cannonBase, cannonPipe, cannonNozzle, cannonBore);
 
                     // Nozzle world anchor for twin aimed deluge water streams!
                     const nozzleTip = new THREE.Object3D();
-                    nozzleTip.position.set(0, 0.95, 3.4);
+                    nozzleTip.position.set(0, 0.88, 3.3);
                     sponsonGroup.add(nozzleTip);
                     if (idx === 0) parts.leftBoatNozzle = nozzleTip;
                     else parts.rightBoatNozzle = nozzleTip;
@@ -484,46 +545,33 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                     boatGroup.add(sponsonGroup);
                 });
 
-                // 2. Central Bridging Bridge Deck & Forward Hull Center
-                const bridgeDeck = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.42, 4.8), matRed);
-                bridgeDeck.position.set(0, 0.95, 0.2);
+                // 2. Central Bridging Foredeck & Forward Hull Center
+                const bridgeDeck = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.42, 3.6), matRed);
+                bridgeDeck.position.set(0, 0.95, 1.0);
                 bridgeDeck.castShadow = true;
                 boatGroup.add(bridgeDeck);
 
                 // Lower Forward Bumper / Wave Deflector Plate
-                const fwdPlate = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.48, 0.8), matChrome);
+                const fwdPlate = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.48, 0.6), matRed);
                 fwdPlate.position.set(0, 0.65, 2.65);
                 boatGroup.add(fwdPlate);
 
+                // Canonical White Horizontal Graphic Stripe on Bow
+                const fwdStripe = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.22, 0.08), matWhite);
+                fwdStripe.position.set(0, 0.65, 2.96);
+                fwdStripe.userData.noOutline = true;
+                boatGroup.add(fwdStripe);
+
                 // Front Catamaran Trim Lip
-                const frontTrim = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.16, 0.16), matCyanTrim);
+                const frontTrim = new THREE.Mesh(new THREE.BoxGeometry(2.36, 0.16, 0.16), matCyanTrim);
                 frontTrim.position.set(0, 1.05, 2.65);
                 frontTrim.userData.noOutline = true;
                 boatGroup.add(frontTrim);
 
-                // 3. Central Cockpit Wraparound Canopy (Tinted Cyan Glass)
-                const boatCanopy = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.85, 2.4), matCabGlass);
-                boatCanopy.position.set(0, 1.58, 0.5);
-                boatCanopy.userData.noOutline = true;
-                boatGroup.add(boatCanopy);
-
-                // Canopy Roof Cap
-                const canopyRoof = new THREE.Mesh(new THREE.BoxGeometry(2.36, 0.22, 2.2), matRed);
-                canopyRoof.position.set(0, 2.05, 0.45);
-                canopyRoof.castShadow = true;
-                boatGroup.add(canopyRoof);
-
-                // Gold Rescue Bots Fire Crest on Brow above windshield
-                const boatCrest = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.72, 0.16), matEmblem);
-                boatCrest.position.set(0, 1.95, 1.62);
-                boatCrest.rotation.x = -0.22;
-                boatCrest.userData.noOutline = true;
-                boatGroup.add(boatCrest);
-
-                // 4. Two Yellow & White Life Ring Buoys on the Foredeck
+                // 3. Two Yellow & White Life Ring Buoys on the Foredeck
                 [-0.68, 0.68].forEach(lx => {
                     const lifeBuoyGroup = new THREE.Group();
-                    lifeBuoyGroup.position.set(lx, 1.22, 1.85);
+                    lifeBuoyGroup.position.set(lx, 1.20, 1.95);
                     lifeBuoyGroup.rotation.x = -Math.PI / 2;
 
                     // Main Life Ring Torus (Yellow Base)
