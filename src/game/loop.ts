@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { renderer, scene, camera, sunLight } from '../rendering/scene.js';
 import { player, buddyBot, botRigs, input } from '../state/gameState.js';
 import { updatePhysics, waypointGroup, wpOuterRing, wpArrowCone } from '../physics/movement.js';
-import { updateAllBotTransforms, speakBotCatchphrase } from '../physics/player.js';
+import { updateAllBotTransforms, speakBotCatchphrase, syncHUDToActiveBot } from '../physics/player.js';
 import { updateIslandTrain, islandTrain } from '../world/railway.js';
 import {
     hqRadarPivot, swapPadRing, outpostPadRings, lhBeamPivot, observatoryDomePivot,
@@ -16,7 +16,7 @@ import {
     craneInteractive, testYard, stuntHoopRigs,
     ferrisWheelPivot, ferrisGondolas, bwX, bwZ, babyDinos, amberSpire, drX, drZ, waywardEnergonShard
 } from '../world/buildings.js';
-import { getTerrainHeight } from '../world/terrain.js';
+import { getTerrainHeight, isNearWater } from '../world/terrain.js';
 import { triggerNPCSpeech, showToast, activeSpeech } from '../ui/dialogs.js';
 import { progression, saveProgression, getRescueStarRank, lastKnownRankLevel, setLastKnownRankLevel, isBotDocked } from '../progression/progression.js';
 import {
@@ -45,6 +45,7 @@ let hudUpdateTimer = 0;
 let lightningFlashTimer = 0;
 let lightningTimer = 0;
 let positionSaveTimer = 0;
+let hudWaterCheckTimer = 0;
 let lastSavedPos = { x: 0, y: 0, z: 0, heading: 0 };
 
 export function savePlayerMapPosition(force = false) {
@@ -89,6 +90,18 @@ export function savePlayerMapPosition(force = false) {
             if (positionSaveTimer >= 1.0) {
                 positionSaveTimer = 0;
                 savePlayerMapPosition();
+            }
+
+            hudWaterCheckTimer += dt;
+            if (hudWaterCheckTimer >= 0.25) {
+                hudWaterCheckTimer = 0;
+                if (player && (player.botType === 'HEATWAVE' || player.botType === 'HIGHTIDE')) {
+                    const near = isNearWater(player.pos.x, player.pos.z, 24.0);
+                    if ((player as any)._lastNearWater !== near) {
+                        (player as any)._lastNearWater = near;
+                        syncHUDToActiveBot();
+                    }
+                }
             }
 
             renderMinimap();

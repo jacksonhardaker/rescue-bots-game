@@ -272,13 +272,14 @@ export let wpArrowCone = null;
                 }
             });
 
-            // High Tide submarine and plesiosaur move in water; Blades and docked Quickshadow fly freely; other bots stay on land
-            const isHighTideWaterMode = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+            // High Tide submarine/plesiosaur and Heatwave boat move in water; Blades and docked Quickshadow fly freely; other bots stay on land
+            const isWaterNavigatingMode = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                                          (player.botType === 'HEATWAVE' && player.mode === 'BOAT');
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
                                    (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
             let ty = getSurfaceHeight(hitPoint.x, hitPoint.z);
-            if (isHighTideWaterMode) {
-                // High Tide submarine and plesiosaur move in water: if tapped on dry land, find nearest water point along line towards player
+            if (isWaterNavigatingMode) {
+                // High Tide and Heatwave boat move in water: if tapped on dry land, find nearest water point along line towards player
                 if (!isPointInWater(hitPoint.x, hitPoint.z)) {
                     for (let step = 0; step <= 1.0; step += 0.05) {
                         const tx = THREE.MathUtils.lerp(hitPoint.x, player.pos.x, step);
@@ -306,7 +307,7 @@ export let wpArrowCone = null;
                 }
             }
 
-            const markerY = isHighTideWaterMode ? -0.45 : Math.max(0.0, ty);
+            const markerY = isWaterNavigatingMode ? -0.45 : Math.max(0.0, ty);
             player.waypoint.set(hitPoint.x, markerY, hitPoint.z);
             player.hasWaypoint = true;
 
@@ -610,9 +611,20 @@ export let wpArrowCone = null;
                         }
                     }
                 } else if (isHeatwaveBoat) {
-                    // Heatwave Rescue Fireboat cruises on water! (Can also pull up to harbor dock and beach ramps)
-                    player.pos.x = Math.max(-2380, Math.min(2380, nextX));
-                    player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
+                    // Heatwave in Boat Mode moves in water only: cannot cross onto dry land
+                    if (nextIsWater) {
+                        player.pos.x = Math.max(-2380, Math.min(2380, nextX));
+                        player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
+                    } else {
+                        player.speed *= -0.4;
+                        player.hasWaypoint = false;
+                        waypointGroup.visible = false;
+                        if (!player.lastShorelineToast || now - player.lastShorelineToast > 3500) {
+                            player.lastShorelineToast = now;
+                            showToast(`🚤 BOAT AT SHORELINE`, `Heatwave's Fireboat moves in water only! Transform to Fire Engine or Dino Mode to drive on land!`);
+                            sfx.playSpeechPop();
+                        }
+                    }
                 } else if (isHighTideAmphibiousDino) {
                     // High Tide Dino Mode is fully AMPHIBIOUS (moves seamlessly across land and ocean!)
                     player.pos.x = Math.max(-2380, Math.min(2380, nextX));
