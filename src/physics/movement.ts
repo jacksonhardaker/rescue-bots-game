@@ -587,6 +587,15 @@ export let wpArrowCone = null;
             if (player.inCrane) {
                 player.speed = 0;
             } else {
+                // Slick Road Drift Physics in Rainstorms
+                const isRainSlick = ((window as any).currentWeatherId === 'RAIN') && onRoad && player.mode === 'VEHICLE';
+                if (isRainSlick && Math.abs(moveX) > 0.45 && Math.abs(player.speed) > 11.0) {
+                    if (!player.lastDriftSound || now - player.lastDriftSound > 850) {
+                        player.lastDriftSound = now;
+                        sfx.playTireSqueal();
+                    }
+                }
+
                 const nextX = player.pos.x + Math.sin(player.heading) * player.speed * dt;
                 const nextZ = player.pos.z + Math.cos(player.heading) * player.speed * dt;
                 const nextGroundY = getSurfaceHeight(nextX, nextZ);
@@ -1137,10 +1146,15 @@ export let wpArrowCone = null;
             const snapX = Math.round(player.pos.x / 2) * 2;
             const snapZ = Math.round(player.pos.z / 2) * 2;
             sunLight.target.position.set(snapX, player.pos.y, snapZ);
-            sunLight.position.set(snapX + 160, player.pos.y + 260, snapZ + 130);
             sunLight.target.updateMatrixWorld();
 
-            // Update Headlight Spotlights & Sonar Ring for Player & Buddy Bot (Aligned with vehicle terrain pitch)
+            // Dynamic Headlight Spotlights & Sonar Ring for Player & Buddy Bot
+            const targetHl = (window as any).targetHeadlightIntensity || 0;
+            headlight.intensity = THREE.MathUtils.lerp(headlight.intensity, targetHl, Math.min(1, dt * 3.5));
+            if (buddyHeadlight) {
+                buddyHeadlight.intensity = THREE.MathUtils.lerp(buddyHeadlight.intensity, targetHl * 0.85, Math.min(1, dt * 3.5));
+            }
+
             headlight.position.set(player.pos.x, player.pos.y + 3.5, player.pos.z);
             headlight.target.position.set(
                 player.pos.x + Math.sin(player.heading) * 22,

@@ -14,7 +14,7 @@ import { waypointGroup } from '../physics/movement.js';
 import { showToast } from './dialogs.js';
 import { saveProgression, isBotDocked } from '../progression/progression.js';
 import { beacons } from '../world/emergencies.js';
-import { applyWeatherMode, currentWeatherIdx } from '../world/weather.js';
+import { applyWeatherMode, currentWeatherIdx, cycleWeatherMode } from '../world/weather.js';
 import { closeUtilityMenu } from '../physics/movement.js';
 import { buildHazardSites } from '../world/emergencies.js';
 import { buildEnergonCubes } from '../world/collectibles.js';
@@ -126,7 +126,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         });
 
         bindButton('btn-time', () => {
-            applyWeatherMode(currentWeatherIdx + 1, true);
+            cycleWeatherMode(null, true);
         });
 
         bindButton('btn-cam', () => {

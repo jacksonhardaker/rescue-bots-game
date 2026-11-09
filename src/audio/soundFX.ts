@@ -493,6 +493,99 @@ class RescueSoundFX {
                 osc.start(now);
                 osc.stop(now + 1.3);
             }
+            playFoghorn() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(68, now);
+                osc.frequency.linearRampToValueAtTime(58, now + 2.2);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(240, now);
+
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.linearRampToValueAtTime(0.24, now + 0.35);
+                gain.gain.setValueAtTime(0.22, now + 1.8);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 2.4);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.getSfxDest());
+
+                osc.start(now);
+                osc.stop(now + 2.45);
+            }
+            playSteamHiss() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const bufferSize = Math.floor(this.ctx.sampleRate * 0.7);
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.28));
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(2600, now);
+                filter.frequency.exponentialRampToValueAtTime(800, now + 0.7);
+                filter.Q.value = 1.4;
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.26, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.getSfxDest());
+                noise.start(now);
+            }
+            playLightningStrike() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.exponentialRampToValueAtTime(45, now + 0.16);
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.35, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+                osc.connect(gain);
+                gain.connect(this.getSfxDest());
+                osc.start(now);
+                osc.stop(now + 0.2);
+                setTimeout(() => this.playThunderRumble(), 70);
+            }
+            playTireSqueal() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(680, now);
+                osc.frequency.linearRampToValueAtTime(740, now + 0.12);
+                osc.frequency.linearRampToValueAtTime(620, now + 0.28);
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+                osc.connect(gain);
+                gain.connect(this.getSfxDest());
+                osc.start(now);
+                osc.stop(now + 0.34);
+            }
             playConeKnock() {
                 if (!this.enabled) return;
                 this.init();

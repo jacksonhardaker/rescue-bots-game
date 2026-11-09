@@ -11,7 +11,7 @@ import { BOT_METADATA } from '../bots/botMeta.js';
 import { getRescueStarRank, CURRENT_SAVE_VERSION, saveProgression, ALL_PLAYABLE_BOTS, getBotDockedKey, isBotDocked } from '../progression/progression.js';
 import { showToast } from './dialogs.js';
 import { DEFAULT_SETTINGS, matchesAction } from '../settings/settings.js';
-import { applyWeatherMode, currentWeatherIdx } from '../world/weather.js';
+import { applyWeatherMode, currentWeatherIdx, cycleWeatherMode, toggleAutoCycle } from '../world/weather.js';
 import { visitingAutobots, WORLD_MEGA_ATTACHMENTS } from '../world/allies.js';
 import { openTacticalMap, closeTacticalMap } from './tacticalMap.js';
 import { closeUtilityMenu } from '../physics/movement.js';
@@ -489,7 +489,11 @@ function _localReset() {
                 cycleBuddyBot();
             }
             if (matchesAction(e.code, 'weatherCycle') && !e.repeat) {
-                applyWeatherMode(currentWeatherIdx + 1, true);
+                if (e.shiftKey) {
+                    toggleAutoCycle(true);
+                } else {
+                    cycleWeatherMode(null, true);
+                }
             }
             if (e.code === 'KeyR' && !e.repeat) {
                 const bee = (typeof visitingAutobots !== 'undefined') ? visitingAutobots.find(a => a.id === 'BUMBLEBEE') : null;

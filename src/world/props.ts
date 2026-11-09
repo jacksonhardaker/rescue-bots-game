@@ -28,15 +28,17 @@ export const interactiveRoadProps = [];
             [-14, -1145], [14, -1145], [-14, -1095], [14, -1095]
         ];
 
+        export const matStreetlampBulb = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+        if (typeof window !== 'undefined') (window as any).matStreetlampBulb = matStreetlampBulb;
+
         export function buildInstancedStreetlamps(scene) {
             const count = streetlampCoords.length;
             const postGeo = new THREE.CylinderGeometry(0.18, 0.28, 7.2, 8);
             const bulbGeo = new THREE.SphereGeometry(0.68, 8, 8);
             const capGeo = new THREE.ConeGeometry(0.95, 0.55, 8);
-            const matBulb = new THREE.MeshBasicMaterial({ color: 0xfef08a });
 
             const iPosts = new THREE.InstancedMesh(postGeo, matDarkSteel, count);
-            const iBulbs = new THREE.InstancedMesh(bulbGeo, matBulb, count);
+            const iBulbs = new THREE.InstancedMesh(bulbGeo, matStreetlampBulb, count);
             const iCaps = new THREE.InstancedMesh(capGeo, matDarkSteel, count);
             const iOutlines = new THREE.InstancedMesh(postGeo, matInkOutline, count);
             const iCapOutlines = new THREE.InstancedMesh(capGeo, matInkOutline, count);

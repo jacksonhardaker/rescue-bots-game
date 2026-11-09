@@ -122,9 +122,16 @@ export const SVG_ICONS = {
                 <circle cx="12" cy="12" r="4"/>
                 <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
             </svg>`,
+            WEATHER_SUNSET: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 18a5 5 0 00-10 0"/>
+                <path d="M12 2v4M4.22 10.22l2.83 2.83M1 18h22M19.78 10.22l-2.83 2.83M12 11V7"/>
+            </svg>`,
             WEATHER_RAIN: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M20 16.58A5 5 0 0018 7h-1.26A8 8 0 104 15.25"/>
                 <path d="M8 19v3M12 18v4M16 19v3"/>
+            </svg>`,
+            WEATHER_FOG: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 14h16M2 18h20M6 10h12M8 6h8"/>
             </svg>`,
             WEATHER_VOLCANO: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 21l6-13h4l6 13H4z"/>

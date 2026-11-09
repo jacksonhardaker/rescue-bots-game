@@ -33,7 +33,7 @@ import { updateVisitingAutobots } from '../world/allies.js';
 import { updateMorBotBattle } from '../world/morbot.js';
 import { updateViewportCulling } from './culling.js';
 import { renderMinimap, renderTacticalMap } from '../ui/tacticalMap.js';
-import { WEATHER_MODES, currentWeatherIdx, rainSystem, volcanoEmberSystem, starField, auroraMesh } from '../world/weather.js';
+import { WEATHER_MODES, currentWeatherIdx, rainSystem, volcanoEmberSystem, starField, auroraMesh, updateWeather } from '../world/weather.js';
 import { waterMesh, shorelineFoamRing } from '../world/terrainMesh.js';
 import { sfx } from '../audio/soundFX.js';
 
@@ -149,10 +149,17 @@ export function savePlayerMapPosition(force = false) {
                     puff.scale.setScalar(0.65 + p * 2.1);
                 }
             }
-            if (waterMesh) waterMesh.position.y = -0.45 + Math.sin(now * 0.0025) * 0.22;
-            if (shorelineFoamRing) shorelineFoamRing.scale.setScalar(1.0 + Math.sin(now * 0.003) * 0.008);
+            const isStormy = Boolean(WEATHER_MODES && WEATHER_MODES[currentWeatherIdx] && WEATHER_MODES[currentWeatherIdx].id === 'RAIN');
+            const oceanSwell = isStormy
+                ? (Math.sin(now * 0.0035) * 0.58 + Math.cos(now * 0.002) * 0.22)
+                : (Math.sin(now * 0.0025) * 0.22);
+            if (waterMesh) waterMesh.position.y = -0.45 + oceanSwell;
+            if (shorelineFoamRing) shorelineFoamRing.scale.setScalar(1.0 + Math.sin(now * 0.003) * (isStormy ? 0.024 : 0.008));
 
-            // Animate Active Weather System & Island Events
+            // Animate Dynamic Day/Night Cycle, Island Weather & Weather Hazards
+            updateWeather(dt, now, player);
+
+            // Animate Active Weather System Particles & Island Events
             const currentMode = (WEATHER_MODES && WEATHER_MODES[currentWeatherIdx]) || { id: 'SUNNY' };
             if (currentMode && currentMode.id === 'RAIN' && rainSystem && rainSystem.group) {
                 rainSystem.group.position.set(player.pos.x, player.pos.y, player.pos.z);
@@ -205,8 +212,8 @@ export function savePlayerMapPosition(force = false) {
                 if (auroraMesh) {
                     auroraMesh.rotation.z = Math.sin(now * 0.001) * 0.035;
                     auroraMesh.position.y = 260 + Math.sin(now * 0.0016) * 12;
+                    (auroraMesh.material as THREE.MeshBasicMaterial).opacity = 0.65 + Math.sin(now * 0.0025) * 0.12;
                 }
-                auroraMesh.material.opacity = 0.65 + Math.sin(now * 0.0025) * 0.12;
 
                 // Animate twinkling diamond stars & pulsing moon halo
                 const stars = starField.stars;
