@@ -20,9 +20,10 @@ export const emergentRescues = [];
 
         const EMERGENCY_SITES = [
             {
-                id: 0, name: "Harbor Dock Rockslide", type: "ROCKSLIDE", x: 0, z: 1080,
+                id: 0, name: "Harbor Pier Dual Crisis", type: "TEAMUP", x: 0, z: 1080,
                 citizenName: "Dockworker Pete", citizenRole: "Stranded Dock Crew",
-                helpCall: "Help! Rescue Bots! We're trapped by the rockslide at the Harbor Dock!",
+                helpCall: "Help! Rescue Bots! Pier warehouse blazes AND heavy crane boulders have trapped us! We need a Team-Up rescue!",
+                teamUpBots: ["HEATWAVE", "BOULDER"],
                 shirtColor: 0xf59e0b, hairColor: 0x451a03, voicePitch: 0.96
             },
             {
@@ -38,9 +39,10 @@ export const emergentRescues = [];
                 shirtColor: 0x06b6d4, hairColor: 0xb45309, voicePitch: 1.16
             },
             {
-                id: 3, name: "Volcano Ridge Inferno", type: "FIRE", x: -680, z: -700,
+                id: 3, name: "Volcano Ridge Dual Crisis", type: "TEAMUP", x: -680, z: -700,
                 citizenName: "Vulcanologist Marco", citizenRole: "Trapped Scientist",
-                helpCall: "Help! We're cut off by the Volcano Ridge Inferno! Bring the Water Cannon!",
+                helpCall: "Help! Intense volcanic blazes AND heavy seismic boulders are closing in! We need a Water Bot and a Heavy Smash Bot together!",
+                teamUpBots: ["HEATWAVE", "BOULDER"],
                 shirtColor: 0xf97316, hairColor: 0x1e293b, voicePitch: 0.94
             },
             {
@@ -62,9 +64,10 @@ export const emergentRescues = [];
                 shirtColor: 0xa855f7, hairColor: 0x0f172a, voicePitch: 1.14
             },
             {
-                id: 7, name: "West Tech Highway Pileup", type: "ROCKSLIDE", x: -1050, z: 25,
+                id: 7, name: "West Tech Highway Dual Crisis", type: "TEAMUP", x: -1050, z: 25,
                 citizenName: "Commuter Toby", citizenRole: "Stranded Driver",
-                helpCall: "Help! Chase! We're pinned by the West Tech Highway Pileup! Deploy your Tow Winch!",
+                helpCall: "Help! A multi-car highway pileup has engine fires AND heavy wrecked barriers blocking everyone! Team up to save us!",
+                teamUpBots: ["HEATWAVE", "CHASE"],
                 shirtColor: 0x22c55e, hairColor: 0x78350f, voicePitch: 1.02
             }
         ];
@@ -83,6 +86,7 @@ const rockGeo = new THREE.DodecahedronGeometry(1.6, 0);
 const matBoulder = new THREE.MeshToonMaterial({ color: 0x78716c, gradientMap: toonGrad3 });
 const matBeaconRed = new THREE.MeshBasicMaterial({ color: 0xff1e42 });
 const matBeaconOrange = new THREE.MeshBasicMaterial({ color: 0xff6414 });
+const matBeaconCyan = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
 const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
         export function spawnHazardNodesForSite(site, idx) {
@@ -96,8 +100,10 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
                 let nodeMesh;
                 const s = 0.9 + (i % 3) * 0.3;
+                const isFireNode = site.type === 'FIRE' || (site.type === 'TEAMUP' && i % 2 === 0);
+                const nodeType = isFireNode ? 'FIRE' : 'ROCKSLIDE';
 
-                if (site.type === 'FIRE') {
+                if (isFireNode) {
                     nodeMesh = new THREE.Group();
                     const outerFlame = new THREE.Mesh(fireConeGeo, matFireCore);
                     outerFlame.position.y = 2.4;
@@ -124,7 +130,7 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
                 siteNodes.push({
                     mesh: nodeMesh,
-                    type: site.type,
+                    type: nodeType,
                     x: nx,
                     y: ny,
                     z: nz,
@@ -146,8 +152,8 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
             beacon.nodes = spawnHazardNodesForSite(site, beacon.id);
             beacon.restored = false;
             beacon.restoredAtTime = -1;
-            beacon.orb.material = beacon.type === 'FIRE' ? matBeaconOrange : matBeaconRed;
-            beacon.skyBeam.material.color.setHex(beacon.type === 'FIRE' ? 0xf97316 : 0xf43f5e);
+            beacon.orb.material = beacon.type === 'FIRE' ? matBeaconOrange : (beacon.type === 'TEAMUP' ? matBeaconCyan : matBeaconRed);
+            beacon.skyBeam.material.color.setHex(beacon.type === 'FIRE' ? 0xf97316 : (beacon.type === 'TEAMUP' ? 0x06b6d4 : 0xf43f5e));
             beacon.skyBeam.material.opacity = 0.28;
             if (beacon.strandedCitizens) {
                 beacon.strandedCitizens.forEach(sc => {
@@ -189,7 +195,8 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                     const site = EMERGENCY_SITES[i];
                     const pip = document.createElement('div');
                     const isFire = site.type === 'FIRE';
-                    pip.className = `mission-pip ${isFire ? 'mission-pip-fire' : 'mission-pip-hazard'}`;
+                    const isTeamUp = site.type === 'TEAMUP';
+                    pip.className = `mission-pip ${isFire ? 'mission-pip-fire' : (isTeamUp ? 'mission-pip-teamup' : 'mission-pip-hazard')}`;
                     pipsContainer.appendChild(pip);
                 }
             }
@@ -208,17 +215,19 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                 pole.position.y = 5.0;
                 group.add(pole);
 
+                const orbMat = isCompleted ? matBeaconGreen : (site.type === 'FIRE' ? matBeaconOrange : (site.type === 'TEAMUP' ? matBeaconCyan : matBeaconRed));
                 const orb = new THREE.Mesh(
                     new THREE.SphereGeometry(1.5, 12, 12),
-                    isCompleted ? matBeaconGreen : (site.type === 'FIRE' ? matBeaconOrange : matBeaconRed)
+                    orbMat
                 );
                 orb.position.y = 10.0;
                 group.add(orb);
 
+                const beamColor = isCompleted ? 0x22c55e : (site.type === 'FIRE' ? 0xf97316 : (site.type === 'TEAMUP' ? 0x06b6d4 : 0xf43f5e));
                 const skyBeam = new THREE.Mesh(
                     new THREE.CylinderGeometry(0.9, 0.9, 95, 8, 1, true),
                     new THREE.MeshBasicMaterial({
-                        color: isCompleted ? 0x22c55e : (site.type === 'FIRE' ? 0xf97316 : 0xf43f5e),
+                        color: beamColor,
                         transparent: true,
                         opacity: isCompleted ? 0.15 : 0.28,
                         side: THREE.DoubleSide
@@ -540,80 +549,98 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         // Aimed High-Pressure Ballistic Water Cannon Arc for Heatwave (Automatically targets nearest active Fire/Hazard!)
         export function spawnWaterCannonStream(sourceRig = botRigs.HEATWAVE, sourceOrigin = null, sourceHeading = player.heading) {
             const rig = sourceRig;
-            const nozzleWorldPos = new THREE.Vector3();
+            const isHeatwaveBoat = (rig === botRigs.HEATWAVE && player.botType === 'HEATWAVE' && player.mode === 'BOAT' && !sourceOrigin);
+            const nozzleWorldPositions = [];
+
             if (sourceOrigin) {
-                nozzleWorldPos.copy(sourceOrigin);
+                nozzleWorldPositions.push(sourceOrigin.clone());
+            } else if (isHeatwaveBoat && rig.leftBoatNozzle && rig.rightBoatNozzle) {
+                const leftPos = new THREE.Vector3();
+                const rightPos = new THREE.Vector3();
+                rig.leftBoatNozzle.getWorldPosition(leftPos);
+                rig.rightBoatNozzle.getWorldPosition(rightPos);
+                nozzleWorldPositions.push(leftPos, rightPos);
             } else {
+                const nozzleWorldPos = new THREE.Vector3();
                 const activeNozzle = player.mode === 'DINO' ? rig.dinoNozzleTip : rig.nozzleTip;
-                activeNozzle.getWorldPosition(nozzleWorldPos);
+                if (activeNozzle) activeNozzle.getWorldPosition(nozzleWorldPos);
+                else nozzleWorldPos.copy(player.pos).add(new THREE.Vector3(0, 2, 0));
+                nozzleWorldPositions.push(nozzleWorldPos);
             }
 
-            // Find closest uncleared hazard node within 34m to aim the Water Cannon arc directly onto the flames!
-            let targetNode = null;
-            let bestDist = 34.0;
-            beacons.forEach(beacon => {
-                if (beacon.restored) return;
-                beacon.nodes.forEach(n => {
-                    if (n.cleared) return;
-                    const d = Math.hypot(n.x - nozzleWorldPos.x, n.z - nozzleWorldPos.z);
-                    if (d < bestDist) {
-                        bestDist = d;
-                        targetNode = n;
+            nozzleWorldPositions.forEach(nozzleWorldPos => {
+                // Find closest uncleared fire or hazard node within 36m to aim the stream directly!
+                let targetNode = null;
+                let bestDist = 36.0;
+                beacons.forEach(beacon => {
+                    if (beacon.restored) return;
+                    beacon.nodes.forEach(n => {
+                        if (n.cleared) return;
+                        const dist = Math.hypot(n.x - nozzleWorldPos.x, n.z - nozzleWorldPos.z);
+                        const effectiveDist = n.type === 'FIRE' ? dist : dist * 1.4;
+                        if (effectiveDist < bestDist) {
+                            bestDist = effectiveDist;
+                            targetNode = n;
+                        }
+                    });
+                });
+
+                let baseVx, baseVy, baseVz;
+                const gravity = 24;
+
+                if (targetNode) {
+                    const dx = targetNode.x - nozzleWorldPos.x;
+                    const dz = targetNode.z - nozzleWorldPos.z;
+                    const dy = (targetNode.y + 1.6) - nozzleWorldPos.y;
+                    const horizDist = Math.max(4.0, Math.hypot(dx, dz));
+                    const flightTime = THREE.MathUtils.clamp(horizDist / 38.0, 0.22, 0.78);
+
+                    baseVx = dx / flightTime;
+                    baseVz = dz / flightTime;
+                    // High ballistic arc that peaks in the middle and lands squarely on target!
+                    baseVy = (dy + 0.5 * gravity * flightTime * flightTime) / flightTime;
+
+                    if (!isHeatwaveBoat && rig.backAttachment) {
+                        const worldAimYaw = Math.atan2(dx, dz);
+                        rig.backAttachment.rotation.y = worldAimYaw - sourceHeading;
                     }
-                });
+                } else {
+                    if (!isHeatwaveBoat && rig.backAttachment) {
+                        rig.backAttachment.rotation.y = 0;
+                    }
+                    const jetSpeed = 42;
+                    baseVx = Math.sin(sourceHeading) * jetSpeed;
+                    baseVz = Math.cos(sourceHeading) * jetSpeed;
+                    baseVy = 9.5;
+                }
+
+                const dropsPerNozzle = isHeatwaveBoat ? 2 : 3;
+                for (let i = 0; i < dropsPerNozzle; i++) {
+                    const dropGroup = new THREE.Group();
+                    const dropGeo = new THREE.SphereGeometry(0.52 + Math.random() * 0.35, 8, 8);
+                    const drop = new THREE.Mesh(
+                        dropGeo,
+                        new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0x00b4d8 : 0xffffff })
+                    );
+                    const dropOutline = new THREE.Mesh(dropGeo, matInkOutline);
+                    dropOutline.scale.setScalar(1.16);
+                    dropGroup.add(drop);
+                    dropGroup.add(dropOutline);
+
+                    dropGroup.position.copy(nozzleWorldPos);
+                    (scene || (typeof window !== "undefined" ? window.scene : null)).add(dropGroup);
+
+                    activeParticles.push({
+                        mesh: dropGroup,
+                        vx: baseVx + (Math.random() - 0.5) * 3.8,
+                        vy: baseVy + (Math.random() - 0.5) * 2.4,
+                        vz: baseVz + (Math.random() - 0.5) * 3.8,
+                        gravity,
+                        isWater: true,
+                        life: 0.88
+                    });
+                }
             });
-
-            let baseVx, baseVy, baseVz;
-            const gravity = 24;
-
-            if (targetNode) {
-                const dx = targetNode.x - nozzleWorldPos.x;
-                const dz = targetNode.z - nozzleWorldPos.z;
-                const dy = (targetNode.y + 1.6) - nozzleWorldPos.y;
-                const horizDist = Math.max(4.0, Math.hypot(dx, dz));
-                const flightTime = THREE.MathUtils.clamp(horizDist / 38.0, 0.22, 0.78);
-
-                baseVx = dx / flightTime;
-                baseVz = dz / flightTime;
-                // High ballistic arc that peaks in the middle and lands squarely on the target fire!
-                baseVy = (dy + 0.5 * gravity * flightTime * flightTime) / flightTime;
-
-                // Rotate Heatwave's roof ladder turret toward the targeted fire!
-                const worldAimYaw = Math.atan2(dx, dz);
-                rig.backAttachment.rotation.y = worldAimYaw - sourceHeading;
-            } else {
-                rig.backAttachment.rotation.y = 0;
-                const jetSpeed = 42;
-                baseVx = Math.sin(sourceHeading) * jetSpeed;
-                baseVz = Math.cos(sourceHeading) * jetSpeed;
-                baseVy = 9.5;
-            }
-
-            for (let i = 0; i < 3; i++) {
-                const dropGroup = new THREE.Group();
-                const dropGeo = new THREE.SphereGeometry(0.52 + Math.random() * 0.35, 8, 8);
-                const drop = new THREE.Mesh(
-                    dropGeo,
-                    new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0x00b4d8 : 0xffffff })
-                );
-                const dropOutline = new THREE.Mesh(dropGeo, matInkOutline);
-                dropOutline.scale.setScalar(1.16);
-                dropGroup.add(drop);
-                dropGroup.add(dropOutline);
-
-                dropGroup.position.copy(nozzleWorldPos);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(dropGroup);
-
-                activeParticles.push({
-                    mesh: dropGroup,
-                    vx: baseVx + (Math.random() - 0.5) * 3.8,
-                    vy: baseVy + (Math.random() - 0.5) * 2.4,
-                    vz: baseVz + (Math.random() - 0.5) * 3.8,
-                    gravity,
-                    isWater: true,
-                    life: 0.88
-                });
-            }
         }
 
 
@@ -627,7 +654,8 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                     pips[idx].className = "mission-pip mission-pip-resolved";
                 } else {
                     const isFire = b.type === 'FIRE';
-                    pips[idx].className = `mission-pip ${isFire ? 'mission-pip-fire' : 'mission-pip-hazard'}`;
+                    const isTeamUp = b.type === 'TEAMUP';
+                    pips[idx].className = `mission-pip ${isFire ? 'mission-pip-fire' : (isTeamUp ? 'mission-pip-teamup' : 'mission-pip-hazard')}`;
                 }
             });
 
@@ -654,8 +682,32 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
             }
         }
 
-        export function clearHazardNode(beacon, node) {
+        export function clearHazardNode(beacon, node, attackType = null) {
             if (node.cleared) return;
+
+            // Validate Attack Compatibility for Team-Up Crises
+            const isWater = (attackType === 'WATER') || (player.waterTimer > 0) || (player.botType === 'HEATWAVE' && player.waterTimer > 0) || (player.botType === 'HIGHTIDE');
+            if (node.type === 'FIRE') {
+                if (!isWater) {
+                    if (!beacon._lastFireWarn || performance.now() - beacon._lastFireWarn > 3200) {
+                        beacon._lastFireWarn = performance.now();
+                        showToast("WATER CANNON NEEDED!", "Extinguish raging fires with Heatwave or High Tide!");
+                        sfx.playWaterSpray();
+                    }
+                    spawnBurstParticles(node.x, node.y + 1.2, node.z, 0x64748b, 4, 0.5);
+                    return;
+                }
+            } else if (node.type === 'ROCKSLIDE') {
+                if (attackType === 'WATER') {
+                    if (!beacon._lastRockWarn || performance.now() - beacon._lastRockWarn > 3200) {
+                        beacon._lastRockWarn = performance.now();
+                        showToast("HEAVY RESCUE NEEDED!", "Smash or scoop heavy boulders with Boulder or heavy bots!");
+                    }
+                    spawnBurstParticles(node.x, node.y + 1.2, node.z, 0x38bdf8, 3, 0.4);
+                    return;
+                }
+            }
+
             node.cleared = true;
             sfx.playRockBreak();
             const burstColor = node.type === 'FIRE' ? 0x38bdf8 : 0x8c827a;
@@ -684,10 +736,23 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                 }
                 saveProgression();
 
-                // Pop out 3 Bonus Golden Energon Cubes around the resolved emergency site!
-                spawnBonusEnergonCubes(beacon.x, beacon.z, 3);
+                // Pop out Bonus Golden Energon Cubes around the resolved emergency site (5 for TEAMUP, 3 for normal)
+                const cubeCount = beacon.type === 'TEAMUP' ? 5 : 3;
+                spawnBonusEnergonCubes(beacon.x, beacon.z, cubeCount);
 
-                showToast("CITIZENS RESCUED!", `${beacon.name} Cleared by ${player.botType}!`);
+                if (beacon.type === 'TEAMUP') {
+                    showToast("TEAM-UP RESCUE COMPLETE!", `${beacon.name} Cleared by Bot Teamwork!`);
+                    sfx.playLevelUp();
+                    triggerNPCSpeech(
+                        "Chief Charlie Burns",
+                        "Police Chief",
+                        "Outstanding team coordination, Rescue Bots! You extinguished the blazes and cleared the rubble in record time!",
+                        0.88,
+                        true
+                    );
+                } else {
+                    showToast("CITIZENS RESCUED!", `${beacon.name} Cleared by ${player.botType}!`);
+                }
 
                 // Have the active Rescue Bot speak an iconic victory catchphrase & turn Stranded Citizens' gems green!
                 speakBotCatchphrase(player.botType, 'RESCUE');

@@ -188,11 +188,16 @@ export function buildRescueBotModel(botType) {
     return parts;
 }
 
-export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0) {
+export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0, boatMorph = 0) {
+            // Heatwave Boat Mode: folds limbs into vehicle aerodynamic layout under the catamaran boat shell
+            if (rig.botType === 'HEATWAVE' && boatMorph > 0) {
+                m = Math.max(m, boatMorph);
+            }
             // Apply mode-dependent ground elevation so the bot's ground contact surface stays flush on terrain
             const bKey = rig.isMega ? `${rig.botType}_MEGA` : rig.botType;
-            const gOffsets = BOT_GROUND_OFFSETS[bKey] || BOT_GROUND_OFFSETS[rig.botType] || { bot: 0, veh: 0, dino: 0 };
-            const groundLiftY = gOffsets.bot * (1 - m - d) + gOffsets.veh * m + gOffsets.dino * d;
+            const gOffsets = BOT_GROUND_OFFSETS[bKey] || BOT_GROUND_OFFSETS[rig.botType] || { bot: 0, veh: 0, dino: 0, boat: 0 };
+            const boatOffset = (gOffsets as any).boat !== undefined ? (gOffsets as any).boat : gOffsets.veh;
+            const groundLiftY = (gOffsets.bot * (1 - m - d) + gOffsets.veh * m + gOffsets.dino * d) * (1 - boatMorph) + boatOffset * boatMorph;
             if (rig.chassis) {
                 rig.chassis.position.y = groundLiftY;
             }
@@ -881,6 +886,21 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 // Dino Mode Armor
                 if (rig.megaDinoArmor) rig.megaDinoArmor.visible = inDino;
                 if (rig.megaDinoTail) rig.megaDinoTail.visible = inDino;
+            }
+
+            // Heatwave Boat Mode Parts & Road Rig Visibility
+            if (rig.botType === 'HEATWAVE') {
+                const inBoat = boatMorph > 0.4;
+                if (rig.boatGroup) rig.boatGroup.visible = inBoat;
+                if (inBoat) {
+                    if (rig.wheels) rig.wheels.forEach(w => { w.visible = false; });
+                    if (rig.backAttachment) rig.backAttachment.visible = false;
+                    if (rig.trailerHitch) rig.trailerHitch.visible = false;
+                    if (rig.megaTrailer) rig.megaTrailer.visible = false;
+                } else {
+                    if (rig.wheels && !rig.isMega) rig.wheels.forEach(w => { w.visible = true; });
+                    if (rig.backAttachment) rig.backAttachment.visible = (d < 0.2);
+                }
             }
         }
 

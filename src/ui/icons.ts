@@ -194,6 +194,19 @@ export const SVG_ICONS = {
                 <path d="M9 17h4l4-5h4M17 12a4 4 0 014-4M15 16a5 5 0 016-1"/>
                 <circle cx="21" cy="7" r="1" fill="currentColor"/>
             </svg>`,
+            FIREBOAT: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 17l2-7h16l2 7H2z" fill="#e81e25" fill-opacity="0.3"/>
+                <path d="M4 10l2-4h12l2 4"/>
+                <path d="M12 6V3M9 4h6"/>
+                <path d="M2 21c3-1 6-1 10 0 4-1 7-1 10 0" stroke="#38bdf8"/>
+            </svg>`,
+            TWIN_DELUGE: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 16h5v4H4zM15 16h5v4h-5z"/>
+                <path d="M6 16v-4l4-4M18 16v-4l-4-4"/>
+                <circle cx="10" cy="8" r="1.5" fill="#facc15"/>
+                <circle cx="14" cy="8" r="1.5" fill="#facc15"/>
+                <path d="M10 6c1-2 3-2 4 0" stroke="#38bdf8"/>
+            </svg>`,
             HYDRO_DELUGE: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 19h16M12 19V11M8 11h8l2-4H6l2 4z"/>
                 <path d="M12 7V3M9 4a6 6 0 016 0"/>

@@ -20,7 +20,7 @@ import { SVG_ICONS } from '../ui/icons.js';
                 'HIGHTIDE', 'HIGHTIDE_MEGA',
                 'QUICKSHADOW', 'QUICKSHADOW_MEGA'
             ];
-            const MODES = ['bot', 'vehicle', 'dino'];
+            const MODES = ['bot', 'vehicle', 'boat', 'dino'];
 
             // Hide every game HUD element; keep only the WebGL canvas
             Array.from(document.body.children).forEach(el => {
@@ -92,10 +92,12 @@ import { SVG_ICONS } from '../ui/icons.js';
                 const colGap = isHighTideMega ? 58 : (isMega ? 28 : 16);
                 const rowGap = isHighTideMega ? 62 : (isMega ? 28 : 16);
                 rowZ += rowGap / 2;
-                MODES.forEach((mode, ci) => {
+                const botModes = id.startsWith('HEATWAVE') ? ['bot', 'vehicle', 'boat', 'dino'] : ['bot', 'vehicle', 'dino'];
+                botModes.forEach((mode, ci) => {
                     const rig = makeRig(id);
                     const holder = new THREE.Group();
-                    holder.userData.gridPos = new THREE.Vector3((ci - 1) * colGap, 0, rowZ);
+                    const offsetIndex = ci - (botModes.length - 1) / 2;
+                    holder.userData.gridPos = new THREE.Vector3(offsetIndex * colGap, 0, rowZ);
                     holder.add(rig.root);
                     bcScene.add(holder);
                     const label = document.createElement('div');
@@ -145,7 +147,7 @@ import { SVG_ICONS } from '../ui/icons.js';
                         </select></label>
                     <label style="display:block;margin-bottom:6px;">Target mode
                         <select data-k="mode" style="width:100%;color:#0f172a;border-radius:6px;padding:3px;">
-                            <option value="bot">Bot</option><option value="vehicle">Vehicle</option><option value="dino">Dino</option>
+                            <option value="bot">Bot</option><option value="vehicle">Vehicle</option><option value="boat">Boat (Heatwave)</option><option value="dino">Dino</option>
                         </select></label>
                     <label style="display:block;margin-bottom:6px;">Morph from Bot → target: <span data-morphval></span>
                         <input data-k="morph" type="range" min="0" max="1" step="0.01" style="width:100%;"></label>
@@ -216,16 +218,21 @@ import { SVG_ICONS } from '../ui/icons.js';
                 const issues = [];
                 let focusCell = null;
                 cells.forEach(c => {
-                    let show, m = 0, d = 0, walk = 0, speed = 0, smash = 0;
+                    let show, m = 0, d = 0, bm = 0, walk = 0, speed = 0, smash = 0;
                     if (state.view === 'grid') {
                         show = true;
                         if (c.mode === 'vehicle') m = 1;
+                        if (c.mode === 'boat') bm = 1;
                         if (c.mode === 'dino') d = 1;
                         c.holder.position.copy(c.holder.userData.gridPos);
                     } else {
                         // Focus view uses the "bot" cell of the chosen bot and morphs it toward the target mode
                         show = c.id === state.bot && c.mode === 'bot';
                         if (state.mode === 'vehicle') m = state.morph;
+                        if (state.mode === 'boat') {
+                            if (c.id.startsWith('HEATWAVE')) bm = state.morph;
+                            else m = state.morph;
+                        }
                         if (state.mode === 'dino') d = state.morph;
                         walk = walkCycle; speed = state.walk ? 12 : 0; smash = smashT;
                         c.holder.position.set(0, 0, 0);
@@ -234,7 +241,7 @@ import { SVG_ICONS } from '../ui/icons.js';
                     c.holder.visible = show;
                     c.label.style.display = show ? '' : 'none';
                     if (!show) return;
-                    applyBotRigMorph(c.rig, m, d, walk, speed, smash, t);
+                    applyBotRigMorph(c.rig, m, d, walk, speed, smash, t, 0, bm);
                     if (state.view === 'grid') c.holder.rotation.y = state.spin ? state.yaw * 0.6 : 0;
                     else c.holder.rotation.y = 0;
 

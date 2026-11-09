@@ -589,11 +589,14 @@ export let wpArrowCone = null;
                 const nextX = player.pos.x + Math.sin(player.heading) * player.speed * dt;
                 const nextZ = player.pos.z + Math.cos(player.heading) * player.speed * dt;
                 const nextGroundY = getSurfaceHeight(nextX, nextZ);
+                const nextIsWater = isPointInWater(nextX, nextZ) || nextGroundY < 0.25;
+
+                const isHeatwaveBoat = (player.botType === 'HEATWAVE' && player.mode === 'BOAT');
+                const canMoveOnWater = isHeatwaveBoat || isHighTideWaterVeh || isHighTideAmphibiousDino;
 
                 if (isHighTideWaterVeh) {
                     // High Tide in Submarine / Ship mode moves in water only: cannot cross onto dry land
-                    const inWater = isPointInWater(nextX, nextZ);
-                    if (inWater || nextGroundY < 0.25) {
+                    if (nextIsWater) {
                         player.pos.x = Math.max(-2380, Math.min(2380, nextX));
                         player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
                     } else {
@@ -606,14 +609,33 @@ export let wpArrowCone = null;
                             sfx.playSpeechPop();
                         }
                     }
-                } else if (isFlyingCopter || isHighTideAmphibiousDino || nextGroundY > -1.5) {
-                    // Blades Helicopter can fly freely; High Tide Dino Mode is fully AMPHIBIOUS (moves seamlessly across land and ocean!); Ground bots stay on land
+                } else if (isHeatwaveBoat) {
+                    // Heatwave Rescue Fireboat cruises on water! (Can also pull up to harbor dock and beach ramps)
+                    player.pos.x = Math.max(-2380, Math.min(2380, nextX));
+                    player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
+                } else if (isHighTideAmphibiousDino) {
+                    // High Tide Dino Mode is fully AMPHIBIOUS (moves seamlessly across land and ocean!)
+                    player.pos.x = Math.max(-2380, Math.min(2380, nextX));
+                    player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
+                } else if (isFlyingCopter && player.pos.y > 6.0) {
+                    // Airborne flight (Blades Helicopter / Quickshadow Bomber in air) flies over land and ocean
+                    player.pos.x = Math.max(-2380, Math.min(2380, nextX));
+                    player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
+                } else if (!nextIsWater && nextGroundY > -0.5) {
+                    // All other ground bots strictly move on land: water boundary check blocks driving into water!
                     player.pos.x = Math.max(-2380, Math.min(2380, nextX));
                     player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
                 } else {
+                    // Shoreline water barrier for non-aquatic bots
                     player.speed *= -0.4;
                     player.hasWaypoint = false;
                     waypointGroup.visible = false;
+                    if (!player.lastWaterToast || now - player.lastWaterToast > 3500) {
+                        player.lastWaterToast = now;
+                        const bName = BOT_METADATA[player.botType]?.name || player.botType;
+                        showToast(`🌊 WATER RESTRICTION`, `${bName} cannot move on water! Transform to Heatwave Boat Mode or High Tide!`);
+                        sfx.playSpeechPop();
+                    }
                 }
             }
 
@@ -679,15 +701,16 @@ export let wpArrowCone = null;
                     }
                 }
             }
-            const isHighTideFloatingInWater = (
-                player.botType === 'HIGHTIDE' &&
-                (player.mode === 'VEHICLE' || player.mode === 'DINO') &&
-                (isPointInWater(player.pos.x, player.pos.z) || centerGroundY < 0.25)
-            );
-            if (isHighTideFloatingInWater) {
-                // High Tide Submarine and swimming Plesiosaur cruise on the water surface with gentle marine swell bobbing
+            const isBotFloatingInWater = (
+                (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                (player.botType === 'HEATWAVE' && player.mode === 'BOAT')
+            ) && (isPointInWater(player.pos.x, player.pos.z) || centerGroundY < 0.25);
+            if (isBotFloatingInWater) {
+                // High Tide and Heatwave Fireboat cruise on the water surface with gentle marine swell bobbing
                 const subSwell = Math.sin(now * 0.003) * 0.12;
-                const waterTargetY = -0.45 - (player.mode === 'DINO' ? 0.35 : 0.22) + subSwell;
+                const waterTargetY = (player.botType === 'HEATWAVE' && player.mode === 'BOAT')
+                    ? (-0.28 + subSwell)
+                    : (-0.45 - (player.mode === 'DINO' ? 0.35 : 0.22) + subSwell);
                 targetGroundY = Math.max(targetGroundY, waterTargetY);
             } else if (isVehicleOrDino && player.speed > 1.0 && noseY > frontY) {
                 // Moving forward towards an uphill slope: gently elevate front suspension to prevent bumper clipping
@@ -708,7 +731,7 @@ export let wpArrowCone = null;
                 targetRoll = Math.atan2(rightY - leftY, halfTrack * 2.0);
                 targetPitch = Math.max(-0.7, Math.min(0.7, targetPitch));
                 targetRoll = Math.max(-0.45, Math.min(0.45, targetRoll));
-                if (isHighTideFloatingInWater) {
+                if (isBotFloatingInWater) {
                     targetPitch += Math.sin(now * 0.0028) * 0.04;
                     targetRoll += Math.cos(now * 0.0022) * 0.05;
                 }
@@ -992,8 +1015,8 @@ export let wpArrowCone = null;
                 }
             }
 
-            // High Tide Submarine & Plesiosaur twin water spray & foaming wake (when actively floating in water!)
-            if (isHighTideFloatingInWater && Math.abs(player.speed) > 1.2 && Math.random() < 0.45) {
+            // High Tide & Heatwave Fireboat twin water spray & foaming wake (when actively floating in water!)
+            if (isBotFloatingInWater && Math.abs(player.speed) > 1.2 && Math.random() < 0.45) {
                 const sinH = Math.sin(player.heading);
                 const cosH = Math.cos(player.heading);
                 const wakeX = player.pos.x - sinH * 2.8 + (Math.random() - 0.5) * 1.6;
@@ -1038,7 +1061,7 @@ export let wpArrowCone = null;
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && (Math.hypot(aimX - n.x, aimZ - n.z) < 18.5 || Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 28.0)) {
-                            clearHazardNode(beacon, n);
+                            clearHazardNode(beacon, n, 'WATER');
                         }
                     });
                 });
@@ -1092,7 +1115,7 @@ export let wpArrowCone = null;
                     const dy = Math.abs(player.pos.y - n.y);
                     const dist = Math.hypot(dx, dz);
                     if (dist < 3.4 + n.r && dy < 12.0) {
-                        clearHazardNode(beacon, n);
+                        clearHazardNode(beacon, n, 'RAM');
                     }
                 });
             });
@@ -1145,6 +1168,22 @@ export let wpArrowCone = null;
                     p.mesh.position.y += p.vy * dt;
                     p.mesh.position.z += p.vz * dt;
                     p.mesh.scale.setScalar(Math.max(0.1, p.life));
+
+                    // Water drop particles directly douse fire nodes on contact!
+                    if (p.isWater) {
+                        for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
+                            const b = beacons[bIdx];
+                            if (b.restored) continue;
+                            for (let nIdx = 0; nIdx < b.nodes.length; nIdx++) {
+                                const n = b.nodes[nIdx];
+                                if (!n.cleared && n.type === 'FIRE') {
+                                    if (p.mesh.position.distanceTo(new THREE.Vector3(n.x, n.y, n.z)) < n.r + 2.2) {
+                                        clearHazardNode(b, n, 'WATER');
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

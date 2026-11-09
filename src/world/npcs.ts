@@ -1078,10 +1078,10 @@ import { spawnWaterCannonStream } from './emergencies.js';
             const isFlying = (isBlades && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
                              (buddyBot.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
 
-            // High Tide in water check: Buddy bot must remain stuck safely on dry land!
-            const isPlayerHighTideInWater = (
-                player.botType === 'HIGHTIDE' &&
-                (isPointInWater(player.pos.x, player.pos.z) || player.mode === 'VEHICLE' || player.pos.y < 0.25)
+            // Water navigation check (High Tide or Heatwave Boat Mode): Buddy bot must remain safely on dry land!
+            const isPlayerWaterNavigating = (
+                (player.botType === 'HIGHTIDE' && (isPointInWater(player.pos.x, player.pos.z) || player.mode === 'VEHICLE' || player.pos.y < 0.25)) ||
+                (player.botType === 'HEATWAVE' && player.mode === 'BOAT' && (isPointInWater(player.pos.x, player.pos.z) || player.pos.y < 0.35))
             );
 
             // Dynamic target formation slot (trails slightly to the rear-left or rear-right of player)
@@ -1090,7 +1090,7 @@ import { spawnWaterCannonStream } from './emergencies.js';
             let targetX = player.pos.x - Math.sin(player.heading) * followDist - Math.cos(player.heading) * sideOffset;
             let targetZ = player.pos.z - Math.cos(player.heading) * followDist + Math.sin(player.heading) * sideOffset;
 
-            if (isPlayerHighTideInWater) {
+            if (isPlayerWaterNavigating) {
                 // If formation slot would be in water, lock target to current buddy position on land
                 if (isPointInWater(targetX, targetZ) || getSurfaceHeight(targetX, targetZ) < 0.35) {
                     targetX = buddyBot.pos.x;
@@ -1104,8 +1104,8 @@ import { spawnWaterCannonStream } from './emergencies.js';
             const distToPlayer = Math.hypot(player.pos.x - buddyBot.pos.x, player.pos.z - buddyBot.pos.z);
 
             // Turn smoothly toward formation slot or face player out in water
-            if (isPlayerHighTideInWater) {
-                // Turn to face High Tide out in the ocean and watch from the shore
+            if (isPlayerWaterNavigating) {
+                // Turn to face player out on the water and watch from the shore
                 const lookAngle = Math.atan2(player.pos.x - buddyBot.pos.x, player.pos.z - buddyBot.pos.z);
                 let diff = lookAngle - buddyBot.heading;
                 while (diff < -Math.PI) diff += Math.PI * 2;
@@ -1126,7 +1126,7 @@ import { spawnWaterCannonStream } from './emergencies.js';
 
             // Speed matching with rubber-banding so Buddy never gets lost
             let targetSpeed = 0;
-            if (isPlayerHighTideInWater) {
+            if (isPlayerWaterNavigating) {
                 targetSpeed = 0;
             } else if (distToSlot > 1.5) {
                 const catchupMult = distToSlot > 25 ? 1.75 : (distToSlot > 12 ? 1.35 : 1.05);
@@ -1137,7 +1137,7 @@ import { spawnWaterCannonStream } from './emergencies.js';
 
             // If player boosted ahead, give Buddy a burst
             if (player.boostTimer > 0 || player.energonBoostTimer > 0) {
-                if (!isPlayerHighTideInWater) targetSpeed = Math.max(targetSpeed, 65);
+                if (!isPlayerWaterNavigating) targetSpeed = Math.max(targetSpeed, 65);
             }
 
             buddyBot.speed = THREE.MathUtils.lerp(buddyBot.speed, targetSpeed, Math.min(1, dt * 7.0));
@@ -1180,14 +1180,14 @@ import { spawnWaterCannonStream } from './emergencies.js';
 
             // Instant rescue teleport catch-up if separated by >160m (keeps it 100% kid-friendly and frustration-free)
             if (distToPlayer > 160) {
-                if (!isPlayerHighTideInWater) {
+                if (!isPlayerWaterNavigating) {
                     buddyBot.pos.set(targetX, player.pos.y, targetZ);
                     buddyBot.heading = player.heading;
                     buddyBot.speed = player.speed;
                 } else {
                     buddyBot.speed = 0;
                 }
-            } else if (isPlayerHighTideInWater) {
+            } else if (isPlayerWaterNavigating) {
                 if (nextInWater) {
                     buddyBot.speed = 0;
                 } else {
@@ -1199,8 +1199,8 @@ import { spawnWaterCannonStream } from './emergencies.js';
                 buddyBot.pos.z = nextBz;
             }
 
-            // If buddy bot ever gets caught in water while High Tide is in ocean, gently steer buddy up onto dry land
-            if (isPlayerHighTideInWater && (isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.35)) {
+            // If buddy bot ever gets caught in water while player is navigating water, gently steer buddy up onto dry land
+            if (isPlayerWaterNavigating && (isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.35)) {
                 const testAngles = [0, Math.PI * 0.5, Math.PI, -Math.PI * 0.5, Math.PI * 0.25, -Math.PI * 0.25, Math.PI * 0.75, -Math.PI * 0.75];
                 let bestH = -999;
                 let bestDx = 0, bestDz = 0;
@@ -1218,14 +1218,15 @@ import { spawnWaterCannonStream } from './emergencies.js';
                 buddyBot.pos.z += bestDz * 6.0 * dt;
             }
 
-            // Shore Watch Dialogue when player enters water with High Tide
-            if (isPlayerHighTideInWater) {
+            // Shore Watch Dialogue when player enters water
+            if (isPlayerWaterNavigating) {
                 if (!buddyBot.lastShoreWatchTime || now - buddyBot.lastShoreWatchTime > 26000) {
                     buddyBot.lastShoreWatchTime = now;
                     const bMeta = BOT_METADATA[buddyBot.botType];
+                    const leaderName = BOT_METADATA[player.botType]?.name || player.botType;
                     const shoreQuotes = [
-                        `I can't swim! I'll keep watch from the shore, High Tide!`,
-                        `Holding down the fort on land! Be careful in deep water, High Tide!`,
+                        `I can't swim! I'll keep watch from the shore, ${leaderName}!`,
+                        `Holding down the fort on land! Be careful in deep water, ${leaderName}!`,
                         `Standing by on the beach! Griffin Rock coastline is secure!`
                     ];
                     const quote = shoreQuotes[Math.floor(Math.random() * shoreQuotes.length)];
@@ -1254,7 +1255,7 @@ import { spawnWaterCannonStream } from './emergencies.js';
             buddyBot.roll = THREE.MathUtils.lerp(buddyBot.roll || 0, bTargetRoll, Math.min(1.0, dt * 14.0));
 
             const isHighTideBuddyWaterMode = (buddyBot.botType === 'HIGHTIDE' && (buddyBot.targetMorph > 0.5 || buddyBot.targetDinoMorph > 0.5));
-            if (isFlying && !isPlayerHighTideInWater) {
+            if (isFlying && !isPlayerWaterNavigating) {
                 const targetAlt = Math.max(14, player.flightAlt + Math.sin(now * 0.003) * 1.5);
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, bCenterY + targetAlt, Math.min(1.0, dt * 4.5));
             } else if (isHighTideBuddyWaterMode && isPointInWater(buddyBot.pos.x, buddyBot.pos.z)) {
@@ -1282,9 +1283,10 @@ import { spawnWaterCannonStream } from './emergencies.js';
                 }
             }
 
-            // Find nearest uncleared hazard node to the Buddy Bot
+            // Find nearest uncleared hazard node to the Buddy Bot (prioritizing bot specialty)
+            const isWaterBuddy = (buddyBot.botType === 'HEATWAVE' || buddyBot.botType === 'HIGHTIDE');
             let nearestHazard = null;
-            let nearestDist = 20.0;
+            let nearestDist = 22.0;
             let targetBeacon = null;
             for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
                 const b = beacons[bIdx];
@@ -1293,8 +1295,10 @@ import { spawnWaterCannonStream } from './emergencies.js';
                     const n = b.nodes[nIdx];
                     if (n.cleared) continue;
                     const d = Math.hypot(buddyBot.pos.x - n.x, buddyBot.pos.z - n.z);
-                    if (d < nearestDist) {
-                        nearestDist = d;
+                    const matchesSpecialty = isWaterBuddy ? (n.type === 'FIRE') : (n.type === 'ROCKSLIDE');
+                    const effectiveDist = matchesSpecialty ? d : (d + 14.0);
+                    if (effectiveDist < nearestDist) {
+                        nearestDist = effectiveDist;
                         nearestHazard = n;
                         targetBeacon = b;
                     }
@@ -1307,21 +1311,21 @@ import { spawnWaterCannonStream } from './emergencies.js';
                 if (buddyBot.botType === 'HEATWAVE') {
                     buddyBot.waterTimer = 1.4;
                     sfx.playWaterSpray();
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'WATER');
                 } else if (buddyBot.botType === 'BOULDER') {
                     buddyBot.scoopTimer = 0.8;
                     buddyBot.smashTimer = 0.4;
                     sfx.playSmash();
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'HEAVY');
                     spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0xfacc15, 8, 1.1);
                 } else if (buddyBot.botType === 'CHASE') {
                     buddyBot.smashTimer = 0.4;
                     sfx.playSirenPulse();
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'HEAVY');
                 } else if (buddyBot.botType === 'BLADES') {
                     buddyBot.smashTimer = 0.4;
                     sfx.playSmash();
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'HEAVY');
                 } else if (buddyBot.botType === 'OPTIMUS') {
                     buddyBot.smashTimer = 0.55;
                     if (player.mode === 'DINO') {
@@ -1329,37 +1333,37 @@ import { spawnWaterCannonStream } from './emergencies.js';
                     } else {
                         sfx.playSmash();
                     }
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'HEAVY');
                     spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0xdc2626, 12, 1.3);
                 } else if (buddyBot.botType === 'BUMBLEBEE') {
                     buddyBot.smashTimer = 0.45;
                     if (player.mode === 'DINO') sfx.playDinoRoar('BUMBLEBEE');
                     else sfx.playStuntChime();
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'HEAVY');
                     spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0xfacc15, 12, 1.2);
                 } else if (buddyBot.botType === 'BLURR') {
                     buddyBot.smashTimer = 0.45;
                     if (player.mode === 'DINO') sfx.playDinoRoar('BLURR');
                     else sfx.playStuntChime();
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'HEAVY');
                     spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0xa855f7, 12, 1.2);
                 } else if (buddyBot.botType === 'SALVAGE') {
                     buddyBot.smashTimer = 0.55;
                     if (player.mode === 'DINO') sfx.playDinoRoar('SALVAGE');
                     else sfx.playRockBreak();
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'HEAVY');
                     spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0x84cc16, 12, 1.2);
                 } else if (buddyBot.botType === 'HIGHTIDE') {
                     buddyBot.waterTimer = 1.4;
                     if (player.mode === 'DINO') sfx.playDinoRoar('HIGHTIDE');
                     sfx.playWaterSpray();
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'WATER');
                     spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0x38bdf8, 12, 1.2);
                 } else if (buddyBot.botType === 'QUICKSHADOW') {
                     buddyBot.smashTimer = 0.45;
                     if (player.mode === 'DINO') sfx.playDinoRoar('QUICKSHADOW');
                     else sfx.playStuntChime();
-                    clearHazardNode(targetBeacon, nearestHazard);
+                    clearHazardNode(targetBeacon, nearestHazard, 'HEAVY');
                     spawnBurstParticles(nearestHazard.x, nearestHazard.y + 1.2, nearestHazard.z, 0x38bdf8, 12, 1.2);
                 }
             }

@@ -544,16 +544,29 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             } else if (isBotDocked(player.botType)) {
                 meta = BOT_METADATA[`${player.botType}_MEGA`] || meta;
             }
+            const isBoat = player.mode === 'BOAT';
             const isVeh = player.mode === 'VEHICLE';
             const isDino = player.mode === 'DINO';
-            const modeLabel = isDino ? `${meta.dinoName} MODE` : (isVeh ? `${meta.vehName} MODE` : `BOT MODE`);
+            const modeLabel = isDino
+                ? `${meta.dinoName} MODE`
+                : (isBoat ? `${meta.boatName || 'RESCUE FIREBOAT'} MODE` : (isVeh ? `${meta.vehName} MODE` : `BOT MODE`));
 
             document.getElementById('mode-readout').textContent = `${meta.name} • ${modeLabel}`;
             document.getElementById('mode-readout').className = `text-xs sm:text-sm font-bold tracking-wide uppercase ${meta.colorClass}`;
             document.getElementById('mode-dot').className = `w-2.5 h-2.5 rounded-full ${meta.dotClass}`;
 
             let nextTransformLabel = 'TO ROBOT';
-            if (player.botType === 'HIGHTIDE') {
+            if (player.botType === 'HEATWAVE') {
+                if (player.mode === 'BOT') {
+                    nextTransformLabel = `TO ${meta.vehName}`;
+                } else if (player.mode === 'VEHICLE') {
+                    nextTransformLabel = `TO ${meta.boatName || 'RESCUE FIREBOAT'}`;
+                } else if (player.mode === 'BOAT') {
+                    nextTransformLabel = `TO ${meta.dinoName}`;
+                } else {
+                    nextTransformLabel = 'TO ROBOT';
+                }
+            } else if (player.botType === 'HIGHTIDE') {
                 const nearWater = isNearWater(player.pos.x, player.pos.z, 24.0);
                 if (player.mode === 'BOT') {
                     nextTransformLabel = nearWater ? `TO ${meta.vehName}` : `TO ${meta.dinoName}`;
@@ -571,14 +584,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             const actionKey = isDino
                 ? meta.dinoActionIcon
-                : (isVeh ? meta.vehActionIcon : meta.botActionIcon);
+                : (isBoat ? (meta.boatActionIcon || 'TWIN_DELUGE') : (isVeh ? meta.vehActionIcon : meta.botActionIcon));
             const actionIconEl = document.getElementById('action-icon');
             if (actionIconEl) {
                 actionIconEl.innerHTML = SVG_ICONS[actionKey] || '';
             }
             document.getElementById('action-label').textContent = isDino
                 ? meta.dinoActionLabel
-                : (isVeh ? meta.vehActionLabel : meta.botActionLabel);
+                : (isBoat ? (meta.boatActionLabel || 'TWIN DELUGE CANNON') : (isVeh ? meta.vehActionLabel : meta.botActionLabel));
 
             const btnAction = document.getElementById('btn-action');
             if (btnAction) {
@@ -780,6 +793,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.dinoMorph = 0.0;
             }
 
+            // Heatwave is the only bot with Boat mode; if switching away from Heatwave while in Boat mode, reset to Vehicle mode
+            if (player.mode === 'BOAT' && newBotType !== 'HEATWAVE') {
+                player.mode = 'VEHICLE';
+                player.boatMorph = 0.0;
+                player.targetMorph = 1.0;
+                player.targetDinoMorph = 0.0;
+            }
+
             // High Tide Megabot Docking Persistence:
             // If switching to High Tide and player was previously docked in Megabot mode, restore Megabot form!
             if (newBotType === 'HIGHTIDE') {
@@ -817,6 +838,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.morph = Math.max(player.targetMorph, player.morph - dt * morphSpeed);
             }
 
+            if (player.boatMorph === undefined) player.boatMorph = 0;
+            if (player.targetBoatMorph === undefined) player.targetBoatMorph = 0;
+            if (player.boatMorph < player.targetBoatMorph) {
+                player.boatMorph = Math.min(player.targetBoatMorph, player.boatMorph + dt * morphSpeed);
+            } else if (player.boatMorph > player.targetBoatMorph) {
+                player.boatMorph = Math.max(player.targetBoatMorph, player.boatMorph - dt * morphSpeed);
+            }
+
             if (player.dinoMorph < player.targetDinoMorph) {
                 player.dinoMorph = Math.min(player.targetDinoMorph, player.dinoMorph + dt * morphSpeed);
             } else if (player.dinoMorph > player.targetDinoMorph) {
@@ -824,8 +853,19 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             // Buddy Bot mirrors player mode & morphs
-            buddyBot.targetMorph = player.targetMorph;
-            buddyBot.targetDinoMorph = player.targetDinoMorph;
+            // Rule: "For a buddy bot, they should stay in vehicle mode when heatwave is in either fire engine or boat mode."
+            const isHeatwavePlayerVehOrBoat = (player.botType === 'HEATWAVE' && (player.mode === 'VEHICLE' || player.mode === 'BOAT'));
+            if (isHeatwavePlayerVehOrBoat) {
+                buddyBot.mode = 'VEHICLE';
+                buddyBot.targetMorph = 1.0;
+                buddyBot.targetDinoMorph = 0.0;
+                buddyBot.targetBoatMorph = 0.0;
+            } else {
+                buddyBot.targetMorph = player.targetMorph;
+                buddyBot.targetDinoMorph = player.targetDinoMorph;
+                buddyBot.targetBoatMorph = 0.0;
+            }
+
             if (buddyBot.morph < buddyBot.targetMorph) {
                 buddyBot.morph = Math.min(buddyBot.targetMorph, buddyBot.morph + dt * morphSpeed);
             } else if (buddyBot.morph > buddyBot.targetMorph) {
@@ -855,14 +895,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                         rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (player.speed / 65) * 0.28, dt * 6);
                         rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, 0, dt * 6);
-                    } else if (player.mode === 'VEHICLE' || player.mode === 'DINO') {
+                    } else if (player.mode === 'VEHICLE' || player.mode === 'BOAT' || player.mode === 'DINO') {
                         rig.chassis.rotation.x = -player.pitch;
                         rig.chassis.rotation.z = player.roll;
                     } else {
                         rig.chassis.rotation.x = -player.pitch * 0.35;
                         rig.chassis.rotation.z = player.roll * 0.35;
                     }
-                    applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer);
+                    applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer, player.boatMorph || 0);
                 } else if (botKey === buddyBot.botType) {
                     // Buddy Bot follows wingman physics position & heading
                     rig.root.visible = true;
@@ -871,14 +911,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                         rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (buddyBot.speed / 65) * 0.28, dt * 6);
                         rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, 0, dt * 6);
-                    } else if (player.mode === 'VEHICLE' || player.mode === 'DINO') {
+                    } else if (player.mode === 'VEHICLE' || player.mode === 'BOAT' || player.mode === 'DINO') {
                         rig.chassis.rotation.x = -buddyBot.pitch;
                         rig.chassis.rotation.z = buddyBot.roll;
                     } else {
                         rig.chassis.rotation.x = -buddyBot.pitch * 0.35;
                         rig.chassis.rotation.z = buddyBot.roll * 0.35;
                     }
-                    applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer);
+                    applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer, buddyBot.boatMorph || 0);
                 } else {
                     // Inactive Bots stay parked in standby at Rescue Bots Headquarters or hidden if secret ally!
                     const slot = HQ_PARKING_SLOTS[botKey];
@@ -915,7 +955,17 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
 
         export function setPlayerMode(nextMode) {
-            if (nextMode === 'VEHICLE') {
+            if (nextMode === 'BOAT') {
+                if (player.botType !== 'HEATWAVE') return;
+                player.mode = 'BOAT';
+                player.targetMorph = 1.0;
+                player.targetBoatMorph = 1.0;
+                player.targetDinoMorph = 0.0;
+                player.flightAlt = 0;
+                sfx.playTransform(true);
+                speakBotCatchphrase(player.botType, 'TO_VEHICLE');
+                showToast("RESCUE FIREBOAT MODE!", "Heatwave transformed into High-Speed Rescue Fireboat!");
+            } else if (nextMode === 'VEHICLE') {
                 if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
                     showToast("🌊 WATER REQUIRED TO SUBMERGE", "High Tide's submarine mode requires water! Head to the harbor or shoreline!");
                     sfx.playSpeechPop();
@@ -923,6 +973,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 }
                 player.mode = 'VEHICLE';
                 player.targetMorph = 1.0;
+                player.targetBoatMorph = 0.0;
                 player.targetDinoMorph = 0.0;
                 sfx.playTransform(true);
                 if (player.botType === 'BLADES' || (player.botType === 'QUICKSHADOW' && isBotDocked('QUICKSHADOW'))) {
@@ -936,8 +987,15 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     sfx.playSpeechPop();
                     return;
                 }
+                // If Heatwave is in deep open water, prevent transforming to dry land dino mode
+                if (player.botType === 'HEATWAVE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
+                    showToast("🌊 RETURN TO SHORE", "Heatwave must steer to the beach or harbor dock before transforming out of Boat Mode!");
+                    sfx.playSpeechPop();
+                    return;
+                }
                 player.mode = 'DINO';
                 player.targetMorph = 0.0;
+                player.targetBoatMorph = 0.0;
                 player.targetDinoMorph = 1.0;
                 sfx.playTransform(true);
                 sfx.playDinoRoar(player.botType);
@@ -951,8 +1009,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 showToast("DINOBOT MODE!", `${meta.name} • ${meta.dinoName}!`);
                 speakBotCatchphrase(player.botType, 'TO_DINO');
             } else {
+                if (player.botType === 'HEATWAVE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
+                    showToast("🌊 RETURN TO SHORE", "Heatwave must steer to the beach or harbor dock before transforming into Robot Mode!");
+                    sfx.playSpeechPop();
+                    return;
+                }
                 player.mode = 'BOT';
                 player.targetMorph = 0.0;
+                player.targetBoatMorph = 0.0;
                 player.targetDinoMorph = 0.0;
                 player.flightAlt = 0;
                 sfx.playTransform(false);
@@ -1174,9 +1238,21 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             undockBotMegabot(player.botType);
         }
 
-        // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot)
+        // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot, with Heatwave: Robot -> Fire Engine -> Boat -> Dino -> Robot)
         export function triggerTransform() {
             const hasDino = BOT_METADATA[player.botType] && BOT_METADATA[player.botType].dinoName;
+            if (player.botType === 'HEATWAVE') {
+                if (player.mode === 'BOT') {
+                    setPlayerMode('VEHICLE');
+                } else if (player.mode === 'VEHICLE') {
+                    setPlayerMode('BOAT');
+                } else if (player.mode === 'BOAT') {
+                    setPlayerMode('DINO');
+                } else {
+                    setPlayerMode('BOT');
+                }
+                return;
+            }
             if (player.botType === 'HIGHTIDE') {
                 const nearWater = isNearWater(player.pos.x, player.pos.z, 24.0);
                 if (player.mode === 'BOT') {
@@ -1294,7 +1370,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && (Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 18.5 || Math.hypot(player.netTarget.x - n.x, player.netTarget.z - n.z) < 10.0)) {
-                            clearHazardNode(beacon, n);
+                            clearHazardNode(beacon, n, 'HEAVY');
                         }
                     });
                 });
@@ -1313,7 +1389,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 20.5) {
-                            clearHazardNode(beacon, n);
+                            clearHazardNode(beacon, n, 'HEAVY');
                         }
                     });
                 });
@@ -1356,7 +1432,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     beacons.forEach(beacon => {
                         beacon.nodes.forEach(n => {
                             if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < clearRadius) {
-                                clearHazardNode(beacon, n);
+                                clearHazardNode(beacon, n, 'HEAVY');
                             }
                         });
                     });
@@ -1381,10 +1457,11 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                         sfx.playBeaconRestore();
                     }
                 }
+                const optimusAttackType = (isMega && player.mode === 'VEHICLE') ? 'WATER' : 'HEAVY';
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < clearRadius) {
-                            clearHazardNode(beacon, n);
+                            clearHazardNode(beacon, n, optimusAttackType);
                         }
                     });
                 });
@@ -1437,7 +1514,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 20.0) {
-                            clearHazardNode(beacon, n);
+                            clearHazardNode(beacon, n, 'HEAVY');
                         }
                     });
                 });
@@ -1468,7 +1545,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
-                            clearHazardNode(beacon, n);
+                            clearHazardNode(beacon, n, 'HEAVY');
                         }
                     });
                 });
@@ -1505,7 +1582,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
-                            clearHazardNode(beacon, n);
+                            clearHazardNode(beacon, n, 'HEAVY');
                         }
                     });
                 });
@@ -1537,7 +1614,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < clearRadius) {
-                            clearHazardNode(beacon, n);
+                            clearHazardNode(beacon, n, 'WATER');
                         }
                     });
                 });
@@ -1569,7 +1646,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
-                            clearHazardNode(beacon, n);
+                            clearHazardNode(beacon, n, 'HEAVY');
                         }
                     });
                 });
@@ -1594,7 +1671,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             beacons.forEach(beacon => {
                 beacon.nodes.forEach(n => {
                     if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 16.5) {
-                        clearHazardNode(beacon, n);
+                        clearHazardNode(beacon, n, 'HEAVY');
                     }
                 });
             });

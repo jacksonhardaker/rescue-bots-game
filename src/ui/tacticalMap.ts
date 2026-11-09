@@ -259,7 +259,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                     }
                 }
 
-                mCtx.fillStyle = b.restored ? '#4ade80' : (b.type === 'FIRE' ? '#fb923c' : '#f43f5e');
+                mCtx.fillStyle = b.restored ? '#4ade80' : (b.type === 'FIRE' ? '#fb923c' : (b.type === 'TEAMUP' ? '#38bdf8' : '#f43f5e'));
                 mCtx.beginPath();
                 mCtx.arc(bx, bz, b.restored ? 2.8 : 4.4, 0, Math.PI * 2);
                 mCtx.fill();
@@ -761,7 +761,7 @@ export function handleTacticalMapTap(clientX, clientY) {
 
                     // Pulsing Radar Rings
                     const pulse = Math.sin(now * 0.006 + b.id) * 3.5;
-                    const ringColor = b.type === 'FIRE' ? 'rgba(251, 146, 60, 0.45)' : 'rgba(244, 63, 94, 0.45)';
+                    const ringColor = b.type === 'FIRE' ? 'rgba(251, 146, 60, 0.45)' : (b.type === 'TEAMUP' ? 'rgba(56, 189, 248, 0.55)' : 'rgba(244, 63, 94, 0.45)');
                     tCtx.strokeStyle = ringColor;
                     tCtx.lineWidth = 1.8;
                     tCtx.beginPath();
@@ -775,7 +775,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                     tCtx.stroke();
 
                     // Beacon Core
-                    tCtx.fillStyle = b.type === 'FIRE' ? '#ea580c' : '#e11d48';
+                    tCtx.fillStyle = b.type === 'FIRE' ? '#ea580c' : (b.type === 'TEAMUP' ? '#0284c7' : '#e11d48');
                     tCtx.beginPath();
                     tCtx.arc(bx, bz, 6.5, 0, Math.PI * 2);
                     tCtx.fill();
@@ -789,11 +789,11 @@ export function handleTacticalMapTap(clientX, clientY) {
                     const lw = tCtx.measureText(labelText).width;
                     tCtx.fillStyle = 'rgba(15, 23, 42, 0.92)';
                     tCtx.fillRect(bx - lw / 2 - 5, bz - 21, lw + 10, 16);
-                    tCtx.strokeStyle = b.type === 'FIRE' ? '#fb923c' : '#f43f5e';
+                    tCtx.strokeStyle = b.type === 'FIRE' ? '#fb923c' : (b.type === 'TEAMUP' ? '#38bdf8' : '#f43f5e');
                     tCtx.lineWidth = 1.2;
                     tCtx.strokeRect(bx - lw / 2 - 5, bz - 21, lw + 10, 16);
 
-                    tCtx.fillStyle = b.type === 'FIRE' ? '#fdba74' : '#fda4af';
+                    tCtx.fillStyle = b.type === 'FIRE' ? '#fdba74' : (b.type === 'TEAMUP' ? '#7dd3fc' : '#fda4af');
                     tCtx.textAlign = 'center';
                     tCtx.fillText(labelText, bx, bz - 9);
                 } else {
