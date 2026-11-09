@@ -200,15 +200,15 @@ export const WEATHER_MODES = [
     {
         id: 'SUNSET',
         name: 'Golden Sunset',
-        skyColor: 0xf59e0b,
-        fogColor: 0xfdba74,
-        fogDensity: 0.00045,
-        sunColor: 0xfef08a,
-        sunIntensity: 1.15,
-        hemiIntensity: 0.65,
-        headlightIntensity: 2.2,
+        skyColor: 0xfce7b3,
+        fogColor: 0xfce7b3,
+        fogDensity: 0.00042,
+        sunColor: 0xfffbeb,
+        sunIntensity: 1.18,
+        hemiIntensity: 0.74,
+        headlightIntensity: 2.0,
         banner: "GOLDEN SUNSET!",
-        desc: "Radiant golden sunshine & sunset warmth across Griffin Rock!"
+        desc: "Warm gentle golden sunshine & dusk approaching across Griffin Rock!"
     },
     {
         id: 'RAIN',
