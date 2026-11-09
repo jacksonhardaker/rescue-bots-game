@@ -200,15 +200,15 @@ export const WEATHER_MODES = [
     {
         id: 'SUNSET',
         name: 'Golden Sunset',
-        skyColor: 0xc026d3,
-        fogColor: 0xdb2777,
-        fogDensity: 0.00048,
-        sunColor: 0xf97316,
-        sunIntensity: 0.95,
-        hemiIntensity: 0.58,
-        headlightIntensity: 2.4,
+        skyColor: 0xf59e0b,
+        fogColor: 0xfdba74,
+        fogDensity: 0.00045,
+        sunColor: 0xfef08a,
+        sunIntensity: 1.15,
+        hemiIntensity: 0.65,
+        headlightIntensity: 2.2,
         banner: "GOLDEN SUNSET!",
-        desc: "Spectacular dusk colors over the bay & headlights turning on!"
+        desc: "Radiant golden sunshine & sunset warmth across Griffin Rock!"
     },
     {
         id: 'RAIN',
@@ -356,7 +356,7 @@ function applyVisualWeatherState(w: typeof WEATHER_MODES[0]) {
     if (rainSystem && rainSystem.group) rainSystem.group.visible = (w.id === 'RAIN');
     if (volcanoEmberSystem && volcanoEmberSystem.group) volcanoEmberSystem.group.visible = (w.id === 'VOLCANO');
     if (auroraMesh) auroraMesh.visible = (w.id === 'NIGHT');
-    if (starField && starField.group) starField.group.visible = (w.id === 'NIGHT' || w.id === 'SUNSET');
+    if (starField && starField.group) starField.group.visible = (w.id === 'NIGHT');
 
     targetHeadlightIntensity = w.headlightIntensity;
     (window as any).targetHeadlightIntensity = targetHeadlightIntensity;
