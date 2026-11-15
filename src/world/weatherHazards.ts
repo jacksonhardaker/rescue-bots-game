@@ -250,7 +250,7 @@ export function updateWeatherHazards(dt: number, now: number, activeWeatherId: s
 
         // A. Water Extinguish Check (Heatwave Water Cannon / High Tide Hydro Jet)
         const isWaterBot = (player.botType === 'HEATWAVE' || player.botType === 'HIGHTIDE');
-        const isWaterActive = player.isActionActive || player.mode === 'BOAT';
+        const isWaterActive = player.isActionActive || (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && player.boatMorph > 0.4);
         if (!d.quenched && distToPlayer < 18.0 && isWaterBot && isWaterActive) {
             quenchMagmaDebris(d, 'WATER');
         }

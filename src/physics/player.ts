@@ -544,7 +544,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             } else if (isBotDocked(player.botType)) {
                 meta = BOT_METADATA[`${player.botType}_MEGA`] || meta;
             }
-            const isBoat = player.mode === 'BOAT';
+            const isBoat = player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && (player.targetBoatMorph ?? 0) > 0.5;
             const isVeh = player.mode === 'VEHICLE';
             const isDino = player.mode === 'DINO';
             const modeLabel = isDino
@@ -557,13 +557,11 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             let nextTransformLabel = 'TO ROBOT';
             if (player.botType === 'HEATWAVE') {
-                const nearWater = isNearWater(player.pos.x, player.pos.z, 24.0);
                 if (player.mode === 'BOT') {
                     nextTransformLabel = `TO ${meta.vehName}`;
                 } else if (player.mode === 'VEHICLE') {
-                    nextTransformLabel = nearWater ? `TO ${meta.boatName || 'RESCUE FIREBOAT'}` : `TO ${meta.dinoName}`;
-                } else if (player.mode === 'BOAT') {
-                    nextTransformLabel = `TO ${meta.dinoName}`;
+                    const inDeepWater = isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0);
+                    nextTransformLabel = inDeepWater ? 'RETURN TO SHORE' : `TO ${meta.dinoName}`;
                 } else {
                     nextTransformLabel = 'TO ROBOT';
                 }
@@ -794,12 +792,16 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.dinoMorph = 0.0;
             }
 
-            // Heatwave is the only bot with Boat mode; if switching away from Heatwave while in Boat mode, reset to Vehicle mode
-            if (player.mode === 'BOAT' && newBotType !== 'HEATWAVE') {
-                player.mode = 'VEHICLE';
+            // If player is out in deep water and tries to switch to a non-aquatic bot, keep them safe
+            if (isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
+                if (newBotType !== 'HEATWAVE' && newBotType !== 'HIGHTIDE') {
+                    showToast("🌊 RETURN TO SHORE", "Steer to the beach or harbor before switching to a land rescue bot!");
+                    return;
+                }
+            }
+            if (newBotType !== 'HEATWAVE') {
                 player.boatMorph = 0.0;
-                player.targetMorph = 1.0;
-                player.targetDinoMorph = 0.0;
+                player.targetBoatMorph = 0.0;
             }
 
             // High Tide Megabot Docking Persistence:
@@ -841,6 +843,21 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             if (player.boatMorph === undefined) player.boatMorph = 0;
             if (player.targetBoatMorph === undefined) player.targetBoatMorph = 0;
+
+            // Heatwave in vehicle mode automatically updates targetBoatMorph based on whether he's in water
+            if (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE') {
+                const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < 0.25;
+                if (inWater && player.targetBoatMorph !== 1.0) {
+                    player.targetBoatMorph = 1.0;
+                    syncHUDToActiveBot();
+                } else if (!inWater && player.targetBoatMorph !== 0.0) {
+                    player.targetBoatMorph = 0.0;
+                    syncHUDToActiveBot();
+                }
+            } else if (player.mode !== 'VEHICLE' || player.botType !== 'HEATWAVE') {
+                player.targetBoatMorph = 0.0;
+            }
+
             if (player.boatMorph < player.targetBoatMorph) {
                 player.boatMorph = Math.min(player.targetBoatMorph, player.boatMorph + dt * morphSpeed);
             } else if (player.boatMorph > player.targetBoatMorph) {
@@ -855,16 +872,26 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             // Buddy Bot mirrors player mode & morphs
             // Rule: "For a buddy bot, they should stay in vehicle mode when heatwave is in either fire engine or boat mode."
-            const isHeatwavePlayerVehOrBoat = (player.botType === 'HEATWAVE' && (player.mode === 'VEHICLE' || player.mode === 'BOAT'));
-            if (isHeatwavePlayerVehOrBoat) {
+            const isHeatwavePlayerVeh = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE');
+            if (isHeatwavePlayerVeh) {
                 buddyBot.mode = 'VEHICLE';
                 buddyBot.targetMorph = 1.0;
                 buddyBot.targetDinoMorph = 0.0;
-                buddyBot.targetBoatMorph = 0.0;
+                if (buddyBot.botType === 'HEATWAVE') {
+                    const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.25;
+                    buddyBot.targetBoatMorph = buddyInWater ? 1.0 : 0.0;
+                } else {
+                    buddyBot.targetBoatMorph = 0.0;
+                }
             } else {
                 buddyBot.targetMorph = player.targetMorph;
                 buddyBot.targetDinoMorph = player.targetDinoMorph;
-                buddyBot.targetBoatMorph = 0.0;
+                if (buddyBot.botType === 'HEATWAVE' && buddyBot.mode === 'VEHICLE') {
+                    const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.25;
+                    buddyBot.targetBoatMorph = buddyInWater ? 1.0 : 0.0;
+                } else {
+                    buddyBot.targetBoatMorph = 0.0;
+                }
             }
 
             if (buddyBot.morph < buddyBot.targetMorph) {
@@ -896,7 +923,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                         rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (player.speed / 65) * 0.28, dt * 6);
                         rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, 0, dt * 6);
-                    } else if (player.mode === 'VEHICLE' || player.mode === 'BOAT' || player.mode === 'DINO') {
+                    } else if (player.mode === 'VEHICLE' || player.mode === 'DINO') {
                         rig.chassis.rotation.x = -player.pitch;
                         rig.chassis.rotation.z = player.roll;
                     } else {
@@ -912,7 +939,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
                         rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (buddyBot.speed / 65) * 0.28, dt * 6);
                         rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, 0, dt * 6);
-                    } else if (player.mode === 'VEHICLE' || player.mode === 'BOAT' || player.mode === 'DINO') {
+                    } else if (player.mode === 'VEHICLE' || player.mode === 'DINO') {
                         rig.chassis.rotation.x = -buddyBot.pitch;
                         rig.chassis.rotation.z = buddyBot.roll;
                     } else {
@@ -956,37 +983,16 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
 
         export function setPlayerMode(nextMode) {
-            if (nextMode === 'BOAT') {
-                if (player.botType !== 'HEATWAVE') return;
-                const nearWater = isNearWater(player.pos.x, player.pos.z, 24.0);
-                if (!nearWater) {
-                    showToast("🌊 WATER REQUIRED", "Heatwave's boat mode requires water! Head to the harbor or shoreline!");
-                    sfx.playSpeechPop();
-                    return;
-                }
-                player.mode = 'BOAT';
-                player.targetMorph = 1.0;
-                player.targetBoatMorph = 1.0;
-                player.targetDinoMorph = 0.0;
-                player.flightAlt = 0;
-                sfx.playTransform(true);
-                speakBotCatchphrase(player.botType, 'TO_VEHICLE');
-                showToast("RESCUE FIREBOAT MODE!", "Heatwave transformed into High-Speed Rescue Fireboat!");
-            } else if (nextMode === 'VEHICLE') {
+            if (nextMode === 'VEHICLE') {
                 if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
                     showToast("🌊 WATER REQUIRED TO SUBMERGE", "High Tide's submarine mode requires water! Head to the harbor or shoreline!");
                     sfx.playSpeechPop();
                     return;
                 }
-                // If Heatwave is in deep open water, prevent transforming to dry land fire engine mode
-                if (player.botType === 'HEATWAVE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
-                    showToast("🌊 RETURN TO SHORE", "Heatwave must steer to the beach or harbor dock before transforming to Fire Engine!");
-                    sfx.playSpeechPop();
-                    return;
-                }
+                const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < 0.25;
                 player.mode = 'VEHICLE';
                 player.targetMorph = 1.0;
-                player.targetBoatMorph = 0.0;
+                player.targetBoatMorph = (player.botType === 'HEATWAVE' && inWater) ? 1.0 : 0.0;
                 player.targetDinoMorph = 0.0;
                 sfx.playTransform(true);
                 if (player.botType === 'BLADES' || (player.botType === 'QUICKSHADOW' && isBotDocked('QUICKSHADOW'))) {
@@ -994,6 +1000,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     player.grounded = false;
                 }
                 speakBotCatchphrase(player.botType, 'TO_VEHICLE');
+                if (player.botType === 'HEATWAVE' && inWater) {
+                    showToast("RESCUE FIREBOAT MODE!", "Heatwave transformed into High-Speed Rescue Fireboat!");
+                }
             } else if (nextMode === 'DINO') {
                 if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
                     showToast("🌊 WATER REQUIRED TO DIVE", "High Tide's plesiosaur dinobot mode requires water! Head to the harbor or shoreline!");
@@ -1251,20 +1260,13 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             undockBotMegabot(player.botType);
         }
 
-        // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot, with Heatwave: Robot -> Fire Engine -> Boat (if near water) / Dino (if on land) -> Dino -> Robot)
+        // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot)
         export function triggerTransform() {
             const hasDino = BOT_METADATA[player.botType] && BOT_METADATA[player.botType].dinoName;
             if (player.botType === 'HEATWAVE') {
-                const nearWater = isNearWater(player.pos.x, player.pos.z, 24.0);
                 if (player.mode === 'BOT') {
                     setPlayerMode('VEHICLE');
                 } else if (player.mode === 'VEHICLE') {
-                    if (nearWater) {
-                        setPlayerMode('BOAT');
-                    } else {
-                        setPlayerMode('DINO');
-                    }
-                } else if (player.mode === 'BOAT') {
                     setPlayerMode('DINO');
                 } else {
                     setPlayerMode('BOT');

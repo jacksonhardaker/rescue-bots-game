@@ -9,7 +9,7 @@ import { progression, saveProgression, isBotDocked } from '../progression/progre
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
 import { spawnBurstParticles, spawnSoapSudsParticles, spawnSparkleGlints, spawnRocketExhaustParticles, spawnDinerFoodParticles, spawnEnergonLightningParticles, spawnWarpVortexParticles, spawnWaterWakeParticles, spawnMagnetSparkParticles, spawnPaintSplatParticles } from '../world/emergencies.js';
 import { activeMorBot } from '../world/morbot.js';
-import { speakBotCatchphrase } from './player.js';
+import { speakBotCatchphrase, syncHUDToActiveBot } from './player.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
 import { getPlayerOBB, testOBBOverlap2D } from '../world/npcs.js';
 
@@ -272,9 +272,8 @@ export let wpArrowCone = null;
                 }
             });
 
-            // High Tide submarine/plesiosaur and Heatwave boat move in water; Blades and docked Quickshadow fly freely; other bots stay on land
-            const isWaterNavigatingMode = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                                          (player.botType === 'HEATWAVE' && player.mode === 'BOAT');
+            // High Tide submarine/plesiosaur moves in water; Blades and docked Quickshadow fly freely; other bots stay on land
+            const isWaterNavigatingMode = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
                                    (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
             let ty = getSurfaceHeight(hitPoint.x, hitPoint.z);
@@ -601,8 +600,7 @@ export let wpArrowCone = null;
                 const nextGroundY = getSurfaceHeight(nextX, nextZ);
                 const nextIsWater = isPointInWater(nextX, nextZ) || nextGroundY < 0.25;
 
-                const isHeatwaveBoat = (player.botType === 'HEATWAVE' && player.mode === 'BOAT');
-                const canMoveOnWater = isHeatwaveBoat || isHighTideWaterVeh || isHighTideAmphibiousDino;
+                const isHeatwaveAmphibiousVehicle = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE');
 
                 if (isHighTideWaterVeh) {
                     // High Tide in Submarine / Ship mode moves in water only: cannot cross onto dry land
@@ -619,19 +617,26 @@ export let wpArrowCone = null;
                             sfx.playSpeechPop();
                         }
                     }
-                } else if (isHeatwaveBoat) {
-                    // Heatwave in Boat Mode moves in water only: cannot cross onto dry land
-                    if (nextIsWater) {
-                        player.pos.x = Math.max(-2380, Math.min(2380, nextX));
-                        player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
+                } else if (isHeatwaveAmphibiousVehicle) {
+                    // Heatwave in Vehicle Mode seamlessly transitions between Fire Engine (land) and Fireboat (water)!
+                    player.pos.x = Math.max(-2380, Math.min(2380, nextX));
+                    player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
+
+                    const enteringWater = nextIsWater || isPointInWater(player.pos.x, player.pos.z) || nextGroundY < 0.25;
+                    if (enteringWater) {
+                        if (player.targetBoatMorph !== 1.0) {
+                            player.targetBoatMorph = 1.0;
+                            sfx.playTransform(true);
+                            spawnWaterWakeParticles(player.pos.x, -0.45, player.pos.z, 8);
+                            showToast("RESCUE FIREBOAT ENGAGED!", "Heatwave transformed to Catamaran Fireboat upon hitting water!");
+                            syncHUDToActiveBot();
+                        }
                     } else {
-                        player.speed *= -0.4;
-                        player.hasWaypoint = false;
-                        waypointGroup.visible = false;
-                        if (!player.lastShorelineToast || now - player.lastShorelineToast > 3500) {
-                            player.lastShorelineToast = now;
-                            showToast(`🚤 BOAT AT SHORELINE`, `Heatwave's Fireboat moves in water only! Transform to Fire Engine or Dino Mode to drive on land!`);
-                            sfx.playSpeechPop();
+                        if (player.targetBoatMorph !== 0.0) {
+                            player.targetBoatMorph = 0.0;
+                            sfx.playTransform(false);
+                            showToast("FIRE ENGINE ENGAGED!", "Heatwave transformed back to Fire Engine on dry land!");
+                            syncHUDToActiveBot();
                         }
                     }
                 } else if (isHighTideAmphibiousDino) {
@@ -648,13 +653,16 @@ export let wpArrowCone = null;
                     player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
                 } else {
                     // Shoreline water barrier for non-aquatic bots
-                    player.speed *= -0.4;
+                    player.speed *= -0.35;
                     player.hasWaypoint = false;
                     waypointGroup.visible = false;
-                    if (!player.lastWaterToast || now - player.lastWaterToast > 3500) {
-                        player.lastWaterToast = now;
-                        const bName = BOT_METADATA[player.botType]?.name || player.botType;
-                        showToast(`🌊 WATER RESTRICTION`, `${bName} cannot move on water! Transform to Heatwave Boat Mode or High Tide!`);
+                    if (!player.lastShorelineToast || now - player.lastShorelineToast > 3500) {
+                        player.lastShorelineToast = now;
+                        if (player.botType === 'HEATWAVE') {
+                            showToast(`🌊 WATER RESTRICTION`, `Heatwave must be in Vehicle Mode to enter the water as a Rescue Fireboat!`);
+                        } else {
+                            showToast(`🌊 WATER RESTRICTION`, `${BOT_METADATA[player.botType]?.name || 'Rescue Bot'} cannot drive in the ocean! Stay on dry land or roads!`);
+                        }
                         sfx.playSpeechPop();
                     }
                 }
@@ -724,12 +732,12 @@ export let wpArrowCone = null;
             }
             const isBotFloatingInWater = (
                 (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                (player.botType === 'HEATWAVE' && player.mode === 'BOAT')
+                (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && player.boatMorph > 0.4)
             ) && (isPointInWater(player.pos.x, player.pos.z) || centerGroundY < 0.25);
             if (isBotFloatingInWater) {
                 // High Tide and Heatwave Fireboat cruise on the water surface with gentle marine swell bobbing
                 const subSwell = Math.sin(now * 0.003) * 0.12;
-                const waterTargetY = (player.botType === 'HEATWAVE' && player.mode === 'BOAT')
+                const waterTargetY = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE')
                     ? (-0.28 + subSwell)
                     : (-0.45 - (player.mode === 'DINO' ? 0.35 : 0.22) + subSwell);
                 targetGroundY = Math.max(targetGroundY, waterTargetY);

@@ -1,7 +1,7 @@
 // 8 Island-Wide Emergencies, Hazard Beacons & Particle Bursts
 import * as THREE from 'three';
 import { scene } from '../rendering/scene.js';
-import { getTerrainHeight, getSurfaceHeight } from './terrain.js';
+import { getTerrainHeight, getSurfaceHeight, isPointInWater } from './terrain.js';
 import { toonGrad3, toonGrad4, matDarkSteel, matChrome, matInkOutline } from '../rendering/materials.js';
 import { player, buddyBot, botRigs } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
@@ -549,7 +549,7 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         // Aimed High-Pressure Ballistic Water Cannon Arc for Heatwave (Automatically targets nearest active Fire/Hazard!)
         export function spawnWaterCannonStream(sourceRig = botRigs.HEATWAVE, sourceOrigin = null, sourceHeading = player.heading) {
             const rig = sourceRig;
-            const isHeatwaveBoat = (rig === botRigs.HEATWAVE && player.botType === 'HEATWAVE' && player.mode === 'BOAT' && !sourceOrigin);
+            const isHeatwaveBoat = (rig === botRigs.HEATWAVE && player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && (player.boatMorph > 0.4 || isPointInWater(player.pos.x, player.pos.z)) && !sourceOrigin);
             const nozzleWorldPositions = [];
 
             if (sourceOrigin) {

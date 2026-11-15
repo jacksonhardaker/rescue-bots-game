@@ -1081,7 +1081,7 @@ import { spawnWaterCannonStream } from './emergencies.js';
             // Water navigation check (High Tide or Heatwave Boat Mode): Buddy bot must remain safely on dry land!
             const isPlayerWaterNavigating = (
                 (player.botType === 'HIGHTIDE' && (isPointInWater(player.pos.x, player.pos.z) || player.mode === 'VEHICLE' || player.pos.y < 0.25)) ||
-                (player.botType === 'HEATWAVE' && player.mode === 'BOAT' && (isPointInWater(player.pos.x, player.pos.z) || player.pos.y < 0.35))
+                (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && (player.boatMorph > 0.4 || isPointInWater(player.pos.x, player.pos.z)))
             );
 
             // Dynamic target formation slot (trails slightly to the rear-left or rear-right of player)

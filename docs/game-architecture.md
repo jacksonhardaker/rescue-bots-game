@@ -140,7 +140,8 @@ stateDiagram-v2
     state VehicleMode {
         LandVehicle --> Drifting: Sharp Turn + Velocity
         LandVehicle --> EnergonTurbo: Turbo Pad / Booster
-        LandVehicle --> HeatwaveBoat: Water Edge + Transform (Heatwave only)
+        LandVehicle --> HeatwaveBoat: Enters Water (Heatwave Auto-Transition)
+        HeatwaveBoat --> LandVehicle: Exits Water (Heatwave Auto-Transition)
         LandVehicle --> FlightMode: Quickshadow Mega Docked
     }
 
@@ -152,7 +153,7 @@ stateDiagram-v2
 ```
 
 * **Playable Rescue Bots & Modes**:
-  1. **Heatwave**: Fire Engine / Brachiosaur / **Catamaran Rescue Boat** / Megabot Water Cannon Tower.
+  1. **Heatwave**: Fire Engine / Brachiosaur / **Amphibious Catamaran Fireboat** / Megabot Water Cannon Tower.
   2. **Boulder**: Bulldozer / Dump Truck / Triceratops / Megabot Excavator.
   3. **Chase**: Police Interceptor / Stegosaurus / Megabot Radar Tower.
   4. **Blades**: Rescue Helicopter / Pterosaur (Flight Physics) / Megabot Sky Lifter.
@@ -163,11 +164,10 @@ stateDiagram-v2
   9. **High Tide**: Armored Amphibious Submarine / Plesiosaur / Megabot Heavy Battleship.
   10. **Quickshadow**: Covert Luxury Coupe / Dilophosaurus / **Megabot Flight Interceptor**.
 
-* **Water Movement Restrictions & Amphibious Transitions**:
+* **Water Movement Restrictions & Automatic Amphibious Transition**:
   * Water surface level is set at `y = 0`.
-  * **Strict Water Authorization**: Only **Heatwave Boat Mode**, **High Tide (Vehicle & Dino Modes)**, and **Mega High Tide** are permitted to enter and navigate ocean water.
-  * All other bots and land vehicles are prevented from crossing into the ocean by the shoreline barrier physics in [`src/physics/movement.ts`](file:///Users/jackson/git/jacksonhardaker/rescue-bots-game/src/physics/movement.ts).
-  * **Context-Aware Transformation**: When Heatwave is in Fire Engine mode on land and transforms, he transitions directly to Dino mode. When at the water's edge, transforming automatically switches him into Catamaran Rescue Boat mode.
+  * **Unified Vehicle State with Automatic Shoreline Transition**: Heatwave maintains the standard 3-mode transform cycle (`BOT` -> `VEHICLE` -> `DINO`). In Vehicle Mode, he seamlessly and automatically transitions between the Fire Engine (on land) and the Catamaran Rescue Fireboat (in water) upon crossing the shoreline.
+  * **Strict Water Authorization**: Only **Heatwave (in Vehicle Mode as the Fireboat)**, **High Tide (Vehicle & Dino Modes)**, and **Mega High Tide** are permitted to enter and navigate ocean water. In Bot or Dino mode, Heatwave and all other non-aquatic bots are prevented from crossing into the ocean by shoreline barrier physics in [`src/physics/movement.ts`](file:///Users/jackson/git/jacksonhardaker/rescue-bots-game/src/physics/movement.ts).
 
 * **Megabot Docking Station**:
   * Located at Firehouse HQ apparatus bays. Driving onto the dock pad triggers the Megabot docking sequence, augmenting the bot with enhanced chassis armor, mega-mode utilities, and unique abilities (such as Quickshadow's vehicle flight mode).
