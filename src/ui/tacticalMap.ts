@@ -91,9 +91,11 @@ export function handleTacticalMapTap(clientX, clientY) {
                     }
                 });
 
-                const isHighTideWaterWaypoint = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || (player.mode === 'DINO' && isPointInWater(worldX, worldZ))));
+                const isWaterPoint = isPointInWater(worldX, worldZ) || getSurfaceHeight(worldX, worldZ) < 0.25;
+                const canTraverseWater = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE') ||
+                                         (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
                 let ty = getSurfaceHeight(worldX, worldZ);
-                const markerY = isHighTideWaterWaypoint ? -0.45 : Math.max(0.0, ty);
+                const markerY = (canTraverseWater && isWaterPoint) ? -0.45 : Math.max(0.0, ty);
 
                 player.waypoint.set(worldX, markerY, worldZ);
                 player.hasWaypoint = true;

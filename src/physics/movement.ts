@@ -272,13 +272,16 @@ export let wpArrowCone = null;
                 }
             });
 
-            // High Tide submarine/plesiosaur moves in water; Blades and docked Quickshadow fly freely; other bots stay on land
-            const isWaterNavigatingMode = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+            // High Tide submarine/plesiosaur and Heatwave vehicle move in water; Blades and docked Quickshadow fly freely; other bots stay on land
+            const isHeatwaveAmphibious = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE');
+            const isHighTideWaterVeh = (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE');
+            const isHighTideAmphibiousDino = (player.botType === 'HIGHTIDE' && player.mode === 'DINO');
+            const canTraverseWater = isHeatwaveAmphibious || isHighTideWaterVeh || isHighTideAmphibiousDino;
             const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
                                    (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
             let ty = getSurfaceHeight(hitPoint.x, hitPoint.z);
-            if (isWaterNavigatingMode) {
-                // High Tide and Heatwave boat move in water: if tapped on dry land, find nearest water point along line towards player
+            if (isHighTideWaterVeh) {
+                // High Tide in submarine vehicle mode moves in water only: if tapped on dry land, find nearest water point along line towards player
                 if (!isPointInWater(hitPoint.x, hitPoint.z)) {
                     for (let step = 0; step <= 1.0; step += 0.05) {
                         const tx = THREE.MathUtils.lerp(hitPoint.x, player.pos.x, step);
@@ -291,7 +294,8 @@ export let wpArrowCone = null;
                         }
                     }
                 }
-            } else if (!isFlyingCopter && ty < -1.0) {
+            } else if (!canTraverseWater && !isFlyingCopter && ty < -0.25) {
+                // Land-only bots cannot traverse water: clamp target point to nearest shoreline / dry land
                 const angle = Math.atan2(hitPoint.z, hitPoint.x);
                 for (let testDist = Math.min(r, 1620); testDist > 50; testDist -= 20) {
                     const tx = Math.cos(angle) * testDist;
@@ -306,7 +310,8 @@ export let wpArrowCone = null;
                 }
             }
 
-            const markerY = isWaterNavigatingMode ? -0.45 : Math.max(0.0, ty);
+            const isWaterPoint = isPointInWater(hitPoint.x, hitPoint.z) || ty < 0.25;
+            const markerY = (canTraverseWater && isWaterPoint) ? -0.45 : Math.max(0.0, ty);
             player.waypoint.set(hitPoint.x, markerY, hitPoint.z);
             player.hasWaypoint = true;
 
