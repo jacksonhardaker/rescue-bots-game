@@ -889,18 +889,231 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 if (rig.megaDinoTail) rig.megaDinoTail.visible = inDino;
             }
 
-            // Heatwave Boat Mode Parts & Road Rig Visibility
+            // Heatwave Boat Mode Mechanical Transformation System
             if (rig.botType === 'HEATWAVE') {
-                const inBoat = boatMorph > 0.4;
-                if (rig.boatGroup) rig.boatGroup.visible = inBoat;
+                const b = Math.max(0, Math.min(1, boatMorph));
+                const inBoat = b > 0.001;
+
+                if (rig.boatGroup) {
+                    rig.boatGroup.visible = inBoat;
+                }
+
                 if (inBoat) {
-                    if (rig.wheels) rig.wheels.forEach(w => { w.visible = false; });
-                    if (rig.backAttachment) rig.backAttachment.visible = false;
+                    // Hide mega trailer / hitch if transforming into boat
                     if (rig.trailerHitch) rig.trailerHitch.visible = false;
                     if (rig.megaTrailer) rig.megaTrailer.visible = false;
+
+                    // 1. Dual Catamaran Sponsons: Slide laterally outward and forward, tilting slightly as they deploy
+                    const tSponson = THREE.MathUtils.smoothstep(b, 0.0, 0.78);
+                    const spScale = THREE.MathUtils.lerp(0.01, 1.0, THREE.MathUtils.smoothstep(b, 0.0, 0.55));
+                    const spTilt = Math.sin(b * Math.PI) * 0.16;
+
+                    if (rig.leftSponson) {
+                        rig.leftSponson.position.set(
+                            THREE.MathUtils.lerp(-0.62, -1.72, tSponson),
+                            THREE.MathUtils.lerp(0.55, 0.82, tSponson),
+                            THREE.MathUtils.lerp(-1.20, 0.10, tSponson)
+                        );
+                        rig.leftSponson.rotation.z = spTilt;
+                        rig.leftSponson.scale.setScalar(spScale);
+                    }
+                    if (rig.rightSponson) {
+                        rig.rightSponson.position.set(
+                            THREE.MathUtils.lerp(0.62, 1.72, tSponson),
+                            THREE.MathUtils.lerp(0.55, 0.82, tSponson),
+                            THREE.MathUtils.lerp(-1.20, 0.10, tSponson)
+                        );
+                        rig.rightSponson.rotation.z = -spTilt;
+                        rig.rightSponson.scale.setScalar(spScale);
+                    }
+
+                    // 2. Twin Deck Deluge Cannons: Unfold and elevate into forward deluge stance
+                    const tCannon = THREE.MathUtils.smoothstep(b, 0.25, 0.85);
+                    const cannonRotX = THREE.MathUtils.lerp(-Math.PI * 0.45, 0, tCannon);
+                    const cannonScale = THREE.MathUtils.lerp(0.01, 1.0, tCannon);
+                    if (rig.leftBoatCannon) {
+                        rig.leftBoatCannon.rotation.x = cannonRotX;
+                        rig.leftBoatCannon.scale.setScalar(cannonScale);
+                    }
+                    if (rig.rightBoatCannon) {
+                        rig.rightBoatCannon.rotation.x = cannonRotX;
+                        rig.rightBoatCannon.scale.setScalar(cannonScale);
+                    }
+
+                    // 3. Central Bridging Foredeck: Slides forward from under cab into position
+                    if (rig.bridgeDeck) {
+                        const tDeck = THREE.MathUtils.smoothstep(b, 0.10, 0.82);
+                        rig.bridgeDeck.position.set(
+                            0,
+                            THREE.MathUtils.lerp(0.72, 0.95, tDeck),
+                            THREE.MathUtils.lerp(-0.75, 1.00, tDeck)
+                        );
+                        const deckScale = THREE.MathUtils.lerp(0.01, 1.0, tDeck);
+                        rig.bridgeDeck.scale.setScalar(deckScale);
+                    }
+
+                    // 4. Bow Wave Deflector: Telescopes forward to form the wave-piercing catamaran prow
+                    if (rig.bowDeflector) {
+                        const tBow = THREE.MathUtils.smoothstep(b, 0.20, 0.88);
+                        rig.bowDeflector.position.set(
+                            0,
+                            THREE.MathUtils.lerp(0.48, 0.65, tBow),
+                            THREE.MathUtils.lerp(1.10, 2.65, tBow)
+                        );
+                        const bowScale = THREE.MathUtils.lerp(0.01, 1.0, tBow);
+                        rig.bowDeflector.scale.setScalar(bowScale);
+                    }
+
+                    // 5. Life Rings: Pop up onto foredeck mounts
+                    if (rig.lifeBuoys && Array.isArray(rig.lifeBuoys)) {
+                        const tBuoy = THREE.MathUtils.smoothstep(b, 0.35, 0.85);
+                        const buoyScale = THREE.MathUtils.lerp(0.01, 1.0, tBuoy);
+                        rig.lifeBuoys.forEach((lb: any) => lb.scale.setScalar(buoyScale));
+                    }
+
+                    // 6. Rear Gantry Arch / Spoiler: Swings up from flat deck into aerodynamic beacon spoiler
+                    if (rig.gantryArch) {
+                        const tArch = THREE.MathUtils.smoothstep(b, 0.25, 0.90);
+                        rig.gantryArch.position.set(
+                            0,
+                            THREE.MathUtils.lerp(0.70, 1.25, tArch),
+                            THREE.MathUtils.lerp(-2.30, -1.80, tArch)
+                        );
+                        rig.gantryArch.rotation.x = THREE.MathUtils.lerp(Math.PI * 0.45, 0, tArch);
+                        const archScale = THREE.MathUtils.lerp(0.01, 1.0, tArch);
+                        rig.gantryArch.scale.setScalar(archScale);
+                    }
+
+                    // 7. Road Ladder Turret: Smoothly retracts and lowers into central recess
+                    if (rig.backAttachment) {
+                        const tLadder = THREE.MathUtils.smoothstep(b, 0.0, 0.75);
+                        rig.backAttachment.position.set(
+                            0,
+                            THREE.MathUtils.lerp(2.45, 1.20, tLadder),
+                            THREE.MathUtils.lerp(-1.35, -2.00, tLadder)
+                        );
+                        rig.backAttachment.rotation.x = THREE.MathUtils.lerp(0, -0.45, tLadder);
+                        const ladderScale = THREE.MathUtils.lerp(1.0, 0.01, THREE.MathUtils.smoothstep(b, 0.15, 0.85));
+                        rig.backAttachment.scale.setScalar(ladderScale);
+                        rig.backAttachment.visible = (b < 0.88);
+                    }
+
+                    // 8. Road Wheels: Tuck inward and fold up like aircraft hydro-landing gear
+                    const tWheel = THREE.MathUtils.smoothstep(b, 0.0, 0.78);
+                    const wheelScale = THREE.MathUtils.lerp(1.0, 0.01, THREE.MathUtils.smoothstep(b, 0.25, 0.85));
+                    const wheelVisible = (b < 0.88);
+
+                    if (rig.leftArmWheelMount) {
+                        rig.leftArmWheelMount.position.set(
+                            THREE.MathUtils.lerp(-0.48, -0.22, tWheel),
+                            -0.22,
+                            THREE.MathUtils.lerp(0.38, -0.15, tWheel)
+                        );
+                        rig.leftArmWheelMount.rotation.y = (Math.PI * 0.45) * tWheel;
+                        rig.leftArmWheelMount.scale.setScalar(wheelScale);
+                        rig.leftArmWheelMount.visible = wheelVisible;
+                    }
+                    if (rig.rightArmWheelMount) {
+                        rig.rightArmWheelMount.position.set(
+                            THREE.MathUtils.lerp(0.48, 0.22, tWheel),
+                            -0.22,
+                            THREE.MathUtils.lerp(0.38, -0.15, tWheel)
+                        );
+                        rig.rightArmWheelMount.rotation.y = -(Math.PI * 0.45) * tWheel;
+                        rig.rightArmWheelMount.scale.setScalar(wheelScale);
+                        rig.rightArmWheelMount.visible = wheelVisible;
+                    }
+                    if (rig.leftLegWheelMount) {
+                        const wheelShiftZ = -0.05 * (1 - m) + 0.36 * m;
+                        rig.leftLegWheelMount.position.set(
+                            THREE.MathUtils.lerp(-0.58, -0.26, tWheel),
+                            0,
+                            THREE.MathUtils.lerp(wheelShiftZ, wheelShiftZ - 0.65, tWheel)
+                        );
+                        rig.leftLegWheelMount.rotation.y = -(Math.PI * 0.42) * tWheel;
+                        rig.leftLegWheelMount.scale.setScalar(wheelScale);
+                        rig.leftLegWheelMount.visible = wheelVisible;
+                    }
+                    if (rig.rightLegWheelMount) {
+                        const wheelShiftZ = -0.05 * (1 - m) + 0.36 * m;
+                        rig.rightLegWheelMount.position.set(
+                            THREE.MathUtils.lerp(0.58, 0.26, tWheel),
+                            0,
+                            THREE.MathUtils.lerp(wheelShiftZ, wheelShiftZ - 0.65, tWheel)
+                        );
+                        rig.rightLegWheelMount.rotation.y = (Math.PI * 0.42) * tWheel;
+                        rig.rightLegWheelMount.scale.setScalar(wheelScale);
+                        rig.rightLegWheelMount.visible = wheelVisible;
+                    }
+                    if (rig.wheels) {
+                        rig.wheels.forEach((w: any) => { w.visible = wheelVisible; });
+                    }
                 } else {
-                    if (rig.wheels && !rig.isMega) rig.wheels.forEach(w => { w.visible = true; });
-                    if (rig.backAttachment) rig.backAttachment.visible = (d < 0.2);
+                    // Reset to standard Fire Engine / Bot mode transforms
+                    if (rig.leftSponson) {
+                        rig.leftSponson.position.set(-1.72, 0.82, 0.10);
+                        rig.leftSponson.rotation.set(0, 0, 0);
+                        rig.leftSponson.scale.set(1, 1, 1);
+                    }
+                    if (rig.rightSponson) {
+                        rig.rightSponson.position.set(1.72, 0.82, 0.10);
+                        rig.rightSponson.rotation.set(0, 0, 0);
+                        rig.rightSponson.scale.set(1, 1, 1);
+                    }
+                    if (rig.leftBoatCannon) {
+                        rig.leftBoatCannon.rotation.set(0, 0, 0);
+                        rig.leftBoatCannon.scale.set(1, 1, 1);
+                    }
+                    if (rig.rightBoatCannon) {
+                        rig.rightBoatCannon.rotation.set(0, 0, 0);
+                        rig.rightBoatCannon.scale.set(1, 1, 1);
+                    }
+                    if (rig.bridgeDeck) {
+                        rig.bridgeDeck.position.set(0, 0.95, 1.00);
+                        rig.bridgeDeck.scale.set(1, 1, 1);
+                    }
+                    if (rig.bowDeflector) {
+                        rig.bowDeflector.position.set(0, 0.65, 2.65);
+                        rig.bowDeflector.scale.set(1, 1, 1);
+                    }
+                    if (rig.lifeBuoys && Array.isArray(rig.lifeBuoys)) {
+                        rig.lifeBuoys.forEach((lb: any) => lb.scale.setScalar(1));
+                    }
+                    if (rig.gantryArch) {
+                        rig.gantryArch.position.set(0, 1.25, -1.80);
+                        rig.gantryArch.rotation.set(0, 0, 0);
+                        rig.gantryArch.scale.set(1, 1, 1);
+                    }
+                    if (rig.backAttachment) {
+                        rig.backAttachment.visible = (d < 0.2);
+                    }
+                    if (rig.leftArmWheelMount) {
+                        rig.leftArmWheelMount.position.set(-0.48, -0.22, 0.38);
+                        rig.leftArmWheelMount.rotation.set(0, 0, 0);
+                        rig.leftArmWheelMount.scale.set(1, 1, 1);
+                        rig.leftArmWheelMount.visible = !rig.isMega;
+                    }
+                    if (rig.rightArmWheelMount) {
+                        rig.rightArmWheelMount.position.set(0.48, -0.22, 0.38);
+                        rig.rightArmWheelMount.rotation.set(0, 0, 0);
+                        rig.rightArmWheelMount.scale.set(1, 1, 1);
+                        rig.rightArmWheelMount.visible = !rig.isMega;
+                    }
+                    if (rig.leftLegWheelMount) {
+                        rig.leftLegWheelMount.position.x = -0.58;
+                        rig.leftLegWheelMount.rotation.set(0, 0, 0);
+                        rig.leftLegWheelMount.scale.set(1, 1, 1);
+                        rig.leftLegWheelMount.visible = !rig.isMega;
+                    }
+                    if (rig.rightLegWheelMount) {
+                        rig.rightLegWheelMount.position.x = 0.58;
+                        rig.rightLegWheelMount.rotation.set(0, 0, 0);
+                        rig.rightLegWheelMount.scale.set(1, 1, 1);
+                        rig.rightLegWheelMount.visible = !rig.isMega;
+                    }
+                    if (rig.wheels && !rig.isMega) {
+                        rig.wheels.forEach((w: any) => { w.visible = true; });
+                    }
                 }
             }
         }

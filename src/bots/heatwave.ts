@@ -133,10 +133,13 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                     shoulder.castShadow = true;
                     armG.add(shoulder);
 
-                    // Front Cab Wheel mounted on Upper Arm (sits flush under cab fender when arm pitches forward)
+                    // Front Cab Wheel mounted on Upper Arm with dedicated wheel mount for amphibious tuck
+                    const armWheelMount = side === -1 ? parts.leftArmWheelMount : parts.rightArmWheelMount;
+                    armWheelMount.position.set(side * 0.48, -0.22, 0.38);
+                    armG.add(armWheelMount);
+
                     const wheel = createWheelAssembly(0.76, 0.52);
-                    wheel.position.set(side * 0.48, -0.22, 0.38);
-                    armG.add(wheel);
+                    armWheelMount.add(wheel);
                     parts.wheels.push(wheel);
 
                     // Articulated Elbow & Forearm that swings 90° inward across the front of the Cab
@@ -522,25 +525,38 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                     jetGlow.userData.noOutline = true;
                     sponsonGroup.add(jetCowling, jetNozzle, jetGlow);
 
-                    // High-Pressure Yellow Deck Deluge Cannon
+                    // High-Pressure Yellow Deck Deluge Cannon on Articulated Turret Mount
+                    const cannonGroup = new THREE.Group();
+                    cannonGroup.position.set(0, 0.60, 1.4);
+
                     const cannonBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.35, 0.35, 10), matGold);
-                    cannonBase.position.set(0, 0.60, 1.4);
+                    cannonBase.castShadow = true;
                     const cannonPipe = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 1.8, 8).rotateX(Math.PI / 2), matGold);
-                    cannonPipe.position.set(0, 0.88, 2.05);
+                    cannonPipe.position.set(0, 0.28, 0.65);
+                    cannonPipe.castShadow = true;
                     const cannonNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.18, 0.45, 8).rotateX(Math.PI / 2), matGold);
-                    cannonNozzle.position.set(0, 0.88, 3.0);
+                    cannonNozzle.position.set(0, 0.28, 1.6);
                     cannonNozzle.userData.noOutline = true;
                     const cannonBore = new THREE.Mesh(new THREE.CircleGeometry(0.16, 8), matDarkSteel);
-                    cannonBore.position.set(0, 0.88, 3.23);
+                    cannonBore.position.set(0, 0.28, 1.83);
                     cannonBore.userData.noOutline = true;
-                    sponsonGroup.add(cannonBase, cannonPipe, cannonNozzle, cannonBore);
 
                     // Nozzle world anchor for twin aimed deluge water streams!
                     const nozzleTip = new THREE.Object3D();
-                    nozzleTip.position.set(0, 0.88, 3.3);
-                    sponsonGroup.add(nozzleTip);
-                    if (idx === 0) parts.leftBoatNozzle = nozzleTip;
-                    else parts.rightBoatNozzle = nozzleTip;
+                    nozzleTip.position.set(0, 0.28, 1.9);
+
+                    cannonGroup.add(cannonBase, cannonPipe, cannonNozzle, cannonBore, nozzleTip);
+                    sponsonGroup.add(cannonGroup);
+
+                    if (idx === 0) {
+                        parts.leftSponson = sponsonGroup;
+                        parts.leftBoatCannon = cannonGroup;
+                        parts.leftBoatNozzle = nozzleTip;
+                    } else {
+                        parts.rightSponson = sponsonGroup;
+                        parts.rightBoatCannon = cannonGroup;
+                        parts.rightBoatNozzle = nozzleTip;
+                    }
 
                     boatGroup.add(sponsonGroup);
                 });
@@ -550,25 +566,34 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                 bridgeDeck.position.set(0, 0.95, 1.0);
                 bridgeDeck.castShadow = true;
                 boatGroup.add(bridgeDeck);
+                parts.bridgeDeck = bridgeDeck;
+
+                // Bow Wave Deflector Assembly (Wave Deflector Plate, White Stripe, Cyan Lip)
+                const bowDeflector = new THREE.Group();
+                bowDeflector.position.set(0, 0.65, 2.65);
 
                 // Lower Forward Bumper / Wave Deflector Plate
                 const fwdPlate = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.48, 0.6), matRed);
-                fwdPlate.position.set(0, 0.65, 2.65);
-                boatGroup.add(fwdPlate);
+                fwdPlate.castShadow = true;
+                bowDeflector.add(fwdPlate);
 
                 // Canonical White Horizontal Graphic Stripe on Bow
                 const fwdStripe = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.22, 0.08), matWhite);
-                fwdStripe.position.set(0, 0.65, 2.96);
+                fwdStripe.position.set(0, 0, 0.31);
                 fwdStripe.userData.noOutline = true;
-                boatGroup.add(fwdStripe);
+                bowDeflector.add(fwdStripe);
 
                 // Front Catamaran Trim Lip
                 const frontTrim = new THREE.Mesh(new THREE.BoxGeometry(2.36, 0.16, 0.16), matCyanTrim);
-                frontTrim.position.set(0, 1.05, 2.65);
+                frontTrim.position.set(0, 0.40, 0);
                 frontTrim.userData.noOutline = true;
-                boatGroup.add(frontTrim);
+                bowDeflector.add(frontTrim);
+
+                boatGroup.add(bowDeflector);
+                parts.bowDeflector = bowDeflector;
 
                 // 3. Two Yellow & White Life Ring Buoys on the Foredeck
+                const lifeBuoys = [];
                 [-0.68, 0.68].forEach(lx => {
                     const lifeBuoyGroup = new THREE.Group();
                     lifeBuoyGroup.position.set(lx, 1.20, 1.95);
@@ -589,7 +614,9 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                     });
 
                     boatGroup.add(lifeBuoyGroup);
+                    lifeBuoys.push(lifeBuoyGroup);
                 });
+                parts.lifeBuoys = lifeBuoys;
 
                 // 5. Rear Gantry Arch / Spoiler with Dual Emergency Beacons
                 const gantryArch = new THREE.Group();
@@ -619,6 +646,7 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
 
                 gantryArch.add(strobeRed, strobeBlue);
                 boatGroup.add(gantryArch);
+                parts.gantryArch = gantryArch;
 
                 // Initialize visibility matching current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.heatwaveDocked);

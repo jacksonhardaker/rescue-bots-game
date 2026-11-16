@@ -849,9 +849,11 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < 0.25;
                 if (inWater && player.targetBoatMorph !== 1.0) {
                     player.targetBoatMorph = 1.0;
+                    sfx.playTransform(true);
                     syncHUDToActiveBot();
                 } else if (!inWater && player.targetBoatMorph !== 0.0) {
                     player.targetBoatMorph = 0.0;
+                    sfx.playTransform(false);
                     syncHUDToActiveBot();
                 }
             } else if (player.mode !== 'VEHICLE' || player.botType !== 'HEATWAVE') {
@@ -898,6 +900,12 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 buddyBot.morph = Math.min(buddyBot.targetMorph, buddyBot.morph + dt * morphSpeed);
             } else if (buddyBot.morph > buddyBot.targetMorph) {
                 buddyBot.morph = Math.max(buddyBot.targetMorph, buddyBot.morph - dt * morphSpeed);
+            }
+            if (buddyBot.boatMorph === undefined) buddyBot.boatMorph = 0;
+            if (buddyBot.boatMorph < buddyBot.targetBoatMorph) {
+                buddyBot.boatMorph = Math.min(buddyBot.targetBoatMorph, buddyBot.boatMorph + dt * morphSpeed);
+            } else if (buddyBot.boatMorph > buddyBot.targetBoatMorph) {
+                buddyBot.boatMorph = Math.max(buddyBot.targetBoatMorph, buddyBot.boatMorph - dt * morphSpeed);
             }
             if (buddyBot.dinoMorph < buddyBot.targetDinoMorph) {
                 buddyBot.dinoMorph = Math.min(buddyBot.targetDinoMorph, buddyBot.dinoMorph + dt * morphSpeed);
