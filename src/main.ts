@@ -21,6 +21,7 @@ import { initRailway } from './world/railway.js';
 import { initBuildings } from './world/buildings.js';
 import { buildInstancedVegetation } from './world/vegetation.js';
 import { initProps } from './world/props.js';
+import { initDumpsters } from './world/dumpsters.js';
 import { initWeather, WEATHER_MODES, cycleWeatherMode } from './world/weather.js';
 import { buildHazardSites, beacons, activeParticles } from './world/emergencies.js';
 import { buildEnergonCubes, initGoldenCrests } from './world/collectibles.js';
@@ -88,6 +89,7 @@ export function initGame() {
     initBuildings(scene);
     buildInstancedVegetation(scene);
     initProps(scene);
+    initDumpsters(scene);
     initWeather(scene);
 
     // 4. Build Bot Models

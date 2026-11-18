@@ -27,6 +27,7 @@ import {
 } from '../world/emergencies.js';
 import { updateLivingWorldNPCs, updateBuddyBotAI } from '../world/npcs.js';
 import { updateInteractiveRoadProps } from '../world/props.js';
+import { updateDumpsters, isDumpsterNearPlayer } from '../world/dumpsters.js';
 import { beacons, updateEmergentRescues, activeParticles } from '../world/emergencies.js';
 import { updateEnergonCubes, updateGoldenCrests, updateLandmarkDiscovery } from '../world/collectibles.js';
 import { updateVisitingAutobots } from '../world/allies.js';
@@ -99,6 +100,13 @@ export function savePlayerMapPosition(force = false) {
                     const near = isNearWater(player.pos.x, player.pos.z, 24.0);
                     if ((player as any)._lastNearWater !== near) {
                         (player as any)._lastNearWater = near;
+                        syncHUDToActiveBot();
+                    }
+                }
+                if (player && player.botType === 'SALVAGE') {
+                    const nearDumpster = isDumpsterNearPlayer(player, 8.5);
+                    if ((player as any)._lastNearDumpster !== nearDumpster) {
+                        (player as any)._lastNearDumpster = nearDumpster;
                         syncHUDToActiveBot();
                     }
                 }
@@ -977,6 +985,7 @@ export function savePlayerMapPosition(force = false) {
             updateEnergonCubes(dt, now);
             updateGoldenCrests(dt, now);
             updateInteractiveRoadProps(dt);
+            updateDumpsters(dt, now);
             updateEmergentRescues(dt, now);
             updateVisitingAutobots(dt, now);
             updateLandmarkDiscovery(player.pos.x, player.pos.z);

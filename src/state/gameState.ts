@@ -45,6 +45,8 @@ export const player: Record<string, any> = {
     craneCooldown: 0,
     bounceCooldown: 0,    // Anti-gravity bounce pad cooldown
     lastSplatTime: 0,
+    dumpsterTimer: 0,     // Salvage Dumpster Hopper Dump animation timer
+    activeDumpster: null, // Currently gripped / dumped dumpster instance
     trailerAngle: 0,
     trailerArticAngle: 0
 };

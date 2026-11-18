@@ -329,6 +329,13 @@ export const SVG_ICONS = {
                 <path d="M12 17v-4M9 15l3-2 3 2"/>
                 <rect x="10" y="11" width="4" height="2" fill="#84cc16"/>
             </svg>`,
+            DUMPSTER_LIFT: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="9" width="16" height="12" rx="1.5" fill="#84cc16" fill-opacity="0.3"/>
+                <path d="M3 6l9-3 9 3M4 9l8-3 8 3"/>
+                <path d="M1 12h3M20 12h3"/>
+                <path d="M7 13v5M12 13v5M17 13v5"/>
+                <path d="M9 2l3-1 3 1"/>
+            </svg>`,
 
             // High Tide Special Powers
             TIDAL_SURGE: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

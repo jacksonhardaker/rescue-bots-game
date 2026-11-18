@@ -121,27 +121,32 @@ export function buildSalvage(parts, materials = {}, textures = {}) {
                 });
 
                 // Articulated Safety Orange Hydraulic Loader Arms (The iconic dumpster lifting arms!)
+                const loaderArms = new THREE.Group();
+                loaderArms.position.set(0, 0.25, -0.65);
+                parts.salvageLoaderArms = loaderArms;
+                parts.backAttachment.add(loaderArms);
+
                 [-1.52, 1.52].forEach(side => {
                     const armBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.25, 10).rotateZ(Math.PI / 2), matSalvageOrange);
-                    armBase.position.set(side * 1.52, 0.25, -0.65);
+                    armBase.position.set(side * 1.52, 0, 0);
 
                     const upperArm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 1.55, 0.38), matSalvageOrange);
-                    upperArm.position.set(side * 1.52, 0.72, -0.35);
+                    upperArm.position.set(side * 1.52, 0.47, 0.30);
                     upperArm.rotation.x = -0.42;
 
                     const elbow = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.25, 10).rotateZ(Math.PI / 2), matSalvageOrange);
-                    elbow.position.set(side * 1.52, 1.35, -0.05);
+                    elbow.position.set(side * 1.52, 1.10, 0.60);
 
                     const reachArm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.35, 1.65), matSalvageOrange);
-                    reachArm.position.set(side * 1.52, 1.25, 0.65);
+                    reachArm.position.set(side * 1.52, 1.00, 1.30);
                     reachArm.rotation.x = 0.12;
 
                     // Front Forklift Lifting Prongs
                     const prong = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.24, 0.72), matSalvageOrange);
-                    prong.position.set(side * 1.52, 1.15, 1.62);
+                    prong.position.set(side * 1.52, 0.90, 2.27);
                     prong.rotation.x = 0.28;
 
-                    parts.backAttachment.add(armBase, upperArm, elbow, reachArm, prong);
+                    loaderArms.add(armBase, upperArm, elbow, reachArm, prong);
                 });
 
                 // 4. Arms: Royal Blue Pauldrons, Steel Biceps & Royal Blue Heavy Gauntlets (Image 1)

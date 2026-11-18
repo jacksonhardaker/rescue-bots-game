@@ -10,6 +10,7 @@ import { syncVisitingAutobotsVisibility, WORLD_MEGA_ATTACHMENTS, WORLD_MEGA_LOCA
 export { syncVisitingAutobotsVisibility };
 import { spawnWaterCannonStream, spawnBurstParticles } from '../world/emergencies.js';
 import { checkBoulderScoopAttack, checkWaterCannonFoliage } from '../world/vegetation.js';
+import { isDumpsterNearPlayer, triggerDumpsterHopperDump } from '../world/dumpsters.js';
 import { SVG_ICONS } from '../ui/icons.js';
 
 import { waypointGroup } from './movement.js';
@@ -582,16 +583,23 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
             document.getElementById('transform-sub').textContent = nextTransformLabel;
 
-            const actionKey = isDino
+            let actionKey = isDino
                 ? meta.dinoActionIcon
                 : (isBoat ? (meta.boatActionIcon || 'TWIN_DELUGE') : (isVeh ? meta.vehActionIcon : meta.botActionIcon));
+            let actionLabel = isDino
+                ? meta.dinoActionLabel
+                : (isBoat ? (meta.boatActionLabel || 'TWIN DELUGE CANNON') : (isVeh ? meta.vehActionLabel : meta.botActionLabel));
+
+            if (player.botType === 'SALVAGE' && isDumpsterNearPlayer(player, 8.5)) {
+                actionKey = 'DUMPSTER_LIFT';
+                actionLabel = 'HOPPER DUMP';
+            }
+
             const actionIconEl = document.getElementById('action-icon');
             if (actionIconEl) {
                 actionIconEl.innerHTML = SVG_ICONS[actionKey] || '';
             }
-            document.getElementById('action-label').textContent = isDino
-                ? meta.dinoActionLabel
-                : (isBoat ? (meta.boatActionLabel || 'TWIN DELUGE CANNON') : (isVeh ? meta.vehActionLabel : meta.botActionLabel));
+            document.getElementById('action-label').textContent = actionLabel;
 
             const btnAction = document.getElementById('btn-action');
             if (btnAction) {
@@ -1602,6 +1610,10 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             if (player.botType === 'SALVAGE') {
+                if (isDumpsterNearPlayer(player, 8.5)) {
+                    triggerDumpsterHopperDump(player);
+                    return;
+                }
                 if (player.mode === 'DINO') {
                     // ANKYLOSAURUS: Heavy Wrecking Club Tail Smash & Ground Shockwave!
                     player.smashTimer = 0.65;

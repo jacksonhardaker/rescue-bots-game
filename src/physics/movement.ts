@@ -434,6 +434,15 @@ export let wpArrowCone = null;
             if (isActionActive('left')) moveX -= 1;
             if (isActionActive('right')) moveX += 1;
 
+            // While dumping a dumpster into Salvage's compactor hopper, hold bot stationary
+            if (player.dumpsterTimer > 0) {
+                moveX = 0;
+                moveY = 0;
+                player.speed = 0;
+                player.hasWaypoint = false;
+                if (waypointGroup) waypointGroup.visible = false;
+            }
+
             // Cancel tap-waypoint if manual keyboard keys are pressed
             if (moveY !== 0 || moveX !== 0) {
                 player.hasWaypoint = false;
