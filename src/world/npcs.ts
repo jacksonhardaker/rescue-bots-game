@@ -1079,10 +1079,10 @@ import { checkBoulderScoopAttack, checkWaterCannonFoliage } from './vegetation.j
             const isFlying = (isBlades && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
                              (buddyBot.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
 
-            // Water navigation check (High Tide or Heatwave Boat Mode): Buddy bot must remain safely on dry land!
+            // Water navigation check (High Tide or All Amphibious Bot Modes): Buddy bot remains safely on dry land!
             const isPlayerWaterNavigating = (
                 (player.botType === 'HIGHTIDE' && (isPointInWater(player.pos.x, player.pos.z) || player.mode === 'VEHICLE' || player.pos.y < 0.25)) ||
-                (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && (player.boatMorph > 0.4 || isPointInWater(player.pos.x, player.pos.z)))
+                (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && ((player.boatMorph || 0) > 0.3 || (player.targetBoatMorph || 0) > 0.5 || isPointInWater(player.pos.x, player.pos.z)))
             );
 
             // Dynamic target formation slot (trails slightly to the rear-left or rear-right of player)
@@ -1311,7 +1311,7 @@ import { checkBoulderScoopAttack, checkWaterCannonFoliage } from './vegetation.j
             }
 
             // Find nearest uncleared hazard node to the Buddy Bot (prioritizing bot specialty)
-            const isWaterBuddy = (buddyBot.botType === 'HEATWAVE' || buddyBot.botType === 'HIGHTIDE');
+            const isWaterBuddy = (buddyBot.botType === 'HEATWAVE' || buddyBot.botType === 'HIGHTIDE' || (buddyBot.mode === 'VEHICLE' && (buddyBot.boatMorph || 0) > 0.3));
             let nearestHazard = null;
             let nearestDist = 22.0;
             let targetBeacon = null;

@@ -92,9 +92,25 @@ export function handleTacticalMapTap(clientX, clientY) {
                 });
 
                 const isWaterPoint = isPointInWater(worldX, worldZ) || getSurfaceHeight(worldX, worldZ) < 0.25;
-                const canTraverseWater = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE') ||
+                const canTraverseWater = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE') ||
                                          (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
                 let ty = getSurfaceHeight(worldX, worldZ);
+                if (!canTraverseWater && ty < -0.25) {
+                    // Land-only bots cannot traverse water: clamp target point to nearest shoreline / dry land
+                    const r = Math.hypot(worldX, worldZ);
+                    const angle = Math.atan2(worldZ, worldX);
+                    for (let testDist = Math.min(r, 1620); testDist > 50; testDist -= 20) {
+                        const tx = Math.cos(angle) * testDist;
+                        const tz = Math.sin(angle) * testDist;
+                        const testY = getSurfaceHeight(tx, tz);
+                        if (testY >= -0.5) {
+                            worldX = tx;
+                            worldZ = tz;
+                            ty = testY;
+                            break;
+                        }
+                    }
+                }
                 const markerY = (canTraverseWater && isWaterPoint) ? -0.45 : Math.max(0.0, ty);
 
                 player.waypoint.set(worldX, markerY, worldZ);

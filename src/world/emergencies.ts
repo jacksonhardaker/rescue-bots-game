@@ -742,7 +742,7 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
                 if (beacon.type === 'TEAMUP') {
                     showToast("TEAM-UP RESCUE COMPLETE!", `${beacon.name} Cleared by Bot Teamwork!`);
-                    sfx.playLevelUp();
+                    sfx.playRankUp();
                     triggerNPCSpeech(
                         "Chief Charlie Burns",
                         "Police Chief",

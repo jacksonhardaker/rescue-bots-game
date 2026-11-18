@@ -96,7 +96,7 @@ export function savePlayerMapPosition(force = false) {
             hudWaterCheckTimer += dt;
             if (hudWaterCheckTimer >= 0.25) {
                 hudWaterCheckTimer = 0;
-                if (player && (player.botType === 'HEATWAVE' || player.botType === 'HIGHTIDE')) {
+                if (player && (player.mode === 'VEHICLE' || player.botType === 'HIGHTIDE')) {
                     const near = isNearWater(player.pos.x, player.pos.z, 24.0);
                     if ((player as any)._lastNearWater !== near) {
                         (player as any)._lastNearWater = near;

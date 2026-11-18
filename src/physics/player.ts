@@ -801,14 +801,18 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.dinoMorph = 0.0;
             }
 
-            // If player is out in deep water and tries to switch to a non-aquatic bot, keep them safe
-            if (isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
-                if (newBotType !== 'HEATWAVE' && newBotType !== 'HIGHTIDE') {
+            // If player is out in deep water and tries to switch bot modes, ensure they are in vehicle (boat) mode or High Tide
+            const inDeepWater = isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0);
+            if (inDeepWater) {
+                if (player.mode !== 'VEHICLE' && newBotType !== 'HIGHTIDE') {
                     showToast("🌊 RETURN TO SHORE", "Steer to the beach or harbor before switching to a land rescue bot!");
                     return;
                 }
             }
-            if (newBotType !== 'HEATWAVE') {
+            if (player.mode === 'VEHICLE' && inDeepWater && newBotType !== 'HIGHTIDE') {
+                player.boatMorph = 1.0;
+                player.targetBoatMorph = 1.0;
+            } else if (newBotType === 'HIGHTIDE' || !inDeepWater) {
                 player.boatMorph = 0.0;
                 player.targetBoatMorph = 0.0;
             }

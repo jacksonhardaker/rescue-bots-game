@@ -501,7 +501,7 @@ export let wpArrowCone = null;
             let maxSpeed = 26; // Bot walking speed
             const hasBoost = (player.boostTimer > 0 || player.energonBoostTimer > 0);
             if (player.mode === 'VEHICLE') {
-                const inBoatMode = (player.boatMorph || 0) > 0.5;
+                const inBoatMode = (player.boatMorph || 0) > 0.3 || (player.targetBoatMorph || 0) > 0.5 || isPointInWater(player.pos.x, player.pos.z);
                 if (inBoatMode) {
                     if (player.botType === 'BLURR') maxSpeed = hasBoost ? 92 : 76;
                     else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 88 : 72;
@@ -518,7 +518,10 @@ export let wpArrowCone = null;
                     else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 82 : 62; // Hydro-thruster submarine
                     else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 74 : (onRoad ? 58 : 44);
                     else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 78 : 62;
+                    else if (player.botType === 'BUMBLEBEE') maxSpeed = hasBoost ? 76 : (onRoad ? 62 : 46);
+                    else if (player.botType === 'OPTIMUS') maxSpeed = hasBoost ? 68 : (onRoad ? 52 : 40);
                     else if (player.botType === 'HEATWAVE') maxSpeed = hasBoost ? 58 : (onRoad ? 46 : 36);
+                    else if (player.botType === 'SALVAGE') maxSpeed = hasBoost ? 56 : (onRoad ? 44 : 34);
                     else maxSpeed = hasBoost ? 54 : (onRoad ? 42 : 34); // Boulder
                 }
             } else if (player.mode === 'DINO') {
@@ -704,11 +707,9 @@ export let wpArrowCone = null;
                     waypointGroup.visible = false;
                     if (!player.lastShorelineToast || now - player.lastShorelineToast > 3500) {
                         player.lastShorelineToast = now;
-                        if (player.botType === 'HEATWAVE') {
-                            showToast(`🌊 WATER RESTRICTION`, `Heatwave must be in Vehicle Mode to enter the water as a Rescue Fireboat!`);
-                        } else {
-                            showToast(`🌊 WATER RESTRICTION`, `${BOT_METADATA[player.botType]?.name || 'Rescue Bot'} cannot drive in the ocean! Stay on dry land or roads!`);
-                        }
+                        const meta = BOT_METADATA[player.botType];
+                        const bName = meta?.boatName || 'Boat Mode';
+                        showToast(`🌊 WATER RESTRICTION`, `${meta?.name || 'Rescue Bot'} must be in Vehicle Mode to enter the water as a ${bName}!`);
                         sfx.playSpeechPop();
                     }
                 }
@@ -778,7 +779,7 @@ export let wpArrowCone = null;
             }
             const isBotFloatingInWater = (
                 (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && (player.boatMorph || 0) > 0.4)
+                (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE')
             ) && (isPointInWater(player.pos.x, player.pos.z) || centerGroundY < 0.25);
             if (isBotFloatingInWater) {
                 // High Tide and all Rescue Boat Modes cruise on the water surface with gentle marine swell bobbing

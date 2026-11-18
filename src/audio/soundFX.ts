@@ -408,6 +408,9 @@ class RescueSoundFX {
                     osc.stop(now + i * 0.075 + 0.5);
                 });
             }
+            playLevelUp() {
+                this.playRankUp();
+            }
             playSoapSuds() {
                 if (!this.enabled) return;
                 this.init();
