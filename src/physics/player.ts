@@ -638,8 +638,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             // Helicopter, Pterosaur & Stealth Bomber Flight UI vs Ground Bot UI
-            const isFlyingCopter = (player.botType === 'BLADES' && (isVeh || isDino)) ||
-                                   (player.botType === 'QUICKSHADOW' && isVeh && isBotDocked('QUICKSHADOW'));
+            const isFlyingCopter = ((player.botType === 'BLADES' && (isVeh || isDino)) ||
+                                   (player.botType === 'QUICKSHADOW' && isVeh && isBotDocked('QUICKSHADOW'))) && !isBoat;
             const btnDescend = document.getElementById('btn-descend');
             const altSep = document.getElementById('altitude-sep');
             const altReadout = document.getElementById('altitude-readout');
@@ -1888,8 +1888,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
         export function triggerSecondaryAction() {
-            const isFlying = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+            const isBoat = player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+            const isFlying = !isBoat && ((player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW')));
             if (isFlying) {
                 player.flightAlt = Math.min(95, player.flightAlt + 12);
                 sfx.playFlightAscend();
@@ -1909,8 +1910,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
         export function triggerDescendAction() {
-            const isFlying = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+            const isBoat = player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+            const isFlying = !isBoat && ((player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW')));
             if (isFlying) {
                 player.flightAlt = Math.max(2, player.flightAlt - 12);
                 sfx.playFlightDescend();

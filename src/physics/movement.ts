@@ -273,13 +273,17 @@ export let wpArrowCone = null;
                 }
             });
 
-            // High Tide submarine/plesiosaur and Heatwave vehicle move in water; Blades and docked Quickshadow fly freely; other bots stay on land
-            const isHeatwaveAmphibious = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE');
+            // High Tide submarine/plesiosaur and all vehicle-mode bots move in water (as boat modes); Blades and docked Quickshadow fly freely over land; other bots stay on land
+            const isAmphibiousVehicle = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE');
             const isHighTideWaterVeh = (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE');
             const isHighTideAmphibiousDino = (player.botType === 'HIGHTIDE' && player.mode === 'DINO');
-            const canTraverseWater = isHeatwaveAmphibious || isHighTideWaterVeh || isHighTideAmphibiousDino;
-            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                                   (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+            const canTraverseWater = isAmphibiousVehicle || isHighTideWaterVeh || isHighTideAmphibiousDino;
+            const isWaterBoat = isAmphibiousVehicle && ((player.targetBoatMorph ?? 0) > 0.05 || (player.boatMorph ?? 0) > 0.05 || isPointInWater(player.pos.x, player.pos.z));
+            const isFlyingCopter = (
+                (player.botType === 'BLADES' && player.mode === 'DINO') ||
+                (player.botType === 'BLADES' && player.mode === 'VEHICLE' && !isWaterBoat) ||
+                (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW') && !isWaterBoat)
+            );
             let ty = getSurfaceHeight(hitPoint.x, hitPoint.z);
             if (isHighTideWaterVeh) {
                 // High Tide in submarine vehicle mode moves in water only: if tapped on dry land, find nearest water point along line towards player
@@ -482,8 +486,13 @@ export let wpArrowCone = null;
                 }
             }
 
-            const isFlyingCopter = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                                   (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+            const isAmphibiousVehicle = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE');
+            const isWaterBoat = isAmphibiousVehicle && ((player.boatMorph || 0) > 0.05 || (player.targetBoatMorph || 0) > 0.05 || isPointInWater(player.pos.x, player.pos.z));
+            const isFlyingCopter = (
+                (player.botType === 'BLADES' && player.mode === 'DINO') ||
+                (player.botType === 'BLADES' && player.mode === 'VEHICLE' && !isWaterBoat) ||
+                (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW') && !isWaterBoat)
+            );
             const isHighTideWaterVeh = (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE');
             const isHighTideAmphibiousDino = (player.botType === 'HIGHTIDE' && player.mode === 'DINO');
             const onRoad = isPointOnRoad(player.pos.x, player.pos.z);
@@ -1052,10 +1061,16 @@ export let wpArrowCone = null;
                 }
             }
 
-            // Continuous Hold Ascend/Descend keys for Blades Helicopter
+            // Continuous Hold Ascend/Descend keys for Blades Helicopter & Quickshadow Bomber
             if (player.inCrane) {
                 player.grounded = false;
                 player.vy = 0;
+            } else if (player.botType === 'BLADES' && player.mode === 'VEHICLE' && isWaterBoat) {
+                // Hovercraft Boat Mode: drops down from flight altitude to float directly on water surface
+                player.flightAlt = THREE.MathUtils.lerp(player.flightAlt || 0, 0, Math.min(1, dt * 5.0));
+                player.pos.y = THREE.MathUtils.lerp(player.pos.y, targetGroundY, Math.min(1, dt * 5.5));
+                player.vy = 0;
+                player.grounded = true;
             } else if (isFlyingCopter) {
                 if (isActionActive('secondaryAction')) player.flightAlt = Math.min(95, player.flightAlt + 28 * dt);
                 if (isActionActive('descendAction')) player.flightAlt = Math.max(2, player.flightAlt - 28 * dt);
