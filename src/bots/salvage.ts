@@ -1,6 +1,7 @@
 // 3D Cel-Shaded Model & Morph Builder for SALVAGE
 import * as THREE from 'three';
 import { createWheelAssembly } from './botHelpers.js';
+import { buildSalvageBoat } from './botBoats.js';
 
 export function buildSalvage(parts, materials = {}, textures = {}) {
     const {
@@ -382,6 +383,9 @@ export function buildSalvage(parts, materials = {}, textures = {}) {
                 carapace.position.set(0, 2.7, -0.3);
                 carapace.castShadow = true;
                 megaDinoArmor.add(carapace);
+
+                // Boat Mode: Trash Collector Catamaran
+                buildSalvageBoat(parts);
 
                 // Initialize visibility matching current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.salvageDocked);

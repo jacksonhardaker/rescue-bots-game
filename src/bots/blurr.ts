@@ -1,6 +1,7 @@
 // 3D Cel-Shaded Model & Morph Builder for BLURR
 import * as THREE from 'three';
 import { createBlurrTurbineWheel } from './botHelpers.js';
+import { buildBlurrBoat } from './botBoats.js';
 
 export function buildBlurr(parts, materials = {}, textures = {}) {
     const {
@@ -392,6 +393,9 @@ export function buildBlurr(parts, materials = {}, textures = {}) {
                 const galliFin = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.8, 2.8), matBlurrNeonGreen);
                 galliFin.position.set(0, 3.2, -0.4);
                 megaDinoArmor.add(galliFin);
+
+                // Boat Mode: Supersonic Foil-Borne Hydrofoil Racer
+                buildBlurrBoat(parts);
 
                 // Initialize visibility matching current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.blurrDocked);

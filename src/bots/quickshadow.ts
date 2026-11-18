@@ -1,6 +1,7 @@
 // 3D Cel-Shaded Model & Morph Builder for QUICKSHADOW
 import * as THREE from 'three';
 import { createQuickshadowWheel } from './botHelpers.js';
+import { buildQuickshadowBoat } from './botBoats.js';
 
 export function buildQuickshadow(parts, materials = {}, textures = {}) {
     const {
@@ -417,6 +418,9 @@ export function buildQuickshadow(parts, materials = {}, textures = {}) {
                     frillWing.position.set(side * 1.2, 2.6, 0.8);
                     megaDinoArmor.add(frillWing);
                 });
+
+                // Boat Mode: Stealth Wave-Piercing Interceptor Speedboat
+                buildQuickshadowBoat(parts);
 
                 // Initialize visibility matching current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.quickshadowDocked);

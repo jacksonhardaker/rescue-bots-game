@@ -492,13 +492,26 @@ export let wpArrowCone = null;
             let maxSpeed = 26; // Bot walking speed
             const hasBoost = (player.boostTimer > 0 || player.energonBoostTimer > 0);
             if (player.mode === 'VEHICLE') {
-                if (player.botType === 'BLURR') maxSpeed = hasBoost ? 88 : (onRoad ? 72 : 54);
-                else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 86 : (isFlyingCopter ? 74 : (onRoad ? 68 : 50));
-                else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 82 : 62; // Hydro-thruster submarine
-                else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 74 : (onRoad ? 58 : 44);
-                else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 78 : 62;
-                else if (player.botType === 'HEATWAVE') maxSpeed = hasBoost ? 58 : (onRoad ? 46 : 36);
-                else maxSpeed = hasBoost ? 54 : (onRoad ? 42 : 34); // Boulder
+                const inBoatMode = (player.boatMorph || 0) > 0.5;
+                if (inBoatMode) {
+                    if (player.botType === 'BLURR') maxSpeed = hasBoost ? 92 : 76;
+                    else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 88 : 72;
+                    else if (player.botType === 'BUMBLEBEE') maxSpeed = hasBoost ? 86 : 70;
+                    else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 82 : 66;
+                    else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 80 : 64;
+                    else if (player.botType === 'OPTIMUS') maxSpeed = hasBoost ? 74 : 58;
+                    else if (player.botType === 'HEATWAVE') maxSpeed = hasBoost ? 70 : 54;
+                    else if (player.botType === 'SALVAGE') maxSpeed = hasBoost ? 66 : 50;
+                    else maxSpeed = hasBoost ? 64 : 48; // Boulder
+                } else {
+                    if (player.botType === 'BLURR') maxSpeed = hasBoost ? 88 : (onRoad ? 72 : 54);
+                    else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 86 : (isFlyingCopter ? 74 : (onRoad ? 68 : 50));
+                    else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 82 : 62; // Hydro-thruster submarine
+                    else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 74 : (onRoad ? 58 : 44);
+                    else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 78 : 62;
+                    else if (player.botType === 'HEATWAVE') maxSpeed = hasBoost ? 58 : (onRoad ? 46 : 36);
+                    else maxSpeed = hasBoost ? 54 : (onRoad ? 42 : 34); // Boulder
+                }
             } else if (player.mode === 'DINO') {
                 // Dinobots excel off-road as well as on highways!
                 if (player.botType === 'BLURR') maxSpeed = hasBoost ? 86 : 68; // Gallimimus supersonic sprint!
@@ -620,7 +633,7 @@ export let wpArrowCone = null;
                 const nextGroundY = getSurfaceHeight(nextX, nextZ);
                 const nextIsWater = isPointInWater(nextX, nextZ) || nextGroundY < 0.25;
 
-                const isHeatwaveAmphibiousVehicle = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE');
+                const isAmphibiousVehicle = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE');
 
                 if (isHighTideWaterVeh) {
                     // High Tide in Submarine / Ship mode moves in water only: cannot cross onto dry land
@@ -637,25 +650,29 @@ export let wpArrowCone = null;
                             sfx.playSpeechPop();
                         }
                     }
-                } else if (isHeatwaveAmphibiousVehicle) {
-                    // Heatwave in Vehicle Mode seamlessly transitions between Fire Engine (land) and Fireboat (water)!
+                } else if (isAmphibiousVehicle) {
+                    // All Bots in Vehicle Mode seamlessly transition between Land Vehicle and Boat upon hitting water!
                     player.pos.x = Math.max(-2380, Math.min(2380, nextX));
                     player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
 
                     const enteringWater = nextIsWater || isPointInWater(player.pos.x, player.pos.z) || nextGroundY < 0.25;
+                    const meta = BOT_METADATA[player.botType];
+                    const boatName = meta?.boatName || 'BOAT';
+                    const vehName = meta?.vehName || 'VEHICLE';
+
                     if (enteringWater) {
                         if (player.targetBoatMorph !== 1.0) {
                             player.targetBoatMorph = 1.0;
                             sfx.playTransform(true);
                             spawnWaterWakeParticles(player.pos.x, -0.45, player.pos.z, 8);
-                            showToast("RESCUE FIREBOAT ENGAGED!", "Heatwave transformed to Catamaran Fireboat upon hitting water!");
+                            showToast(`${boatName} ENGAGED!`, `${meta.name} transformed to ${boatName} upon hitting water!`);
                             syncHUDToActiveBot();
                         }
                     } else {
                         if (player.targetBoatMorph !== 0.0) {
                             player.targetBoatMorph = 0.0;
                             sfx.playTransform(false);
-                            showToast("FIRE ENGINE ENGAGED!", "Heatwave transformed back to Fire Engine on dry land!");
+                            showToast(`${vehName} ENGAGED!`, `${meta.name} transformed back to ${vehName} on dry land!`);
                             syncHUDToActiveBot();
                         }
                     }
@@ -752,12 +769,12 @@ export let wpArrowCone = null;
             }
             const isBotFloatingInWater = (
                 (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && player.boatMorph > 0.4)
+                (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && (player.boatMorph || 0) > 0.4)
             ) && (isPointInWater(player.pos.x, player.pos.z) || centerGroundY < 0.25);
             if (isBotFloatingInWater) {
-                // High Tide and Heatwave Fireboat cruise on the water surface with gentle marine swell bobbing
+                // High Tide and all Rescue Boat Modes cruise on the water surface with gentle marine swell bobbing
                 const subSwell = Math.sin(now * 0.003) * 0.12;
-                const waterTargetY = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE')
+                const waterTargetY = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE')
                     ? (-0.28 + subSwell)
                     : (-0.45 - (player.mode === 'DINO' ? 0.35 : 0.22) + subSwell);
                 targetGroundY = Math.max(targetGroundY, waterTargetY);

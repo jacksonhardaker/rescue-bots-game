@@ -1,6 +1,7 @@
 // 3D Cel-Shaded Model & Morph Builder for BLADES
 import * as THREE from 'three';
 import { texFaceBlades } from '../rendering/textures.js';
+import { buildBladesBoat } from './botBoats.js';
 
 export function buildBlades(parts, materials = {}, textures = {}) {
     const {
@@ -386,6 +387,9 @@ export function buildBlades(parts, materials = {}, textures = {}) {
                     turbine.position.set(tx, 2.8, -0.2);
                     megaDinoArmor.add(turbine);
                 });
+
+                // Boat Mode: Air-Sea Rescue Hovercraft
+                buildBladesBoat(parts);
 
                 // Initialize visibility matching current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.bladesDocked);

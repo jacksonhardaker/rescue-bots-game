@@ -1,6 +1,7 @@
 // 3D Cel-Shaded Model & Morph Builder for OPTIMUS
 import * as THREE from 'three';
 import { createWheelAssembly } from './botHelpers.js';
+import { buildOptimusBoat } from './botBoats.js';
 
 export function buildOptimus(parts, materials = {}, textures = {}) {
     const {
@@ -620,6 +621,9 @@ export function buildOptimus(parts, materials = {}, textures = {}) {
                     spike.castShadow = true;
                     megaDinoTail.add(spike);
                 }
+
+                // Boat Mode: Offshore Command Flagship
+                buildOptimusBoat(parts);
 
                 // Initialize rig part visibility to match current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.optimusDocked);

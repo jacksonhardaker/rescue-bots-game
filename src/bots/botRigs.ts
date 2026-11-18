@@ -15,6 +15,7 @@ import { buildBlurr } from "./blurr.js";
 import { buildSalvage } from "./salvage.js";
 import { buildHighTide } from "./hightide.js";
 import { buildQuickshadow } from "./quickshadow.js";
+import { animateBotBoatMorph } from "./botBoats.js";
 
 export const BOT_SCALES = {
     BOULDER: 1.0,
@@ -189,8 +190,8 @@ export function buildRescueBotModel(botType) {
 }
 
 export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0, boatMorph = 0) {
-            // Heatwave Boat Mode: folds limbs into vehicle aerodynamic layout under the catamaran boat shell
-            if (rig.botType === 'HEATWAVE' && boatMorph > 0) {
+            // Boat Mode: folds limbs into vehicle aerodynamic layout under the boat shell
+            if (rig.botType !== 'HIGHTIDE' && boatMorph > 0) {
                 m = Math.max(m, boatMorph);
             }
             // Apply mode-dependent ground elevation so the bot's ground contact surface stays flush on terrain
@@ -1115,6 +1116,10 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                         rig.wheels.forEach((w: any) => { w.visible = true; });
                     }
                 }
+            }
+
+            if (rig.botType !== 'HEATWAVE' && rig.botType !== 'HIGHTIDE') {
+                animateBotBoatMorph(rig, boatMorph, now, 0.016);
             }
         }
 

@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { texFaceChase } from '../rendering/textures.js';
 import { createLightbar, createWheelAssembly } from './botHelpers.js';
+import { buildChaseBoat } from './botBoats.js';
 
 export function buildChase(parts, materials = {}, textures = {}) {
     const {
@@ -431,6 +432,9 @@ export function buildChase(parts, materials = {}, textures = {}) {
                     scute.userData.noOutline = true;
                     megaDinoArmor.add(scute);
                 }
+
+                // 5. Boat Mode: Coast Guard Interceptor
+                buildChaseBoat(parts);
 
                 // Initialize visibility matching current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.chaseDocked);

@@ -1,6 +1,7 @@
 // 3D Cel-Shaded Model & Morph Builder for BUMBLEBEE
 import * as THREE from 'three';
 import { createWheelAssembly } from './botHelpers.js';
+import { buildBumblebeeBoat } from './botBoats.js';
 
 export function buildBumblebee(parts, materials = {}, textures = {}) {
     const {
@@ -485,6 +486,9 @@ export function buildBumblebee(parts, materials = {}, textures = {}) {
                 raptorRollCage.position.set(0, 2.8, 0.2);
                 raptorRollCage.castShadow = true;
                 megaDinoArmor.add(raptorRollCage);
+
+                // Boat Mode: High-Speed Jet Boat
+                buildBumblebeeBoat(parts);
 
                 // Initialize visibility matching current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.bumblebeeDocked);

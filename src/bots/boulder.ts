@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { texFaceBoulder } from '../rendering/textures.js';
 import { createWheelAssembly } from './botHelpers.js';
+import { buildBoulderBoat } from './botBoats.js';
 
 export function buildBoulder(parts, materials = {}, textures = {}) {
     const {
@@ -504,6 +505,9 @@ export function buildBoulder(parts, materials = {}, textures = {}) {
                 frillArmor.position.set(0, 3.4, 1.2);
                 frillArmor.rotation.x = -0.42;
                 megaDinoArmor.add(frillArmor);
+
+                // Boat Mode: Channel Dredger
+                buildBoulderBoat(parts);
 
                 // Initialize visibility matching current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.boulderDocked);

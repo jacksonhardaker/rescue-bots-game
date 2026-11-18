@@ -546,24 +546,24 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             } else if (isBotDocked(player.botType)) {
                 meta = BOT_METADATA[`${player.botType}_MEGA`] || meta;
             }
-            const isBoat = player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && (player.targetBoatMorph ?? 0) > 0.5;
+            const isBoat = player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && (player.targetBoatMorph ?? 0) > 0.5;
             const isVeh = player.mode === 'VEHICLE';
             const isDino = player.mode === 'DINO';
             const modeLabel = isDino
                 ? `${meta.dinoName} MODE`
-                : (isBoat ? `${meta.boatName || 'RESCUE FIREBOAT'} MODE` : (isVeh ? `${meta.vehName} MODE` : `BOT MODE`));
+                : (isBoat ? `${meta.boatName || 'BOAT'} MODE` : (isVeh ? `${meta.vehName} MODE` : `BOT MODE`));
 
             document.getElementById('mode-readout').textContent = `${meta.name} • ${modeLabel}`;
             document.getElementById('mode-readout').className = `text-xs sm:text-sm font-bold tracking-wide uppercase ${meta.colorClass}`;
             document.getElementById('mode-dot').className = `w-2.5 h-2.5 rounded-full ${meta.dotClass}`;
 
             let nextTransformLabel = 'TO ROBOT';
-            if (player.botType === 'HEATWAVE') {
+            if (player.botType !== 'HIGHTIDE') {
                 if (player.mode === 'BOT') {
                     nextTransformLabel = `TO ${meta.vehName}`;
                 } else if (player.mode === 'VEHICLE') {
                     const inDeepWater = isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0);
-                    nextTransformLabel = inDeepWater ? 'RETURN TO SHORE' : `TO ${meta.dinoName}`;
+                    nextTransformLabel = inDeepWater ? 'RETURN TO SHORE' : (meta.dinoName ? `TO ${meta.dinoName}` : 'TO ROBOT');
                 } else {
                     nextTransformLabel = 'TO ROBOT';
                 }
@@ -853,8 +853,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             if (player.boatMorph === undefined) player.boatMorph = 0;
             if (player.targetBoatMorph === undefined) player.targetBoatMorph = 0;
 
-            // Heatwave in vehicle mode automatically updates targetBoatMorph based on whether he's in water
-            if (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE') {
+            // All bots in vehicle mode (except High Tide who is already oceanic) automatically update targetBoatMorph based on whether they're in water
+            const canHaveBoat = player.botType !== 'HIGHTIDE';
+            if (canHaveBoat && player.mode === 'VEHICLE') {
                 const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < 0.25;
                 if (inWater && player.targetBoatMorph !== 1.0) {
                     player.targetBoatMorph = 1.0;
@@ -865,7 +866,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     sfx.playTransform(false);
                     syncHUDToActiveBot();
                 }
-            } else if (player.mode !== 'VEHICLE' || player.botType !== 'HEATWAVE') {
+            } else if (player.mode !== 'VEHICLE' || !canHaveBoat) {
                 player.targetBoatMorph = 0.0;
             }
 
@@ -882,13 +883,12 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             // Buddy Bot mirrors player mode & morphs
-            // Rule: "For a buddy bot, they should stay in vehicle mode when heatwave is in either fire engine or boat mode."
-            const isHeatwavePlayerVeh = (player.botType === 'HEATWAVE' && player.mode === 'VEHICLE');
-            if (isHeatwavePlayerVeh) {
+            const isPlayerVehOrBoat = (player.mode === 'VEHICLE');
+            if (isPlayerVehOrBoat) {
                 buddyBot.mode = 'VEHICLE';
                 buddyBot.targetMorph = 1.0;
                 buddyBot.targetDinoMorph = 0.0;
-                if (buddyBot.botType === 'HEATWAVE') {
+                if (buddyBot.botType !== 'HIGHTIDE') {
                     const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.25;
                     buddyBot.targetBoatMorph = buddyInWater ? 1.0 : 0.0;
                 } else {
@@ -897,7 +897,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             } else {
                 buddyBot.targetMorph = player.targetMorph;
                 buddyBot.targetDinoMorph = player.targetDinoMorph;
-                if (buddyBot.botType === 'HEATWAVE' && buddyBot.mode === 'VEHICLE') {
+                if (buddyBot.botType !== 'HIGHTIDE' && buddyBot.mode === 'VEHICLE') {
                     const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.25;
                     buddyBot.targetBoatMorph = buddyInWater ? 1.0 : 0.0;
                 } else {
@@ -1009,7 +1009,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < 0.25;
                 player.mode = 'VEHICLE';
                 player.targetMorph = 1.0;
-                player.targetBoatMorph = (player.botType === 'HEATWAVE' && inWater) ? 1.0 : 0.0;
+                player.targetBoatMorph = (player.botType !== 'HIGHTIDE' && inWater) ? 1.0 : 0.0;
                 player.targetDinoMorph = 0.0;
                 sfx.playTransform(true);
                 if (player.botType === 'BLADES' || (player.botType === 'QUICKSHADOW' && isBotDocked('QUICKSHADOW'))) {
@@ -1017,18 +1017,19 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     player.grounded = false;
                 }
                 speakBotCatchphrase(player.botType, 'TO_VEHICLE');
-                if (player.botType === 'HEATWAVE' && inWater) {
-                    showToast("RESCUE FIREBOAT MODE!", "Heatwave transformed into High-Speed Rescue Fireboat!");
+                if (player.botType !== 'HIGHTIDE' && inWater) {
+                    const bName = BOT_METADATA[player.botType]?.boatName || 'BOAT';
+                    showToast(`${bName} MODE!`, `${BOT_METADATA[player.botType].name} transformed into ${bName}!`);
                 }
             } else if (nextMode === 'DINO') {
                 if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
-                    showToast("🌊 WATER REQUIRED TO DIVE", "High Tide's plesiosaur dinobot mode requires water! Head to the harbor or shoreline!");
+                    showToast("WATER REQUIRED TO DIVE", "High Tide's plesiosaur dinobot mode requires water! Head to the harbor or shoreline!");
                     sfx.playSpeechPop();
                     return;
                 }
-                // If Heatwave is in deep open water, prevent transforming to dry land dino mode
-                if (player.botType === 'HEATWAVE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
-                    showToast("🌊 RETURN TO SHORE", "Heatwave must steer to the beach or harbor dock before transforming out of Boat Mode!");
+                // If bot is in deep open water, prevent transforming to dry land dino mode
+                if (player.botType !== 'HIGHTIDE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
+                    showToast("RETURN TO SHORE", `${BOT_METADATA[player.botType].name} must steer to the beach or harbor dock before transforming out of Boat Mode!`);
                     sfx.playSpeechPop();
                     return;
                 }
@@ -1048,8 +1049,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 showToast("DINOBOT MODE!", `${meta.name} • ${meta.dinoName}!`);
                 speakBotCatchphrase(player.botType, 'TO_DINO');
             } else {
-                if (player.botType === 'HEATWAVE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
-                    showToast("🌊 RETURN TO SHORE", "Heatwave must steer to the beach or harbor dock before transforming into Robot Mode!");
+                if (player.botType !== 'HIGHTIDE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
+                    showToast("RETURN TO SHORE", `${BOT_METADATA[player.botType].name} must steer to the beach or harbor dock before transforming into Robot Mode!`);
                     sfx.playSpeechPop();
                     return;
                 }
@@ -1374,6 +1375,24 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             if (player.botType === 'CHASE') {
+                const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+                if (isBoat) {
+                    player.sonarTimer = 1.6;
+                    sfx.playSirenPulse();
+                    checkHitMorBotWithSpecialAbility(38.0, "DEPTH SONAR PULSE");
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 26.0) {
+                                clearHazardNode(beacon, n, 'WATER');
+                            }
+                        });
+                    });
+                    spawnBurstParticles(player.pos.x, -0.2, player.pos.z, 0x06b6d4, 24, 2.2);
+                    spawnBurstParticles(player.pos.x, -0.2, player.pos.z, 0x38bdf8, 18, 1.8);
+                    showToast("DEPTH SONAR PULSE!", "Coast Guard Interceptor emitted a high-frequency ocean sonar scan!");
+                    return;
+                }
+
                 // Police Energy Net & Tow Winch / Stegosaurus Tail Spike EMP Shockwave!
                 player.sonarTimer = 1.45;
                 player.netTimer = 1.35;
@@ -1419,6 +1438,25 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             if (player.botType === 'BLADES') {
+                const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+                if (isBoat) {
+                    player.boostTimer = 2.4;
+                    player.speed = Math.max(player.speed + 22, 78);
+                    sfx.playSmash();
+                    checkHitMorBotWithSpecialAbility(34.0, "HOVER AIR JET");
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 22.0) {
+                                clearHazardNode(beacon, n, 'HEAVY');
+                            }
+                        });
+                    });
+                    spawnBurstParticles(player.pos.x - Math.sin(player.heading) * 3.0, -0.3, player.pos.z - Math.cos(player.heading) * 3.0, 0xffffff, 24, 2.0);
+                    spawnBurstParticles(player.pos.x, -0.3, player.pos.z, 0x38bdf8, 16, 1.6);
+                    showToast("HOVER AIR JET!", "Hovercraft twin lift-fans launched a high-speed air-cushion surge!");
+                    return;
+                }
+
                 // Helicopter Rescue Winch & Rotor Cyclone / Pterosaur Wing Gale!
                 player.winchTimer = 1.65;
                 player.sonarTimer = 1.45;
@@ -1483,6 +1521,25 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     );
                     return;
                 } else if (player.mode === 'VEHICLE') {
+                    const isBoat = (player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4;
+                    if (isBoat) {
+                        player.waterTimer = 2.4;
+                        sfx.playWaterSpray();
+                        checkHitMorBotWithSpecialAbility(42.0, "COMMAND WATER CANNON");
+                        const aimX = player.pos.x + Math.sin(player.heading) * 16;
+                        const aimZ = player.pos.z + Math.cos(player.heading) * 16;
+                        checkWaterCannonFoliage(player.pos.x, player.pos.z, player.heading, aimX, aimZ, 0.15);
+                        beacons.forEach(beacon => {
+                            beacon.nodes.forEach(n => {
+                                if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < (isMega ? 40.0 : 28.0)) {
+                                    clearHazardNode(beacon, n, 'WATER');
+                                }
+                            });
+                        });
+                        spawnBurstParticles(player.pos.x + Math.sin(player.heading) * 5.0, 0.4, player.pos.z + Math.cos(player.heading) * 5.0, 0x38bdf8, 28, 2.4);
+                        showToast("COMMAND WATER DELUGE!", "Flagship dual heavy deluge monitors discharged high-pressure torrents!");
+                        return;
+                    }
                     if (isMega) {
                         player.waterTimer = 2.2;
                         sfx.playWaterSpray();
@@ -1528,7 +1585,26 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             if (player.botType === 'BUMBLEBEE') {
-                // BUMBLEBEE: Stinger Pulse Blasters / Nitro Turbo / Velociraptor Pounce Leap!
+                // BUMBLEBEE: Stinger Pulse Blasters / Nitro Turbo / Velociraptor Pounce Leap / Jet Boat
+                const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+                if (isBoat) {
+                    player.boostTimer = 2.2;
+                    player.speed = Math.max(player.speed + 24, 82);
+                    sfx.playStuntChime();
+                    checkHitMorBotWithSpecialAbility(34.0, "TURBO ROOSTER-TAIL");
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 22.0) {
+                                clearHazardNode(beacon, n, 'HEAVY');
+                            }
+                        });
+                    });
+                    spawnBurstParticles(player.pos.x - Math.sin(player.heading) * 4.0, 0.5, player.pos.z - Math.cos(player.heading) * 4.0, 0xfacc15, 20, 2.2);
+                    spawnBurstParticles(player.pos.x - Math.sin(player.heading) * 4.0, 0.8, player.pos.z - Math.cos(player.heading) * 4.0, 0x38bdf8, 24, 2.4);
+                    showToast("TURBO ROOSTER-TAIL!", "Jet boat twin waterjets opened up with a massive rooster-tail boost!");
+                    return;
+                }
+
                 if (player.mode === 'DINO') {
                     player.smashTimer = 0.5;
                     player.vy = 24.0;
@@ -1542,7 +1618,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                         sfx.playBoingSound();
                         sfx.playStuntChime();
                         spawnBurstParticles(player.pos.x, player.pos.y + 0.5, player.pos.z, 0xfacc15, 24, 1.8);
-                        showToast("🚜 MONSTER TRUCK BOUNCE!", "Bumblebee launched a mega monster jump!");
+                        showToast("MONSTER TRUCK BOUNCE!", "Bumblebee launched a mega monster jump!");
                     } else {
                         player.boostTimer = 1.8;
                         player.speed = Math.max(player.speed, 42.0);
@@ -1571,6 +1647,26 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             if (player.botType === 'BLURR') {
+                const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+                if (isBoat) {
+                    player.boostTimer = 2.6;
+                    player.speed = Math.max(player.speed + 28, 88);
+                    sfx.playStuntChime();
+                    sfx.playWarpWhoosh();
+                    checkHitMorBotWithSpecialAbility(36.0, "SUPERSONIC HYDRO-GLIDE");
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 25.0) {
+                                clearHazardNode(beacon, n, 'HEAVY');
+                            }
+                        });
+                    });
+                    spawnBurstParticles(player.pos.x, 0.2, player.pos.z, 0xa855f7, 24, 2.2);
+                    spawnBurstParticles(player.pos.x, 0.2, player.pos.z, 0x22c55e, 18, 1.8);
+                    showToast("SUPERSONIC HYDRO-GLIDE!", "Blurr rose onto ocean hydrofoils for supersonic wave riding!");
+                    return;
+                }
+
                 if (player.mode === 'DINO') {
                     // GALLIMIMUS: Sonic Stride Supersonic Dash & Lightning Sprint!
                     player.boostTimer = 2.4;
@@ -1614,6 +1710,25 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     triggerDumpsterHopperDump(player);
                     return;
                 }
+                const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+                if (isBoat) {
+                    player.scoopTimer = 1.3;
+                    player.smashTimer = 0.5;
+                    sfx.playRockBreak();
+                    checkHitMorBotWithSpecialAbility(34.0, "OCEAN SKIMMER SCOOP");
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
+                                clearHazardNode(beacon, n, 'HEAVY');
+                            }
+                        });
+                    });
+                    spawnBurstParticles(player.pos.x + Math.sin(player.heading) * 4.0, 0.2, player.pos.z + Math.cos(player.heading) * 4.0, 0x84cc16, 20, 1.8);
+                    spawnBurstParticles(player.pos.x + Math.sin(player.heading) * 4.0, 0.2, player.pos.z + Math.cos(player.heading) * 4.0, 0x0284c7, 16, 1.6);
+                    showToast("OCEAN SKIMMER SCOOP!", "Catamaran collection scoop deployed to recover ocean debris!");
+                    return;
+                }
+
                 if (player.mode === 'DINO') {
                     // ANKYLOSAURUS: Heavy Wrecking Club Tail Smash & Ground Shockwave!
                     player.smashTimer = 0.65;
@@ -1675,6 +1790,25 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             if (player.botType === 'QUICKSHADOW') {
+                const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+                if (isBoat) {
+                    player.boostTimer = 2.4;
+                    player.speed = Math.max(player.speed + 25, 84);
+                    sfx.playWarpWhoosh();
+                    checkHitMorBotWithSpecialAbility(35.0, "STEALTH HYDRO-GLIDE");
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
+                                clearHazardNode(beacon, n, 'HEAVY');
+                            }
+                        });
+                    });
+                    spawnBurstParticles(player.pos.x, 0.2, player.pos.z, 0x38bdf8, 22, 1.8);
+                    spawnSparkleGlints(player.pos.x, 0.8, player.pos.z, 20);
+                    showToast("STEALTH HYDRO-GLIDE!", "Quickshadow sliced through the surf with cloaked water-jets!");
+                    return;
+                }
+
                 if (player.mode === 'DINO') {
                     // DILOPHOSAURUS: Shadow Ambush Stealth Leap & Covert Strike!
                     player.boostTimer = 2.2;
@@ -1706,6 +1840,28 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 spawnSparkleGlints(player.pos.x, player.pos.y + 1.2, player.pos.z, 18);
                 return;
             }
+
+            const isBoulderBoat = player.botType === 'BOULDER' && player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+            if (isBoulderBoat) {
+                player.scoopTimer = 1.35;
+                player.smashTimer = 0.65;
+                sfx.playSmash();
+                sfx.playRockBreak();
+                checkHitMorBotWithSpecialAbility(38.0, "HYDRAULIC CHANNEL DREDGER");
+                checkBoulderScoopAttack(player.pos.x, player.pos.y, player.pos.z, player.heading, 9.5);
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 22.0) {
+                            clearHazardNode(beacon, n, 'HEAVY');
+                        }
+                    });
+                });
+                spawnBurstParticles(player.pos.x + Math.sin(player.heading) * 4.5, 0.2, player.pos.z + Math.cos(player.heading) * 4.5, 0x10b981, 22, 2.0);
+                spawnBurstParticles(player.pos.x + Math.sin(player.heading) * 4.5, 0.4, player.pos.z + Math.cos(player.heading) * 4.5, 0x06b6d4, 18, 1.8);
+                showToast("CHANNEL DREDGER RAM!", "Boulder engaged heavy dredging jaws to clear waterways!");
+                return;
+            }
+
             player.scoopTimer = 0.85;
             player.smashTimer = 0.45;
             if (player.mode === 'DINO') {

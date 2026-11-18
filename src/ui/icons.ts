@@ -214,6 +214,53 @@ export const SVG_ICONS = {
                 <circle cx="14" cy="8" r="1.5" fill="#facc15"/>
                 <path d="M10 6c1-2 3-2 4 0" stroke="#38bdf8"/>
             </svg>`,
+            POLICE_DEPTH_SONAR: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 13l4-5h10l4 5-3 5H6l-3-5z" fill="#38bdf8" fill-opacity="0.25"/>
+                <circle cx="12" cy="14" r="2" fill="#0284c7"/>
+                <path d="M8 14a4 4 0 018 0M5 14a7 7 0 0114 0" stroke="#38bdf8"/>
+                <rect x="11" y="5" width="2" height="3" fill="#ef4444"/>
+            </svg>`,
+            HOVER_AIR_JET: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="7" rx="3.5" fill="#f97316" fill-opacity="0.25" stroke="#ea580c"/>
+                <circle cx="7" cy="8" r="3" stroke="#f97316"/>
+                <circle cx="17" cy="8" r="3" stroke="#f97316"/>
+                <path d="M7 6v4M5 8h4M17 6v4M15 8h4"/>
+                <path d="M4 20c3-1 6-1 8 0 2-1 5-1 8 0" stroke="#38bdf8"/>
+            </svg>`,
+            DREDGE_RAM: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="6" width="4" height="12" rx="1" fill="#22c55e" stroke="#16a34a"/>
+                <rect x="16" y="6" width="4" height="12" rx="1" fill="#22c55e" stroke="#16a34a"/>
+                <path d="M8 10h8M8 14h8M4 17h16" stroke="#15803d"/>
+                <path d="M2 21c4-1.5 8-1.5 10 0 2-1.5 6-1.5 10 0" stroke="#facc15"/>
+            </svg>`,
+            COMMAND_DELUGE: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 16l3-6h12l3 6H3z" fill="#ef4444" fill-opacity="0.25" stroke="#dc2626"/>
+                <path d="M10 10V5M14 10V5M8 5h8"/>
+                <path d="M7 3c2-1 5 1 5 2M17 3c-2-1-5 1-5 2" stroke="#38bdf8"/>
+                <circle cx="12" cy="7" r="1.5" fill="#facc15"/>
+            </svg>`,
+            TURBO_ROOSTER_TAIL: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 15l14-5 6 3-10 6-10-4z" fill="#facc15" fill-opacity="0.25" stroke="#eab308"/>
+                <path d="M3 13c-2-4 1-8 4-10 1 3 0 6-2 8" stroke="#38bdf8"/>
+                <path d="M6 13c-1-3 1-6 3-8 1 2 0 5-1 6" stroke="#06b6d4"/>
+                <circle cx="18" cy="12" r="1.5" fill="#facc15"/>
+            </svg>`,
+            SUPERSONIC_HYDRO_GLIDE: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10l12-3 7 3-11 3-8-3z" fill="#a855f7" fill-opacity="0.25" stroke="#9333ea"/>
+                <path d="M8 12l-2 7h5l-1-7M16 11l-1 8h4l1-8" stroke="#22c55e"/>
+                <path d="M2 20c5-1 10-1 20 0" stroke="#38bdf8"/>
+            </svg>`,
+            OCEAN_SKIMMER_SCOOP: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="5" height="12" rx="2" fill="#0284c7" fill-opacity="0.25" stroke="#0369a1"/>
+                <rect x="17" y="7" width="5" height="12" rx="2" fill="#0284c7" fill-opacity="0.25" stroke="#0369a1"/>
+                <path d="M7 11h10v6a3 3 0 01-3 3h-4a3 3 0 01-3-3v-6z" fill="#84cc16" fill-opacity="0.3" stroke="#65a30d"/>
+                <path d="M10 14l2-2 2 2M12 12v5" stroke="#facc15"/>
+            </svg>`,
+            STEALTH_HYDRO_GLIDE: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 21 16 12 14 3 16" fill="#0ea5e9" fill-opacity="0.2" stroke="#0284c7"/>
+                <line x1="12" y1="2" x2="12" y2="21" stroke="#38bdf8"/>
+                <path d="M5 20c3-1 5-1 7 0 2-1 4-1 7 0" stroke="#06b6d4"/>
+            </svg>`,
             HYDRO_DELUGE: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 19h16M12 19V11M8 11h8l2-4H6l2 4z"/>
                 <path d="M12 7V3M9 4a6 6 0 016 0"/>
