@@ -21,7 +21,7 @@ import { sunLight } from '../rendering/scene.js';
 import { speakClosestDisasterForNPC } from '../world/npcs.js';
 import { triggerPrimaryAction, checkHitMorBotWithSpecialAbility } from './player.js';
 import { spawnWaterCannonStream } from '../world/emergencies.js';
-import { explodeRock, explodeTree, checkBoulderScoopAttack, checkWaterCannonFoliage } from '../world/vegetation.js';
+import { explodeRock, explodeTree, explodeBush, checkBoulderScoopAttack, checkWaterCannonFoliage } from '../world/vegetation.js';
 
 const RAINBOW_TRAIL_COLORS = [0xef4444, 0xf97316, 0xfacc15, 0x4ade80, 0x38bdf8, 0xa855f7];
 let rainbowTrailIdx = 0;
@@ -815,13 +815,16 @@ export let wpArrowCone = null;
                     const dist = Math.hypot(dx, dz);
                     const minDist = playerRadius + c.r;
                     if (dist < minDist && dist > 0.001) {
-                        // When Boulder uses Dozer Scoop on a rock or tree, explode it on impact!
+                        // When Boulder uses Dozer Scoop on a rock, tree or bush, explode it on impact!
                         if (player.botType === 'BOULDER' && (player.scoopTimer > 0 || player.smashTimer > 0)) {
                             if (c.type === 'ROCK' && c.target) {
                                 explodeRock(c.target);
                                 continue;
                             } else if (c.type === 'TREE' && c.target) {
                                 explodeTree(c.target);
+                                continue;
+                            } else if (c.type === 'BUSH' && c.target) {
+                                explodeBush(c.target);
                                 continue;
                             }
                         }

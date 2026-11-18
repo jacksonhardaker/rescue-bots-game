@@ -43,8 +43,25 @@ export interface RockInstance {
     collider: any;
 }
 
+export interface BushInstance {
+    id: number;
+    x: number;
+    y: number;
+    z: number;
+    s: number;
+    baseScale: number;
+    growthFactor: number;
+    rot: number;
+    color: number;
+    instanceIdx: number;
+    bucket: any;
+    destroyed: boolean;
+    collider: any;
+}
+
 export const allTrees: TreeInstance[] = [];
 export const allRocks: RockInstance[] = [];
+export const allBushes: BushInstance[] = [];
 
 const dummy = new THREE.Object3D();
 const zeroMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -150,6 +167,7 @@ let lastColossalToastTime = 0;
                 bushes: [],
                 rocks: [],
                 treeMeshes: [] as any[],
+                bushMeshes: null as any,
                 rockMeshes: null as any
             };
         });
@@ -293,7 +311,37 @@ let lastColossalToastTime = 0;
             if (isPointOnRoad(bx, bz) || isInsideAnyPlaza(bx, bz)) continue;
             const s = 0.65 + Math.random() * 0.95;
             const bColor = bushColors[Math.floor(Math.random() * bushColors.length)];
-            getSectorBucket(bx, bz).bushes.push({ x: bx, y: by, z: bz, s, rot: Math.random() * Math.PI, color: bColor });
+
+            const bushObj: BushInstance = {
+                id: placed,
+                x: bx,
+                y: by,
+                z: bz,
+                s,
+                baseScale: s,
+                growthFactor: 1.0,
+                rot: Math.random() * Math.PI,
+                color: bColor,
+                instanceIdx: -1,
+                bucket: null,
+                destroyed: false,
+                collider: null
+            };
+
+            getSectorBucket(bx, bz).bushes.push(bushObj);
+            allBushes.push(bushObj);
+
+            // Bush collision detection: solid obstacle in worldColliders so bots cannot drive through bushes!
+            const bushCollider = {
+                x: bx,
+                z: bz,
+                r: 1.35 * 1.2 * s * 0.75, // Scaled bush collision radius (~1.2m for s=1.0)
+                type: 'BUSH',
+                target: bushObj,
+                destroyed: false
+            };
+            bushObj.collider = bushCollider;
+            worldColliders.push(bushCollider);
             placed++;
         }
 
@@ -406,8 +454,13 @@ export function buildInstancedVegetation(scene) {
             const iBushOut = new THREE.InstancedMesh(bushGeo, matInkOutline, n);
             iBushes.castShadow = true;
             iBushes.receiveShadow = true;
+            bucket.bushMeshes = { iBushes, iBushOut };
+
             for (let i = 0; i < n; i++) {
                 const b = bucket.bushes[i];
+                b.instanceIdx = i;
+                b.bucket = bucket;
+
                 dummy.position.set(b.x, b.y + 0.55 * b.s, b.z);
                 dummy.scale.set(b.s * 1.25, b.s * 0.78, b.s * 1.15);
                 dummy.rotation.set(0, b.rot, 0);
@@ -465,11 +518,12 @@ export function buildInstancedVegetation(scene) {
         window.sectorChunks = sectorChunks;
         (window as any).allTrees = allTrees;
         (window as any).allRocks = allRocks;
+        (window as any).allBushes = allBushes;
     }
 }
 
 // ---------------------------------------------------------------------
-// Interactivity: Boulder Scoop Demolition & Heatwave Tree Growth
+// Interactivity: Boulder Scoop Demolition & Heatwave Tree/Bush Growth
 // ---------------------------------------------------------------------
 
 export function explodeRock(rock: RockInstance) {
@@ -497,7 +551,7 @@ export function explodeRock(rock: RockInstance) {
     progression.heroPoints = (progression.heroPoints || 0) + 5;
     saveProgression();
 
-    showToast("🚜 BOULDER DOZER SMASH!", "Rock Demolished! +5 Hero Pts");
+    showToast("BOULDER DOZER SMASH", "Rock Demolished! +5 Hero Pts");
     sfx.playDiscoveryChime();
 }
 
@@ -530,7 +584,36 @@ export function explodeTree(tree: TreeInstance) {
     progression.heroPoints = (progression.heroPoints || 0) + 5;
     saveProgression();
 
-    showToast("🚜 TIMBERRRR!", "Tree Cleared by Dozer Scoop! +5 Hero Pts");
+    showToast("TIMBERRRR", "Tree Cleared by Dozer Scoop! +5 Hero Pts");
+    sfx.playDiscoveryChime();
+}
+
+export function explodeBush(bush: BushInstance) {
+    if (!bush || bush.destroyed) return;
+    bush.destroyed = true;
+    if (bush.collider) {
+        bush.collider.destroyed = true;
+        bush.collider.r = 0;
+    }
+
+    if (bush.bucket && bush.bucket.bushMeshes) {
+        const { iBushes, iBushOut } = bush.bucket.bushMeshes;
+        iBushes.setMatrixAt(bush.instanceIdx, zeroMatrix);
+        iBushOut.setMatrixAt(bush.instanceIdx, zeroMatrix);
+        iBushes.instanceMatrix.needsUpdate = true;
+        iBushOut.instanceMatrix.needsUpdate = true;
+    }
+
+    sfx.playRockBreak();
+    sfx.playSmash();
+    spawnBurstParticles(bush.x, bush.y + 0.55 * bush.s, bush.z, bush.color || 0x22c55e, 22, 1.8);
+    spawnBurstParticles(bush.x, bush.y + 0.8 * bush.s, bush.z, 0x84cc16, 16, 1.6);
+    spawnBurstParticles(bush.x, bush.y + 0.3 * bush.s, bush.z, 0xfacc15, 12, 1.4);
+
+    progression.heroPoints = (progression.heroPoints || 0) + 5;
+    saveProgression();
+
+    showToast("DOZER SCOOP SMASH", "Bush Cleared by Boulder! +5 Hero Pts");
     sfx.playDiscoveryChime();
 }
 
@@ -596,7 +679,62 @@ export function waterTree(tree: TreeInstance, growthDelta: number) {
         const now = performance.now();
         if (now - lastColossalToastTime > 6000) {
             lastColossalToastTime = now;
-            showToast("🌲 COLOSSAL REDWOOD!", "Tree watered to 5x maximum size! +10 Hero Pts");
+            showToast("COLOSSAL REDWOOD", "Tree watered to 5x maximum size! +10 Hero Pts");
+        }
+        progression.heroPoints = (progression.heroPoints || 0) + 10;
+        saveProgression();
+    }
+
+    return true;
+}
+
+export function waterBush(bush: BushInstance, growthDelta: number) {
+    if (!bush || bush.destroyed || bush.growthFactor >= 5.0) return false;
+
+    const prevFactor = bush.growthFactor;
+    bush.growthFactor = Math.min(5.0, bush.growthFactor + growthDelta);
+    const currentScale = bush.baseScale * bush.growthFactor;
+    bush.s = currentScale;
+
+    // Update collider radius so bush becomes wider as it grows
+    if (bush.collider) {
+        bush.collider.r = 1.35 * 1.2 * currentScale * 0.75;
+    }
+
+    // Update instance transforms
+    if (bush.bucket && bush.bucket.bushMeshes) {
+        const { iBushes, iBushOut } = bush.bucket.bushMeshes;
+
+        dummy.position.set(bush.x, bush.y + 0.55 * currentScale, bush.z);
+        dummy.scale.set(currentScale * 1.25, currentScale * 0.78, currentScale * 1.15);
+        dummy.rotation.set(0, bush.rot, 0);
+        dummy.updateMatrix();
+        iBushes.setMatrixAt(bush.instanceIdx, dummy.matrix);
+
+        dummy.scale.set(currentScale * 1.25 * 1.09, currentScale * 0.78 * 1.09, currentScale * 1.15 * 1.09);
+        dummy.updateMatrix();
+        iBushOut.setMatrixAt(bush.instanceIdx, dummy.matrix);
+
+        iBushes.instanceMatrix.needsUpdate = true;
+        iBushOut.instanceMatrix.needsUpdate = true;
+    }
+
+    // Gentle growth particles
+    if (Math.random() < 0.35) {
+        spawnSparkleGlints(bush.x, bush.y + 0.8 * currentScale, bush.z, 6);
+        spawnBurstParticles(bush.x, bush.y + 0.5 * currentScale, bush.z, 0x4ade80, 5, 0.8);
+    }
+
+    // Reached max size (5x)
+    if (prevFactor < 5.0 && bush.growthFactor >= 5.0) {
+        spawnSparkleGlints(bush.x, bush.y + 1.2 * currentScale, bush.z, 24);
+        spawnBurstParticles(bush.x, bush.y + 0.9 * currentScale, bush.z, 0x22c55e, 26, 1.8);
+        sfx.playDiscoveryChime();
+
+        const now = performance.now();
+        if (now - lastColossalToastTime > 6000) {
+            lastColossalToastTime = now;
+            showToast("COLOSSAL BUSH", "Bush watered to 5x maximum size! +10 Hero Pts");
         }
         progression.heroPoints = (progression.heroPoints || 0) + 10;
         saveProgression();
@@ -632,12 +770,25 @@ export function checkBoulderScoopAttack(x: number, y: number, z: number, heading
             explodeTree(t);
         }
     }
+
+    // Check bushes
+    for (let i = 0; i < allBushes.length; i++) {
+        const b = allBushes[i];
+        if (b.destroyed) continue;
+        const dFront = Math.hypot(frontX - b.x, frontZ - b.z);
+        const dCenter = Math.hypot(x - b.x, z - b.z);
+        const bushRadius = 1.35 * 1.2 * b.s * 0.85;
+        if (dFront < (radius + bushRadius) || dCenter < (3.6 + bushRadius)) {
+            explodeBush(b);
+        }
+    }
 }
 
 export function checkWaterCannonFoliage(originX: number, originZ: number, heading: number, aimX: number, aimZ: number, dt: number) {
     const fwdX = Math.sin(heading);
     const fwdZ = Math.cos(heading);
 
+    // Check trees
     for (let i = 0; i < allTrees.length; i++) {
         const t = allTrees[i];
         if (t.destroyed || t.growthFactor >= 5.0) continue;
@@ -662,14 +813,43 @@ export function checkWaterCannonFoliage(originX: number, originZ: number, headin
             waterTree(t, dt * 2.5);
         }
     }
+
+    // Check bushes
+    for (let i = 0; i < allBushes.length; i++) {
+        const b = allBushes[i];
+        if (b.destroyed || b.growthFactor >= 5.0) continue;
+
+        const distOrigin = Math.hypot(b.x - originX, b.z - originZ);
+        if (distOrigin > 28.0) continue;
+
+        let inStream = false;
+        if (distOrigin < 5.0) {
+            inStream = true;
+        } else {
+            const dx = b.x - originX;
+            const dz = b.z - originZ;
+            const dot = (dx * fwdX + dz * fwdZ) / distOrigin;
+            const distAim = Math.hypot(b.x - aimX, b.z - aimZ);
+            if (dot > 0.68 || distAim < 14.0) {
+                inStream = true;
+            }
+        }
+
+        if (inStream) {
+            waterBush(b, dt * 2.5);
+        }
+    }
 }
 
 if (typeof window !== 'undefined') {
     (window as any).allTrees = allTrees;
     (window as any).allRocks = allRocks;
+    (window as any).allBushes = allBushes;
     (window as any).explodeRock = explodeRock;
     (window as any).explodeTree = explodeTree;
+    (window as any).explodeBush = explodeBush;
     (window as any).waterTree = waterTree;
+    (window as any).waterBush = waterBush;
     (window as any).checkBoulderScoopAttack = checkBoulderScoopAttack;
     (window as any).checkWaterCannonFoliage = checkWaterCannonFoliage;
 }
