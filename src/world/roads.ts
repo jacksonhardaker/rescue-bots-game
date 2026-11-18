@@ -10,6 +10,7 @@ import { registerCullableObject } from '../state/gameState.js';
             c.width = 512;
             c.height = 512;
             const ctx = c.getContext('2d');
+            if (!ctx) return new THREE.Texture();
 
             // 1. Dark Charcoal-Slate Asphalt Base (#334155)
             ctx.fillStyle = '#334155';
@@ -58,10 +59,13 @@ import { registerCullableObject } from '../state/gameState.js';
             ctx.fillStyle = '#facc15'; // Vibrant cartoon yellow core
             ctx.fillRect(246, 16, 20, 224);
 
-            const tex = new THREE.CanvasTexture(c);
+            // Extract pixel buffer into a persistent Uint8Array to prevent iOS WebKit detached canvas memory purge
+            const imgData = ctx.getImageData(0, 0, 512, 512);
+            const pixelBuffer = new Uint8Array(imgData.data.buffer);
+            const tex = new THREE.DataTexture(pixelBuffer, 512, 512, THREE.RGBAFormat);
             tex.wrapS = THREE.ClampToEdgeWrapping;
             tex.wrapT = THREE.RepeatWrapping;
-            tex.anisotropy = (typeof window !== 'undefined' && window.renderer && window.renderer.capabilities) ? window.renderer.capabilities.getMaxAnisotropy() : 4;
+            tex.anisotropy = (typeof window !== 'undefined' && window.renderer && window.renderer.capabilities) ? Math.min(4, window.renderer.capabilities.getMaxAnisotropy()) : 4;
             tex.minFilter = THREE.LinearMipmapLinearFilter;
             tex.magFilter = THREE.LinearFilter;
             tex.generateMipmaps = true;
@@ -77,6 +81,7 @@ import { registerCullableObject } from '../state/gameState.js';
             c.width = 512;
             c.height = 512;
             const ctx = c.getContext('2d');
+            if (!ctx) return new THREE.Texture();
 
             // 1. Granite/Gravel Ballast Roadbed Base (#334155 / #475569)
             ctx.fillStyle = '#334155';
@@ -145,10 +150,13 @@ import { registerCullableObject } from '../state/gameState.js';
                 ctx.fillRect(rx - 2, 0, 4, 512);
             });
 
-            const tex = new THREE.CanvasTexture(c);
+            // Extract pixel buffer into a persistent Uint8Array to prevent iOS WebKit detached canvas memory purge
+            const imgData = ctx.getImageData(0, 0, 512, 512);
+            const pixelBuffer = new Uint8Array(imgData.data.buffer);
+            const tex = new THREE.DataTexture(pixelBuffer, 512, 512, THREE.RGBAFormat);
             tex.wrapS = THREE.ClampToEdgeWrapping;
             tex.wrapT = THREE.RepeatWrapping;
-            tex.anisotropy = (typeof window !== 'undefined' && window.renderer && window.renderer.capabilities) ? window.renderer.capabilities.getMaxAnisotropy() : 4;
+            tex.anisotropy = (typeof window !== 'undefined' && window.renderer && window.renderer.capabilities) ? Math.min(4, window.renderer.capabilities.getMaxAnisotropy()) : 4;
             tex.minFilter = THREE.LinearMipmapLinearFilter;
             tex.magFilter = THREE.LinearFilter;
             tex.generateMipmaps = true;
@@ -265,7 +273,10 @@ export let roadTexture = null;
                 polygonOffset: true,
                 polygonOffsetFactor: polyOffsetFactor,
                 polygonOffsetUnits: polyOffsetUnits,
-                side: THREE.DoubleSide
+                side: THREE.FrontSide,
+                emissive: 0xffffff,
+                emissiveMap: customTexture || sharedRoadTexture,
+                emissiveIntensity: 0.16
             });
 
             const mesh = new THREE.Mesh(geo, roadMat);
@@ -278,7 +289,7 @@ export let roadTexture = null;
             const padG = new THREE.Group();
             padG.position.set(cx, gy + 0.16, cz);
 
-            // Dark Asphalt Paved Apron
+            // Dark Asphalt Paved Apron with subtle emissive floor to prevent shadow crush
             const padMesh = new THREE.Mesh(
                 new THREE.CircleGeometry(radius, 32).rotateX(-Math.PI / 2),
                 new THREE.MeshToonMaterial({
@@ -286,7 +297,9 @@ export let roadTexture = null;
                     gradientMap: toonGrad3,
                     polygonOffset: true,
                     polygonOffsetFactor: -1.35,
-                    polygonOffsetUnits: -6.0
+                    polygonOffsetUnits: -6.0,
+                    emissive: 0x334155,
+                    emissiveIntensity: 0.16
                 })
             );
             padMesh.receiveShadow = true;
@@ -300,7 +313,9 @@ export let roadTexture = null;
                     gradientMap: toonGrad3,
                     polygonOffset: true,
                     polygonOffsetFactor: -1.4,
-                    polygonOffsetUnits: -6.5
+                    polygonOffsetUnits: -6.5,
+                    emissive: 0x64748b,
+                    emissiveIntensity: 0.16
                 })
             );
             padG.add(curbMesh);

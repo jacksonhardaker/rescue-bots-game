@@ -92,6 +92,12 @@ export function createStarField() {
     const starCount = 420;
     const starGeo = new THREE.OctahedronGeometry(2.4, 0);
     const starColors = [0xffffff, 0xfef08a, 0xbae6fd, 0xfbcfe8, 0x67e8f9];
+    // Reusable shared materials across the 420 stars to eliminate iPad shader compile lags & memory pressure
+    const sharedStarMats = starColors.map(c => new THREE.MeshBasicMaterial({
+        color: c,
+        transparent: true,
+        opacity: 0.85
+    }));
     const starMeshes: THREE.Mesh[] = [];
 
     for (let i = 0; i < starCount; i++) {
@@ -103,12 +109,7 @@ export function createStarField() {
         const y = dist * Math.sin(phi);
         const z = dist * Math.sin(theta) * Math.cos(phi);
 
-        const c = starColors[i % starColors.length];
-        const mat = new THREE.MeshBasicMaterial({
-            color: c,
-            transparent: true,
-            opacity: 0.85
-        });
+        const mat = sharedStarMats[i % sharedStarMats.length];
         const star = new THREE.Mesh(starGeo, mat);
         star.position.set(x, y, z);
         star.userData.noOutline = true;
@@ -423,10 +424,19 @@ export function updateWeather(dt: number, now: number, playerRef: any) {
 
     // 2. Diurnal Sun & Moon Orbital Position
     const sunAngle = ((timeOfDay - 6.0) / 24.0) * Math.PI * 2;
+    const isNightTime = timeOfDay >= 19.5 || timeOfDay < 5.5;
     const sunDist = 300;
-    const sunX = Math.cos(sunAngle) * sunDist;
-    const sunY = Math.max(25, Math.sin(sunAngle) * 340);
-    const sunZ = 130 + Math.sin(sunAngle) * 70;
+    let sunX = Math.cos(sunAngle) * sunDist;
+    let sunY = Math.max(90, Math.sin(sunAngle) * 340);
+    let sunZ = 130 + Math.sin(sunAngle) * 70;
+
+    if (isNightTime || currentMode.id === 'NIGHT') {
+        // At night, directional light acts as high-angle moonlight (aligned with the moon group)
+        // preventing low-angle grazing shadows from blanketing the island and blacking out roads
+        sunX = 240;
+        sunY = 320;
+        sunZ = -280;
+    }
 
     const snapX = Math.round(playerRef.pos.x / 2) * 2;
     const snapZ = Math.round(playerRef.pos.z / 2) * 2;
