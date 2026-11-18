@@ -1,10 +1,54 @@
 // Sector-Chunked Instanced Forests, Bushes & Rocks for Viewport Culling
 import * as THREE from 'three';
-import { getTerrainHeight, isPointInWater, getRailwayRadius } from './terrain.js';
+import { getTerrainHeight, isPointInWater, getRailwayRadius, isPointOnRoad } from './terrain.js';
 import { toonGrad3, toonGrad4, matInkOutline } from '../rendering/materials.js';
-import { registerCullableObject } from '../state/gameState.js';
+import { registerCullableObject, worldColliders } from '../state/gameState.js';
+import { sfx } from '../audio/soundFX.js';
+import { showToast } from '../ui/dialogs.js';
+import { progression, saveProgression } from '../progression/progression.js';
+import { spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
 
-export let sectorChunks = [];
+export let sectorChunks: any[] = [];
+
+export interface TreeInstance {
+    id: number;
+    x: number;
+    y: number;
+    z: number;
+    s: number;
+    baseScale: number;
+    growthFactor: number;
+    rot: number;
+    color: number;
+    archIdx: number;
+    instanceIdx: number;
+    bucket: any;
+    destroyed: boolean;
+    collider: any;
+}
+
+export interface RockInstance {
+    id: number;
+    x: number;
+    y: number;
+    z: number;
+    s: number;
+    baseScale: number;
+    r1: number;
+    r2: number;
+    color: number;
+    instanceIdx: number;
+    bucket: any;
+    destroyed: boolean;
+    collider: any;
+}
+
+export const allTrees: TreeInstance[] = [];
+export const allRocks: RockInstance[] = [];
+
+const dummy = new THREE.Object3D();
+const zeroMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
+let lastColossalToastTime = 0;
 
         // =====================================================================
         // 5C. SECTOR-CHUNKED INSTANCED FORESTS, BUSHES & ROCKS FOR VIEWPORT CULLING
@@ -104,7 +148,9 @@ export let sectorChunks = [];
                 cz,
                 treeTypes: Array.from({ length: TREE_ARCHETYPES.length }, () => []),
                 bushes: [],
-                rocks: []
+                rocks: [],
+                treeMeshes: [] as any[],
+                rockMeshes: null as any
             };
         });
 
@@ -202,15 +248,36 @@ export let sectorChunks = [];
             const arch = TREE_ARCHETYPES[typeIdx];
             const colorHex = arch.colors[Math.floor(Math.random() * arch.colors.length)];
 
-            getSectorBucket(tx, tz).treeTypes[typeIdx].push({
+            const treeObj: TreeInstance = {
+                id: placed,
                 x: tx,
                 y: ty,
                 z: tz,
                 s: scale,
+                baseScale: scale,
+                growthFactor: 1.0,
                 rot: Math.random() * Math.PI * 2,
-                color: colorHex
-            });
-            worldColliders.push({ x: tx, z: tz, r: 1.4 * scale });
+                color: colorHex,
+                archIdx: typeIdx,
+                instanceIdx: -1,
+                bucket: null,
+                destroyed: false,
+                collider: null
+            };
+
+            getSectorBucket(tx, tz).treeTypes[typeIdx].push(treeObj);
+            allTrees.push(treeObj);
+
+            const treeCollider = {
+                x: tx,
+                z: tz,
+                r: 1.4 * scale,
+                type: 'TREE',
+                target: treeObj,
+                destroyed: false
+            };
+            treeObj.collider = treeCollider;
+            worldColliders.push(treeCollider);
             placed++;
         }
 
@@ -241,7 +308,37 @@ export let sectorChunks = [];
             if (ry < 0.8 || isPointOnRoad(rx, rz) || isInsideAnyPlaza(rx, rz)) continue;
             const s = 0.65 + Math.random() * 1.45;
             const rColor = rockColors[Math.floor(Math.random() * rockColors.length)];
-            getSectorBucket(rx, rz).rocks.push({ x: rx, y: ry, z: rz, s, r1: attempt * 0.3, r2: attempt * 0.7, color: rColor });
+
+            const rockObj: RockInstance = {
+                id: placed,
+                x: rx,
+                y: ry,
+                z: rz,
+                s,
+                baseScale: s,
+                r1: attempt * 0.3,
+                r2: attempt * 0.7,
+                color: rColor,
+                instanceIdx: -1,
+                bucket: null,
+                destroyed: false,
+                collider: null
+            };
+
+            getSectorBucket(rx, rz).rocks.push(rockObj);
+            allRocks.push(rockObj);
+
+            // Rock collision detection: solid obstacle in worldColliders so bots cannot drive through rocks!
+            const rockCollider = {
+                x: rx,
+                z: rz,
+                r: 1.85 * 1.35 * s * 0.75, // Scaled rock collision radius (~1.9m for s=1.0)
+                type: 'ROCK',
+                target: rockObj,
+                destroyed: false
+            };
+            rockObj.collider = rockCollider;
+            worldColliders.push(rockCollider);
             placed++;
         }
 
@@ -249,116 +346,331 @@ export function buildInstancedVegetation(scene) {
     const s = scene || (typeof window !== 'undefined' ? window.scene : null);
     if (!s) return;
 
-    const dummy = new THREE.Object3D();
-        const tmpColor = new THREE.Color();
+    const tmpColor = new THREE.Color();
 
-        sectorBuckets.forEach(bucket => {
-            const sectorGroup = new THREE.Group();
+    sectorBuckets.forEach(bucket => {
+        const sectorGroup = new THREE.Group();
 
-            TREE_ARCHETYPES.forEach((arch, archIdx) => {
-                const list = bucket.treeTypes[archIdx];
-                if (!list || list.length === 0) return;
-                const n = list.length;
+        TREE_ARCHETYPES.forEach((arch, archIdx) => {
+            const list = bucket.treeTypes[archIdx];
+            if (!list || list.length === 0) return;
+            const n = list.length;
 
-                const iTrunks = new THREE.InstancedMesh(arch.trunkGeo, arch.trunkMat, n);
-                const iLeaves = new THREE.InstancedMesh(arch.leavesGeo, matTreeLeavesBase, n);
-                const iOutline = new THREE.InstancedMesh(arch.leavesGeo, matInkOutline, n);
-                iTrunks.castShadow = true;
-                iLeaves.castShadow = true;
+            const iTrunks = new THREE.InstancedMesh(arch.trunkGeo, arch.trunkMat, n);
+            const iLeaves = new THREE.InstancedMesh(arch.leavesGeo, matTreeLeavesBase, n);
+            const iOutline = new THREE.InstancedMesh(arch.leavesGeo, matInkOutline, n);
+            iTrunks.castShadow = true;
+            iLeaves.castShadow = true;
+            bucket.treeMeshes[archIdx] = { iTrunks, iLeaves, iOutline };
 
-                for (let i = 0; i < n; i++) {
-                    const t = list[i];
+            for (let i = 0; i < n; i++) {
+                const t = list[i];
+                t.instanceIdx = i;
+                t.bucket = bucket;
 
-                    // Trunk transform
-                    dummy.position.set(t.x, t.y + arch.trunkY * t.s, t.z);
-                    dummy.scale.set(t.s, t.s, t.s);
-                    dummy.rotation.set(0, t.rot, 0);
-                    dummy.updateMatrix();
-                    iTrunks.setMatrixAt(i, dummy.matrix);
+                // Trunk transform
+                dummy.position.set(t.x, t.y + arch.trunkY * t.s, t.z);
+                dummy.scale.set(t.s, t.s, t.s);
+                dummy.rotation.set(0, t.rot, 0);
+                dummy.updateMatrix();
+                iTrunks.setMatrixAt(i, dummy.matrix);
 
-                    // Leaves transform
-                    dummy.position.set(t.x, t.y + arch.leavesY * t.s, t.z);
-                    dummy.scale.set(t.s * arch.leavesScale[0], t.s * arch.leavesScale[1], t.s * arch.leavesScale[2]);
-                    dummy.rotation.set(0, t.rot, 0);
-                    dummy.updateMatrix();
-                    iLeaves.setMatrixAt(i, dummy.matrix);
+                // Leaves transform
+                dummy.position.set(t.x, t.y + arch.leavesY * t.s, t.z);
+                dummy.scale.set(t.s * arch.leavesScale[0], t.s * arch.leavesScale[1], t.s * arch.leavesScale[2]);
+                dummy.rotation.set(0, t.rot, 0);
+                dummy.updateMatrix();
+                iLeaves.setMatrixAt(i, dummy.matrix);
 
-                    // Cartoon ink outline transform
-                    dummy.scale.set(
-                        t.s * arch.leavesScale[0] * arch.outlineScale[0],
-                        t.s * arch.leavesScale[1] * arch.outlineScale[1],
-                        t.s * arch.leavesScale[2] * arch.outlineScale[2]
-                    );
-                    dummy.updateMatrix();
-                    iOutline.setMatrixAt(i, dummy.matrix);
+                // Cartoon ink outline transform
+                dummy.scale.set(
+                    t.s * arch.leavesScale[0] * arch.outlineScale[0],
+                    t.s * arch.leavesScale[1] * arch.outlineScale[1],
+                    t.s * arch.leavesScale[2] * arch.outlineScale[2]
+                );
+                dummy.updateMatrix();
+                iOutline.setMatrixAt(i, dummy.matrix);
 
-                    // Leaves instance color
-                    tmpColor.setHex(t.color);
-                    iLeaves.setColorAt(i, tmpColor);
-                }
-
-                if (iLeaves.instanceColor) iLeaves.instanceColor.needsUpdate = true;
-                sectorGroup.add(iTrunks, iLeaves, iOutline);
-            });
-
-            if (bucket.bushes.length > 0) {
-                const n = bucket.bushes.length;
-                const iBushes = new THREE.InstancedMesh(bushGeo, matBushToon, n);
-                const iBushOut = new THREE.InstancedMesh(bushGeo, matInkOutline, n);
-                iBushes.castShadow = true;
-                iBushes.receiveShadow = true;
-                for (let i = 0; i < n; i++) {
-                    const b = bucket.bushes[i];
-                    dummy.position.set(b.x, b.y + 0.55 * b.s, b.z);
-                    dummy.scale.set(b.s * 1.25, b.s * 0.78, b.s * 1.15);
-                    dummy.rotation.set(0, b.rot, 0);
-                    dummy.updateMatrix();
-                    iBushes.setMatrixAt(i, dummy.matrix);
-
-                    dummy.scale.set(b.s * 1.25 * 1.09, b.s * 0.78 * 1.09, b.s * 1.15 * 1.09);
-                    dummy.updateMatrix();
-                    iBushOut.setMatrixAt(i, dummy.matrix);
-
-                    tmpColor.setHex(b.color);
-                    iBushes.setColorAt(i, tmpColor);
-                }
-                if (iBushes.instanceColor) iBushes.instanceColor.needsUpdate = true;
-                sectorGroup.add(iBushes, iBushOut);
+                // Leaves instance color
+                tmpColor.setHex(t.color);
+                iLeaves.setColorAt(i, tmpColor);
             }
 
-            if (bucket.rocks.length > 0) {
-                const n = bucket.rocks.length;
-                const iRocks = new THREE.InstancedMesh(envRockGeo, matRockToon, n);
-                const iRockOut = new THREE.InstancedMesh(envRockGeo, matInkOutline, n);
-                iRocks.castShadow = true;
-                iRocks.receiveShadow = true;
-                for (let i = 0; i < n; i++) {
-                    const r = bucket.rocks[i];
-                    // Position rocks to sit firmly on the terrain and cast prominent 3D shadows
-                    dummy.position.set(r.x, r.y + 0.92 * r.s, r.z);
-                    dummy.scale.set(r.s * 1.35, r.s * 1.15, r.s * 1.25);
-                    dummy.rotation.set(r.r1, r.r2, 0);
-                    dummy.updateMatrix();
-                    iRocks.setMatrixAt(i, dummy.matrix);
-
-                    dummy.scale.set(r.s * 1.35 * 1.08, r.s * 1.15 * 1.08, r.s * 1.25 * 1.08);
-                    dummy.updateMatrix();
-                    iRockOut.setMatrixAt(i, dummy.matrix);
-
-                    tmpColor.setHex(r.color);
-                    iRocks.setColorAt(i, tmpColor);
-                }
-                if (iRocks.instanceColor) iRocks.instanceColor.needsUpdate = true;
-                sectorGroup.add(iRocks, iRockOut);
-            }
-
-            s.add(sectorGroup);
-            registerCullableObject(sectorGroup, bucket.cx, 12, bucket.cz, SECTOR_STEP * 0.78);
+            if (iLeaves.instanceColor) iLeaves.instanceColor.needsUpdate = true;
+            sectorGroup.add(iTrunks, iLeaves, iOutline);
         });
 
-        sectorChunks = sectorBuckets;
-        if (typeof window !== 'undefined') {
-            window.sectorChunks = sectorChunks;
+        if (bucket.bushes.length > 0) {
+            const n = bucket.bushes.length;
+            const iBushes = new THREE.InstancedMesh(bushGeo, matBushToon, n);
+            const iBushOut = new THREE.InstancedMesh(bushGeo, matInkOutline, n);
+            iBushes.castShadow = true;
+            iBushes.receiveShadow = true;
+            for (let i = 0; i < n; i++) {
+                const b = bucket.bushes[i];
+                dummy.position.set(b.x, b.y + 0.55 * b.s, b.z);
+                dummy.scale.set(b.s * 1.25, b.s * 0.78, b.s * 1.15);
+                dummy.rotation.set(0, b.rot, 0);
+                dummy.updateMatrix();
+                iBushes.setMatrixAt(i, dummy.matrix);
+
+                dummy.scale.set(b.s * 1.25 * 1.09, b.s * 0.78 * 1.09, b.s * 1.15 * 1.09);
+                dummy.updateMatrix();
+                iBushOut.setMatrixAt(i, dummy.matrix);
+
+                tmpColor.setHex(b.color);
+                iBushes.setColorAt(i, tmpColor);
+            }
+            if (iBushes.instanceColor) iBushes.instanceColor.needsUpdate = true;
+            sectorGroup.add(iBushes, iBushOut);
+        }
+
+        if (bucket.rocks.length > 0) {
+            const n = bucket.rocks.length;
+            const iRocks = new THREE.InstancedMesh(envRockGeo, matRockToon, n);
+            const iRockOut = new THREE.InstancedMesh(envRockGeo, matInkOutline, n);
+            iRocks.castShadow = true;
+            iRocks.receiveShadow = true;
+            bucket.rockMeshes = { iRocks, iRockOut };
+
+            for (let i = 0; i < n; i++) {
+                const r = bucket.rocks[i];
+                r.instanceIdx = i;
+                r.bucket = bucket;
+
+                // Position rocks to sit firmly on the terrain and cast prominent 3D shadows
+                dummy.position.set(r.x, r.y + 0.92 * r.s, r.z);
+                dummy.scale.set(r.s * 1.35, r.s * 1.15, r.s * 1.25);
+                dummy.rotation.set(r.r1, r.r2, 0);
+                dummy.updateMatrix();
+                iRocks.setMatrixAt(i, dummy.matrix);
+
+                dummy.scale.set(r.s * 1.35 * 1.08, r.s * 1.15 * 1.08, r.s * 1.25 * 1.08);
+                dummy.updateMatrix();
+                iRockOut.setMatrixAt(i, dummy.matrix);
+
+                tmpColor.setHex(r.color);
+                iRocks.setColorAt(i, tmpColor);
+            }
+            if (iRocks.instanceColor) iRocks.instanceColor.needsUpdate = true;
+            sectorGroup.add(iRocks, iRockOut);
+        }
+
+        s.add(sectorGroup);
+        registerCullableObject(sectorGroup, bucket.cx, 12, bucket.cz, SECTOR_STEP * 0.78);
+    });
+
+    sectorChunks = sectorBuckets;
+    if (typeof window !== 'undefined') {
+        window.sectorChunks = sectorChunks;
+        (window as any).allTrees = allTrees;
+        (window as any).allRocks = allRocks;
+    }
+}
+
+// ---------------------------------------------------------------------
+// Interactivity: Boulder Scoop Demolition & Heatwave Tree Growth
+// ---------------------------------------------------------------------
+
+export function explodeRock(rock: RockInstance) {
+    if (!rock || rock.destroyed) return;
+    rock.destroyed = true;
+    if (rock.collider) {
+        rock.collider.destroyed = true;
+        rock.collider.r = 0;
+    }
+
+    if (rock.bucket && rock.bucket.rockMeshes) {
+        const { iRocks, iRockOut } = rock.bucket.rockMeshes;
+        iRocks.setMatrixAt(rock.instanceIdx, zeroMatrix);
+        iRockOut.setMatrixAt(rock.instanceIdx, zeroMatrix);
+        iRocks.instanceMatrix.needsUpdate = true;
+        iRockOut.instanceMatrix.needsUpdate = true;
+    }
+
+    sfx.playRockBreak();
+    sfx.playSmash();
+    spawnBurstParticles(rock.x, rock.y + 0.9 * rock.s, rock.z, rock.color || 0x64748b, 22, 2.2);
+    spawnBurstParticles(rock.x, rock.y + 1.4 * rock.s, rock.z, 0x94a3b8, 16, 2.4);
+    spawnBurstParticles(rock.x, rock.y + 0.6 * rock.s, rock.z, 0xfacc15, 14, 1.8);
+
+    progression.heroPoints = (progression.heroPoints || 0) + 5;
+    saveProgression();
+
+    showToast("🚜 BOULDER DOZER SMASH!", "Rock Demolished! +5 Hero Pts");
+    sfx.playDiscoveryChime();
+}
+
+export function explodeTree(tree: TreeInstance) {
+    if (!tree || tree.destroyed) return;
+    tree.destroyed = true;
+    if (tree.collider) {
+        tree.collider.destroyed = true;
+        tree.collider.r = 0;
+    }
+
+    if (tree.bucket && tree.bucket.treeMeshes && tree.bucket.treeMeshes[tree.archIdx]) {
+        const { iTrunks, iLeaves, iOutline } = tree.bucket.treeMeshes[tree.archIdx];
+        iTrunks.setMatrixAt(tree.instanceIdx, zeroMatrix);
+        iLeaves.setMatrixAt(tree.instanceIdx, zeroMatrix);
+        iOutline.setMatrixAt(tree.instanceIdx, zeroMatrix);
+        iTrunks.instanceMatrix.needsUpdate = true;
+        iLeaves.instanceMatrix.needsUpdate = true;
+        iOutline.instanceMatrix.needsUpdate = true;
+    }
+
+    const arch = TREE_ARCHETYPES[tree.archIdx];
+    sfx.playRockBreak();
+    sfx.playSmash();
+    // Wood splinters + foliage burst!
+    spawnBurstParticles(tree.x, tree.y + arch.trunkY * tree.s, tree.z, 0x78350f, 24, 2.2);
+    spawnBurstParticles(tree.x, tree.y + arch.leavesY * tree.s, tree.z, tree.color || 0x22c55e, 28, 2.5);
+    spawnBurstParticles(tree.x, tree.y + 1.2, tree.z, 0xfacc15, 14, 1.8);
+
+    progression.heroPoints = (progression.heroPoints || 0) + 5;
+    saveProgression();
+
+    showToast("🚜 TIMBERRRR!", "Tree Cleared by Dozer Scoop! +5 Hero Pts");
+    sfx.playDiscoveryChime();
+}
+
+export function waterTree(tree: TreeInstance, growthDelta: number) {
+    if (!tree || tree.destroyed || tree.growthFactor >= 5.0) return false;
+
+    const prevFactor = tree.growthFactor;
+    tree.growthFactor = Math.min(5.0, tree.growthFactor + growthDelta);
+    const currentScale = tree.baseScale * tree.growthFactor;
+    tree.s = currentScale;
+
+    // Update collider radius so tree trunk becomes wider as it grows
+    if (tree.collider) {
+        tree.collider.r = 1.4 * currentScale;
+    }
+
+    // Update instance transforms
+    if (tree.bucket && tree.bucket.treeMeshes && tree.bucket.treeMeshes[tree.archIdx]) {
+        const arch = TREE_ARCHETYPES[tree.archIdx];
+        const { iTrunks, iLeaves, iOutline } = tree.bucket.treeMeshes[tree.archIdx];
+
+        // Trunk
+        dummy.position.set(tree.x, tree.y + arch.trunkY * currentScale, tree.z);
+        dummy.scale.set(currentScale, currentScale, currentScale);
+        dummy.rotation.set(0, tree.rot, 0);
+        dummy.updateMatrix();
+        iTrunks.setMatrixAt(tree.instanceIdx, dummy.matrix);
+
+        // Leaves
+        dummy.position.set(tree.x, tree.y + arch.leavesY * currentScale, tree.z);
+        dummy.scale.set(currentScale * arch.leavesScale[0], currentScale * arch.leavesScale[1], currentScale * arch.leavesScale[2]);
+        dummy.rotation.set(0, tree.rot, 0);
+        dummy.updateMatrix();
+        iLeaves.setMatrixAt(tree.instanceIdx, dummy.matrix);
+
+        // Outline
+        dummy.scale.set(
+            currentScale * arch.leavesScale[0] * arch.outlineScale[0],
+            currentScale * arch.leavesScale[1] * arch.outlineScale[1],
+            currentScale * arch.leavesScale[2] * arch.outlineScale[2]
+        );
+        dummy.updateMatrix();
+        iOutline.setMatrixAt(tree.instanceIdx, dummy.matrix);
+
+        iTrunks.instanceMatrix.needsUpdate = true;
+        iLeaves.instanceMatrix.needsUpdate = true;
+        iOutline.instanceMatrix.needsUpdate = true;
+    }
+
+    // Gentle growth particles
+    if (Math.random() < 0.35) {
+        spawnSparkleGlints(tree.x, tree.y + TREE_ARCHETYPES[tree.archIdx].leavesY * currentScale, tree.z, 6);
+        spawnBurstParticles(tree.x, tree.y + TREE_ARCHETYPES[tree.archIdx].trunkY * currentScale, tree.z, 0x4ade80, 5, 0.8);
+    }
+
+    // Reached max size (5x)
+    if (prevFactor < 5.0 && tree.growthFactor >= 5.0) {
+        const arch = TREE_ARCHETYPES[tree.archIdx];
+        spawnSparkleGlints(tree.x, tree.y + arch.leavesY * currentScale, tree.z, 24);
+        spawnBurstParticles(tree.x, tree.y + arch.leavesY * currentScale, tree.z, 0x22c55e, 26, 1.8);
+        sfx.playDiscoveryChime();
+
+        const now = performance.now();
+        if (now - lastColossalToastTime > 6000) {
+            lastColossalToastTime = now;
+            showToast("🌲 COLOSSAL REDWOOD!", "Tree watered to 5x maximum size! +10 Hero Pts");
+        }
+        progression.heroPoints = (progression.heroPoints || 0) + 10;
+        saveProgression();
+    }
+
+    return true;
+}
+
+export function checkBoulderScoopAttack(x: number, y: number, z: number, heading: number, radius = 7.5) {
+    const frontX = x + Math.sin(heading) * 4.5;
+    const frontZ = z + Math.cos(heading) * 4.5;
+
+    // Check rocks
+    for (let i = 0; i < allRocks.length; i++) {
+        const r = allRocks[i];
+        if (r.destroyed) continue;
+        const dFront = Math.hypot(frontX - r.x, frontZ - r.z);
+        const dCenter = Math.hypot(x - r.x, z - r.z);
+        const rockRadius = 1.85 * 1.35 * r.s * 0.85;
+        if (dFront < (radius + rockRadius) || dCenter < (3.6 + rockRadius)) {
+            explodeRock(r);
         }
     }
+
+    // Check trees
+    for (let i = 0; i < allTrees.length; i++) {
+        const t = allTrees[i];
+        if (t.destroyed) continue;
+        const dFront = Math.hypot(frontX - t.x, frontZ - t.z);
+        const dCenter = Math.hypot(x - t.x, z - t.z);
+        const treeRadius = 1.4 * t.s;
+        if (dFront < (radius + treeRadius) || dCenter < (3.6 + treeRadius)) {
+            explodeTree(t);
+        }
+    }
+}
+
+export function checkWaterCannonFoliage(originX: number, originZ: number, heading: number, aimX: number, aimZ: number, dt: number) {
+    const fwdX = Math.sin(heading);
+    const fwdZ = Math.cos(heading);
+
+    for (let i = 0; i < allTrees.length; i++) {
+        const t = allTrees[i];
+        if (t.destroyed || t.growthFactor >= 5.0) continue;
+
+        const distOrigin = Math.hypot(t.x - originX, t.z - originZ);
+        if (distOrigin > 28.0) continue;
+
+        let inStream = false;
+        if (distOrigin < 5.0) {
+            inStream = true;
+        } else {
+            const dx = t.x - originX;
+            const dz = t.z - originZ;
+            const dot = (dx * fwdX + dz * fwdZ) / distOrigin;
+            const distAim = Math.hypot(t.x - aimX, t.z - aimZ);
+            if (dot > 0.68 || distAim < 14.0) {
+                inStream = true;
+            }
+        }
+
+        if (inStream) {
+            waterTree(t, dt * 2.5);
+        }
+    }
+}
+
+if (typeof window !== 'undefined') {
+    (window as any).allTrees = allTrees;
+    (window as any).allRocks = allRocks;
+    (window as any).explodeRock = explodeRock;
+    (window as any).explodeTree = explodeTree;
+    (window as any).waterTree = waterTree;
+    (window as any).checkBoulderScoopAttack = checkBoulderScoopAttack;
+    (window as any).checkWaterCannonFoliage = checkWaterCannonFoliage;
+}
 

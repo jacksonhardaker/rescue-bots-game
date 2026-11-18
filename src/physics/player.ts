@@ -9,6 +9,7 @@ import { progression, saveProgression, isBotDocked, setBotDocked, ALL_PLAYABLE_B
 import { syncVisitingAutobotsVisibility, WORLD_MEGA_ATTACHMENTS, WORLD_MEGA_LOCATIONS } from '../world/allies.js';
 export { syncVisitingAutobotsVisibility };
 import { spawnWaterCannonStream, spawnBurstParticles } from '../world/emergencies.js';
+import { checkBoulderScoopAttack, checkWaterCannonFoliage } from '../world/vegetation.js';
 import { SVG_ICONS } from '../ui/icons.js';
 
 import { waypointGroup } from './movement.js';
@@ -1357,6 +1358,10 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 }
                 sfx.playWaterSpray();
                 checkHitMorBotWithSpecialAbility(34.0, "WATER CANNON");
+
+                const aimX = player.pos.x + Math.sin(player.heading) * 14;
+                const aimZ = player.pos.z + Math.cos(player.heading) * 14;
+                checkWaterCannonFoliage(player.pos.x, player.pos.z, player.heading, aimX, aimZ, 0.15);
                 return;
             }
 
@@ -1696,6 +1701,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             } else {
                 sfx.playSmash();
             }
+            checkBoulderScoopAttack(player.pos.x, player.pos.y, player.pos.z, player.heading, 8.5);
             beacons.forEach(beacon => {
                 beacon.nodes.forEach(n => {
                     if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 16.5) {

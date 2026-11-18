@@ -20,6 +20,7 @@ import { railroadCrossings } from './railway.js';
 import { getBotScale } from '../bots/botRigs.js';
 import { getInnerRoadRadius, getOuterRoadRadius } from './terrain.js';
 import { spawnWaterCannonStream } from './emergencies.js';
+import { checkBoulderScoopAttack, checkWaterCannonFoliage } from './vegetation.js';
         export function createHumanNPCMesh(cfg) {
             const root = new THREE.Group();
 
@@ -1199,6 +1200,24 @@ import { spawnWaterCannonStream } from './emergencies.js';
                 buddyBot.pos.z = nextBz;
             }
 
+            // Buddy Bot Obstacle Collision against Rocks, Trees & Buildings
+            if (worldColliders && worldColliders.length > 0) {
+                const buddyRadius = 2.4;
+                for (let i = 0; i < worldColliders.length; i++) {
+                    const c = worldColliders[i];
+                    if (c.destroyed || c.r <= 0) continue;
+                    const dx = buddyBot.pos.x - c.x;
+                    const dz = buddyBot.pos.z - c.z;
+                    const dist = Math.hypot(dx, dz);
+                    const minDist = buddyRadius + c.r;
+                    if (dist < minDist && dist > 0.001) {
+                        const overlap = minDist - dist;
+                        buddyBot.pos.x += (dx / dist) * overlap;
+                        buddyBot.pos.z += (dz / dist) * overlap;
+                    }
+                }
+            }
+
             // If buddy bot ever gets caught in water while player is navigating water, gently steer buddy up onto dry land
             if (isPlayerWaterNavigating && (isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.35)) {
                 const testAngles = [0, Math.PI * 0.5, Math.PI, -Math.PI * 0.5, Math.PI * 0.25, -Math.PI * 0.25, Math.PI * 0.75, -Math.PI * 0.75];
@@ -1275,11 +1294,19 @@ import { spawnWaterCannonStream } from './emergencies.js';
                 buddyBot.actionCooldown -= dt;
             }
             if (buddyBot.smashTimer > 0) buddyBot.smashTimer = Math.max(0, buddyBot.smashTimer - dt);
-            if (buddyBot.scoopTimer > 0) buddyBot.scoopTimer = Math.max(0, buddyBot.scoopTimer - dt);
+            if (buddyBot.scoopTimer > 0) {
+                buddyBot.scoopTimer = Math.max(0, buddyBot.scoopTimer - dt);
+                if (buddyBot.botType === 'BOULDER') {
+                    checkBoulderScoopAttack(buddyBot.pos.x, buddyBot.pos.y, buddyBot.pos.z, buddyBot.heading, 6.0);
+                }
+            }
             if (buddyBot.waterTimer > 0) {
                 buddyBot.waterTimer = Math.max(0, buddyBot.waterTimer - dt);
                 if (buddyBot.botType === 'HEATWAVE') {
                     spawnWaterCannonStream(bRig, new THREE.Vector3(buddyBot.pos.x, buddyBot.pos.y + 3.2, buddyBot.pos.z), buddyBot.heading);
+                    const bAimX = buddyBot.pos.x + Math.sin(buddyBot.heading) * 14;
+                    const bAimZ = buddyBot.pos.z + Math.cos(buddyBot.heading) * 14;
+                    checkWaterCannonFoliage(buddyBot.pos.x, buddyBot.pos.z, buddyBot.heading, bAimX, bAimZ, dt);
                 }
             }
 

@@ -21,6 +21,7 @@ import { sunLight } from '../rendering/scene.js';
 import { speakClosestDisasterForNPC } from '../world/npcs.js';
 import { triggerPrimaryAction, checkHitMorBotWithSpecialAbility } from './player.js';
 import { spawnWaterCannonStream } from '../world/emergencies.js';
+import { explodeRock, explodeTree, checkBoulderScoopAttack, checkWaterCannonFoliage } from '../world/vegetation.js';
 
 const RAINBOW_TRAIL_COLORS = [0xef4444, 0xf97316, 0xfacc15, 0x4ade80, 0x38bdf8, 0xa855f7];
 let rainbowTrailIdx = 0;
@@ -445,7 +446,12 @@ export let wpArrowCone = null;
             }
 
             if (player.smashTimer > 0) player.smashTimer = Math.max(0, player.smashTimer - dt);
-            if (player.scoopTimer > 0) player.scoopTimer = Math.max(0, player.scoopTimer - dt);
+            if (player.scoopTimer > 0) {
+                player.scoopTimer = Math.max(0, player.scoopTimer - dt);
+                if (player.botType === 'BOULDER') {
+                    checkBoulderScoopAttack(player.pos.x, player.pos.y, player.pos.z, player.heading, 6.0);
+                }
+            }
             if (player.winchTimer > 0) player.winchTimer = Math.max(0, player.winchTimer - dt);
             if (player.netTimer > 0) player.netTimer = Math.max(0, player.netTimer - dt);
             if (player.boostTimer > 0) player.boostTimer = Math.max(0, player.boostTimer - dt);
@@ -794,17 +800,29 @@ export let wpArrowCone = null;
                 const playerRadius = 2.4;
                 for (let i = 0; i < worldColliders.length; i++) {
                     const c = worldColliders[i];
+                    if (c.destroyed || c.r <= 0) continue;
                     const dx = player.pos.x - c.x;
                     const dz = player.pos.z - c.z;
                     const dist = Math.hypot(dx, dz);
                     const minDist = playerRadius + c.r;
                     if (dist < minDist && dist > 0.001) {
+                        // When Boulder uses Dozer Scoop on a rock or tree, explode it on impact!
+                        if (player.botType === 'BOULDER' && (player.scoopTimer > 0 || player.smashTimer > 0)) {
+                            if (c.type === 'ROCK' && c.target) {
+                                explodeRock(c.target);
+                                continue;
+                            } else if (c.type === 'TREE' && c.target) {
+                                explodeTree(c.target);
+                                continue;
+                            }
+                        }
+
                         const overlap = minDist - dist;
                         const nx = dx / dist;
                         const nz = dz / dist;
                         player.pos.x += nx * overlap;
                         player.pos.z += nz * overlap;
-                        // Nudge tangential slide if auto-piloting around a building or tree
+                        // Nudge tangential slide if auto-piloting around a building, rock or tree
                         if (player.hasWaypoint) {
                             player.pos.x += -nz * dt * 8;
                             player.pos.z += nx * dt * 8;
@@ -1099,6 +1117,9 @@ export let wpArrowCone = null;
                         }
                     });
                 });
+
+                // Water nearby trees along the water stream (trees grow up to 5x size!)
+                checkWaterCannonFoliage(player.pos.x, player.pos.z, player.heading, aimX, aimZ, dt);
             }
 
             // Animate Blades' Helicopter Rescue Winch Cable & Airlift Hook
