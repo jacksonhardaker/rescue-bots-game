@@ -42,12 +42,19 @@ let lastTime = performance.now();
 let frameCount = 0;
 let fpsTimer = 0;
 let minimapTimer = 0;
+let tacticalMapTimer = 1;
 let hudUpdateTimer = 0;
 let lightningFlashTimer = 0;
 let lightningTimer = 0;
 let positionSaveTimer = 0;
 let hudWaterCheckTimer = 0;
 let lastSavedPos = { x: 0, y: 0, z: 0, heading: 0 };
+
+const _bubbleWorldPos = new THREE.Vector3();
+let _fpsCounterEl: HTMLElement | null = null;
+let _tacticalMapModalEl: HTMLElement | null = null;
+let _npcWorldBubbleEl: HTMLElement | null = null;
+let _worldBubbleTailEl: HTMLElement | null = null;
 
 export function savePlayerMapPosition(force = false) {
     if (!player || !player.pos) return;
@@ -82,7 +89,8 @@ export function savePlayerMapPosition(force = false) {
             fpsTimer += dt;
             if (fpsTimer >= 0.5) {
                 const fps = Math.round(frameCount / fpsTimer);
-                document.getElementById('fps-counter').textContent = `${fps} FPS`;
+                if (!_fpsCounterEl) _fpsCounterEl = document.getElementById('fps-counter');
+                if (_fpsCounterEl) _fpsCounterEl.textContent = `${fps} FPS`;
                 frameCount = 0;
                 fpsTimer = 0;
             }
@@ -112,9 +120,20 @@ export function savePlayerMapPosition(force = false) {
                 }
             }
 
-            renderMinimap();
-            if ((() => { const m = document.getElementById('tactical-map-modal'); return !!m && !m.classList.contains('hidden'); })()) {
-                renderTacticalMap();
+            minimapTimer += dt;
+            if (minimapTimer >= 0.085) {
+                minimapTimer = 0;
+                renderMinimap();
+            }
+            if (!_tacticalMapModalEl) _tacticalMapModalEl = document.getElementById('tactical-map-modal');
+            if (_tacticalMapModalEl && !_tacticalMapModalEl.classList.contains('hidden')) {
+                tacticalMapTimer += dt;
+                if (tacticalMapTimer >= 0.05) {
+                    tacticalMapTimer = 0;
+                    renderTacticalMap();
+                }
+            } else {
+                tacticalMapTimer = 1;
             }
 
             // Animate 3D Tap Waypoint Marker (Pulsing Ring & Bouncing Arrow)
@@ -1007,11 +1026,13 @@ export function savePlayerMapPosition(force = false) {
                 activeSpeech.timer -= dt;
                 if (activeSpeech.timer <= 0) {
                     activeSpeech.visible = false;
-                    const bubbleEl = document.getElementById('npc-world-bubble');
-                    if (bubbleEl) bubbleEl.classList.add('hidden');
+                    if (!_npcWorldBubbleEl) _npcWorldBubbleEl = document.getElementById('npc-world-bubble');
+                    if (_npcWorldBubbleEl) _npcWorldBubbleEl.classList.add('hidden');
                 } else {
-                    const bubbleEl = document.getElementById('npc-world-bubble');
-                    const bubbleTail = document.getElementById('world-bubble-tail');
+                    if (!_npcWorldBubbleEl) _npcWorldBubbleEl = document.getElementById('npc-world-bubble');
+                    if (!_worldBubbleTailEl) _worldBubbleTailEl = document.getElementById('world-bubble-tail');
+                    const bubbleEl = _npcWorldBubbleEl;
+                    const bubbleTail = _worldBubbleTailEl;
                     if (bubbleEl) {
                         let wx = 0, wy = 0, wz = 0;
                         const s = activeSpeech.source;
@@ -1034,15 +1055,15 @@ export function savePlayerMapPosition(force = false) {
                             curYOffset = (player.mode === 'VEHICLE') ? 4.2 : 7.2;
                         }
 
-                        const bubbleWorldPos = new THREE.Vector3(wx, wy + curYOffset, wz);
-                        const distToCam = camera.position.distanceTo(bubbleWorldPos);
+                        _bubbleWorldPos.set(wx, wy + curYOffset, wz);
+                        const distToCam = camera.position.distanceTo(_bubbleWorldPos);
 
-                        bubbleWorldPos.project(camera);
-                        const inFront = bubbleWorldPos.z < 1.0;
+                        _bubbleWorldPos.project(camera);
+                        const inFront = _bubbleWorldPos.z < 1.0;
 
                         if (inFront && distToCam < 95.0) {
-                            const screenX = (bubbleWorldPos.x * 0.5 + 0.5) * window.innerWidth;
-                            const screenY = (-bubbleWorldPos.y * 0.5 + 0.5) * window.innerHeight;
+                            const screenX = (_bubbleWorldPos.x * 0.5 + 0.5) * window.innerWidth;
+                            const screenY = (-_bubbleWorldPos.y * 0.5 + 0.5) * window.innerHeight;
 
                             const clampX = Math.max(150, Math.min(window.innerWidth - 150, screenX));
                             const clampY = Math.max(75, Math.min(window.innerHeight - 85, screenY));

@@ -125,84 +125,118 @@ export function handleTacticalMapTap(clientX, clientY) {
             }
 
 
+let minimapBgCanvas: HTMLCanvasElement | null = null;
+let minimapBgW = 0;
+let minimapBgH = 0;
+let _lastNearestHintText = '';
+let _nearestHintEl: HTMLElement | null = null;
+
+function ensureMinimapBgCache(w: number, h: number) {
+    if (minimapBgCanvas && minimapBgW === w && minimapBgH === h) return;
+    minimapBgCanvas = document.createElement('canvas');
+    minimapBgCanvas.width = w;
+    minimapBgCanvas.height = h;
+    minimapBgW = w;
+    minimapBgH = h;
+
+    const bgCtx = minimapBgCanvas.getContext('2d');
+    if (!bgCtx) return;
+
+    const cx = w / 2;
+    const cy = h / 2;
+    const mapScale = (cx * 0.70) / 1950;
+
+    // Deep Ocean background
+    bgCtx.fillStyle = '#082f49';
+    bgCtx.beginPath();
+    bgCtx.arc(cx, cy, cx, 0, Math.PI * 2);
+    bgCtx.fill();
+
+    // Main Island landmass
+    bgCtx.fillStyle = '#166534';
+    bgCtx.beginPath();
+    bgCtx.arc(cx, cy, 1650 * mapScale, 0, Math.PI * 2);
+    bgCtx.fill();
+
+    // Wayward Island landmass
+    const wix = cx + 1960 * mapScale;
+    const wiz = cy + 540 * mapScale;
+    bgCtx.fillStyle = '#14532d';
+    bgCtx.beginPath();
+    bgCtx.arc(wix, wiz, 340 * mapScale, 0, Math.PI * 2);
+    bgCtx.fill();
+
+    // Wayward Causeway Highway and Suspension Bridge
+    bgCtx.strokeStyle = '#f59e0b';
+    bgCtx.lineWidth = 2.4;
+    bgCtx.beginPath();
+    bgCtx.moveTo(cx + 1120 * mapScale, cy + 540 * mapScale);
+    bgCtx.lineTo(cx + 1780 * mapScale, cy + 540 * mapScale);
+    bgCtx.stroke();
+
+    // Inner & Outer Coastal Highway Loops + Arterials
+    bgCtx.strokeStyle = '#475569';
+    bgCtx.lineWidth = 2.0;
+    bgCtx.beginPath();
+    bgCtx.arc(cx, cy, INNER_LOOP_RADIUS * mapScale, 0, Math.PI * 2);
+    bgCtx.stroke();
+
+    bgCtx.beginPath();
+    bgCtx.arc(cx, cy, OUTER_LOOP_RADIUS * mapScale, 0, Math.PI * 2);
+    bgCtx.stroke();
+
+    bgCtx.beginPath();
+    bgCtx.moveTo(cx, cy - 1140 * mapScale);
+    bgCtx.lineTo(cx, cy + 1140 * mapScale);
+    bgCtx.moveTo(cx - 1120 * mapScale, cy + 25 * mapScale);
+    bgCtx.lineTo(cx + 1180 * mapScale, cy + 25 * mapScale);
+    bgCtx.moveTo(cx + 1180 * mapScale, cy + 60 * mapScale);
+    bgCtx.lineTo(cx + 1320 * mapScale, cy + 60 * mapScale);
+    bgCtx.stroke();
+
+    // Griffin Rock Island Railway Circuit Track
+    bgCtx.save();
+    bgCtx.strokeStyle = '#94a3b8';
+    bgCtx.lineWidth = 1.6;
+    bgCtx.setLineDash([4, 3]);
+    bgCtx.beginPath();
+    for (let i = 0; i <= 64; i++) {
+        const theta = (i / 64) * Math.PI * 2;
+        const r = getRailwayRadius(theta) * mapScale;
+        const mx = cx + Math.cos(theta) * r;
+        const my = cy + Math.sin(theta) * r;
+        if (i === 0) bgCtx.moveTo(mx, my);
+        else bgCtx.lineTo(mx, my);
+    }
+    bgCtx.stroke();
+    bgCtx.restore();
+
+    // Rescue Bots HQ
+    const hqx = cx + (typeof HQ_SWAP_PAD !== 'undefined' ? HQ_SWAP_PAD.x : 0) * mapScale;
+    const hqz = cy + (typeof HQ_SWAP_PAD !== 'undefined' ? HQ_SWAP_PAD.z : -15) * mapScale;
+    bgCtx.fillStyle = '#38bdf8';
+    bgCtx.fillRect(hqx - 3.5, hqz - 3.5, 7, 7);
+    bgCtx.strokeStyle = '#ffffff';
+    bgCtx.lineWidth = 1;
+    bgCtx.strokeRect(hqx - 3.5, hqz - 3.5, 7, 7);
+}
+
         // 10A. CLEAN & UNCLUTTERED HUD MINIMAP (160x160 circular dial)
         // =====================================================================
         export function renderMinimap() {
             ensureMapCanvases();
-            if (!mCtx) return;
+            if (!mCtx || !minimapCanvas) return;
             const w = minimapCanvas.width;
             const h = minimapCanvas.height;
             const cx = w / 2;
             const cy = h / 2;
-
-            mCtx.clearRect(0, 0, w, h);
-
-            // Deep Ocean background
-            mCtx.fillStyle = '#082f49';
-            mCtx.beginPath();
-            mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
-            mCtx.fill();
-
             const mapScale = (cx * 0.70) / 1950;
 
-            // Main Island landmass
-            mCtx.fillStyle = '#166534';
-            mCtx.beginPath();
-            mCtx.arc(cx, cy, 1650 * mapScale, 0, Math.PI * 2);
-            mCtx.fill();
-
-            // Wayward Island landmass
-            const wix = cx + 1960 * mapScale;
-            const wiz = cy + 540 * mapScale;
-            mCtx.fillStyle = '#14532d';
-            mCtx.beginPath();
-            mCtx.arc(wix, wiz, 340 * mapScale, 0, Math.PI * 2);
-            mCtx.fill();
-
-            // Wayward Causeway Highway and Suspension Bridge
-            mCtx.strokeStyle = '#f59e0b';
-            mCtx.lineWidth = 2.4;
-            mCtx.beginPath();
-            mCtx.moveTo(cx + 1120 * mapScale, cy + 540 * mapScale);
-            mCtx.lineTo(cx + 1780 * mapScale, cy + 540 * mapScale);
-            mCtx.stroke();
-
-            // Inner & Outer Coastal Highway Loops + Arterials
-            mCtx.strokeStyle = '#475569';
-            mCtx.lineWidth = 2.0;
-            mCtx.beginPath();
-            mCtx.arc(cx, cy, INNER_LOOP_RADIUS * mapScale, 0, Math.PI * 2);
-            mCtx.stroke();
-
-            mCtx.beginPath();
-            mCtx.arc(cx, cy, OUTER_LOOP_RADIUS * mapScale, 0, Math.PI * 2);
-            mCtx.stroke();
-
-            mCtx.beginPath();
-            mCtx.moveTo(cx, cy - 1140 * mapScale);
-            mCtx.lineTo(cx, cy + 1140 * mapScale);
-            mCtx.moveTo(cx - 1120 * mapScale, cy + 25 * mapScale);
-            mCtx.lineTo(cx + 1180 * mapScale, cy + 25 * mapScale);
-            mCtx.moveTo(cx + 1180 * mapScale, cy + 60 * mapScale);
-            mCtx.lineTo(cx + 1320 * mapScale, cy + 60 * mapScale);
-            mCtx.stroke();
-
-            // Griffin Rock Island Railway Circuit Track
-            mCtx.save();
-            mCtx.strokeStyle = '#94a3b8';
-            mCtx.lineWidth = 1.6;
-            mCtx.setLineDash([4, 3]);
-            mCtx.beginPath();
-            for (let i = 0; i <= 64; i++) {
-                const theta = (i / 64) * Math.PI * 2;
-                const r = getRailwayRadius(theta) * mapScale;
-                const mx = cx + Math.cos(theta) * r;
-                const my = cy + Math.sin(theta) * r;
-                if (i === 0) mCtx.moveTo(mx, my);
-                else mCtx.lineTo(mx, my);
+            ensureMinimapBgCache(w, h);
+            mCtx.clearRect(0, 0, w, h);
+            if (minimapBgCanvas) {
+                mCtx.drawImage(minimapBgCanvas, 0, 0);
             }
-            mCtx.stroke();
-            mCtx.restore();
 
             // Moving Griffin Rock Express Train
             if (typeof islandTrain !== 'undefined' && islandTrain && islandTrain.cars.length > 0) {
@@ -231,15 +265,6 @@ export function handleTacticalMapTap(clientX, clientY) {
                 mCtx.fill();
             }
 
-            // Rescue Bots HQ
-            const hqx = cx + (typeof HQ_SWAP_PAD !== 'undefined' ? HQ_SWAP_PAD.x : 0) * mapScale;
-            const hqz = cy + (typeof HQ_SWAP_PAD !== 'undefined' ? HQ_SWAP_PAD.z : -15) * mapScale;
-            mCtx.fillStyle = '#38bdf8';
-            mCtx.fillRect(hqx - 3.5, hqz - 3.5, 7, 7);
-            mCtx.strokeStyle = '#ffffff';
-            mCtx.lineWidth = 1;
-            mCtx.strokeRect(hqx - 3.5, hqz - 3.5, 7, 7);
-
             // Live MorBot Radar Blip when Boss Battle is Active
             if (typeof morbotBattle !== 'undefined' && morbotBattle && (morbotBattle.state === 'PURSUIT' || morbotBattle.state === 'ROBOT')) {
                 const mbx = cx + morbotBattle.pos.x * mapScale;
@@ -265,7 +290,8 @@ export function handleTacticalMapTap(clientX, clientY) {
             let nearestDist = Infinity;
             let nearestName = "All Clear!";
 
-            beacons.forEach(b => {
+            for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
+                const b = beacons[bIdx];
                 const bx = cx + b.x * mapScale;
                 const bz = cy + b.z * mapScale;
 
@@ -284,17 +310,22 @@ export function handleTacticalMapTap(clientX, clientY) {
                 mCtx.strokeStyle = '#ffffff';
                 mCtx.lineWidth = 1.0;
                 mCtx.stroke();
-            });
+            }
 
-            const hintEl = document.getElementById('nearest-hazard-hint');
-            if (hintEl) {
-                hintEl.textContent = nearestDist < Infinity ? `Nearest: ${nearestName}` : `All 8 Emergencies Resolved!`;
+            if (!_nearestHintEl) _nearestHintEl = document.getElementById('nearest-hazard-hint');
+            if (_nearestHintEl) {
+                const hintText = nearestDist < Infinity ? `Nearest: ${nearestName}` : `All 8 Emergencies Resolved!`;
+                if (hintText !== _lastNearestHintText) {
+                    _lastNearestHintText = hintText;
+                    _nearestHintEl.textContent = hintText;
+                }
             }
 
             // Draw Undocked Mega Mode Attachments on Minimap
             if (typeof WORLD_MEGA_LOCATIONS !== 'undefined') {
-                Object.entries(WORLD_MEGA_LOCATIONS).forEach(([botKey, loc]) => {
-                    if (!loc || isBotDocked(botKey)) return;
+                for (const botKey in WORLD_MEGA_LOCATIONS) {
+                    const loc = WORLD_MEGA_LOCATIONS[botKey];
+                    if (!loc || isBotDocked(botKey)) continue;
                     const mx = cx + loc.x * mapScale;
                     const mz = cy + loc.z * mapScale;
                     const meta = MEGA_ATTACHMENT_META[botKey];
@@ -305,7 +336,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                     mCtx.strokeStyle = '#ffffff';
                     mCtx.lineWidth = 0.9;
                     mCtx.stroke();
-                });
+                }
             }
 
             // Draw Buddy Bot Arrow (Cyan Wingman Chevron)
