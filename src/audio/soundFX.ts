@@ -10,6 +10,32 @@ class RescueSoundFX {
                 this.masterBus = null;
                 this.sfxBus = null;
                 this.engineBus = null;
+                this.noiseBuf = null;
+                this.steamNoiseBuf = null;
+            }
+            ensureNoiseBuffer() {
+                if (!this.ctx) return null;
+                if (!this.noiseBuf) {
+                    const len = Math.floor(this.ctx.sampleRate * 0.5);
+                    this.noiseBuf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+                    const data = this.noiseBuf.getChannelData(0);
+                    for (let i = 0; i < len; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+                }
+                return this.noiseBuf;
+            }
+            ensureSteamNoiseBuffer() {
+                if (!this.ctx) return null;
+                if (!this.steamNoiseBuf) {
+                    const bufferSize = Math.floor(this.ctx.sampleRate * 0.7);
+                    this.steamNoiseBuf = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = this.steamNoiseBuf.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.28));
+                    }
+                }
+                return this.steamNoiseBuf;
             }
             init() {
                 if (!this.ctx) {
@@ -29,6 +55,10 @@ class RescueSoundFX {
                     } catch (e) {
                         console.warn("Audio bus creation failed:", e);
                     }
+                }
+                if (this.ctx) {
+                    this.ensureNoiseBuffer();
+                    this.ensureSteamNoiseBuffer();
                 }
                 if (this.ctx && this.ctx.state === 'suspended') {
                     this.ctx.resume();
@@ -80,15 +110,8 @@ class RescueSoundFX {
                 const ctx = this.ctx;
                 const now = ctx.currentTime;
 
-                // Create cached white-noise buffer for mechanical ratchet & air-hiss transients
-                if (!this.noiseBuf) {
-                    const len = ctx.sampleRate * 0.25;
-                    this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
-                    const data = this.noiseBuf.getChannelData(0);
-                    for (let i = 0; i < len; i++) {
-                        data[i] = Math.random() * 2 - 1;
-                    }
-                }
+                // Reuse cached white-noise buffer for mechanical ratchet & air-hiss transients
+                this.ensureNoiseBuffer();
 
                 // Classic 5-pulse Transformers "Chu-ku-chu-ku-chee!" phased vocoder/flanger transformation sound
                 // Analyzing the reference audio: 5 distinct 195ms mechanical syllables over ~1.14s with rising formant sweeps
@@ -529,14 +552,8 @@ class RescueSoundFX {
                 this.init();
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
-                const bufferSize = Math.floor(this.ctx.sampleRate * 0.7);
-                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.28));
-                }
                 const noise = this.ctx.createBufferSource();
-                noise.buffer = buffer;
+                noise.buffer = this.ensureSteamNoiseBuffer();
 
                 const filter = this.ctx.createBiquadFilter();
                 filter.type = 'bandpass';
@@ -1352,14 +1369,8 @@ class RescueSoundFX {
                     lfo.stop(now + 0.33);
 
                     // 2. Rotor Blade Downdraft Air Whoosh (filtered noise sweep upward)
-                    if (!this.noiseBuf) {
-                        const len = ctx.sampleRate * 0.25;
-                        this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
-                        const data = this.noiseBuf.getChannelData(0);
-                        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-                    }
                     const noiseSrc = ctx.createBufferSource();
-                    noiseSrc.buffer = this.noiseBuf;
+                    noiseSrc.buffer = this.ensureNoiseBuffer();
                     const filter = ctx.createBiquadFilter();
                     filter.type = 'bandpass';
                     filter.Q.setValueAtTime(2.2, now);
@@ -1432,14 +1443,8 @@ class RescueSoundFX {
                     lfo.stop(now + 0.33);
 
                     // 2. Air Wash / Descent Downward Wind Settle (bandpass filter sweep downward)
-                    if (!this.noiseBuf) {
-                        const len = ctx.sampleRate * 0.25;
-                        this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
-                        const data = this.noiseBuf.getChannelData(0);
-                        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-                    }
                     const noiseSrc = ctx.createBufferSource();
-                    noiseSrc.buffer = this.noiseBuf;
+                    noiseSrc.buffer = this.ensureNoiseBuffer();
                     const filter = ctx.createBiquadFilter();
                     filter.type = 'bandpass';
                     filter.Q.setValueAtTime(2.0, now);

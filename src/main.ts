@@ -23,7 +23,7 @@ import { buildInstancedVegetation } from './world/vegetation.js';
 import { initProps } from './world/props.js';
 import { initDumpsters } from './world/dumpsters.js';
 import { initWeather, WEATHER_MODES, cycleWeatherMode } from './world/weather.js';
-import { buildHazardSites, beacons, activeParticles } from './world/emergencies.js';
+import { buildHazardSites, beacons, activeParticles, prewarmParticlePool } from './world/emergencies.js';
 import { buildEnergonCubes, initGoldenCrests } from './world/collectibles.js';
 import { initEmergentRescues } from './world/emergencies.js';
 import { initVisitingAutobots, syncVisitingAutobotsVisibility } from './world/allies.js';
@@ -117,6 +117,14 @@ export function initGame() {
     // 8. Apply Saved Weather
     if (progression && progression.weatherMode && typeof cycleWeatherMode === 'function') {
         cycleWeatherMode(progression.weatherMode, false);
+    }
+
+    // 8B. Pre-warm Particle Pool & Compile WebGL Shaders at Startup (prevents mid-action shader stalls on iPad)
+    prewarmParticlePool(scene);
+    try {
+        renderer.compile(scene, camera);
+    } catch (e) {
+        console.warn('WebGL shader pre-compile skipped:', e);
     }
 
     // 9. Start Main Render & Animation Loop
