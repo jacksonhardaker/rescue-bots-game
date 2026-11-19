@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && vite build --mode botcheck",
+    "build": "vite build && vite build --mode botcheck && vite build --mode modelcheck",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"

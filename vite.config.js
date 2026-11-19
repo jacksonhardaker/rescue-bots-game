@@ -3,7 +3,9 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 import { fileURLToPath } from 'node:url';
 
 export default defineConfig(({ mode }) => {
-  const isBotCheck = mode === 'botcheck';
+  const inputFile = mode === 'botcheck'
+    ? './botcheck.html'
+    : (mode === 'modelcheck' ? './modelcheck.html' : './index.html');
   return {
     plugins: [viteSingleFile()],
     build: {
@@ -13,7 +15,7 @@ export default defineConfig(({ mode }) => {
       assetsInlineLimit: 100000000,
       chunkSizeWarningLimit: 100000,
       rollupOptions: {
-        input: fileURLToPath(new URL(isBotCheck ? './botcheck.html' : './index.html', import.meta.url))
+        input: fileURLToPath(new URL(inputFile, import.meta.url))
       }
     }
   };

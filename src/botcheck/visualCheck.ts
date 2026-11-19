@@ -218,7 +218,7 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
             <label><input data-k="anim" type="checkbox"> Idle anim</label>
         </div>
         <div data-report style="margin-top:8px;max-height:220px;overflow:auto;font:11px/1.35 ui-monospace,monospace;"></div>
-        <div style="margin-top:6px;color:#94a3b8;font-size:11px;">Drag to orbit · wheel to zoom · <a href="./index.html" style="color:#7dd3fc;">back to game</a></div>`;
+        <div style="margin-top:6px;color:#94a3b8;font-size:11px;">Drag to orbit · wheel to zoom · <a href="./modelcheck.html" style="color:#7dd3fc;">model check</a> · <a href="./index.html" style="color:#7dd3fc;">back to game</a></div>`;
     document.body.appendChild(panel);
     const q = (sel: string): any => panel.querySelector(sel);
 
