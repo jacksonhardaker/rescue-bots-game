@@ -40,9 +40,8 @@ import { initTacticalMap, openTacticalMap, closeTacticalMap, renderMinimap, rend
 import { initSettingsModal, renderSettingsControlsList, syncSettingsUI } from './ui/settingsModal.js';
 import { showToast, triggerNPCSpeech } from './ui/dialogs.js';
 
-// Game Loop & Bot Check Studio
+// Game Loop
 import { animate } from './game/loop.js';
-import { startBotCheck } from './botcheck/visualCheck.js';
 
 // Attach singletons to window for HTML event handlers & debugging
 if (typeof window !== 'undefined') {
@@ -63,20 +62,22 @@ if (typeof window !== 'undefined') {
         syncSettingsUI,
         showToast,
         triggerNPCSpeech,
-        switchRescueBot,
-        startBotCheck
+        switchRescueBot
     });
 }
 
 export function initGame() {
-    // 1. Initialize Scene & Renderer
-    const { scene, camera, renderer } = initScene();
-
-    // Check if player requested Visual Check Studio (?botcheck)
+    // Fallback redirect for legacy ?botcheck URLs
     if (typeof location !== 'undefined' && new URLSearchParams(location.search).has('botcheck')) {
-        startBotCheck();
+        const p = new URLSearchParams(location.search);
+        p.delete('botcheck');
+        const qs = p.toString();
+        location.replace('./botcheck.html' + (qs ? '?' + qs : ''));
         return;
     }
+
+    // 1. Initialize Scene & Renderer
+    const { scene, camera, renderer } = initScene();
 
     // 2. Load Settings & Progression
     loadProgression();

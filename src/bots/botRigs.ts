@@ -860,7 +860,7 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
 
             // Universal Mega Parts Visibility Morph System
             if (rig.isMega) {
-                const inVeh = m > 0.05;
+                const inVeh = m > 0.05 && (rig.botType === 'HIGHTIDE' || boatMorph < 0.5);
                 const inBot = (m < 0.2 && d < 0.2);
                 const inDino = d > 0.05;
 
