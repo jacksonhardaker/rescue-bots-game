@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { scene } from '../rendering/scene.js';
 import { getTerrainHeight, getSurfaceHeight, isPointInWater, isNearWater, isPointOnRoad, getZoneName } from '../world/terrain.js';
-import { player, buddyBot, botRigs, input, ramps, stateHolder, worldColliders } from '../state/gameState.js';
+import { player, buddyBot, botRigs, input, ramps, stateHolder, worldColliders, queryNearbyColliders } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { isActionActive } from '../settings/settings.js';
 import { progression, saveProgression, isBotDocked } from '../progression/progression.js';
@@ -25,6 +25,7 @@ import { explodeRock, explodeTree, explodeBush, checkBoulderScoopAttack, checkWa
 
 const RAINBOW_TRAIL_COLORS = [0xef4444, 0xf97316, 0xfacc15, 0x4ade80, 0x38bdf8, 0xa855f7];
 let rainbowTrailIdx = 0;
+const _playerNearbyColliders: any[] = [];
 import { morbotBattle } from '../world/morbot.js';
 export let waypointGroup = null;
 export let wpOuterRing = null;
@@ -834,14 +835,16 @@ export let wpArrowCone = null;
 
             if (!player.inCrane && currentClearance < 12) {
                 const playerRadius = 2.4;
-                for (let i = 0; i < worldColliders.length; i++) {
-                    const c = worldColliders[i];
+                const nearbyColliders = queryNearbyColliders(player.pos.x, player.pos.z, playerRadius + 16, _playerNearbyColliders);
+                for (let i = 0; i < nearbyColliders.length; i++) {
+                    const c = nearbyColliders[i];
                     if (c.destroyed || c.r <= 0) continue;
                     const dx = player.pos.x - c.x;
                     const dz = player.pos.z - c.z;
-                    const dist = Math.hypot(dx, dz);
                     const minDist = playerRadius + c.r;
-                    if (dist < minDist && dist > 0.001) {
+                    const distSq = dx * dx + dz * dz;
+                    if (distSq < minDist * minDist && distSq > 1e-6) {
+                        const dist = Math.sqrt(distSq);
                         // When Boulder uses Dozer Scoop on a rock, tree or bush, explode it on impact!
                         if (player.botType === 'BOULDER' && (player.scoopTimer > 0 || player.smashTimer > 0)) {
                             if (c.type === 'ROCK' && c.target) {
@@ -1277,13 +1280,20 @@ export let wpArrowCone = null;
 
                     // Water drop particles directly douse fire nodes on contact!
                     if (p.isWater) {
+                        const px = p.mesh.position.x;
+                        const py = p.mesh.position.y;
+                        const pz = p.mesh.position.z;
                         for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
                             const b = beacons[bIdx];
                             if (b.restored) continue;
                             for (let nIdx = 0; nIdx < b.nodes.length; nIdx++) {
                                 const n = b.nodes[nIdx];
                                 if (!n.cleared && n.type === 'FIRE') {
-                                    if (p.mesh.position.distanceTo(new THREE.Vector3(n.x, n.y, n.z)) < n.r + 2.2) {
+                                    const pdx = px - n.x;
+                                    const pdy = py - n.y;
+                                    const pdz = pz - n.z;
+                                    const hitR = n.r + 2.2;
+                                    if (pdx * pdx + pdy * pdy + pdz * pdz < hitR * hitR) {
                                         clearHazardNode(b, n, 'WATER');
                                     }
                                 }

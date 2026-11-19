@@ -83,6 +83,64 @@ export const input: Record<string, any> = {
 export const ramps: any[] = [];
 
 export const worldColliders: any[] = [];
+const COLLIDER_CELL_SIZE = 48;
+const _colliderGrid = new Map<number, any[]>();
+let _indexedColliderCount = 0;
+let _colliderQueryStamp = 0;
+
+function _cellKey(cx: number, cz: number): number {
+    return (((cx + 512) & 0xfff) << 12) | ((cz + 512) & 0xfff);
+}
+
+function _indexCollider(c: any) {
+    if (!c) return;
+    const r = Math.max(c.r || 0, 1);
+    const minCx = Math.floor((c.x - r) / COLLIDER_CELL_SIZE);
+    const maxCx = Math.floor((c.x + r) / COLLIDER_CELL_SIZE);
+    const minCz = Math.floor((c.z - r) / COLLIDER_CELL_SIZE);
+    const maxCz = Math.floor((c.z + r) / COLLIDER_CELL_SIZE);
+    for (let cx = minCx; cx <= maxCx; cx++) {
+        for (let cz = minCz; cz <= maxCz; cz++) {
+            const key = _cellKey(cx, cz);
+            let bucket = _colliderGrid.get(key);
+            if (!bucket) {
+                bucket = [];
+                _colliderGrid.set(key, bucket);
+            }
+            bucket.push(c);
+        }
+    }
+}
+
+export function queryNearbyColliders(x: number, z: number, radius: number, outList: any[] = []): any[] {
+    if (_indexedColliderCount > worldColliders.length) {
+        _colliderGrid.clear();
+        _indexedColliderCount = 0;
+    }
+    while (_indexedColliderCount < worldColliders.length) {
+        _indexCollider(worldColliders[_indexedColliderCount++]);
+    }
+    outList.length = 0;
+    _colliderQueryStamp++;
+    const pad = radius + 24;
+    const minCx = Math.floor((x - pad) / COLLIDER_CELL_SIZE);
+    const maxCx = Math.floor((x + pad) / COLLIDER_CELL_SIZE);
+    const minCz = Math.floor((z - pad) / COLLIDER_CELL_SIZE);
+    const maxCz = Math.floor((z + pad) / COLLIDER_CELL_SIZE);
+    for (let cx = minCx; cx <= maxCx; cx++) {
+        for (let cz = minCz; cz <= maxCz; cz++) {
+            const bucket = _colliderGrid.get(_cellKey(cx, cz));
+            if (!bucket) continue;
+            for (let i = 0; i < bucket.length; i++) {
+                const c = bucket[i];
+                if (c._qStamp === _colliderQueryStamp || c.destroyed || c.r <= 0) continue;
+                c._qStamp = _colliderQueryStamp;
+                outList.push(c);
+            }
+        }
+    }
+    return outList;
+}
 export const cullableWorldObjects: any[] = []; // Viewport & Distance Frustum Culling Registry
 export const humanNPCs: any[] = [];
 export const vehicleNPCs: any[] = [];
@@ -117,6 +175,7 @@ if (typeof window !== 'undefined') {
     window.input = input;
     window.ramps = ramps;
     window.worldColliders = worldColliders;
+    (window as any).queryNearbyColliders = queryNearbyColliders;
     window.cullableWorldObjects = cullableWorldObjects;
     window.humanNPCs = humanNPCs;
     window.vehicleNPCs = vehicleNPCs;

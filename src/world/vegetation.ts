@@ -63,6 +63,48 @@ export const allTrees: TreeInstance[] = [];
 export const allRocks: RockInstance[] = [];
 export const allBushes: BushInstance[] = [];
 
+const FOLIAGE_CELL_SIZE = 64;
+const treeGrid = new Map<number, TreeInstance[]>();
+const bushGrid = new Map<number, BushInstance[]>();
+const rockGrid = new Map<number, RockInstance[]>();
+const _nearbyTrees: TreeInstance[] = [];
+const _nearbyBushes: BushInstance[] = [];
+const _nearbyRocks: RockInstance[] = [];
+
+function _foliageCellKey(cx: number, cz: number): number {
+    return (((cx + 512) & 0xfff) << 12) | ((cz + 512) & 0xfff);
+}
+
+function insertFoliageGrid<T extends { x: number; z: number }>(grid: Map<number, T[]>, item: T) {
+    const cx = Math.floor(item.x / FOLIAGE_CELL_SIZE);
+    const cz = Math.floor(item.z / FOLIAGE_CELL_SIZE);
+    const key = _foliageCellKey(cx, cz);
+    let bucket = grid.get(key);
+    if (!bucket) {
+        bucket = [];
+        grid.set(key, bucket);
+    }
+    bucket.push(item);
+}
+
+function queryFoliageGrid<T>(grid: Map<number, T[]>, x: number, z: number, radius: number, outList: T[]): T[] {
+    outList.length = 0;
+    const minCx = Math.floor((x - radius) / FOLIAGE_CELL_SIZE);
+    const maxCx = Math.floor((x + radius) / FOLIAGE_CELL_SIZE);
+    const minCz = Math.floor((z - radius) / FOLIAGE_CELL_SIZE);
+    const maxCz = Math.floor((z + radius) / FOLIAGE_CELL_SIZE);
+    for (let cx = minCx; cx <= maxCx; cx++) {
+        for (let cz = minCz; cz <= maxCz; cz++) {
+            const bucket = grid.get(_foliageCellKey(cx, cz));
+            if (!bucket) continue;
+            for (let i = 0; i < bucket.length; i++) {
+                outList.push(bucket[i]);
+            }
+        }
+    }
+    return outList;
+}
+
 const dummy = new THREE.Object3D();
 const zeroMatrix = new THREE.Matrix4().makeScale(0, 0, 0);
 let lastColossalToastTime = 0;
@@ -285,6 +327,7 @@ let lastColossalToastTime = 0;
 
             getSectorBucket(tx, tz).treeTypes[typeIdx].push(treeObj);
             allTrees.push(treeObj);
+            insertFoliageGrid(treeGrid, treeObj);
 
             const treeCollider = {
                 x: tx,
@@ -330,6 +373,7 @@ let lastColossalToastTime = 0;
 
             getSectorBucket(bx, bz).bushes.push(bushObj);
             allBushes.push(bushObj);
+            insertFoliageGrid(bushGrid, bushObj);
 
             // Bush collision detection: solid obstacle in worldColliders so bots cannot drive through bushes!
             const bushCollider = {
@@ -375,6 +419,7 @@ let lastColossalToastTime = 0;
 
             getSectorBucket(rx, rz).rocks.push(rockObj);
             allRocks.push(rockObj);
+            insertFoliageGrid(rockGrid, rockObj);
 
             // Rock collision detection: solid obstacle in worldColliders so bots cannot drive through rocks!
             const rockCollider = {
@@ -746,39 +791,55 @@ export function waterBush(bush: BushInstance, growthDelta: number) {
 export function checkBoulderScoopAttack(x: number, y: number, z: number, heading: number, radius = 7.5) {
     const frontX = x + Math.sin(heading) * 4.5;
     const frontZ = z + Math.cos(heading) * 4.5;
+    const queryRadius = radius + 16;
 
-    // Check rocks
-    for (let i = 0; i < allRocks.length; i++) {
-        const r = allRocks[i];
+    // Check nearby rocks
+    const nearbyRocks = queryFoliageGrid(rockGrid, x, z, queryRadius, _nearbyRocks);
+    for (let i = 0; i < nearbyRocks.length; i++) {
+        const r = nearbyRocks[i];
         if (r.destroyed) continue;
-        const dFront = Math.hypot(frontX - r.x, frontZ - r.z);
-        const dCenter = Math.hypot(x - r.x, z - r.z);
         const rockRadius = 1.85 * 1.35 * r.s * 0.85;
-        if (dFront < (radius + rockRadius) || dCenter < (3.6 + rockRadius)) {
+        const dfx = frontX - r.x;
+        const dfz = frontZ - r.z;
+        const dcx = x - r.x;
+        const dcz = z - r.z;
+        const rFront = radius + rockRadius;
+        const rCenter = 3.6 + rockRadius;
+        if ((dfx * dfx + dfz * dfz) < rFront * rFront || (dcx * dcx + dcz * dcz) < rCenter * rCenter) {
             explodeRock(r);
         }
     }
 
-    // Check trees
-    for (let i = 0; i < allTrees.length; i++) {
-        const t = allTrees[i];
+    // Check nearby trees
+    const nearbyTrees = queryFoliageGrid(treeGrid, x, z, queryRadius, _nearbyTrees);
+    for (let i = 0; i < nearbyTrees.length; i++) {
+        const t = nearbyTrees[i];
         if (t.destroyed) continue;
-        const dFront = Math.hypot(frontX - t.x, frontZ - t.z);
-        const dCenter = Math.hypot(x - t.x, z - t.z);
         const treeRadius = 1.4 * t.s;
-        if (dFront < (radius + treeRadius) || dCenter < (3.6 + treeRadius)) {
+        const dfx = frontX - t.x;
+        const dfz = frontZ - t.z;
+        const dcx = x - t.x;
+        const dcz = z - t.z;
+        const rFront = radius + treeRadius;
+        const rCenter = 3.6 + treeRadius;
+        if ((dfx * dfx + dfz * dfz) < rFront * rFront || (dcx * dcx + dcz * dcz) < rCenter * rCenter) {
             explodeTree(t);
         }
     }
 
-    // Check bushes
-    for (let i = 0; i < allBushes.length; i++) {
-        const b = allBushes[i];
+    // Check nearby bushes
+    const nearbyBushes = queryFoliageGrid(bushGrid, x, z, queryRadius, _nearbyBushes);
+    for (let i = 0; i < nearbyBushes.length; i++) {
+        const b = nearbyBushes[i];
         if (b.destroyed) continue;
-        const dFront = Math.hypot(frontX - b.x, frontZ - b.z);
-        const dCenter = Math.hypot(x - b.x, z - b.z);
         const bushRadius = 1.35 * 1.2 * b.s * 0.85;
-        if (dFront < (radius + bushRadius) || dCenter < (3.6 + bushRadius)) {
+        const dfx = frontX - b.x;
+        const dfz = frontZ - b.z;
+        const dcx = x - b.x;
+        const dcz = z - b.z;
+        const rFront = radius + bushRadius;
+        const rCenter = 3.6 + bushRadius;
+        if ((dfx * dfx + dfz * dfz) < rFront * rFront || (dcx * dcx + dcz * dcz) < rCenter * rCenter) {
             explodeBush(b);
         }
     }
@@ -787,24 +848,30 @@ export function checkBoulderScoopAttack(x: number, y: number, z: number, heading
 export function checkWaterCannonFoliage(originX: number, originZ: number, heading: number, aimX: number, aimZ: number, dt: number) {
     const fwdX = Math.sin(heading);
     const fwdZ = Math.cos(heading);
+    const maxOriginSq = 28.0 * 28.0;
+    const minOriginSq = 5.0 * 5.0;
+    const maxAimSq = 14.0 * 14.0;
 
-    // Check trees
-    for (let i = 0; i < allTrees.length; i++) {
-        const t = allTrees[i];
+    // Check nearby trees
+    const nearbyTrees = queryFoliageGrid(treeGrid, originX, originZ, 32.0, _nearbyTrees);
+    for (let i = 0; i < nearbyTrees.length; i++) {
+        const t = nearbyTrees[i];
         if (t.destroyed || t.growthFactor >= 5.0) continue;
 
-        const distOrigin = Math.hypot(t.x - originX, t.z - originZ);
-        if (distOrigin > 28.0) continue;
+        const dx = t.x - originX;
+        const dz = t.z - originZ;
+        const distOriginSq = dx * dx + dz * dz;
+        if (distOriginSq > maxOriginSq) continue;
 
         let inStream = false;
-        if (distOrigin < 5.0) {
+        if (distOriginSq < minOriginSq) {
             inStream = true;
         } else {
-            const dx = t.x - originX;
-            const dz = t.z - originZ;
+            const distOrigin = Math.sqrt(distOriginSq);
             const dot = (dx * fwdX + dz * fwdZ) / distOrigin;
-            const distAim = Math.hypot(t.x - aimX, t.z - aimZ);
-            if (dot > 0.68 || distAim < 14.0) {
+            const dax = t.x - aimX;
+            const daz = t.z - aimZ;
+            if (dot > 0.68 || (dax * dax + daz * daz) < maxAimSq) {
                 inStream = true;
             }
         }
@@ -814,23 +881,26 @@ export function checkWaterCannonFoliage(originX: number, originZ: number, headin
         }
     }
 
-    // Check bushes
-    for (let i = 0; i < allBushes.length; i++) {
-        const b = allBushes[i];
+    // Check nearby bushes
+    const nearbyBushes = queryFoliageGrid(bushGrid, originX, originZ, 32.0, _nearbyBushes);
+    for (let i = 0; i < nearbyBushes.length; i++) {
+        const b = nearbyBushes[i];
         if (b.destroyed || b.growthFactor >= 5.0) continue;
 
-        const distOrigin = Math.hypot(b.x - originX, b.z - originZ);
-        if (distOrigin > 28.0) continue;
+        const dx = b.x - originX;
+        const dz = b.z - originZ;
+        const distOriginSq = dx * dx + dz * dz;
+        if (distOriginSq > maxOriginSq) continue;
 
         let inStream = false;
-        if (distOrigin < 5.0) {
+        if (distOriginSq < minOriginSq) {
             inStream = true;
         } else {
-            const dx = b.x - originX;
-            const dz = b.z - originZ;
+            const distOrigin = Math.sqrt(distOriginSq);
             const dot = (dx * fwdX + dz * fwdZ) / distOrigin;
-            const distAim = Math.hypot(b.x - aimX, b.z - aimZ);
-            if (dot > 0.68 || distAim < 14.0) {
+            const dax = b.x - aimX;
+            const daz = b.z - aimZ;
+            if (dot > 0.68 || (dax * dax + daz * daz) < maxAimSq) {
                 inStream = true;
             }
         }

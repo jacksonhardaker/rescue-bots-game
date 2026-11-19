@@ -7,7 +7,8 @@ import {
     matNPCBeam, matNPCBeamPool
 } from '../rendering/materials.js';
 import { texWindshieldCyan } from '../rendering/textures.js';
-import { player, buddyBot, botRigs, humanNPCs, vehicleNPCs, worldColliders } from '../state/gameState.js';
+import { player, buddyBot, botRigs, humanNPCs, vehicleNPCs, worldColliders, queryNearbyColliders } from '../state/gameState.js';
+const _buddyNearbyColliders: any[] = [];
 import { sfx } from '../audio/soundFX.js';
 import { triggerNPCSpeech } from '../ui/dialogs.js';
 import { applyBotRigMorph, BOT_SCALES } from '../bots/botRigs.js';
@@ -1203,14 +1204,16 @@ import { checkBoulderScoopAttack, checkWaterCannonFoliage } from './vegetation.j
             // Buddy Bot Obstacle Collision against Rocks, Trees & Buildings
             if (worldColliders && worldColliders.length > 0) {
                 const buddyRadius = 2.4;
-                for (let i = 0; i < worldColliders.length; i++) {
-                    const c = worldColliders[i];
+                const nearbyColliders = queryNearbyColliders(buddyBot.pos.x, buddyBot.pos.z, buddyRadius + 16, _buddyNearbyColliders);
+                for (let i = 0; i < nearbyColliders.length; i++) {
+                    const c = nearbyColliders[i];
                     if (c.destroyed || c.r <= 0) continue;
                     const dx = buddyBot.pos.x - c.x;
                     const dz = buddyBot.pos.z - c.z;
-                    const dist = Math.hypot(dx, dz);
                     const minDist = buddyRadius + c.r;
-                    if (dist < minDist && dist > 0.001) {
+                    const distSq = dx * dx + dz * dz;
+                    if (distSq < minDist * minDist && distSq > 1e-6) {
+                        const dist = Math.sqrt(distSq);
                         const overlap = minDist - dist;
                         buddyBot.pos.x += (dx / dist) * overlap;
                         buddyBot.pos.z += (dz / dist) * overlap;
