@@ -7,7 +7,7 @@ import { sfx } from '../audio/soundFX.js';
 import { isActionActive } from '../settings/settings.js';
 import { progression, saveProgression, isBotDocked } from '../progression/progression.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
-import { spawnBurstParticles, spawnSoapSudsParticles, spawnSparkleGlints, spawnRocketExhaustParticles, spawnDinerFoodParticles, spawnEnergonLightningParticles, spawnWarpVortexParticles, spawnWaterWakeParticles, spawnMagnetSparkParticles, spawnPaintSplatParticles } from '../world/emergencies.js';
+import { spawnBurstParticles, spawnSoapSudsParticles, spawnSparkleGlints, spawnRocketExhaustParticles, spawnDinerFoodParticles, spawnEnergonLightningParticles, spawnWarpVortexParticles, spawnWaterWakeParticles, spawnMagnetSparkParticles, spawnPaintSplatParticles, releaseParticle } from '../world/emergencies.js';
 import { activeMorBot } from '../world/morbot.js';
 import { speakBotCatchphrase, syncHUDToActiveBot } from './player.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
@@ -1265,14 +1265,15 @@ export let wpArrowCone = null;
                 const p = activeParticles[i];
                 p.life -= dt;
                 if (p.life <= 0) {
-                    scene.remove(p.mesh);
+                    releaseParticle(p);
                     activeParticles.splice(i, 1);
                 } else {
                     p.vy -= p.gravity * dt;
                     p.mesh.position.x += p.vx * dt;
                     p.mesh.position.y += p.vy * dt;
                     p.mesh.position.z += p.vz * dt;
-                    p.mesh.scale.setScalar(Math.max(0.1, p.life));
+                    const s = Math.max(0.1, p.life);
+                    p.mesh.scale.set((p.baseScaleX || 1) * s, (p.baseScaleY || 1) * s, (p.baseScaleZ || 1) * s);
 
                     // Water drop particles directly douse fire nodes on contact!
                     if (p.isWater) {

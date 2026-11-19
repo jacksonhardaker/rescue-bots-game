@@ -295,25 +295,140 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
             updateMissionHUD();
         }
 
+const _isMobilePerf = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1));
+const MAX_ACTIVE_PARTICLES = _isMobilePerf ? 160 : 280;
+
+// Shared unit geometries and cached materials for pooled particle rendering (zero per-particle WebGL allocations)
+const _partGeoOcta = new THREE.OctahedronGeometry(0.65, 0);
+const _partGeoSphere = new THREE.SphereGeometry(0.6, 8, 8);
+const _partGeoBox = new THREE.BoxGeometry(0.7, 0.35, 0.7);
+const _partGeoCyl = new THREE.CylinderGeometry(0.8, 1.0, 0.2, 8);
+const _partGeoDodeca = new THREE.DodecahedronGeometry(0.55, 0);
+
+const _particleMatCache = new Map<string, THREE.MeshBasicMaterial>();
+function getParticleMaterial(colorHex: number, transparent = false, opacity = 1.0): THREE.MeshBasicMaterial {
+    const key = `${colorHex}_${transparent ? 1 : 0}_${Math.round(opacity * 100)}`;
+    let mat = _particleMatCache.get(key);
+    if (!mat) {
+        mat = new THREE.MeshBasicMaterial(
+            transparent ? { color: colorHex, transparent: true, opacity } : { color: colorHex }
+        );
+        _particleMatCache.set(key, mat);
+    }
+    return mat;
+}
+
+const particleRootGroup = new THREE.Group();
+const _outlinedPool: THREE.Group[] = [];
+const _plainPool: THREE.Mesh[] = [];
+const _nozzleLeftPos = new THREE.Vector3();
+const _nozzleRightPos = new THREE.Vector3();
+const _nozzleSinglePos = new THREE.Vector3();
+const _nozzleFallbackPos = new THREE.Vector3();
+const _nozzlePositions: THREE.Vector3[] = [];
+
+function ensureParticleRoot(targetScene?: any): THREE.Group {
+    const s = targetScene || scene || (typeof window !== 'undefined' ? window.scene : null);
+    if (s && particleRootGroup.parent !== s) {
+        s.add(particleRootGroup);
+    }
+    return particleRootGroup;
+}
+
+function acquireParticleMesh(
+    geo: THREE.BufferGeometry,
+    mat: THREE.MeshBasicMaterial,
+    outlined: boolean,
+    outlineScale = 1.18,
+    targetScene?: any
+): { mesh: THREE.Object3D; poolType: 'outlined' | 'plain' } {
+    ensureParticleRoot(targetScene);
+    if (outlined) {
+        let grp = _outlinedPool.pop();
+        if (!grp) {
+            grp = new THREE.Group();
+            const inner = new THREE.Mesh(geo, mat);
+            const outline = new THREE.Mesh(geo, matInkOutline);
+            outline.scale.setScalar(outlineScale);
+            grp.add(inner);
+            grp.add(outline);
+            particleRootGroup.add(grp);
+        } else {
+            const inner = grp.children[0] as THREE.Mesh;
+            const outline = grp.children[1] as THREE.Mesh;
+            inner.geometry = geo;
+            inner.material = mat;
+            outline.geometry = geo;
+            outline.scale.setScalar(outlineScale);
+        }
+        grp.rotation.set(0, 0, 0);
+        grp.visible = true;
+        return { mesh: grp, poolType: 'outlined' };
+    }
+    let mesh = _plainPool.pop();
+    if (!mesh) {
+        mesh = new THREE.Mesh(geo, mat);
+        mesh.userData.noOutline = true;
+        particleRootGroup.add(mesh);
+    } else {
+        mesh.geometry = geo;
+        mesh.material = mat;
+    }
+    mesh.rotation.set(0, 0, 0);
+    mesh.visible = true;
+    return { mesh, poolType: 'plain' };
+}
+
+export function releaseParticle(p: any) {
+    if (!p || !p.mesh) return;
+    p.mesh.visible = false;
+    if (p.poolType === 'outlined') {
+        _outlinedPool.push(p.mesh);
+    } else if (p.poolType === 'plain') {
+        _plainPool.push(p.mesh);
+    } else {
+        const s = scene || (typeof window !== 'undefined' ? window.scene : null);
+        if (s) s.remove(p.mesh);
+    }
+}
+
+export function prewarmParticlePool(targetScene?: any) {
+    ensureParticleRoot(targetScene);
+    const defaultMat = getParticleMaterial(0xffffff);
+    const preGeos = [_partGeoOcta, _partGeoSphere];
+    for (let i = 0; i < preGeos.length; i++) {
+        const p1 = acquireParticleMesh(preGeos[i], defaultMat, true, 1.18, targetScene);
+        p1.mesh.visible = false;
+        _outlinedPool.push(p1.mesh as THREE.Group);
+        const p2 = acquireParticleMesh(preGeos[i], defaultMat, false, 1.0, targetScene);
+        p2.mesh.visible = false;
+        _plainPool.push(p2.mesh as THREE.Mesh);
+    }
+}
+
+function pushPooledParticle(item: any) {
+    if (activeParticles.length >= MAX_ACTIVE_PARTICLES) {
+        const oldest = activeParticles.shift();
+        if (oldest) releaseParticle(oldest);
+    }
+    activeParticles.push(item);
+}
+
         export function spawnBurstParticles(x, y, z, colorHex = 0x78716c, count = 10, speedScale = 1) {
             for (let i = 0; i < count; i++) {
-                const pGroup = new THREE.Group();
-                const pGeo = new THREE.OctahedronGeometry(0.55 + Math.random() * 0.45, 0);
-                const pMesh = new THREE.Mesh(
-                    pGeo,
-                    new THREE.MeshBasicMaterial({ color: i % 3 === 0 ? 0xffd60a : colorHex })
-                );
-                const pOutline = new THREE.Mesh(pGeo, matInkOutline);
-                pOutline.scale.setScalar(1.18);
-                pGroup.add(pMesh);
-                pGroup.add(pOutline);
-
+                const mat = getParticleMaterial(i % 3 === 0 ? 0xffd60a : colorHex);
+                const { mesh: pGroup, poolType } = acquireParticleMesh(_partGeoOcta, mat, true, 1.18);
+                const scaleS = (0.55 + Math.random() * 0.45) / 0.65;
+                pGroup.scale.setScalar(scaleS);
                 pGroup.position.set(x, y + 1.2, z);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(pGroup);
                 const angle = Math.random() * Math.PI * 2;
                 const spd = (5 + Math.random() * 12) * speedScale;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh: pGroup,
+                    poolType,
+                    baseScaleX: scaleS,
+                    baseScaleY: scaleS,
+                    baseScaleZ: scaleS,
                     vx: Math.cos(angle) * spd,
                     vy: (7 + Math.random() * 11) * speedScale,
                     vz: Math.sin(angle) * spd,
@@ -326,27 +441,23 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         export function spawnSoapSudsParticles(x, y, z, count = 6) {
             const bubbleColors = [0xffffff, 0xbae6fd, 0xfbcfe8, 0xfef08a, 0xa5f3fc];
             for (let i = 0; i < count; i++) {
-                const radius = 0.45 + Math.random() * 0.75;
-                const bGeo = new THREE.SphereGeometry(radius, 8, 8);
-                const bMesh = new THREE.Mesh(
-                    bGeo,
-                    new THREE.MeshBasicMaterial({
-                        color: bubbleColors[i % bubbleColors.length],
-                        transparent: true,
-                        opacity: 0.85
-                    })
-                );
-                bMesh.userData.noOutline = true;
+                const scaleS = (0.45 + Math.random() * 0.75) / 0.6;
+                const mat = getParticleMaterial(bubbleColors[i % bubbleColors.length], true, 0.85);
+                const { mesh: bMesh, poolType } = acquireParticleMesh(_partGeoSphere, mat, false);
+                bMesh.scale.setScalar(scaleS);
                 bMesh.position.set(
                     x + (Math.random() - 0.5) * 3.6,
                     y + Math.random() * 2.2,
                     z + (Math.random() - 0.5) * 3.6
                 );
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(bMesh);
                 const ang = Math.random() * Math.PI * 2;
                 const spd = 2.0 + Math.random() * 4.5;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh: bMesh,
+                    poolType,
+                    baseScaleX: scaleS,
+                    baseScaleY: scaleS,
+                    baseScaleZ: scaleS,
                     vx: Math.cos(ang) * spd,
                     vy: 2.2 + Math.random() * 3.8,
                     vz: Math.sin(ang) * spd,
@@ -358,23 +469,26 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
         export function spawnSparkleGlints(x, y, z, count = 12) {
             for (let i = 0; i < count; i++) {
-                const gGeo = new THREE.OctahedronGeometry(0.45 + Math.random() * 0.4, 0);
-                const gMesh = new THREE.Mesh(
-                    gGeo,
-                    new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xffffff : 0xfacc15, transparent: true, opacity: 0.95 })
-                );
-                gMesh.scale.set(0.65, 1.85, 0.65);
-                gMesh.userData.noOutline = true;
+                const gScale = (0.45 + Math.random() * 0.4) / 0.65;
+                const sx = 0.65 * gScale;
+                const sy = 1.85 * gScale;
+                const sz = 0.65 * gScale;
+                const mat = getParticleMaterial(i % 2 === 0 ? 0xffffff : 0xfacc15, true, 0.95);
+                const { mesh: gMesh, poolType } = acquireParticleMesh(_partGeoOcta, mat, false);
+                gMesh.scale.set(sx, sy, sz);
                 gMesh.position.set(
                     x + (Math.random() - 0.5) * 3.6,
                     y + 0.8 + Math.random() * 2.6,
                     z + (Math.random() - 0.5) * 3.6
                 );
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(gMesh);
                 const ang = Math.random() * Math.PI * 2;
                 const spd = 3.5 + Math.random() * 6.5;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh: gMesh,
+                    poolType,
+                    baseScaleX: sx,
+                    baseScaleY: sy,
+                    baseScaleZ: sz,
                     vx: Math.cos(ang) * spd,
                     vy: 3.5 + Math.random() * 5.5,
                     vz: Math.sin(ang) * spd,
@@ -387,17 +501,19 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         export function spawnRocketExhaustParticles(x, y, z, count = 28) {
             const fireColors = [0xff4500, 0xf97316, 0xfacc15, 0xffffff, 0x94a3b8];
             for (let i = 0; i < count; i++) {
-                const pGeo = new THREE.OctahedronGeometry(0.5 + Math.random() * 0.7, 0);
-                const pMesh = new THREE.Mesh(
-                    pGeo,
-                    new THREE.MeshBasicMaterial({ color: fireColors[i % fireColors.length] })
-                );
+                const scaleS = (0.5 + Math.random() * 0.7) / 0.65;
+                const mat = getParticleMaterial(fireColors[i % fireColors.length]);
+                const { mesh: pMesh, poolType } = acquireParticleMesh(_partGeoOcta, mat, false);
+                pMesh.scale.setScalar(scaleS);
                 pMesh.position.set(x + (Math.random() - 0.5) * 3.5, y + 0.5, z + (Math.random() - 0.5) * 3.5);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(pMesh);
                 const ang = Math.random() * Math.PI * 2;
                 const spd = 6.0 + Math.random() * 12.0;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh: pMesh,
+                    poolType,
+                    baseScaleX: scaleS,
+                    baseScaleY: scaleS,
+                    baseScaleZ: scaleS,
                     vx: Math.cos(ang) * spd,
                     vy: 4.0 + Math.random() * 10.0,
                     vz: Math.sin(ang) * spd - 8.0,
@@ -410,17 +526,20 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         export function spawnDinerFoodParticles(x, y, z, count = 16) {
             const foodColors = [0xd97706, 0x22c55e, 0xef4444, 0xfacc15, 0x78350f, 0x38bdf8];
             for (let i = 0; i < count; i++) {
-                const geo = i % 2 === 0 ? new THREE.BoxGeometry(0.7, 0.35, 0.7) : new THREE.SphereGeometry(0.45, 6, 6);
-                const mesh = new THREE.Mesh(
-                    geo,
-                    new THREE.MeshBasicMaterial({ color: foodColors[i % foodColors.length] })
-                );
+                const isBox = i % 2 === 0;
+                const scaleS = isBox ? 1.0 : 0.75;
+                const mat = getParticleMaterial(foodColors[i % foodColors.length]);
+                const { mesh, poolType } = acquireParticleMesh(isBox ? _partGeoBox : _partGeoSphere, mat, false);
+                mesh.scale.setScalar(scaleS);
                 mesh.position.set(x + (Math.random() - 0.5) * 3.2, y + 0.6 + Math.random() * 1.5, z + (Math.random() - 0.5) * 3.2);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
                 const ang = Math.random() * Math.PI * 2;
                 const spd = 2.0 + Math.random() * 4.0;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh,
+                    poolType,
+                    baseScaleX: scaleS,
+                    baseScaleY: scaleS,
+                    baseScaleZ: scaleS,
                     vx: Math.cos(ang) * spd,
                     vy: 3.5 + Math.random() * 4.5,
                     vz: Math.sin(ang) * spd,
@@ -433,19 +552,23 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         export function spawnEnergonLightningParticles(x, y, z, count = 22) {
             const colors = [0x22d3ee, 0x06b6d4, 0xfacc15, 0xa855f7, 0xffffff];
             for (let i = 0; i < count; i++) {
-                const geo = new THREE.OctahedronGeometry(0.5 + Math.random() * 0.5, 0);
-                const mesh = new THREE.Mesh(
-                    geo,
-                    new THREE.MeshBasicMaterial({ color: colors[i % colors.length] })
-                );
-                mesh.scale.set(0.4, 2.2, 0.4);
+                const lScale = (0.5 + Math.random() * 0.5) / 0.65;
+                const sx = 0.4 * lScale;
+                const sy = 2.2 * lScale;
+                const sz = 0.4 * lScale;
+                const mat = getParticleMaterial(colors[i % colors.length]);
+                const { mesh, poolType } = acquireParticleMesh(_partGeoOcta, mat, false);
+                mesh.scale.set(sx, sy, sz);
                 mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
                 mesh.position.set(x + (Math.random() - 0.5) * 5.0, y + 1.2 + Math.random() * 3.0, z + (Math.random() - 0.5) * 5.0);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
                 const ang = Math.random() * Math.PI * 2;
                 const spd = 4.0 + Math.random() * 9.0;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh,
+                    poolType,
+                    baseScaleX: sx,
+                    baseScaleY: sy,
+                    baseScaleZ: sz,
                     vx: Math.cos(ang) * spd,
                     vy: (Math.random() - 0.2) * 8.0,
                     vz: Math.sin(ang) * spd,
@@ -458,17 +581,19 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         export function spawnWarpVortexParticles(x, y, z, count = 26) {
             const portalColors = [0x06b6d4, 0x3b82f6, 0xa855f7, 0xec4899, 0xffffff];
             for (let i = 0; i < count; i++) {
-                const geo = new THREE.SphereGeometry(0.45 + Math.random() * 0.4, 6, 6);
-                const mesh = new THREE.Mesh(
-                    geo,
-                    new THREE.MeshBasicMaterial({ color: portalColors[i % portalColors.length], transparent: true, opacity: 0.9 })
-                );
+                const scaleS = (0.45 + Math.random() * 0.4) / 0.6;
+                const mat = getParticleMaterial(portalColors[i % portalColors.length], true, 0.9);
+                const { mesh, poolType } = acquireParticleMesh(_partGeoSphere, mat, false);
+                mesh.scale.setScalar(scaleS);
                 mesh.position.set(x + (Math.random() - 0.5) * 4.0, y + 1.5 + Math.random() * 3.5, z + (Math.random() - 0.5) * 4.0);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
                 const ang = Math.random() * Math.PI * 2;
                 const spd = 3.0 + Math.random() * 7.0;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh,
+                    poolType,
+                    baseScaleX: scaleS,
+                    baseScaleY: scaleS,
+                    baseScaleZ: scaleS,
                     vx: Math.cos(ang) * spd,
                     vy: (Math.random() - 0.5) * 6.0,
                     vz: Math.sin(ang) * spd,
@@ -481,17 +606,19 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         export function spawnWaterWakeParticles(x, y, z, count = 16) {
             const foamColors = [0xffffff, 0xe0f2fe, 0xbae6fd, 0x7dd3fc];
             for (let i = 0; i < count; i++) {
-                const geo = new THREE.CylinderGeometry(0.6 + Math.random() * 0.8, 0.8 + Math.random() * 0.9, 0.2, 8);
-                const mesh = new THREE.Mesh(
-                    geo,
-                    new THREE.MeshBasicMaterial({ color: foamColors[i % foamColors.length], transparent: true, opacity: 0.85 })
-                );
+                const wScale = (0.6 + Math.random() * 0.8) / 0.8;
+                const mat = getParticleMaterial(foamColors[i % foamColors.length], true, 0.85);
+                const { mesh, poolType } = acquireParticleMesh(_partGeoCyl, mat, false);
+                mesh.scale.set(wScale, 1.0, wScale);
                 mesh.position.set(x + (Math.random() - 0.5) * 4.5, -0.1, z + (Math.random() - 0.5) * 5.0);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
                 const ang = Math.random() * Math.PI * 2;
                 const spd = 1.5 + Math.random() * 3.5;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh,
+                    poolType,
+                    baseScaleX: wScale,
+                    baseScaleY: 1.0,
+                    baseScaleZ: wScale,
                     vx: Math.cos(ang) * spd,
                     vy: 0.4 + Math.random() * 0.8,
                     vz: Math.sin(ang) * spd - 3.5, // push outward behind ferry
@@ -504,17 +631,19 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         export function spawnMagnetSparkParticles(x, y, z, count = 18) {
             const sparkColors = [0x38bdf8, 0x0284c7, 0xfacc15, 0xffffff];
             for (let i = 0; i < count; i++) {
-                const geo = new THREE.OctahedronGeometry(0.35 + Math.random() * 0.3, 0);
-                const mesh = new THREE.Mesh(
-                    geo,
-                    new THREE.MeshBasicMaterial({ color: sparkColors[i % sparkColors.length] })
-                );
+                const scaleS = (0.35 + Math.random() * 0.3) / 0.65;
+                const mat = getParticleMaterial(sparkColors[i % sparkColors.length]);
+                const { mesh, poolType } = acquireParticleMesh(_partGeoOcta, mat, false);
+                mesh.scale.setScalar(scaleS);
                 mesh.position.set(x + (Math.random() - 0.5) * 4.0, y + (Math.random() - 0.5) * 2.0, z + (Math.random() - 0.5) * 4.0);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
                 const ang = Math.random() * Math.PI * 2;
                 const spd = 3.5 + Math.random() * 6.0;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh,
+                    poolType,
+                    baseScaleX: scaleS,
+                    baseScaleY: scaleS,
+                    baseScaleZ: scaleS,
                     vx: Math.cos(ang) * spd,
                     vy: (Math.random() - 0.5) * 5.0,
                     vz: Math.sin(ang) * spd,
@@ -525,18 +654,21 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         }
 
         export function spawnPaintSplatParticles(x, y, z, colorHex = 0xf43f5e, count = 22) {
+            const mat = getParticleMaterial(colorHex);
             for (let i = 0; i < count; i++) {
-                const geo = i % 2 === 0 ? new THREE.SphereGeometry(0.45 + Math.random() * 0.45, 6, 6) : new THREE.DodecahedronGeometry(0.5, 0);
-                const mesh = new THREE.Mesh(
-                    geo,
-                    new THREE.MeshBasicMaterial({ color: colorHex })
-                );
+                const isSphere = i % 2 === 0;
+                const scaleS = isSphere ? ((0.45 + Math.random() * 0.45) / 0.6) : (0.5 / 0.55);
+                const { mesh, poolType } = acquireParticleMesh(isSphere ? _partGeoSphere : _partGeoDodeca, mat, false);
+                mesh.scale.setScalar(scaleS);
                 mesh.position.set(x, y, z);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
                 const ang = Math.random() * Math.PI * 2;
                 const spd = 4.0 + Math.random() * 9.0;
-                activeParticles.push({
+                pushPooledParticle({
                     mesh,
+                    poolType,
+                    baseScaleX: scaleS,
+                    baseScaleY: scaleS,
+                    baseScaleZ: scaleS,
                     vx: Math.cos(ang) * spd,
                     vy: 2.0 + Math.random() * 8.0,
                     vz: Math.sin(ang) * spd,
@@ -550,40 +682,44 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
         export function spawnWaterCannonStream(sourceRig = botRigs.HEATWAVE, sourceOrigin = null, sourceHeading = player.heading) {
             const rig = sourceRig;
             const isHeatwaveBoat = (rig === botRigs.HEATWAVE && player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && (player.boatMorph > 0.4 || isPointInWater(player.pos.x, player.pos.z)) && !sourceOrigin);
-            const nozzleWorldPositions = [];
+            _nozzlePositions.length = 0;
 
             if (sourceOrigin) {
-                nozzleWorldPositions.push(sourceOrigin.clone());
+                _nozzleSinglePos.copy(sourceOrigin);
+                _nozzlePositions.push(_nozzleSinglePos);
             } else if (isHeatwaveBoat && rig.leftBoatNozzle && rig.rightBoatNozzle) {
-                const leftPos = new THREE.Vector3();
-                const rightPos = new THREE.Vector3();
-                rig.leftBoatNozzle.getWorldPosition(leftPos);
-                rig.rightBoatNozzle.getWorldPosition(rightPos);
-                nozzleWorldPositions.push(leftPos, rightPos);
+                rig.leftBoatNozzle.getWorldPosition(_nozzleLeftPos);
+                rig.rightBoatNozzle.getWorldPosition(_nozzleRightPos);
+                _nozzlePositions.push(_nozzleLeftPos, _nozzleRightPos);
             } else {
-                const nozzleWorldPos = new THREE.Vector3();
                 const activeNozzle = player.mode === 'DINO' ? rig.dinoNozzleTip : rig.nozzleTip;
-                if (activeNozzle) activeNozzle.getWorldPosition(nozzleWorldPos);
-                else nozzleWorldPos.copy(player.pos).add(new THREE.Vector3(0, 2, 0));
-                nozzleWorldPositions.push(nozzleWorldPos);
+                if (activeNozzle) activeNozzle.getWorldPosition(_nozzleSinglePos);
+                else {
+                    _nozzleFallbackPos.set(player.pos.x, player.pos.y + 2, player.pos.z);
+                    _nozzleSinglePos.copy(_nozzleFallbackPos);
+                }
+                _nozzlePositions.push(_nozzleSinglePos);
             }
 
-            nozzleWorldPositions.forEach(nozzleWorldPos => {
+            for (let npIdx = 0; npIdx < _nozzlePositions.length; npIdx++) {
+                const nozzleWorldPos = _nozzlePositions[npIdx];
                 // Find closest uncleared fire or hazard node within 36m to aim the stream directly!
                 let targetNode = null;
                 let bestDist = 36.0;
-                beacons.forEach(beacon => {
-                    if (beacon.restored) return;
-                    beacon.nodes.forEach(n => {
-                        if (n.cleared) return;
+                for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
+                    const beacon = beacons[bIdx];
+                    if (beacon.restored) continue;
+                    for (let nIdx = 0; nIdx < beacon.nodes.length; nIdx++) {
+                        const n = beacon.nodes[nIdx];
+                        if (n.cleared) continue;
                         const dist = Math.hypot(n.x - nozzleWorldPos.x, n.z - nozzleWorldPos.z);
                         const effectiveDist = n.type === 'FIRE' ? dist : dist * 1.4;
                         if (effectiveDist < bestDist) {
                             bestDist = effectiveDist;
                             targetNode = n;
                         }
-                    });
-                });
+                    }
+                }
 
                 let baseVx, baseVy, baseVz;
                 const gravity = 24;
@@ -616,22 +752,18 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
                 const dropsPerNozzle = isHeatwaveBoat ? 2 : 3;
                 for (let i = 0; i < dropsPerNozzle; i++) {
-                    const dropGroup = new THREE.Group();
-                    const dropGeo = new THREE.SphereGeometry(0.52 + Math.random() * 0.35, 8, 8);
-                    const drop = new THREE.Mesh(
-                        dropGeo,
-                        new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0x00b4d8 : 0xffffff })
-                    );
-                    const dropOutline = new THREE.Mesh(dropGeo, matInkOutline);
-                    dropOutline.scale.setScalar(1.16);
-                    dropGroup.add(drop);
-                    dropGroup.add(dropOutline);
-
+                    const mat = getParticleMaterial(i % 2 === 0 ? 0x00b4d8 : 0xffffff);
+                    const { mesh: dropGroup, poolType } = acquireParticleMesh(_partGeoSphere, mat, true, 1.16);
+                    const scaleS = (0.52 + Math.random() * 0.35) / 0.6;
+                    dropGroup.scale.setScalar(scaleS);
                     dropGroup.position.copy(nozzleWorldPos);
-                    (scene || (typeof window !== "undefined" ? window.scene : null)).add(dropGroup);
 
-                    activeParticles.push({
+                    pushPooledParticle({
                         mesh: dropGroup,
+                        poolType,
+                        baseScaleX: scaleS,
+                        baseScaleY: scaleS,
+                        baseScaleZ: scaleS,
                         vx: baseVx + (Math.random() - 0.5) * 3.8,
                         vy: baseVy + (Math.random() - 0.5) * 2.4,
                         vz: baseVz + (Math.random() - 0.5) * 3.8,
@@ -640,7 +772,7 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                         life: 0.88
                     });
                 }
-            });
+            }
         }
 
 
@@ -948,4 +1080,10 @@ if (typeof window !== 'undefined') {
     window.clearHazardNode = clearHazardNode;
     window.spawnBurstParticles = spawnBurstParticles;
     window.spawnWaterCannonStream = spawnWaterCannonStream;
+    Object.assign(window, {
+        spawnWaterWakeParticles,
+        spawnSparkleGlints,
+        spawnSoapSudsParticles,
+        spawnPaintSplatParticles
+    });
 }

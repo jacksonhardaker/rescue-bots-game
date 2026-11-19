@@ -45,9 +45,30 @@ interface WeatherParticle {
 }
 
 const activeSteamParticles: WeatherParticle[] = [];
+const _steamPool: THREE.Mesh[] = [];
+const MAX_ACTIVE_STEAM_PARTICLES = 48;
 const steamPuffGeo = new THREE.DodecahedronGeometry(0.75, 0);
 const matSteam = new THREE.MeshBasicMaterial({ color: 0xf1f5f9, transparent: true, opacity: 0.72 });
+const _lightningBoltMat = new THREE.LineBasicMaterial({ color: 0xe0f2fe, linewidth: 3 });
 const steamGroup = new THREE.Group();
+
+function acquireSteamMesh(): THREE.Mesh {
+    let mesh = _steamPool.pop();
+    if (!mesh) {
+        mesh = new THREE.Mesh(steamPuffGeo, matSteam.clone());
+        mesh.userData.noOutline = true;
+        steamGroup.add(mesh);
+    }
+    (mesh.material as THREE.MeshBasicMaterial).opacity = 0.72;
+    mesh.rotation.set(0, 0, 0);
+    mesh.visible = true;
+    return mesh;
+}
+
+function releaseSteamMesh(mesh: THREE.Mesh) {
+    mesh.visible = false;
+    _steamPool.push(mesh);
+}
 
 // Mountain Highway Debris Spawn Anchors
 const MAGMA_SPAWN_COORDS = [
@@ -119,8 +140,11 @@ function createMagmaDebrisNode(id: number, x: number, y: number, z: number): Mag
 
 export function spawnSteamBurst(x: number, y: number, z: number, count = 16) {
     for (let i = 0; i < count; i++) {
-        const mesh = new THREE.Mesh(steamPuffGeo, matSteam);
-        mesh.userData.noOutline = true;
+        if (activeSteamParticles.length >= MAX_ACTIVE_STEAM_PARTICLES) {
+            const oldest = activeSteamParticles.shift();
+            if (oldest) releaseSteamMesh(oldest.mesh);
+        }
+        const mesh = acquireSteamMesh();
         mesh.position.set(
             x + (Math.random() - 0.5) * 2.2,
             y + Math.random() * 1.5,
@@ -128,7 +152,6 @@ export function spawnSteamBurst(x: number, y: number, z: number, count = 16) {
         );
         const s = 0.6 + Math.random() * 0.8;
         mesh.scale.setScalar(s);
-        steamGroup.add(mesh);
 
         activeSteamParticles.push({
             mesh,
@@ -177,8 +200,7 @@ export function triggerLightningStrike(sceneNode: THREE.Scene, origin: { x: numb
     }
 
     const boltGeo = new THREE.BufferGeometry().setFromPoints(points);
-    const boltMat = new THREE.LineBasicMaterial({ color: 0xe0f2fe, linewidth: 3 });
-    lightningStrikeMesh = new THREE.Line(boltGeo, boltMat);
+    lightningStrikeMesh = new THREE.Line(boltGeo, _lightningBoltMat);
     lightningStrikeMesh.userData.noOutline = true;
     s.add(lightningStrikeMesh);
     lightningStrikeTimer = 0.14;
@@ -193,8 +215,7 @@ export function updateWeatherHazards(dt: number, now: number, activeWeatherId: s
         const p = activeSteamParticles[i];
         p.life += dt;
         if (p.life >= p.maxLife) {
-            steamGroup.remove(p.mesh);
-            p.mesh.geometry.dispose();
+            releaseSteamMesh(p.mesh);
             activeSteamParticles.splice(i, 1);
             continue;
         }

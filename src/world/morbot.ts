@@ -20,6 +20,9 @@ import { spawnEnergonLightningParticles, spawnMagnetSparkParticles, spawnSparkle
 export let activeMorBot = null;
 export let morbotState = null;
 
+const _sparkHazardGeo = new THREE.SphereGeometry(0.75, 8, 8);
+const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true });
+
         export const MORBOT_FLEET_CONFIGS = [
             {
                 name: "MORBOT ALPHA",
@@ -1374,10 +1377,7 @@ export let morbotState = null;
             },
 
             spawnSparkHazard(x, y, z) {
-                const mesh = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.75, 8, 8),
-                    new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true })
-                );
+                const mesh = new THREE.Mesh(_sparkHazardGeo, _sparkHazardMat);
                 mesh.position.set(x, y + 0.35, z);
                 scene.add(mesh);
                 this.sparkHazards.push({ mesh, x, y, z, life: 7.0 });
