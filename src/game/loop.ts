@@ -1,7 +1,8 @@
 // Main Render Loop & Animation Frame Dispatcher
 import * as THREE from 'three';
 import { renderer, scene, camera, sunLight, isMobileDevice } from '../rendering/scene.js';
-import { player, buddyBot, botRigs, input } from '../state/gameState.js';
+import { player, buddyBot, botRigs, input, worldState } from '../state/gameState.js';
+import { undergroundScene, updateUnderground, updateDrillTransition } from '../world/underground.js';
 import { updatePhysics, waypointGroup, wpOuterRing, wpArrowCone } from '../physics/movement.js';
 import { updateAllBotTransforms, speakBotCatchphrase, syncHUDToActiveBot } from '../physics/player.js';
 import { updateIslandTrain, islandTrain } from '../world/railway.js';
@@ -59,10 +60,13 @@ let _worldBubbleTailEl: HTMLElement | null = null;
 
 export function savePlayerMapPosition(force = false) {
     if (!player || !player.pos) return;
-    const px = Math.round(player.pos.x * 10) / 10;
-    const py = Math.round(player.pos.y * 10) / 10;
-    const pz = Math.round(player.pos.z * 10) / 10;
-    const pHead = Math.round(player.heading * 100) / 100;
+    const isUg = worldState.activeArea === 'UNDERGROUND' && worldState.savedSurfacePos;
+    const refPos = isUg ? worldState.savedSurfacePos : player.pos;
+    const refHeading = isUg ? (worldState.savedSurfaceHeading || 0) : player.heading;
+    const px = Math.round(refPos.x * 10) / 10;
+    const py = Math.round(refPos.y * 10) / 10;
+    const pz = Math.round(refPos.z * 10) / 10;
+    const pHead = Math.round(refHeading * 100) / 100;
 
     const dist = Math.hypot(px - lastSavedPos.x, pz - lastSavedPos.z);
     const dHead = Math.abs(pHead - lastSavedPos.heading);
@@ -74,6 +78,76 @@ export function savePlayerMapPosition(force = false) {
         progression.playerMode = player.mode;
         progression.buddyBotType = buddyBot.botType;
         saveProgression({ immediate: force });
+    }
+}
+
+function updateSpeechBubbleProjection(dt: number) {
+    if (!activeSpeech || !activeSpeech.visible) return;
+    activeSpeech.timer -= dt;
+    if (activeSpeech.timer <= 0) {
+        activeSpeech.visible = false;
+        if (!_npcWorldBubbleEl) _npcWorldBubbleEl = document.getElementById('npc-world-bubble');
+        if (_npcWorldBubbleEl) _npcWorldBubbleEl.classList.add('hidden');
+        return;
+    }
+    if (!_npcWorldBubbleEl) _npcWorldBubbleEl = document.getElementById('npc-world-bubble');
+    if (!_worldBubbleTailEl) _worldBubbleTailEl = document.getElementById('world-bubble-tail');
+    const bubbleEl = _npcWorldBubbleEl;
+    const bubbleTail = _worldBubbleTailEl;
+    if (!bubbleEl) return;
+
+    let wx = 0, wy = 0, wz = 0;
+    const s = activeSpeech.source;
+    if (s) {
+        if (s.pos) {
+            wx = s.pos.x; wy = s.pos.y; wz = s.pos.z;
+        } else if (s.rig && s.rig.root) {
+            wx = s.rig.root.position.x;
+            wy = s.rig.root.position.y;
+            wz = s.rig.root.position.z;
+        } else if (s.x !== undefined) {
+            wx = s.x;
+            wy = s.y !== undefined ? s.y : getTerrainHeight(s.x, s.z);
+            wz = s.z;
+        }
+    }
+
+    let curYOffset = activeSpeech.yOffset;
+    if (s === player || s === buddyBot) {
+        curYOffset = (player.mode === 'VEHICLE') ? 4.2 : 7.2;
+    }
+
+    _bubbleWorldPos.set(wx, wy + curYOffset, wz);
+    const distToCam = camera.position.distanceTo(_bubbleWorldPos);
+
+    _bubbleWorldPos.project(camera);
+    const inFront = _bubbleWorldPos.z < 1.0;
+
+    if (inFront && distToCam < 95.0) {
+        const screenX = (_bubbleWorldPos.x * 0.5 + 0.5) * window.innerWidth;
+        const screenY = (-_bubbleWorldPos.y * 0.5 + 0.5) * window.innerHeight;
+
+        const clampX = Math.max(150, Math.min(window.innerWidth - 150, screenX));
+        const clampY = Math.max(75, Math.min(window.innerHeight - 85, screenY));
+
+        const scale = THREE.MathUtils.clamp(1.0 - (distToCam - 14) * 0.004, 0.82, 1.12);
+
+        bubbleEl.style.left = `${clampX}px`;
+        bubbleEl.style.top = `${clampY}px`;
+        bubbleEl.style.transform = `translate(-50%, -100%) scale(${scale})`;
+        bubbleEl.style.opacity = '1';
+
+        if (bubbleTail) {
+            bubbleTail.style.display = 'flex';
+            const tailOffset = Math.max(-95, Math.min(95, screenX - clampX));
+            bubbleTail.style.transform = `translateX(${tailOffset}px)`;
+        }
+    } else {
+        bubbleEl.style.left = '50%';
+        bubbleEl.style.top = '95px';
+        bubbleEl.style.transform = 'translate(-50%, 0) scale(1.0)';
+        bubbleEl.style.opacity = '1';
+        if (bubbleTail) bubbleTail.style.display = 'none';
     }
 }
 
@@ -137,6 +211,8 @@ export function savePlayerMapPosition(force = false) {
                 tacticalMapTimer = 1;
             }
 
+            updateDrillTransition(dt, now);
+
             // Animate 3D Tap Waypoint Marker (Pulsing Ring & Bouncing Arrow)
             if (waypointGroup && waypointGroup.visible && wpOuterRing && wpArrowCone) {
                 const wpPulse = 1.0 + Math.sin(now * 0.01) * 0.18;
@@ -144,6 +220,16 @@ export function savePlayerMapPosition(force = false) {
                 wpOuterRing.rotation.z += dt * 1.8;
                 wpArrowCone.position.y = 4.2 + Math.sin(now * 0.012) * 1.1;
                 wpArrowCone.rotation.y += dt * 3.0;
+            }
+
+            if (worldState.activeArea === 'UNDERGROUND') {
+                updatePhysics(dt, now);
+                updateBuddyBotAI(dt, now);
+                updateAllBotTransforms(dt, now);
+                updateUnderground(dt, now);
+                updateSpeechBubbleProjection(dt);
+                if (renderer) renderer.render(undergroundScene, camera);
+                return;
             }
 
             // Animate HQ Radar Dish, Outpost Rings, Lighthouse Beam, Regional Landmarks, Ocean Waves & Flickering Fires
@@ -1023,75 +1109,7 @@ export function savePlayerMapPosition(force = false) {
             updateViewportCulling();
 
             // Update 3D Comic Speech Bubble Screen Projection
-            if (activeSpeech && activeSpeech.visible) {
-                activeSpeech.timer -= dt;
-                if (activeSpeech.timer <= 0) {
-                    activeSpeech.visible = false;
-                    if (!_npcWorldBubbleEl) _npcWorldBubbleEl = document.getElementById('npc-world-bubble');
-                    if (_npcWorldBubbleEl) _npcWorldBubbleEl.classList.add('hidden');
-                } else {
-                    if (!_npcWorldBubbleEl) _npcWorldBubbleEl = document.getElementById('npc-world-bubble');
-                    if (!_worldBubbleTailEl) _worldBubbleTailEl = document.getElementById('world-bubble-tail');
-                    const bubbleEl = _npcWorldBubbleEl;
-                    const bubbleTail = _worldBubbleTailEl;
-                    if (bubbleEl) {
-                        let wx = 0, wy = 0, wz = 0;
-                        const s = activeSpeech.source;
-                        if (s) {
-                            if (s.pos) {
-                                wx = s.pos.x; wy = s.pos.y; wz = s.pos.z;
-                            } else if (s.rig && s.rig.root) {
-                                wx = s.rig.root.position.x;
-                                wy = s.rig.root.position.y;
-                                wz = s.rig.root.position.z;
-                            } else if (s.x !== undefined) {
-                                wx = s.x;
-                                wy = s.y !== undefined ? s.y : getTerrainHeight(s.x, s.z);
-                                wz = s.z;
-                            }
-                        }
-
-                        let curYOffset = activeSpeech.yOffset;
-                        if (s === player || s === buddyBot) {
-                            curYOffset = (player.mode === 'VEHICLE') ? 4.2 : 7.2;
-                        }
-
-                        _bubbleWorldPos.set(wx, wy + curYOffset, wz);
-                        const distToCam = camera.position.distanceTo(_bubbleWorldPos);
-
-                        _bubbleWorldPos.project(camera);
-                        const inFront = _bubbleWorldPos.z < 1.0;
-
-                        if (inFront && distToCam < 95.0) {
-                            const screenX = (_bubbleWorldPos.x * 0.5 + 0.5) * window.innerWidth;
-                            const screenY = (-_bubbleWorldPos.y * 0.5 + 0.5) * window.innerHeight;
-
-                            const clampX = Math.max(150, Math.min(window.innerWidth - 150, screenX));
-                            const clampY = Math.max(75, Math.min(window.innerHeight - 85, screenY));
-
-                            const scale = THREE.MathUtils.clamp(1.0 - (distToCam - 14) * 0.004, 0.82, 1.12);
-
-                            bubbleEl.style.left = `${clampX}px`;
-                            bubbleEl.style.top = `${clampY}px`;
-                            bubbleEl.style.transform = `translate(-50%, -100%) scale(${scale})`;
-                            bubbleEl.style.opacity = '1';
-
-                            if (bubbleTail) {
-                                bubbleTail.style.display = 'flex';
-                                const tailOffset = Math.max(-95, Math.min(95, screenX - clampX));
-                                bubbleTail.style.transform = `translateX(${tailOffset}px)`;
-                            }
-                        } else {
-                            // Distant caller or behind camera: Dock at top-center as an incoming radio call
-                            bubbleEl.style.left = '50%';
-                            bubbleEl.style.top = '95px';
-                            bubbleEl.style.transform = 'translate(-50%, 0) scale(1.0)';
-                            bubbleEl.style.opacity = '1';
-                            if (bubbleTail) bubbleTail.style.display = 'none';
-                        }
-                    }
-                }
-            }
+            updateSpeechBubbleProjection(dt);
 
             if (isMobileDevice && renderer && renderer.shadowMap.enabled) {
                 renderer.shadowMap.autoUpdate = false;

@@ -23,6 +23,7 @@ import { buildInstancedVegetation } from './world/vegetation.js';
 import { initProps } from './world/props.js';
 import { initDumpsters } from './world/dumpsters.js';
 import { initWeather, WEATHER_MODES, cycleWeatherMode } from './world/weather.js';
+import { initUnderground } from './world/underground.js';
 import { buildHazardSites, beacons, activeParticles, prewarmParticlePool } from './world/emergencies.js';
 import { buildEnergonCubes, initGoldenCrests } from './world/collectibles.js';
 import { initEmergentRescues } from './world/emergencies.js';
@@ -92,6 +93,7 @@ export function initGame() {
     initProps(scene);
     initDumpsters(scene);
     initWeather(scene);
+    initUnderground(renderer, camera);
 
     // 4. Build Bot Models
     initBotRigs(scene);

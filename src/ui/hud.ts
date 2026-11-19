@@ -5,9 +5,10 @@ import {
     dockOptimusMegabot, undockOptimusMegabot, dockActiveBotMegabot, undockActiveBotMegabot,
     cycleBuddyBot, switchRescueBot
 } from '../physics/player.js';
-import { player } from '../state/gameState.js';
+import { player, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { SVG_ICONS } from './icons.js';
+import { triggerBoulderDrillTransition, exitUndergroundViaShaft, swapToSurface } from '../world/underground.js';
 
 import { HQ_SWAP_PAD } from '../world/buildings.js';
 import { waypointGroup } from '../physics/movement.js';
@@ -40,6 +41,14 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('btn-jump-scan', triggerSecondaryAction);
         bindButton('btn-descend', triggerDescendAction);
         bindButton('btn-siren', toggleSiren);
+        bindButton('btn-drill', triggerBoulderDrillTransition);
+        bindButton('btn-cavern-exit', exitUndergroundViaShaft);
+        const cComp = document.getElementById('cavern-compass-icon');
+        if (cComp) cComp.innerHTML = SVG_ICONS.CAVERN_COMPASS;
+        const cGem = document.getElementById('cavern-gem-icon');
+        if (cGem) cGem.innerHTML = SVG_ICONS.CAVERN_GEM;
+        const cExitIcon = document.getElementById('cavern-exit-icon');
+        if (cExitIcon) cExitIcon.innerHTML = SVG_ICONS.DRILL_UP;
         bindButton('btn-dock', () => {
             dockActiveBotMegabot();
         });
@@ -80,6 +89,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
 
         // Warp to Rescue Bots Headquarters Button
         bindButton('btn-hq-warp', () => {
+            if (worldState.activeArea === 'UNDERGROUND') swapToSurface(true);
             player.pos.set(HQ_SWAP_PAD.x, getTerrainHeight(HQ_SWAP_PAD.x, HQ_SWAP_PAD.z) + 0.5, HQ_SWAP_PAD.z);
             player.heading = 0;
             player.speed = 0;
@@ -150,6 +160,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         });
 
         bindButton('btn-reset', () => {
+            if (worldState.activeArea === 'UNDERGROUND') swapToSurface(true);
             player.pos.set(HQ_SWAP_PAD.x, 5, HQ_SWAP_PAD.z);
             player.heading = 0;
             player.speed = 0;

@@ -189,7 +189,7 @@ export function buildRescueBotModel(botType) {
     return parts;
 }
 
-export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0, boatMorph = 0) {
+export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0, boatMorph = 0, drillAmount = 0) {
             // Boat Mode: folds limbs into vehicle aerodynamic layout under the boat shell
             if (rig.botType !== 'HIGHTIDE' && boatMorph > 0) {
                 m = Math.max(m, boatMorph);
@@ -1120,6 +1120,27 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
 
             if (rig.botType !== 'HEATWAVE' && rig.botType !== 'HIGHTIDE') {
                 animateBotBoatMorph(rig, boatMorph, now, 0.016);
+            }
+
+            // Boulder Rotary Auger Drill Visibility & Rotation
+            if (rig.botType === 'BOULDER') {
+                const showBotDrill = drillAmount > 0.05 && m < 0.5 && d < 0.5 && boatMorph < 0.25;
+                const showVehDrill = drillAmount > 0.05 && m >= 0.5 && d < 0.5 && boatMorph < 0.25;
+                if (rig.botDrillAssembly) {
+                    rig.botDrillAssembly.visible = showBotDrill;
+                    if (showBotDrill) {
+                        rig.botDrillAssembly.scale.setScalar(Math.min(1.0, drillAmount));
+                        if (rig.botDrillBit) rig.botDrillBit.rotation.y = now * 0.032;
+                        rig.rightArm.rotation.x = THREE.MathUtils.lerp(rig.rightArm.rotation.x, -0.58, Math.min(1.0, drillAmount));
+                    }
+                }
+                if (rig.vehDrillAssembly) {
+                    rig.vehDrillAssembly.visible = showVehDrill;
+                    if (showVehDrill) {
+                        rig.vehDrillAssembly.scale.setScalar(1.22 * Math.min(1.0, drillAmount));
+                        if (rig.vehDrillBit) rig.vehDrillBit.rotation.y = now * 0.032;
+                    }
+                }
             }
         }
 

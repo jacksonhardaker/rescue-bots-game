@@ -1478,6 +1478,161 @@ class RescueSoundFX {
                     console.warn("SFX playFlightDescend error:", e);
                 }
             }
+
+            playDrillBore() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const ctx = this.ctx;
+                    const now = ctx.currentTime;
+
+                    // 1. Deep sawtooth industrial auger motor ramping up & chewing earth
+                    const motorOsc = ctx.createOscillator();
+                    const motorGain = ctx.createGain();
+                    motorOsc.type = 'sawtooth';
+                    motorOsc.frequency.setValueAtTime(58, now);
+                    motorOsc.frequency.exponentialRampToValueAtTime(118, now + 0.35);
+                    motorOsc.frequency.linearRampToValueAtTime(86, now + 1.35);
+
+                    const motorFilter = ctx.createBiquadFilter();
+                    motorFilter.type = 'lowpass';
+                    motorFilter.frequency.setValueAtTime(420, now);
+                    motorFilter.frequency.linearRampToValueAtTime(920, now + 0.45);
+                    motorFilter.frequency.exponentialRampToValueAtTime(260, now + 1.4);
+
+                    motorGain.gain.setValueAtTime(0.001, now);
+                    motorGain.gain.linearRampToValueAtTime(0.22, now + 0.08);
+                    motorGain.gain.setValueAtTime(0.20, now + 0.95);
+                    motorGain.gain.exponentialRampToValueAtTime(0.001, now + 1.42);
+
+                    motorOsc.connect(motorFilter);
+                    motorFilter.connect(motorGain);
+                    motorGain.connect(this.getSfxDest());
+                    motorOsc.start(now);
+                    motorOsc.stop(now + 1.44);
+
+                    // 2. Bandpass-filtered rock grinding noise (reuses cached noise buffer, looped for 1.35s)
+                    const noiseSrc = ctx.createBufferSource();
+                    noiseSrc.buffer = this.ensureNoiseBuffer();
+                    noiseSrc.loop = true;
+                    const grindFilter = ctx.createBiquadFilter();
+                    grindFilter.type = 'bandpass';
+                    grindFilter.Q.setValueAtTime(1.8, now);
+                    grindFilter.frequency.setValueAtTime(360, now);
+                    grindFilter.frequency.exponentialRampToValueAtTime(1150, now + 0.45);
+                    grindFilter.frequency.exponentialRampToValueAtTime(280, now + 1.38);
+
+                    const grindGain = ctx.createGain();
+                    grindGain.gain.setValueAtTime(0.001, now);
+                    grindGain.gain.linearRampToValueAtTime(0.22, now + 0.10);
+                    grindGain.gain.setValueAtTime(0.19, now + 0.90);
+                    grindGain.gain.exponentialRampToValueAtTime(0.001, now + 1.40);
+
+                    noiseSrc.connect(grindFilter);
+                    grindFilter.connect(grindGain);
+                    grindGain.connect(this.getSfxDest());
+                    noiseSrc.start(now);
+                    noiseSrc.stop(now + 1.42);
+                } catch (e) {
+                    console.warn("SFX playDrillBore error:", e);
+                }
+            }
+
+            playRockCrack() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const ctx = this.ctx;
+                    const now = ctx.currentTime;
+
+                    // 1. Seismic thump
+                    const thump = ctx.createOscillator();
+                    const thumpGain = ctx.createGain();
+                    thump.type = 'triangle';
+                    thump.frequency.setValueAtTime(135, now);
+                    thump.frequency.exponentialRampToValueAtTime(28, now + 0.36);
+                    thumpGain.gain.setValueAtTime(0.28, now);
+                    thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+                    thump.connect(thumpGain);
+                    thumpGain.connect(this.getSfxDest());
+                    thump.start(now);
+                    thump.stop(now + 0.40);
+
+                    // 2. Crisp rock shatter noise burst
+                    const crackSrc = ctx.createBufferSource();
+                    crackSrc.buffer = this.ensureNoiseBuffer();
+                    const crackFilter = ctx.createBiquadFilter();
+                    crackFilter.type = 'highpass';
+                    crackFilter.frequency.setValueAtTime(480, now);
+                    const crackGain = ctx.createGain();
+                    crackGain.gain.setValueAtTime(0.24, now);
+                    crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
+                    crackSrc.connect(crackFilter);
+                    crackFilter.connect(crackGain);
+                    crackGain.connect(this.getSfxDest());
+                    crackSrc.start(now);
+                    crackSrc.stop(now + 0.34);
+                } catch (e) {
+                    console.warn("SFX playRockCrack error:", e);
+                }
+            }
+
+            playGemChime() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const ctx = this.ctx;
+                    const now = ctx.currentTime;
+                    const notes = [880, 1174.66, 1567.98];
+                    notes.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = i % 2 === 0 ? 'triangle' : 'sine';
+                        const t0 = now + i * 0.055;
+                        osc.frequency.setValueAtTime(freq, t0);
+                        gain.gain.setValueAtTime(0.001, t0);
+                        gain.gain.linearRampToValueAtTime(0.14, t0 + 0.015);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.28);
+                        osc.connect(gain);
+                        gain.connect(this.getSfxDest());
+                        osc.start(t0);
+                        osc.stop(t0 + 0.30);
+                    });
+                } catch (e) {
+                    console.warn("SFX playGemChime error:", e);
+                }
+            }
+
+            playCavernDiscovery() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const ctx = this.ctx;
+                    const now = ctx.currentTime;
+                    const fanfare = [392.0, 493.88, 587.33, 783.99];
+                    fanfare.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        const t0 = now + i * 0.09;
+                        const dur = i === fanfare.length - 1 ? 0.55 : 0.22;
+                        osc.frequency.setValueAtTime(freq, t0);
+                        gain.gain.setValueAtTime(0.001, t0);
+                        gain.gain.linearRampToValueAtTime(0.17, t0 + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+                        osc.connect(gain);
+                        gain.connect(this.getSfxDest());
+                        osc.start(t0);
+                        osc.stop(t0 + dur + 0.02);
+                    });
+                } catch (e) {
+                    console.warn("SFX playCavernDiscovery error:", e);
+                }
+            }
         }
 
 export const sfx = new RescueSoundFX();

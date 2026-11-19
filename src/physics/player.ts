@@ -1,6 +1,10 @@
 // Active Player Controller, Bot Switching, Morph Animations & Action Triggers
 import * as THREE from 'three';
-import { player, buddyBot, botRigs, botPhraseCounters } from '../state/gameState.js';
+import { player, buddyBot, botRigs, botPhraseCounters, worldState } from '../state/gameState.js';
+import {
+    syncUndergroundBotRigs, checkUndergroundBoulderStrike,
+    triggerNearbyDinoReaction, updateCavernHUD
+} from '../world/underground.js';
 import { BOT_METADATA, HQ_PARKING_SLOTS } from '../bots/botMeta.js';
 import { applyBotRigMorph, getBotScale, setHighTideRigMega, setOptimusRigMega, setBotRigMega } from '../bots/botRigs.js';
 import { sfx } from '../audio/soundFX.js';
@@ -638,6 +642,22 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             // Helicopter, Pterosaur & Stealth Bomber Flight UI vs Ground Bot UI
+            const btnDrill = document.getElementById('btn-drill');
+            const drillIcon = document.getElementById('drill-icon');
+            const drillLabel = document.getElementById('drill-label');
+            if (btnDrill) {
+                if (player.botType === 'BOULDER') {
+                    btnDrill.classList.remove('hidden');
+                    const isUg = worldState.activeArea === 'UNDERGROUND';
+                    btnDrill.classList.toggle('drill-underground', isUg);
+                    if (drillIcon) drillIcon.innerHTML = isUg ? SVG_ICONS.DRILL_UP : SVG_ICONS.DRILL;
+                    if (drillLabel) drillLabel.textContent = isUg ? 'DRILL UP' : 'DRILL';
+                } else {
+                    btnDrill.classList.add('hidden');
+                }
+            }
+            updateCavernHUD();
+
             const isFlyingCopter = ((player.botType === 'BLADES' && (isVeh || isDino)) ||
                                    (player.botType === 'QUICKSHADOW' && isVeh && isBotDocked('QUICKSHADOW'))) && !isBoat;
             const btnDescend = document.getElementById('btn-descend');
@@ -737,7 +757,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             const backDist = 7.5;
             const sideDist = 4.2;
             buddyBot.heading = player.heading;
-            if (player.botType === 'HIGHTIDE' && (isPointInWater(player.pos.x, player.pos.z) || player.mode === 'VEHICLE' || player.pos.y < 0.25)) {
+            if (worldState.activeArea === 'UNDERGROUND') {
+                buddyBot.pos.set(
+                    player.pos.x - Math.sin(player.heading) * 6.0,
+                    player.pos.y,
+                    player.pos.z - Math.cos(player.heading) * 6.0
+                );
+                syncUndergroundBotRigs();
+            } else if (player.botType === 'HIGHTIDE' && (isPointInWater(player.pos.x, player.pos.z) || player.mode === 'VEHICLE' || player.pos.y < 0.25)) {
                 // If High Tide is in water, keep or place buddy safely on land
                 if (!isPointInWater(buddyBot.pos.x, buddyBot.pos.z) && buddyBot.pos.y >= 0.35) {
                     // Buddy is already on dry land, hold position
@@ -817,24 +844,26 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.targetBoatMorph = 0.0;
             }
 
-            // High Tide Megabot Docking Persistence:
-            // If switching to High Tide and player was previously docked in Megabot mode, restore Megabot form!
-            if (newBotType === 'HIGHTIDE') {
-                const isMega = Boolean(progression.highTideDocked);
-                setHighTideRigMega(botRigs['HIGHTIDE'], isMega);
-                if (highTideWorldShip) highTideWorldShip.visible = !isMega;
-            } else if (oldBotType === 'HIGHTIDE') {
-                // When switching away from High Tide, High Tide and his boat both appear in the world!
-                if (highTideWorldShip) highTideWorldShip.visible = true;
-            }
+            if (worldState.activeArea === 'UNDERGROUND') {
+                syncUndergroundBotRigs(oldBotType, newBotType);
+            } else {
+                // High Tide Megabot Docking Persistence:
+                if (newBotType === 'HIGHTIDE') {
+                    const isMega = Boolean(progression.highTideDocked);
+                    setHighTideRigMega(botRigs['HIGHTIDE'], isMega);
+                    if (highTideWorldShip) highTideWorldShip.visible = !isMega;
+                } else if (oldBotType === 'HIGHTIDE') {
+                    if (highTideWorldShip) highTideWorldShip.visible = true;
+                }
 
-            // Optimus Prime Mega Docking Persistence:
-            if (newBotType === 'OPTIMUS') {
-                const isMega = Boolean(progression.optimusDocked);
-                setOptimusRigMega(botRigs['OPTIMUS'], isMega);
-                if (optimusWorldTrailer) optimusWorldTrailer.visible = !isMega;
-            } else if (oldBotType === 'OPTIMUS') {
-                if (optimusWorldTrailer) optimusWorldTrailer.visible = true;
+                // Optimus Prime Mega Docking Persistence:
+                if (newBotType === 'OPTIMUS') {
+                    const isMega = Boolean(progression.optimusDocked);
+                    setOptimusRigMega(botRigs['OPTIMUS'], isMega);
+                    if (optimusWorldTrailer) optimusWorldTrailer.visible = !isMega;
+                } else if (oldBotType === 'OPTIMUS') {
+                    if (optimusWorldTrailer) optimusWorldTrailer.visible = true;
+                }
             }
 
             syncVisitingAutobotsVisibility();
@@ -951,7 +980,21 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                         rig.chassis.rotation.x = -player.pitch * 0.35;
                         rig.chassis.rotation.z = player.roll * 0.35;
                     }
-                    applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer, player.boatMorph || 0);
+                    applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer, player.boatMorph || 0,
+                        botKey === 'BOULDER' && ((player.drillEquipTimer || 0) > 0 || worldState.drillAnim?.active)
+                            ? (worldState.drillAnim?.active ? 1.0 : Math.min(1.0, (player.drillEquipTimer || 0) / 0.25))
+                            : 0
+                    );
+                    if (botKey === 'BOULDER' && worldState.drillAnim?.active) {
+                        const dAnim = worldState.drillAnim;
+                        if (dAnim.timer / dAnim.duration < 0.58) {
+                            const vib = Math.sin(now * 0.08) * 0.04;
+                            const isVehMode = player.mode === 'VEHICLE' || player.morph > 0.5;
+                            rig.chassis.rotation.x = dAnim.direction === 'DOWN'
+                                ? (isVehMode ? 0.88 : 0.36) + vib
+                                : (isVehMode ? -0.82 : -0.22) + vib;
+                        }
+                    }
                 } else if (botKey === buddyBot.botType) {
                     // Buddy Bot follows wingman physics position & heading
                     rig.root.visible = true;
@@ -967,7 +1010,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                         rig.chassis.rotation.x = -buddyBot.pitch * 0.35;
                         rig.chassis.rotation.z = buddyBot.roll * 0.35;
                     }
-                    applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer, buddyBot.boatMorph || 0);
+                    applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer, buddyBot.boatMorph || 0, 0);
+                } else if (worldState.activeArea === 'UNDERGROUND') {
+                    rig.root.visible = false;
                 } else {
                     // Inactive Bots stay parked in standby at Rescue Bots Headquarters or hidden if secret ally!
                     const slot = HQ_PARKING_SLOTS[botKey];
@@ -1327,6 +1372,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
         export function checkHitMorBotWithSpecialAbility(attackRadius = 48.0, attackName = "") {
+            if (worldState.activeArea === 'UNDERGROUND') return false;
             if (typeof morbotBattle === 'undefined' || !morbotBattle || (morbotBattle.state !== 'PURSUIT' && morbotBattle.state !== 'ROBOT')) {
                 return false;
             }
@@ -1357,10 +1403,15 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
         // Bot-Specific Special Action (Adapts across Bot, Vehicle, and Dinobot Modes!)
         export function triggerPrimaryAction() {
-            // Check MorBot hit with active bot's special ability
-            const currentBotMeta = BOT_METADATA[player.botType];
-            const botAttackName = currentBotMeta ? `${currentBotMeta.name} ${currentBotMeta.powerName || "SPECIAL POWER"}` : "HEROIC SPECIAL POWER";
-            checkHitMorBotWithSpecialAbility(48.0, botAttackName);
+            const isUnderground = worldState.activeArea === 'UNDERGROUND';
+            if (isUnderground) {
+                triggerNearbyDinoReaction(player.pos.x, player.pos.z);
+            } else {
+                // Check MorBot hit with active bot's special ability
+                const currentBotMeta = BOT_METADATA[player.botType];
+                const botAttackName = currentBotMeta ? `${currentBotMeta.name} ${currentBotMeta.powerName || "SPECIAL POWER"}` : "HEROIC SPECIAL POWER";
+                checkHitMorBotWithSpecialAbility(48.0, botAttackName);
+            }
 
             if (player.botType === 'HEATWAVE') {
                 // Aimed High-Pressure Water Cannon Arc (from Ladder Turret or Brachiosaur Snout!)
@@ -1868,19 +1919,26 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             player.scoopTimer = 0.85;
             player.smashTimer = 0.45;
+            if (isUnderground && player.mode !== 'DINO') {
+                player.drillEquipTimer = 0.9;
+            }
             if (player.mode === 'DINO') {
                 sfx.playDinoRoar('BOULDER');
             } else {
                 sfx.playSmash();
             }
-            checkBoulderScoopAttack(player.pos.x, player.pos.y, player.pos.z, player.heading, 8.5);
-            beacons.forEach(beacon => {
-                beacon.nodes.forEach(n => {
-                    if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 16.5) {
-                        clearHazardNode(beacon, n, 'HEAVY');
-                    }
+            if (isUnderground) {
+                checkUndergroundBoulderStrike(player.pos.x, player.pos.y, player.pos.z, player.heading);
+            } else {
+                checkBoulderScoopAttack(player.pos.x, player.pos.y, player.pos.z, player.heading, 8.5);
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 16.5) {
+                            clearHazardNode(beacon, n, 'HEAVY');
+                        }
+                    });
                 });
-            });
+            }
             spawnBurstParticles(
                 player.pos.x + Math.sin(player.heading) * 4.2,
                 player.pos.y + 0.6,

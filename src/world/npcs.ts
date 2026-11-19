@@ -7,7 +7,8 @@ import {
     matNPCBeam, matNPCBeamPool
 } from '../rendering/materials.js';
 import { texWindshieldCyan } from '../rendering/textures.js';
-import { player, buddyBot, botRigs, humanNPCs, vehicleNPCs, worldColliders, queryNearbyColliders } from '../state/gameState.js';
+import { player, buddyBot, botRigs, humanNPCs, vehicleNPCs, worldColliders, queryNearbyColliders, worldState } from '../state/gameState.js';
+import { resolveUndergroundPointCollision } from './underground.js';
 const _buddyNearbyColliders: any[] = [];
 import { sfx } from '../audio/soundFX.js';
 import { triggerNPCSpeech } from '../ui/dialogs.js';
@@ -1201,8 +1202,10 @@ import { checkBoulderScoopAttack, checkWaterCannonFoliage } from './vegetation.j
                 buddyBot.pos.z = nextBz;
             }
 
-            // Buddy Bot Obstacle Collision against Rocks, Trees & Buildings
-            if (worldColliders && worldColliders.length > 0) {
+            // Buddy Bot Obstacle Collision against Cavern Maze OR Surface Rocks, Trees & Buildings
+            if (worldState.activeArea === 'UNDERGROUND') {
+                resolveUndergroundPointCollision(buddyBot.pos, 2.3);
+            } else if (worldColliders && worldColliders.length > 0) {
                 const buddyRadius = 2.4;
                 const nearbyColliders = queryNearbyColliders(buddyBot.pos.x, buddyBot.pos.z, buddyRadius + 16, _buddyNearbyColliders);
                 for (let i = 0; i < nearbyColliders.length; i++) {
@@ -1278,7 +1281,8 @@ import { checkBoulderScoopAttack, checkWaterCannonFoliage } from './vegetation.j
 
             const isHighTideBuddyWaterMode = (buddyBot.botType === 'HIGHTIDE' && (buddyBot.targetMorph > 0.5 || buddyBot.targetDinoMorph > 0.5));
             if (isFlying && !isPlayerWaterNavigating) {
-                const targetAlt = Math.max(14, player.flightAlt + Math.sin(now * 0.003) * 1.5);
+                const maxBuddyAlt = worldState.activeArea === 'UNDERGROUND' ? 12 : 95;
+                const targetAlt = Math.min(maxBuddyAlt, Math.max(12, player.flightAlt + Math.sin(now * 0.003) * 1.5));
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, bCenterY + targetAlt, Math.min(1.0, dt * 4.5));
             } else if (isHighTideBuddyWaterMode && isPointInWater(buddyBot.pos.x, buddyBot.pos.z)) {
                 const subSwell = Math.sin(now * 0.003 + 1.2) * 0.12;
@@ -1299,7 +1303,7 @@ import { checkBoulderScoopAttack, checkWaterCannonFoliage } from './vegetation.j
             if (buddyBot.smashTimer > 0) buddyBot.smashTimer = Math.max(0, buddyBot.smashTimer - dt);
             if (buddyBot.scoopTimer > 0) {
                 buddyBot.scoopTimer = Math.max(0, buddyBot.scoopTimer - dt);
-                if (buddyBot.botType === 'BOULDER') {
+                if (buddyBot.botType === 'BOULDER' && worldState.activeArea !== 'UNDERGROUND') {
                     checkBoulderScoopAttack(buddyBot.pos.x, buddyBot.pos.y, buddyBot.pos.z, buddyBot.heading, 6.0);
                 }
             }
@@ -1307,11 +1311,15 @@ import { checkBoulderScoopAttack, checkWaterCannonFoliage } from './vegetation.j
                 buddyBot.waterTimer = Math.max(0, buddyBot.waterTimer - dt);
                 if (buddyBot.botType === 'HEATWAVE') {
                     spawnWaterCannonStream(bRig, new THREE.Vector3(buddyBot.pos.x, buddyBot.pos.y + 3.2, buddyBot.pos.z), buddyBot.heading);
-                    const bAimX = buddyBot.pos.x + Math.sin(buddyBot.heading) * 14;
-                    const bAimZ = buddyBot.pos.z + Math.cos(buddyBot.heading) * 14;
-                    checkWaterCannonFoliage(buddyBot.pos.x, buddyBot.pos.z, buddyBot.heading, bAimX, bAimZ, dt);
+                    if (worldState.activeArea !== 'UNDERGROUND') {
+                        const bAimX = buddyBot.pos.x + Math.sin(buddyBot.heading) * 14;
+                        const bAimZ = buddyBot.pos.z + Math.cos(buddyBot.heading) * 14;
+                        checkWaterCannonFoliage(buddyBot.pos.x, buddyBot.pos.z, buddyBot.heading, bAimX, bAimZ, dt);
+                    }
                 }
             }
+
+            if (worldState.activeArea === 'UNDERGROUND') return;
 
             // Find nearest uncleared hazard node to the Buddy Bot (prioritizing bot specialty)
             const isWaterBuddy = (buddyBot.botType === 'HEATWAVE' || buddyBot.botType === 'HIGHTIDE' || (buddyBot.mode === 'VEHICLE' && (buddyBot.boatMorph || 0) > 0.3));

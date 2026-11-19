@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { scene } from '../rendering/scene.js';
 import { getTerrainHeight, getSurfaceHeight, isPointInWater } from './terrain.js';
 import { toonGrad3, toonGrad4, matDarkSteel, matChrome, matInkOutline } from '../rendering/materials.js';
-import { player, buddyBot, botRigs } from '../state/gameState.js';
+import { player, buddyBot, botRigs, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
@@ -319,6 +319,7 @@ function getParticleMaterial(colorHex: number, transparent = false, opacity = 1.
 }
 
 const particleRootGroup = new THREE.Group();
+let _activeParticleScene: THREE.Scene | null = null;
 const _outlinedPool: THREE.Group[] = [];
 const _plainPool: THREE.Mesh[] = [];
 const _nozzleLeftPos = new THREE.Vector3();
@@ -328,11 +329,16 @@ const _nozzleFallbackPos = new THREE.Vector3();
 const _nozzlePositions: THREE.Vector3[] = [];
 
 function ensureParticleRoot(targetScene?: any): THREE.Group {
-    const s = targetScene || scene || (typeof window !== 'undefined' ? window.scene : null);
+    const s = targetScene || _activeParticleScene || scene || (typeof window !== 'undefined' ? window.scene : null);
     if (s && particleRootGroup.parent !== s) {
         s.add(particleRootGroup);
     }
     return particleRootGroup;
+}
+
+export function setActiveParticleScene(targetScene: THREE.Scene | null) {
+    _activeParticleScene = targetScene;
+    ensureParticleRoot(targetScene || scene);
 }
 
 function acquireParticleMesh(
@@ -387,7 +393,7 @@ export function releaseParticle(p: any) {
     } else if (p.poolType === 'plain') {
         _plainPool.push(p.mesh);
     } else {
-        const s = scene || (typeof window !== 'undefined' ? window.scene : null);
+        const s = _activeParticleScene || scene || (typeof window !== 'undefined' ? window.scene : null);
         if (s) s.remove(p.mesh);
     }
 }
@@ -815,6 +821,7 @@ function pushPooledParticle(item: any) {
         }
 
         export function clearHazardNode(beacon, node, attackType = null) {
+            if (worldState.activeArea === 'UNDERGROUND') return;
             if (node.cleared) return;
 
             // Validate Attack Compatibility for Team-Up Crises

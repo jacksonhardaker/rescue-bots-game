@@ -700,6 +700,73 @@
             box-shadow: 0 8px 28px rgba(6, 182, 212, 0.6), inset 0 2px 2px rgba(255, 255, 255, 0.45) !important;
         }
 
+        /* Boulder Ground Drill Button & Subterranean HUD */
+        #btn-drill {
+            background: linear-gradient(180deg, #facc15 0%, #65a30d 55%, #14532d 100%) !important;
+            border-color: #fef08a !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 14px rgba(132, 204, 22, 0.55), inset 0 2px 3px rgba(255, 255, 255, 0.45) !important;
+        }
+        #btn-drill.drill-underground {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 55%, #1e1b4b 100%) !important;
+            border-color: #7dd3fc !important;
+            box-shadow: 0 4px 14px rgba(56, 189, 248, 0.6), inset 0 2px 3px rgba(255, 255, 255, 0.45) !important;
+        }
+        #cavern-hud-pill {
+            position: fixed;
+            top: 0.75rem;
+            right: 4.5rem;
+            z-index: 25;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            background: rgba(11, 15, 30, 0.92);
+            border: 1.5px solid rgba(56, 189, 248, 0.55);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+        }
+        #cavern-hud-pill.hidden {
+            display: none !important;
+        }
+        #cavern-transition-overlay.opacity-0 {
+            opacity: 0;
+        }
+        #cavern-transition-overlay.opacity-100 {
+            opacity: 1;
+        }
+        #cavern-exit-prompt {
+            position: fixed !important;
+            top: 22% !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 35 !important;
+            pointer-events: auto !important;
+        }
+        #cavern-exit-prompt.hidden {
+            display: none !important;
+        }
+        #btn-cavern-exit {
+            background: linear-gradient(90deg, #eab308 0%, #16a34a 55%, #0284c7 100%) !important;
+            border-color: #fef08a !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 28px rgba(56, 189, 248, 0.55), inset 0 2px 2px rgba(255, 255, 255, 0.45) !important;
+        }
+        #cavern-transition-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            background: radial-gradient(circle at center, rgba(15, 23, 42, 0.96) 0%, rgba(5, 7, 15, 0.99) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            transition: opacity 0.28s ease;
+        }
+        .opacity-0 { opacity: 0; }
+        .opacity-100 { opacity: 1; }
+
         .text-white { color: #ffffff; }
         .text-white\/30 { color: rgba(255, 255, 255, 0.3); }
         .text-white\/70 { color: rgba(255, 255, 255, 0.7); }
@@ -843,6 +910,18 @@
                 </div>
                 <!-- Region / Zone Badge directly beneath minimap dial, fully readable without truncation -->
                 <div class="px-2 py-0.5 rounded-full bg-slate-950/90 border border-amber-400/40 text-[8.5px] sm:text-[10px] mono-font text-lime-300 font-bold tracking-tight text-center shadow-lg whitespace-nowrap max-w-[136px] sm:max-w-[175px] truncate pointer-events-none select-none" id="zone-label">RESCUE HQ</div>
+                <!-- Underground Discovery & Gem Counter Pill (visible only while inside caverns) -->
+                <div id="cavern-hud-pill" class="hidden pointer-events-none select-none">
+                    <span class="flex items-center gap-1 text-[9.5px] sm:text-[10.5px] font-bold text-cyan-200">
+                        <span id="cavern-compass-icon" class="w-4 h-4 flex items-center justify-center shrink-0"></span>
+                        <span>SECRETS: <span id="cavern-stat-discoveries" class="text-amber-300">0 / 7</span></span>
+                    </span>
+                    <span class="text-white/30">|</span>
+                    <span class="flex items-center gap-1 text-[9.5px] sm:text-[10.5px] font-bold text-purple-200">
+                        <span id="cavern-gem-icon" class="w-4 h-4 flex items-center justify-center shrink-0"></span>
+                        <span>GEMS: <span id="cavern-stat-gems" class="text-white">0</span></span>
+                    </span>
+                </div>
             </div>
 
             <div class="flex flex-col gap-2">
@@ -1302,6 +1381,12 @@
             <span class="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase mt-0.5" id="siren-label">SIREN</span>
         </button>
 
+        <!-- Boulder Rotary Drill Button (Enter Underground Caverns / Return to Surface) -->
+        <button id="btn-drill" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 flex flex-col items-center justify-center text-white select-none" title="Drill into Underground Caverns / Return to Surface (Key: G)">
+            <span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center leading-none" id="drill-icon"></span>
+            <span class="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase mt-0.5" id="drill-label">DRILL</span>
+        </button>
+
         <!-- Extra Flight Descend Button (Shown when Blades is in Helicopter or Pterosaur Mode) -->
         <button id="btn-descend" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-slate-600 to-slate-800 border-2 border-cyan-300 flex flex-col items-center justify-center text-white select-none">
             <span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center leading-none" id="descend-icon">
@@ -1344,6 +1429,24 @@
             <span class="text-xs sm:text-sm font-extrabold tracking-tight uppercase mt-0.5">TRANSFORM</span>
             <span class="text-[9px] sm:text-[10px] font-bold bg-slate-950/85 text-yellow-300 px-2 py-0.2 rounded-full mt-0.5" id="transform-sub">TO VEHICLE</span>
         </button>
+    </div>
+
+    <!-- Underground Sunlit Surface Exit Shaft Prompt -->
+    <div id="cavern-exit-prompt" class="hidden">
+        <button id="btn-cavern-exit" class="tactile-btn px-5 py-3 sm:px-6 sm:py-3.5 rounded-2xl border-2 flex items-center gap-3 text-white font-extrabold tracking-wider select-none cursor-pointer">
+            <span id="cavern-exit-icon" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0 drop-shadow"></span>
+            <div class="flex flex-col text-left">
+                <span class="text-[10px] sm:text-xs uppercase text-amber-200 tracking-wider font-extrabold">SUNLIT SURFACE SHAFT</span>
+                <span class="text-sm sm:text-base font-black drop-shadow tracking-wide text-white">RETURN TO GRIFFIN ROCK</span>
+            </div>
+        </button>
+    </div>
+
+    <!-- Full-Screen Subterranean Drill Transition Curtain -->
+    <div id="cavern-transition-overlay" class="opacity-0 pointer-events-none">
+        <span id="cavern-transition-icon" class="w-16 h-16 flex items-center justify-center"></span>
+        <div id="cavern-transition-title" class="text-xl sm:text-2xl font-black tracking-wider text-amber-300 uppercase text-center">DRILLING INTO CAVERNS...</div>
+        <div id="cavern-transition-sub" class="text-xs sm:text-sm text-cyan-200 font-semibold text-center">Descending into Subterranean Tunnels</div>
     </div>
 
     <!-- Megabot Docking Prompt (Floats in the middle of the screen when approaching High Tide vessel or Optimus trailer) -->
@@ -1856,10 +1959,10 @@
                     <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-cyan-500/20 border border-cyan-400/60 flex items-center justify-center text-cyan-300 text-lg shadow-inner">🗺️</div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <h2 class="text-sm sm:text-lg font-black text-amber-300 tracking-wide font-sans">GRIFFIN ROCK TACTICAL MAP</h2>
+                            <h2 id="tactical-map-title" class="text-sm sm:text-lg font-black text-amber-300 tracking-wide font-sans">GRIFFIN ROCK TACTICAL MAP</h2>
                             <span id="tactical-map-status-pill" class="text-[8.5px] sm:text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-bold uppercase tracking-wider">LIVE RADAR</span>
                         </div>
-                        <div class="text-[10px] sm:text-xs text-slate-300 font-medium">Island Aerial Surveillance • Real-Time Positioning System</div>
+                        <div id="tactical-map-subtitle" class="text-[10px] sm:text-xs text-slate-300 font-medium">Island Aerial Surveillance • Real-Time Positioning System</div>
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -1879,7 +1982,7 @@
                     <!-- Tactical HUD Coordinate Crosshairs & Compass Overlays (Clean Separate Corner Anchors) -->
                     <div class="tactical-hud-pill-left">
                         <span class="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                        <span>GRID: GR-01 // 1:4000</span>
+                        <span id="tactical-map-grid-pill">GRID: GR-01 // 1:4000</span>
                     </div>
                     <div class="tactical-hud-pill-right">
                         <span id="tactical-active-emergencies-count">EMERGENCIES: --</span>

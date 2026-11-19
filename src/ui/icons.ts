@@ -180,6 +180,30 @@ export const SVG_ICONS = {
                 <path d="M6 19h12a2 2 0 002-2v-4a8 8 0 10-16 0v4a2 2 0 002 2z"/>
                 <path d="M12 3v3M4 6l2 2M20 6l-2 2M12 13v6M4 21h16"/>
             </svg>`,
+            DRILL: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="6" y="2.5" width="12" height="4.5" rx="1.2" fill="#facc15" stroke="#0f172a" stroke-width="1.5"/>
+                <rect x="8" y="4" width="3" height="1.5" fill="#0f172a"/>
+                <rect x="13" y="4" width="3" height="1.5" fill="#0f172a"/>
+                <polygon points="7,7 17,7 12,21" fill="#e2e8f0" stroke="#0f172a" stroke-width="1.6"/>
+                <path d="M7.6 9.5L16.2 11.2M8.8 13L15.1 14.5M10 16.5L13.9 17.6" stroke="#facc15" stroke-width="2"/>
+                <path d="M4 21.5h16M5 18.5l-2 2M19 18.5l2 2" stroke="#84cc16" stroke-width="1.6"/>
+            </svg>`,
+            DRILL_UP: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12,3 7,17 17,17" fill="#e2e8f0" stroke="#0f172a" stroke-width="1.6"/>
+                <path d="M9.6 8.5L14.5 10M8.6 12L15.4 13.5M7.8 15.2L16.2 16.2" stroke="#facc15" stroke-width="2"/>
+                <rect x="6" y="17" width="12" height="4" rx="1.2" fill="#facc15" stroke="#0f172a" stroke-width="1.5"/>
+                <path d="M5 6l2-3M19 6l-2-3M12 1v1.5" stroke="#38bdf8" stroke-width="1.8"/>
+            </svg>`,
+            CAVERN_GEM: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12,2 20,8 17,21 7,21 4,8" fill="#a855f7" fill-opacity="0.35" stroke="#c084fc" stroke-width="1.8"/>
+                <polygon points="12,2 16,8 12,21 8,8" fill="#38bdf8" fill-opacity="0.35" stroke="#38bdf8" stroke-width="1.4"/>
+                <line x1="4" y1="8" x2="20" y2="8" stroke="#e9d5ff" stroke-width="1.4"/>
+            </svg>`,
+            CAVERN_COMPASS: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 20c0-8 4-14 9-14s9 6 9 14H3z" fill="#334155" fill-opacity="0.55" stroke="#38bdf8" stroke-width="1.8"/>
+                <path d="M7 20c0-5 2.2-9 5-9s5 4 5 9" fill="#0f172a" stroke="#22d3ee" stroke-width="1.4"/>
+                <polygon points="12,13 13.2,15.5 16,15.8 13.8,17.5 14.5,20 12,18.6 9.5,20 10.2,17.5 8,15.8 10.8,15.5" fill="#facc15"/>
+            </svg>`,
 
             // Bot-Specific Special Powers (24x24)
             QUAKE_SMASH: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

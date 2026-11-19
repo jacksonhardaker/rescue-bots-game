@@ -34,7 +34,11 @@ export const progression: Record<string, any> = {
     quickshadowDocked: false,
     weatherMode: 'SUNNY',
     playerPosition: null,
-    completedMissions: []
+    completedMissions: [],
+    discoveredCavernLandmarks: [],
+    cavernGemsCollected: 0,
+    exploredCavernCells: [],
+    brokenCavernWalls: []
 };
 
 export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'];
@@ -85,7 +89,9 @@ export function getHeroPoints(prog = progression) {
     const landmarkPts = (Array.isArray(prog.discoveredLandmarks) ? prog.discoveredLandmarks.length * 2 : 0);
     const crestPts = (Array.isArray(prog.collectedCrests) ? prog.collectedCrests.length * 5 : 0);
     const allyPts = (Array.isArray(prog.discoveredAllies) ? prog.discoveredAllies.length * 10 : 0);
-    return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts;
+    const cavernLandmarkPts = (Array.isArray(prog.discoveredCavernLandmarks) ? prog.discoveredCavernLandmarks.length * 4 : 0);
+    const cavernGemPts = Math.floor((prog.cavernGemsCollected || 0) / 3);
+    return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts + cavernLandmarkPts + cavernGemPts;
 }
 
 export function getRescueStarRank(prog = progression) {
@@ -139,12 +145,12 @@ export function loadProgression(options: Record<string, any> = {}) {
     // Merge highest progress without wiping anything
     candidates.forEach(data => {
         if (!data) return;
-        ['totalEmergenciesResolved', 'totalCitizensRescued', 'totalEnergonCubes', 'totalStuntsCompleted'].forEach(f => {
+        ['totalEmergenciesResolved', 'totalCitizensRescued', 'totalEnergonCubes', 'totalStuntsCompleted', 'cavernGemsCollected'].forEach(f => {
             if (Number.isFinite(data[f]) && data[f] > (target[f] || 0)) {
                 target[f] = Math.floor(data[f]);
             }
         });
-        ['discoveredLandmarks', 'collectedCrests', 'discoveredAllies'].forEach(f => {
+        ['discoveredLandmarks', 'collectedCrests', 'discoveredAllies', 'discoveredCavernLandmarks', 'brokenCavernWalls'].forEach(f => {
             if (Array.isArray(data[f])) {
                 const s = new Set(target[f] || []);
                 data[f].forEach(x => {
@@ -153,6 +159,13 @@ export function loadProgression(options: Record<string, any> = {}) {
                 target[f] = Array.from(s);
             }
         });
+        if (Array.isArray(data.exploredCavernCells)) {
+            const s = new Set(target.exploredCavernCells || []);
+            data.exploredCavernCells.forEach(x => {
+                if (typeof x === 'number' && Number.isFinite(x)) s.add(x);
+            });
+            target.exploredCavernCells = Array.from(s);
+        }
         if (typeof data.autoSpawnEmergencies === 'boolean' && target.autoSpawnEmergencies === undefined) {
             target.autoSpawnEmergencies = data.autoSpawnEmergencies;
         }
@@ -241,6 +254,18 @@ export function loadProgression(options: Record<string, any> = {}) {
     }
     if (Array.isArray(target.completedMissions)) {
         progression.completedMissions = target.completedMissions.filter(x => typeof x === 'number');
+    }
+    if (Number.isFinite(target.cavernGemsCollected) && target.cavernGemsCollected >= 0) {
+        progression.cavernGemsCollected = Math.floor(target.cavernGemsCollected);
+    }
+    if (Array.isArray(target.discoveredCavernLandmarks)) {
+        progression.discoveredCavernLandmarks = target.discoveredCavernLandmarks.filter(x => typeof x === 'string');
+    }
+    if (Array.isArray(target.exploredCavernCells)) {
+        progression.exploredCavernCells = target.exploredCavernCells.filter(x => typeof x === 'number' && Number.isFinite(x));
+    }
+    if (Array.isArray(target.brokenCavernWalls)) {
+        progression.brokenCavernWalls = target.brokenCavernWalls.filter(x => typeof x === 'string');
     }
 
     progression.saveVersion = CURRENT_SAVE_VERSION;
@@ -434,10 +459,10 @@ export function importSaveData(file: any, onComplete?: () => void) {
         try {
             const parsed = JSON.parse(e.target.result as string);
             if (parsed && typeof parsed === 'object') {
-                ['totalEmergenciesResolved', 'totalCitizensRescued', 'totalEnergonCubes', 'totalStuntsCompleted'].forEach(f => {
+                ['totalEmergenciesResolved', 'totalCitizensRescued', 'totalEnergonCubes', 'totalStuntsCompleted', 'cavernGemsCollected'].forEach(f => {
                     if (Number.isFinite(parsed[f])) progression[f] = Math.max(0, Math.floor(parsed[f]));
                 });
-                ['discoveredLandmarks', 'collectedCrests', 'discoveredAllies'].forEach(f => {
+                ['discoveredLandmarks', 'collectedCrests', 'discoveredAllies', 'discoveredCavernLandmarks', 'exploredCavernCells', 'brokenCavernWalls'].forEach(f => {
                     if (Array.isArray(parsed[f])) progression[f] = parsed[f];
                 });
                 if (typeof parsed.buddyBotType === 'string' && (window.BOT_METADATA ? window.BOT_METADATA[parsed.buddyBotType] : true)) {
@@ -472,6 +497,10 @@ export function resetCareerProgress(onComplete) {
         progression.playerMode = 'BOT';
         progression.playerPosition = null;
         progression.completedMissions = [];
+        progression.discoveredCavernLandmarks = [];
+        progression.cavernGemsCollected = 0;
+        progression.exploredCavernCells = [];
+        progression.brokenCavernWalls = [];
         try {
             for (const k of LEGACY_SAVE_KEYS) {
                 window.localStorage.removeItem(k);

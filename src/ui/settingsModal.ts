@@ -18,6 +18,7 @@ import { closeUtilityMenu } from '../physics/movement.js';
 import { buildHazardSites } from '../world/emergencies.js';
 import { switchRescueBot, unlockAndSwitchBot, triggerTransform, triggerPrimaryAction, triggerSecondaryAction, triggerDescendAction, toggleSiren, undockHighTideMegabot, dockHighTideMegabot, undockOptimusMegabot, dockOptimusMegabot, dockActiveBotMegabot, undockActiveBotMegabot, cycleBuddyBot } from '../physics/player.js';
 import { toggleBumblebeeMorph } from '../world/allies.js';
+import { triggerBoulderDrillTransition } from '../world/underground.js';
 import { morbotBattle } from '../world/morbot.js';
 import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
 let activeRebindAction = null;
@@ -474,6 +475,9 @@ function _localReset() {
             }
             if (matchesAction(e.code, 'siren') && !e.repeat) {
                 toggleSiren();
+            }
+            if (matchesAction(e.code, 'drillAction') && !e.repeat) {
+                triggerBoulderDrillTransition();
             }
             if (matchesAction(e.code, 'dock') && !e.repeat) {
                 if (isBotDocked(player.botType)) {

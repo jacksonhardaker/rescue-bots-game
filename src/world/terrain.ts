@@ -223,8 +223,26 @@ import * as THREE from "three";
 
         const ramps = [];
         let ferryController = null;
+        let _ugHooks: {
+            isActive: () => boolean;
+            getSurfaceHeight: (x: number, z: number) => number;
+            isPointInWater: (x: number, z: number) => boolean;
+            getZoneName: (x: number, z: number) => string;
+        } | null = null;
+
+        export function setUndergroundTerrainHooks(hooks: {
+            isActive: () => boolean;
+            getSurfaceHeight: (x: number, z: number) => number;
+            isPointInWater: (x: number, z: number) => boolean;
+            getZoneName: (x: number, z: number) => string;
+        } | null) {
+            _ugHooks = hooks;
+        }
 
         export function getSurfaceHeight(x, z) {
+            if (_ugHooks && _ugHooks.isActive()) {
+                return _ugHooks.getSurfaceHeight(x, z);
+            }
             // Wayward Island Suspension Causeway Bridge (X: 1480 .. 1760, Z: 540)
             if (x >= 1480 && x <= 1760 && Math.abs(z - 540) <= 10.5) {
                 if (x <= 1735) return 7.5;
@@ -313,6 +331,7 @@ import * as THREE from "three";
         }
 
         export function isPointOnRoad(x, z) {
+            if (_ugHooks && _ugHooks.isActive()) return false;
             const r = Math.sqrt(x * x + z * z);
             const theta = Math.atan2(z, x);
             if (Math.abs(r - getInnerRoadRadius(theta)) < 12.5) return true;
@@ -379,6 +398,9 @@ import * as THREE from "three";
         }
 
         export function isPointInWater(x, z) {
+            if (_ugHooks && _ugHooks.isActive()) {
+                return _ugHooks.isPointInWater(x, z);
+            }
             const sh = getSurfaceHeight(x, z);
             const th = getTerrainHeight(x, z);
             // Water plane is at y = -0.45.
@@ -407,6 +429,9 @@ import * as THREE from "three";
         }
 
         export function getZoneName(x, z) {
+            if (_ugHooks && _ugHooks.isActive()) {
+                return _ugHooks.getZoneName(x, z);
+            }
             if (Math.hypot(x - (-820), z - (-1180)) < 65) return "DR. MOROCCO'S CLIFFSIDE LAIR";
             if (Math.hypot(x - (-60), z - 1480) < 48) return "HIGH TIDE OCEAN RIG";
             if (Math.hypot(x - 2020, z - 510) < 55) return "CYBERTRONIAN ANCIENT RUINS";

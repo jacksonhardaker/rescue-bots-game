@@ -1,5 +1,7 @@
 // Minimap Radar & Full-Screen Tactical Island Map System
-import { player, buddyBot } from '../state/gameState.js';
+import { player, buddyBot, worldState } from '../state/gameState.js';
+import { progression } from '../progression/progression.js';
+import { getUndergroundMapData } from '../world/underground.js';
 import { beacons } from '../world/emergencies.js';
 import { DISCOVERY_LANDMARKS } from '../world/collectibles.js';
 import { sfx } from '../audio/soundFX.js';
@@ -79,6 +81,26 @@ export function handleTacticalMapTap(clientX, clientY) {
                 const canvasY = (clientY - rect.top) * (tacticalMapCanvas.height / rect.height);
                 const cx = tacticalMapCanvas.width / 2;
                 const cy = tacticalMapCanvas.height / 2;
+
+                if (worldState.activeArea === 'UNDERGROUND') {
+                    const ug = getUndergroundMapData();
+                    const ugScale = (cx * 0.84) / ug.halfWorld;
+                    let worldX = Math.max(-ug.halfWorld + 6, Math.min(ug.halfWorld - 6, (canvasX - cx) / ugScale));
+                    let worldZ = Math.max(-ug.halfWorld + 6, Math.min(ug.halfWorld - 6, (canvasY - cy) / ugScale));
+                    const ty = getSurfaceHeight(worldX, worldZ);
+                    const isWaterPt = isPointInWater(worldX, worldZ);
+                    const markerY = isWaterPt ? -0.45 : Math.max(0.0, ty);
+                    player.waypoint.set(worldX, markerY, worldZ);
+                    player.hasWaypoint = true;
+                    waypointGroup.position.set(worldX, markerY, worldZ);
+                    waypointGroup.visible = true;
+                    if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
+                    spawnBurstParticles(worldX, markerY + 0.5, worldZ, 0xfacc15, 6, 0.8);
+                    showToast("CAVERN WAYPOINT SET", `Navigating tunnels to (${Math.round(worldX)}, ${Math.round(worldZ)})`);
+                    closeTacticalMap();
+                    return;
+                }
+
                 const mapScale = (cx * 0.82) / 2200;
                 let worldX = (canvasX - cx) / mapScale;
                 let worldZ = (canvasY - cy) / mapScale;
@@ -221,6 +243,216 @@ function ensureMinimapBgCache(w: number, h: number) {
     bgCtx.strokeRect(hqx - 3.5, hqz - 3.5, 7, 7);
 }
 
+        function drawMapChevron(ctx: CanvasRenderingContext2D, x: number, y: number, heading: number, size: number, fill: string, stroke?: string) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(-heading + Math.PI);
+            ctx.fillStyle = fill;
+            ctx.beginPath();
+            ctx.moveTo(0, -size * 1.25);
+            ctx.lineTo(size, size * 1.1);
+            ctx.lineTo(0, size * 0.55);
+            ctx.lineTo(-size, size * 1.1);
+            ctx.closePath();
+            ctx.fill();
+            if (stroke) {
+                ctx.strokeStyle = stroke;
+                ctx.lineWidth = 1.4;
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function setNearestHintText(hintText: string) {
+            if (!_nearestHintEl) _nearestHintEl = document.getElementById('nearest-hazard-hint');
+            if (_nearestHintEl && hintText !== _lastNearestHintText) {
+                _lastNearestHintText = hintText;
+                _nearestHintEl.textContent = hintText;
+            }
+        }
+
+        function renderUndergroundRadar(
+            ctx: CanvasRenderingContext2D,
+            w: number,
+            h: number,
+            mapScale: number,
+            isFullMap: boolean
+        ) {
+            const ug = getUndergroundMapData();
+            const cx = w / 2;
+            const cy = h / 2;
+            const now = performance.now();
+            const discIds: string[] = Array.isArray(progression.discoveredCavernLandmarks) ? progression.discoveredCavernLandmarks : [];
+
+            // Background
+            ctx.fillStyle = isFullMap ? '#050814' : '#0b1024';
+            ctx.fillRect(0, 0, w, h);
+
+            const cs = ug.cellSize * mapScale;
+
+            // Fog-of-war explored 13x13 cavern cells
+            for (let r = 0; r < ug.gridSize; r++) {
+                for (let c = 0; c < ug.gridSize; c++) {
+                    const idx = r * ug.gridSize + c;
+                    const explored = ug.exploredSet.has(idx);
+                    const cellLeft = cx + (-ug.halfWorld + c * ug.cellSize) * mapScale;
+                    const cellTop = cy + (-ug.halfWorld + r * ug.cellSize) * mapScale;
+                    ctx.fillStyle = explored ? '#1e293b' : '#090e1d';
+                    ctx.fillRect(cellLeft + 0.5, cellTop + 0.5, cs - 1, cs - 1);
+                }
+            }
+
+            // Underground Lagoon & Magma Core overlays
+            const lcx = cx + ug.lagoon.x * mapScale;
+            const lcz = cy + ug.lagoon.z * mapScale;
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+            ctx.beginPath();
+            ctx.ellipse(lcx, lcz, ug.lagoon.rx * mapScale, ug.lagoon.rz * mapScale, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            const mcx = cx + ug.magma.x * mapScale;
+            const mcz = cy + ug.magma.z * mapScale;
+            ctx.fillStyle = 'rgba(249, 115, 22, 0.6)';
+            ctx.beginPath();
+            ctx.arc(mcx, mcz, ug.magma.r * mapScale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(mcx - ug.magma.r * mapScale, mcz - 8 * mapScale, ug.magma.r * 2 * mapScale, 16 * mapScale);
+
+            // Solid Maze Wall Edges (shown clearly around explored regions, subtle silhouette outside)
+            ctx.lineCap = 'round';
+            ug.edges.forEach((e: any) => {
+                if (e.open) return;
+                const exploredNear = ug.exploredSet.has(e.r1 * ug.gridSize + e.c1) || ug.exploredSet.has(e.r2 * ug.gridSize + e.c2);
+                if (e.cracked) {
+                    if (e.broken) return;
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = isFullMap ? 4.0 : 2.2;
+                } else {
+                    ctx.strokeStyle = exploredNear ? '#64748b' : 'rgba(51, 65, 85, 0.35)';
+                    ctx.lineWidth = isFullMap ? 2.6 : 1.4;
+                }
+                const ex = cx + e.x * mapScale;
+                const ez = cy + e.z * mapScale;
+                ctx.beginPath();
+                if (e.horizontal) {
+                    ctx.moveTo(ex - cs * 0.5, ez);
+                    ctx.lineTo(ex + cs * 0.5, ez);
+                } else {
+                    ctx.moveTo(ex, ez - cs * 0.5);
+                    ctx.lineTo(ex, ez + cs * 0.5);
+                }
+                ctx.stroke();
+            });
+
+            // Outer Cavern Perimeter Frame
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = isFullMap ? 3.0 : 1.6;
+            const boxSize = ug.halfWorld * 2 * mapScale;
+            ctx.strokeRect(cx - boxSize * 0.5, cy - boxSize * 0.5, boxSize, boxSize);
+
+            // Sunlit Exit Shafts (Gold Rings)
+            ug.exitShafts.forEach((sh: any) => {
+                const sx = cx + sh.x * mapScale;
+                const sz = cy + sh.z * mapScale;
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = isFullMap ? 2.2 : 1.3;
+                ctx.beginPath();
+                ctx.arc(sx, sz, isFullMap ? 8.5 : 4.2, 0, Math.PI * 2);
+                ctx.stroke();
+                if (isFullMap) {
+                    ctx.fillStyle = '#fde047';
+                    ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('EXIT SHAFT', sx, sz + 17);
+                }
+            });
+
+            // Collectible Gems inside explored corridors
+            if (isFullMap) {
+                ug.gems.forEach((gem: any) => {
+                    if (gem.collected) return;
+                    const gCellR = Math.floor((gem.z + ug.halfWorld) / ug.cellSize);
+                    const gCellC = Math.floor((gem.x + ug.halfWorld) / ug.cellSize);
+                    if (!ug.exploredSet.has(gCellR * ug.gridSize + gCellC)) return;
+                    ctx.fillStyle = '#c084fc';
+                    ctx.beginPath();
+                    ctx.arc(cx + gem.x * mapScale, cy + gem.z * mapScale, 2.8, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            // 7 Hidden Discoveries
+            ug.discoveries.forEach((disc: any) => {
+                const found = discIds.includes(disc.id);
+                const dx = cx + disc.x * mapScale;
+                const dz = cy + disc.z * mapScale;
+                if (!found && !isFullMap) return;
+                ctx.fillStyle = found ? disc.color : 'rgba(148, 163, 184, 0.55)';
+                ctx.beginPath();
+                ctx.arc(dx, dz, isFullMap ? 6.0 : 3.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = isFullMap ? 1.5 : 0.9;
+                ctx.stroke();
+
+                if (isFullMap) {
+                    const label = found ? disc.name : '???';
+                    ctx.font = 'bold 9px "JetBrains Mono", monospace';
+                    const lw = ctx.measureText(label).width;
+                    ctx.fillStyle = 'rgba(11, 15, 30, 0.9)';
+                    ctx.fillRect(dx - lw * 0.5 - 4, dz - 20, lw + 8, 13);
+                    ctx.fillStyle = found ? disc.color : '#cbd5e1';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(label, dx, dz - 10);
+                }
+            });
+
+            // Roaming Dinosaurs (sonar ping blips)
+            ug.dinos.forEach((d: any) => {
+                const dR = Math.floor((d.z + ug.halfWorld) / ug.cellSize);
+                const dC = Math.floor((d.x + ug.halfWorld) / ug.cellSize);
+                const nearPlayer = Math.hypot(d.x - player.pos.x, d.z - player.pos.z) < 95;
+                if (!ug.exploredSet.has(dR * ug.gridSize + dC) && !nearPlayer) return;
+                ctx.fillStyle = d.isBig ? '#fb7185' : '#4ade80';
+                ctx.beginPath();
+                ctx.arc(cx + d.x * mapScale, cy + d.z * mapScale, isFullMap ? (d.isBig ? 4.8 : 3.4) : 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Active Waypoint Marker
+            if (player.hasWaypoint && isFullMap) {
+                const wx = cx + player.waypoint.x * mapScale;
+                const wz = cy + player.waypoint.z * mapScale;
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(wx, wz, 8 + Math.sin(now * 0.01) * 2, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Buddy & Player Chevrons
+            if (buddyBot && buddyBot.botType && buddyBot.botType !== player.botType) {
+                drawMapChevron(ctx, cx + buddyBot.pos.x * mapScale, cy + buddyBot.pos.z * mapScale, buddyBot.heading, isFullMap ? 7 : 4.2, '#38bdf8', '#ffffff');
+            }
+            drawMapChevron(ctx, cx + player.pos.x * mapScale, cy + player.pos.z * mapScale, player.heading, isFullMap ? 9 : 5.2, '#facc15', '#ffffff');
+
+            if (!isFullMap) {
+                setNearestHintText(`Secrets: ${discIds.length}/${ug.discoveries.length} • Gems: ${progression.cavernGemsCollected || 0}`);
+            } else {
+                const titleEl = document.getElementById('tactical-map-title');
+                const subEl = document.getElementById('tactical-map-subtitle');
+                const pillEl = document.getElementById('tactical-map-status-pill');
+                const gridEl = document.getElementById('tactical-map-grid-pill');
+                const countEl = document.getElementById('tactical-active-emergencies-count');
+                if (titleEl) titleEl.textContent = 'GRIFFIN ROCK CAVERNS SONAR';
+                if (subEl) subEl.textContent = 'Subterranean Maze Mapping • Tap anywhere to navigate tunnels';
+                if (pillEl) pillEl.textContent = 'SONAR ACTIVE';
+                if (gridEl) gridEl.textContent = 'DEPTH: -120M // 13x13 GRID';
+                if (countEl) countEl.textContent = `SECRETS: ${discIds.length} / ${ug.discoveries.length}`;
+            }
+        }
+
         // 10A. CLEAN & UNCLUTTERED HUD MINIMAP (160x160 circular dial)
         // =====================================================================
         export function renderMinimap() {
@@ -230,6 +462,19 @@ function ensureMinimapBgCache(w: number, h: number) {
             const h = minimapCanvas.height;
             const cx = w / 2;
             const cy = h / 2;
+
+            if (worldState.activeArea === 'UNDERGROUND') {
+                mCtx.clearRect(0, 0, w, h);
+                mCtx.save();
+                mCtx.beginPath();
+                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
+                mCtx.clip();
+                const ugMiniScale = (cx * 0.80) / 234;
+                renderUndergroundRadar(mCtx, w, h, ugMiniScale, false);
+                mCtx.restore();
+                return;
+            }
+
             const mapScale = (cx * 0.70) / 1950;
 
             ensureMinimapBgCache(w, h);
@@ -388,6 +633,22 @@ function ensureMinimapBgCache(w: number, h: number) {
 
             // Clear Canvas
             tCtx.clearRect(0, 0, w, h);
+
+            if (worldState.activeArea === 'UNDERGROUND') {
+                const ugFullScale = (cx * 0.84) / 234;
+                renderUndergroundRadar(tCtx, w, h, ugFullScale, true);
+                return;
+            }
+
+            // Ensure surface Tactical Map header text is active
+            const titleEl = document.getElementById('tactical-map-title');
+            const subEl = document.getElementById('tactical-map-subtitle');
+            const pillEl = document.getElementById('tactical-map-status-pill');
+            const gridEl = document.getElementById('tactical-map-grid-pill');
+            if (titleEl && titleEl.textContent !== 'GRIFFIN ROCK TACTICAL MAP') titleEl.textContent = 'GRIFFIN ROCK TACTICAL MAP';
+            if (subEl && subEl.textContent !== 'Island Aerial Surveillance • Real-Time Positioning System') subEl.textContent = 'Island Aerial Surveillance • Real-Time Positioning System';
+            if (pillEl && pillEl.textContent !== 'LIVE RADAR') pillEl.textContent = 'LIVE RADAR';
+            if (gridEl && gridEl.textContent !== 'GRID: GR-01 // 1:4000') gridEl.textContent = 'GRID: GR-01 // 1:4000';
 
             // Layer 1: Oceanic Slate Radar Background
             const oceanGrad = tCtx.createRadialGradient(cx, cy, 60, cx, cy, cx * 1.05);

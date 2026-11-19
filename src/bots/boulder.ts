@@ -509,6 +509,88 @@ export function buildBoulder(parts, materials = {}, textures = {}) {
                 // Boat Mode: Channel Dredger
                 buildBoulderBoat(parts);
 
+                // =============================================================
+                // ROTARY AUGER TUNNEL DRILL (Bot Forearm + Bulldozer TBM Mode)
+                // =============================================================
+                const createRotaryAugerDrill = () => {
+                    const drillRoot = new THREE.Group();
+
+                    // Industrial housing collar & hazard trim
+                    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.72, 0.52, 12), matDarkSteel);
+                    collar.position.y = -0.26;
+                    collar.castShadow = true;
+                    drillRoot.add(collar);
+
+                    const hazardBand = new THREE.Mesh(new THREE.CylinderGeometry(0.73, 0.73, 0.24, 12), matHazardMat);
+                    hazardBand.position.y = -0.24;
+                    hazardBand.userData.noOutline = true;
+                    drillRoot.add(hazardBand);
+
+                    // 4 Glowing Cyan Energon Core Vents around collar
+                    for (let i = 0; i < 4; i++) {
+                        const ang = (i / 4) * Math.PI * 2;
+                        const vent = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.26, 0.16), matVisorCyan);
+                        vent.position.set(Math.cos(ang) * 0.68, -0.26, Math.sin(ang) * 0.68);
+                        vent.rotation.y = -ang;
+                        vent.userData.noOutline = true;
+                        drillRoot.add(vent);
+                    }
+
+                    // Spinning rotary auger bit pointing straight along -Y
+                    const bitGroup = new THREE.Group();
+                    bitGroup.position.y = -0.52;
+                    drillRoot.add(bitGroup);
+
+                    const coreCone = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.64, 2.25, 10).rotateX(Math.PI),
+                        matChrome
+                    );
+                    coreCone.position.y = -1.12;
+                    coreCone.castShadow = true;
+                    bitGroup.add(coreCone);
+
+                    // Helical yellow cutting flutes wrapped down the tapering auger bit
+                    const fluteCount = 5;
+                    for (let f = 0; f < fluteCount; f++) {
+                        const t = f / (fluteCount - 1);
+                        const r = THREE.MathUtils.lerp(0.66, 0.22, t);
+                        const flute = new THREE.Mesh(
+                            new THREE.TorusGeometry(r, 0.085, 6, 12).rotateX(Math.PI / 2 + 0.24),
+                            matYellow
+                        );
+                        flute.position.y = -0.28 - t * 1.55;
+                        flute.rotation.y = f * 0.9;
+                        bitGroup.add(flute);
+                    }
+
+                    const tipSpike = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.18, 0.48, 8).rotateX(Math.PI),
+                        matDarkSteel
+                    );
+                    tipSpike.position.y = -2.35;
+                    bitGroup.add(tipSpike);
+
+                    return { drillRoot, bitGroup };
+                };
+
+                // 1. Bot Mode Drill mounted below Right Forearm Fist
+                const botDrill = createRotaryAugerDrill();
+                botDrill.drillRoot.position.set(0, -0.95, 0.12);
+                botDrill.drillRoot.visible = false;
+                parts.rightForearm.add(botDrill.drillRoot);
+                parts.botDrillAssembly = botDrill.drillRoot;
+                parts.botDrillBit = botDrill.bitGroup;
+
+                // 2. Vehicle Mode TBM Drill projecting forward from Bulldozer Nose
+                const vehDrill = createRotaryAugerDrill();
+                vehDrill.drillRoot.position.set(0, -0.18, 1.55);
+                vehDrill.drillRoot.rotation.x = -Math.PI / 2;
+                vehDrill.drillRoot.scale.setScalar(1.22);
+                vehDrill.drillRoot.visible = false;
+                parts.frontAttachment.add(vehDrill.drillRoot);
+                parts.vehDrillAssembly = vehDrill.drillRoot;
+                parts.vehDrillBit = vehDrill.bitGroup;
+
                 // Initialize visibility matching current docked status
                 const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.boulderDocked);
                 if (typeof (window as any).setBotRigMega === 'function') {

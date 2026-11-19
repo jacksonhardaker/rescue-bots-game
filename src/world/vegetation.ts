@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { getTerrainHeight, isPointInWater, getRailwayRadius, isPointOnRoad } from './terrain.js';
 import { toonGrad3, toonGrad4, matInkOutline } from '../rendering/materials.js';
-import { registerCullableObject, worldColliders } from '../state/gameState.js';
+import { registerCullableObject, worldColliders, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { showToast } from '../ui/dialogs.js';
 import { progression, saveProgression } from '../progression/progression.js';
@@ -789,6 +789,7 @@ export function waterBush(bush: BushInstance, growthDelta: number) {
 }
 
 export function checkBoulderScoopAttack(x: number, y: number, z: number, heading: number, radius = 7.5) {
+    if (worldState.activeArea === 'UNDERGROUND') return;
     const frontX = x + Math.sin(heading) * 4.5;
     const frontZ = z + Math.cos(heading) * 4.5;
     const queryRadius = radius + 16;
@@ -846,6 +847,7 @@ export function checkBoulderScoopAttack(x: number, y: number, z: number, heading
 }
 
 export function checkWaterCannonFoliage(originX: number, originZ: number, heading: number, aimX: number, aimZ: number, dt: number) {
+    if (worldState.activeArea === 'UNDERGROUND') return;
     const fwdX = Math.sin(heading);
     const fwdZ = Math.cos(heading);
     const maxOriginSq = 28.0 * 28.0;

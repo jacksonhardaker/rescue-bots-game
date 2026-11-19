@@ -2,7 +2,11 @@
 import * as THREE from 'three';
 import { scene } from '../rendering/scene.js';
 import { getTerrainHeight, getSurfaceHeight, isPointInWater, isNearWater, isPointOnRoad, getZoneName } from '../world/terrain.js';
-import { player, buddyBot, botRigs, input, ramps, stateHolder, worldColliders, queryNearbyColliders } from '../state/gameState.js';
+import { player, buddyBot, botRigs, input, ramps, stateHolder, worldColliders, queryNearbyColliders, worldState } from '../state/gameState.js';
+import {
+    resolveUndergroundCollisions, getUndergroundCameraClamp,
+    triggerNearbyDinoReaction, registerUndergroundFXCallbacks
+} from '../world/underground.js';
 import { sfx } from '../audio/soundFX.js';
 import { isActionActive } from '../settings/settings.js';
 import { progression, saveProgression, isBotDocked } from '../progression/progression.js';
@@ -23,6 +27,7 @@ import { triggerPrimaryAction, checkHitMorBotWithSpecialAbility } from './player
 import { spawnWaterCannonStream } from '../world/emergencies.js';
 import { explodeRock, explodeTree, explodeBush, checkBoulderScoopAttack, checkWaterCannonFoliage } from '../world/vegetation.js';
 
+const _camIdealPos = new THREE.Vector3();
 const RAINBOW_TRAIL_COLORS = [0xef4444, 0xf97316, 0xfacc15, 0x4ade80, 0x38bdf8, 0xa855f7];
 let rainbowTrailIdx = 0;
 const _playerNearbyColliders: any[] = [];
@@ -144,6 +149,20 @@ export let wpArrowCone = null;
         energyNetGroup.add(energyNetDome);
         scene.add(energyNetGroup);
 
+        export function reparentSharedFXToScene(targetScene: THREE.Scene) {
+            if (!targetScene) return;
+            targetScene.add(waypointGroup);
+            targetScene.add(headlight);
+            targetScene.add(headlight.target);
+            targetScene.add(buddyHeadlight);
+            targetScene.add(buddyHeadlight.target);
+            targetScene.add(sonarMesh);
+            targetScene.add(winchGroup);
+            targetScene.add(energyNetGroup);
+        }
+
+        registerUndergroundFXCallbacks(reparentSharedFXToScene, () => waypointGroup);
+
         document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
         document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
         document.addEventListener('touchmove', e => {
@@ -225,54 +244,64 @@ export let wpArrowCone = null;
             const hitPoint = intersectRayWithTerrain(raycaster.ray, _rayHitPoint);
             if (!hitPoint) return;
 
-            // Clamp within playable 10x island & Wayward Island boundary
-            const maxRadius = 1720;
+            const isUndergroundTap = worldState.activeArea === 'UNDERGROUND';
             const r = Math.hypot(hitPoint.x, hitPoint.z);
-            const isWayward = Math.hypot(hitPoint.x - 1960, hitPoint.z - 540) < 360 ||
-                              (hitPoint.x >= 1120 && hitPoint.x <= 1780 && Math.abs(hitPoint.z - 540) < 40);
-            if (!isWayward && r > maxRadius) {
-                hitPoint.x = (hitPoint.x / r) * maxRadius;
-                hitPoint.z = (hitPoint.z / r) * maxRadius;
-            }
 
-            // If child taps near a Human or Vehicle NPC, have that NPC immediately speak the closest disaster location!
-            if (playChime) {
-                let tappedNPC = null;
-                let bestNPCDist = 18.0;
-                for (let i = 0; i < humanNPCs.length; i++) {
-                    const d = Math.hypot(hitPoint.x - humanNPCs[i].x, hitPoint.z - humanNPCs[i].z);
-                    if (d < bestNPCDist) { bestNPCDist = d; tappedNPC = humanNPCs[i]; }
+            if (isUndergroundTap) {
+                hitPoint.x = Math.max(-228, Math.min(228, hitPoint.x));
+                hitPoint.z = Math.max(-228, Math.min(228, hitPoint.z));
+                if (playChime) {
+                    triggerNearbyDinoReaction(hitPoint.x, hitPoint.z);
                 }
-                for (let i = 0; i < vehicleNPCs.length; i++) {
-                    const d = Math.hypot(hitPoint.x - vehicleNPCs[i].x, hitPoint.z - vehicleNPCs[i].z);
-                    if (d < bestNPCDist) { bestNPCDist = d; tappedNPC = vehicleNPCs[i]; }
+            } else {
+                // Clamp within playable 10x island & Wayward Island boundary
+                const maxRadius = 1720;
+                const isWayward = Math.hypot(hitPoint.x - 1960, hitPoint.z - 540) < 360 ||
+                                  (hitPoint.x >= 1120 && hitPoint.x <= 1780 && Math.abs(hitPoint.z - 540) < 40);
+                if (!isWayward && r > maxRadius) {
+                    hitPoint.x = (hitPoint.x / r) * maxRadius;
+                    hitPoint.z = (hitPoint.z / r) * maxRadius;
                 }
-                if (tappedNPC) {
-                    speakClosestDisasterForNPC(tappedNPC, true);
-                } else {
-                    for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
-                        const b = beacons[bIdx];
-                        if (b.strandedCitizens && Math.hypot(hitPoint.x - b.x, hitPoint.z - b.z) < 24.0) {
-                            const sc = b.strandedCitizens[0];
-                            if (!b.restored) {
-                                triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc, true);
-                            } else {
-                                const botName = BOT_METADATA[player.botType] ? BOT_METADATA[player.botType].name : player.botType;
-                                triggerNPCSpeech(sc.name, "Rescued Citizen", `Thank you, ${botName}! You saved us at the ${b.name}!`, sc, true);
+
+                // If child taps near a Human or Vehicle NPC, have that NPC immediately speak the closest disaster location!
+                if (playChime) {
+                    let tappedNPC = null;
+                    let bestNPCDist = 18.0;
+                    for (let i = 0; i < humanNPCs.length; i++) {
+                        const d = Math.hypot(hitPoint.x - humanNPCs[i].x, hitPoint.z - humanNPCs[i].z);
+                        if (d < bestNPCDist) { bestNPCDist = d; tappedNPC = humanNPCs[i]; }
+                    }
+                    for (let i = 0; i < vehicleNPCs.length; i++) {
+                        const d = Math.hypot(hitPoint.x - vehicleNPCs[i].x, hitPoint.z - vehicleNPCs[i].z);
+                        if (d < bestNPCDist) { bestNPCDist = d; tappedNPC = vehicleNPCs[i]; }
+                    }
+                    if (tappedNPC) {
+                        speakClosestDisasterForNPC(tappedNPC, true);
+                    } else {
+                        for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
+                            const b = beacons[bIdx];
+                            if (b.strandedCitizens && Math.hypot(hitPoint.x - b.x, hitPoint.z - b.z) < 24.0) {
+                                const sc = b.strandedCitizens[0];
+                                if (!b.restored) {
+                                    triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc, true);
+                                } else {
+                                    const botName = BOT_METADATA[player.botType] ? BOT_METADATA[player.botType].name : player.botType;
+                                    triggerNPCSpeech(sc.name, "Rescued Citizen", `Thank you, ${botName}! You saved us at the ${b.name}!`, sc, true);
+                                }
+                                break;
                             }
-                            break;
                         }
                     }
                 }
-            }
 
-            // Snap to nearest active emergency beacon if child taps close to one (generous 28m magnet!)
-            beacons.forEach(b => {
-                if (!b.restored && Math.hypot(hitPoint.x - b.x, hitPoint.z - b.z) < 28) {
-                    hitPoint.x = b.x;
-                    hitPoint.z = b.z;
-                }
-            });
+                // Snap to nearest active emergency beacon if child taps close to one (generous 28m magnet!)
+                beacons.forEach(b => {
+                    if (!b.restored && Math.hypot(hitPoint.x - b.x, hitPoint.z - b.z) < 28) {
+                        hitPoint.x = b.x;
+                        hitPoint.z = b.z;
+                    }
+                });
+            }
 
             // High Tide submarine/plesiosaur and all vehicle-mode bots move in water (as boat modes); Blades and docked Quickshadow fly freely over land; other bots stay on land
             const isAmphibiousVehicle = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE');
@@ -341,6 +370,7 @@ export let wpArrowCone = null;
                 target.closest('#morocco-modal') ||
                 target.closest('#morbot-victory-modal') ||
                 target.closest('#tactical-map-modal') ||
+                target.closest('#cavern-exit-prompt') ||
                 target.closest('#minimap-container')
             );
         }
@@ -431,6 +461,42 @@ export let wpArrowCone = null;
 
 
         export function updatePhysics(dt, now) {
+            const isUnderground = worldState.activeArea === 'UNDERGROUND';
+            if (player.drillEquipTimer > 0) player.drillEquipTimer = Math.max(0, player.drillEquipTimer - dt);
+
+            // While drilling into or out of the underground caverns, lock controls & frame borehole action
+            if (worldState.drillAnim && worldState.drillAnim.active) {
+                player.speed = 0;
+                player.hasWaypoint = false;
+                if (waypointGroup) waypointGroup.visible = false;
+                activePointerDown = false;
+                for (let i = activeParticles.length - 1; i >= 0; i--) {
+                    const p = activeParticles[i];
+                    p.life -= dt;
+                    if (p.life <= 0) {
+                        releaseParticle(p);
+                        activeParticles.splice(i, 1);
+                    } else {
+                        p.vy -= p.gravity * dt;
+                        p.mesh.position.x += p.vx * dt;
+                        p.mesh.position.y += p.vy * dt;
+                        p.mesh.position.z += p.vz * dt;
+                        const s = Math.max(0.1, p.life);
+                        p.mesh.scale.set((p.baseScaleX || 1) * s, (p.baseScaleY || 1) * s, (p.baseScaleZ || 1) * s);
+                    }
+                }
+                const focusY = worldState.drillAnim.startY;
+                _camIdealPos.set(
+                    player.pos.x + Math.sin(input.camYaw) * 24,
+                    focusY + 12,
+                    player.pos.z + Math.cos(input.camYaw) * 24
+                );
+                if (isUnderground) getUndergroundCameraClamp(player.pos, _camIdealPos);
+                camera.position.lerp(_camIdealPos, Math.min(1, dt * 8));
+                camera.lookAt(player.pos.x, focusY + 1.5, player.pos.z);
+                return;
+            }
+
             let moveY = 0;
             let moveX = 0;
 
@@ -462,7 +528,7 @@ export let wpArrowCone = null;
             if (player.smashTimer > 0) player.smashTimer = Math.max(0, player.smashTimer - dt);
             if (player.scoopTimer > 0) {
                 player.scoopTimer = Math.max(0, player.scoopTimer - dt);
-                if (player.botType === 'BOULDER') {
+                if (player.botType === 'BOULDER' && !isUnderground) {
                     checkBoulderScoopAttack(player.pos.x, player.pos.y, player.pos.z, player.heading, 6.0);
                 }
             }
@@ -716,6 +782,15 @@ export let wpArrowCone = null;
                 }
             }
 
+            // Apply gentle playful knockback impulse from big cavern dinosaurs
+            if (Math.hypot(player.knockbackVx || 0, player.knockbackVz || 0) > 0.1) {
+                player.pos.x += (player.knockbackVx || 0) * dt;
+                player.pos.z += (player.knockbackVz || 0) * dt;
+                const decay = Math.exp(-dt * 7.5);
+                player.knockbackVx *= decay;
+                player.knockbackVz *= decay;
+            }
+
             // Sample terrain footprint for vehicle suspension & pitch/roll slope conform
             const isVehicleOrDino = player.mode === 'VEHICLE' || player.mode === 'DINO';
             const currentBotScale = getBotScale(player.botType);
@@ -755,7 +830,7 @@ export let wpArrowCone = null;
             // Griffin Rock Express Train Car Roof & Flatbed Riding Detection
             let onTrainRoof = false;
             let ridingTrainCar = null;
-            if (typeof islandTrain !== 'undefined' && islandTrain.cars.length > 0) {
+            if (!isUnderground && typeof islandTrain !== 'undefined' && islandTrain.cars.length > 0) {
                 for (let i = 0; i < islandTrain.cars.length; i++) {
                     const car = islandTrain.cars[i];
                     const cdx = player.pos.x - car.x;
@@ -830,10 +905,14 @@ export let wpArrowCone = null;
                 player.pos.z += trainVz * dt;
             }
 
-            // Ground Collision against Buildings & Trees (Slide smoothly around obstacles during Tap-to-Move)
+            // Ground Collision against Buildings & Trees (Surface) OR Cavern Maze/Dinos (Underground)
             const currentClearance = player.pos.y - targetGroundY;
 
-            if (!player.inCrane && currentClearance < 12) {
+            if (isUnderground) {
+                player.pos.x = Math.max(-228, Math.min(228, player.pos.x));
+                player.pos.z = Math.max(-228, Math.min(228, player.pos.z));
+                resolveUndergroundCollisions(player, dt, now);
+            } else if (!player.inCrane && currentClearance < 12) {
                 const playerRadius = 2.4;
                 const nearbyColliders = queryNearbyColliders(player.pos.x, player.pos.z, playerRadius + 16, _playerNearbyColliders);
                 for (let i = 0; i < nearbyColliders.length; i++) {
@@ -1076,8 +1155,10 @@ export let wpArrowCone = null;
                 player.vy = 0;
                 player.grounded = true;
             } else if (isFlyingCopter) {
-                if (isActionActive('secondaryAction')) player.flightAlt = Math.min(95, player.flightAlt + 28 * dt);
+                const maxFlyAlt = isUnderground ? 14 : 95;
+                if (isActionActive('secondaryAction')) player.flightAlt = Math.min(maxFlyAlt, player.flightAlt + 28 * dt);
                 if (isActionActive('descendAction')) player.flightAlt = Math.max(2, player.flightAlt - 28 * dt);
+                if (player.flightAlt > maxFlyAlt) player.flightAlt = maxFlyAlt;
                 const targetHoverY = centerGroundY + player.flightAlt + Math.sin(now * 0.004) * 0.45;
                 player.pos.y = THREE.MathUtils.lerp(player.pos.y, targetHoverY, Math.min(1, dt * 5.5));
                 player.vy = 0;
@@ -1126,16 +1207,18 @@ export let wpArrowCone = null;
 
             // KID-FRIENDLY SMART AUTO-RESCUE: Automatically trigger rescue powers when arriving near any emergency!
             let nearActiveHazard = false;
-            beacons.forEach(beacon => {
-                if (beacon.restored) return;
-                beacon.nodes.forEach(n => {
-                    if (n.cleared) return;
-                    const distToHazard = Math.hypot(player.pos.x - n.x, player.pos.z - n.z);
-                    if (distToHazard < 13.5) {
-                        nearActiveHazard = true;
-                    }
+            if (!isUnderground) {
+                beacons.forEach(beacon => {
+                    if (beacon.restored) return;
+                    beacon.nodes.forEach(n => {
+                        if (n.cleared) return;
+                        const distToHazard = Math.hypot(player.pos.x - n.x, player.pos.z - n.z);
+                        if (distToHazard < 13.5) {
+                            nearActiveHazard = true;
+                        }
+                    });
                 });
-            });
+            }
 
             // Note: Auto-attack on MorBot proximity is intentionally disabled to keep boss battles active & challenging.
 
@@ -1150,24 +1233,26 @@ export let wpArrowCone = null;
                 spawnWaterCannonStream();
                 if (Math.random() < 0.25) sfx.playWaterSpray();
 
-                // Check MorBot hit from continuous water cannon stream
-                if (typeof checkHitMorBotWithSpecialAbility === 'function') {
-                    checkHitMorBotWithSpecialAbility(48.0, "WATER CANNON");
-                }
+                if (!isUnderground) {
+                    // Check MorBot hit from continuous water cannon stream
+                    if (typeof checkHitMorBotWithSpecialAbility === 'function') {
+                        checkHitMorBotWithSpecialAbility(48.0, "WATER CANNON");
+                    }
 
-                // Extinguish any hazard node within 30m of Heatwave or along his forward arc
-                const aimX = player.pos.x + Math.sin(player.heading) * 14;
-                const aimZ = player.pos.z + Math.cos(player.heading) * 14;
-                beacons.forEach(beacon => {
-                    beacon.nodes.forEach(n => {
-                        if (!n.cleared && (Math.hypot(aimX - n.x, aimZ - n.z) < 18.5 || Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 28.0)) {
-                            clearHazardNode(beacon, n, 'WATER');
-                        }
+                    // Extinguish any hazard node within 30m of Heatwave or along his forward arc
+                    const aimX = player.pos.x + Math.sin(player.heading) * 14;
+                    const aimZ = player.pos.z + Math.cos(player.heading) * 14;
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && (Math.hypot(aimX - n.x, aimZ - n.z) < 18.5 || Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 28.0)) {
+                                clearHazardNode(beacon, n, 'WATER');
+                            }
+                        });
                     });
-                });
 
-                // Water nearby trees along the water stream (trees grow up to 5x size!)
-                checkWaterCannonFoliage(player.pos.x, player.pos.z, player.heading, aimX, aimZ, dt);
+                    // Water nearby trees along the water stream (trees grow up to 5x size!)
+                    checkWaterCannonFoliage(player.pos.x, player.pos.z, player.heading, aimX, aimZ, dt);
+                }
             }
 
             // Animate Blades' Helicopter Rescue Winch Cable & Airlift Hook
@@ -1210,31 +1295,35 @@ export let wpArrowCone = null;
             }
 
             // Direct Contact / Ramming Hazard Nodes (Cleared easily when driving or walking up to them!)
-            beacons.forEach(beacon => {
-                beacon.nodes.forEach(n => {
-                    if (n.cleared) return;
-                    const dx = player.pos.x - n.x;
-                    const dz = player.pos.z - n.z;
-                    const dy = Math.abs(player.pos.y - n.y);
-                    const dist = Math.hypot(dx, dz);
-                    if (dist < 3.4 + n.r && dy < 12.0) {
-                        clearHazardNode(beacon, n, 'RAM');
-                    }
+            if (!isUnderground) {
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (n.cleared) return;
+                        const dx = player.pos.x - n.x;
+                        const dz = player.pos.z - n.z;
+                        const dy = Math.abs(player.pos.y - n.y);
+                        const dist = Math.hypot(dx, dz);
+                        if (dist < 3.4 + n.r && dy < 12.0) {
+                            clearHazardNode(beacon, n, 'RAM');
+                        }
+                    });
                 });
-            });
+            }
 
 
             // Dynamic Shadow Tracking across the 10X Island (Texel-snapped to prevent shadow edge swimming)
-            const snapX = Math.round(player.pos.x / 2) * 2;
-            const snapZ = Math.round(player.pos.z / 2) * 2;
-            sunLight.target.position.set(snapX, player.pos.y, snapZ);
-            sunLight.target.updateMatrixWorld();
+            if (!isUnderground) {
+                const snapX = Math.round(player.pos.x / 2) * 2;
+                const snapZ = Math.round(player.pos.z / 2) * 2;
+                sunLight.target.position.set(snapX, player.pos.y, snapZ);
+                sunLight.target.updateMatrixWorld();
+            }
 
             // Dynamic Headlight Spotlights & Sonar Ring for Player & Buddy Bot
-            const targetHl = (window as any).targetHeadlightIntensity || 0;
+            const targetHl = isUnderground ? 2.8 : ((window as any).targetHeadlightIntensity || 0);
             headlight.intensity = THREE.MathUtils.lerp(headlight.intensity, targetHl, Math.min(1, dt * 3.5));
             if (buddyHeadlight) {
-                buddyHeadlight.intensity = THREE.MathUtils.lerp(buddyHeadlight.intensity, targetHl * 0.85, Math.min(1, dt * 3.5));
+                buddyHeadlight.intensity = THREE.MathUtils.lerp(buddyHeadlight.intensity, isUnderground ? 1.8 : targetHl * 0.85, Math.min(1, dt * 3.5));
             }
 
             headlight.position.set(player.pos.x, player.pos.y + 3.5, player.pos.z);
@@ -1279,7 +1368,7 @@ export let wpArrowCone = null;
                     p.mesh.scale.set((p.baseScaleX || 1) * s, (p.baseScaleY || 1) * s, (p.baseScaleZ || 1) * s);
 
                     // Water drop particles directly douse fire nodes on contact!
-                    if (p.isWater) {
+                    if (p.isWater && !isUnderground) {
                         const px = p.mesh.position.x;
                         const py = p.mesh.position.y;
                         const pz = p.mesh.position.z;
@@ -1343,6 +1432,10 @@ export let wpArrowCone = null;
             }
 
             // Facing Factor: 1.0 when facing the bot directly from front, 0.0 when behind
+            if (isUnderground) {
+                baseDist = Math.min(baseDist, 27.0);
+                activePitch = Math.min(activePitch, 0.42);
+            }
             const frontFactor = Math.max(0, Math.cos(input.camYaw - player.heading));
             const activeDist = baseDist * (1.0 - frontFactor * 0.28);
             const dynamicPitch = activePitch * (1.0 - frontFactor * 0.38);
@@ -1355,7 +1448,11 @@ export let wpArrowCone = null;
             const minGroundCamY = getSurfaceHeight(idealCamX, idealCamZ) + 4.5;
             const idealCamY = Math.max(minGroundCamY, player.pos.y + camHeight + 4.5 * (1.0 - frontFactor * 0.55));
 
-            camera.position.lerp(new THREE.Vector3(idealCamX, idealCamY, idealCamZ), Math.min(1, dt * 8));
+            _camIdealPos.set(idealCamX, idealCamY, idealCamZ);
+            if (isUnderground) {
+                getUndergroundCameraClamp(player.pos, _camIdealPos);
+            }
+            camera.position.lerp(_camIdealPos, Math.min(1, dt * 8));
 
             // While facing the bot from front, center directly on the bot's chest.
             // As the camera shifts behind the bot, smoothly transition the look target ahead of the bot.

@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { getSurfaceHeight } from './terrain.js';
 import { toonGrad3, toonGrad4, matDarkSteel, matChrome, matInkOutline } from '../rendering/materials.js';
-import { player, botRigs, worldColliders, registerCullableObject } from '../state/gameState.js';
+import { player, botRigs, worldColliders, registerCullableObject, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
 import { progression, saveProgression } from '../progression/progression.js';
@@ -233,6 +233,7 @@ export function getNearestDumpster(playerRef: any, maxDist = 8.5): DumpsterInsta
 }
 
 export function isDumpsterNearPlayer(playerRef: any, threshold = 8.5): boolean {
+    if (worldState.activeArea === 'UNDERGROUND') return false;
     return getNearestDumpster(playerRef, threshold) !== null;
 }
 

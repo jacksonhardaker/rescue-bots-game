@@ -47,8 +47,34 @@ export const player: Record<string, any> = {
     lastSplatTime: 0,
     dumpsterTimer: 0,     // Salvage Dumpster Hopper Dump animation timer
     activeDumpster: null, // Currently gripped / dumped dumpster instance
+    drillEquipTimer: 0,   // Boulder rotary auger drill equipment animation timer
+    drillSpin: 0,
+    dinoNudgeCooldown: 0, // Prevents repeated big-dino knockback impulses
+    knockbackVx: 0,
+    knockbackVz: 0,
     trailerAngle: 0,
     trailerArticAngle: 0
+};
+
+export const worldState: Record<string, any> = {
+    activeArea: 'SURFACE', // 'SURFACE' | 'UNDERGROUND'
+    savedSurfacePos: new THREE.Vector3(0, 5, -15),
+    savedSurfaceHeading: 0,
+    savedUndergroundPos: new THREE.Vector3(0, 1.0, 6),
+    savedUndergroundHeading: 0,
+    hasVisitedUnderground: false,
+    nearExitShaft: false,
+    drillAnim: {
+        active: false,
+        direction: 'DOWN', // 'DOWN' | 'UP'
+        timer: 0,
+        duration: 1.9,
+        swapped: false,
+        startX: 0,
+        startY: 0,
+        startZ: 0,
+        lastParticleTime: 0
+    }
 };
 
 export const buddyBot: Record<string, any> = {
@@ -172,6 +198,7 @@ export const botPhraseCounters = {
 if (typeof window !== 'undefined') {
     window.player = player;
     window.buddyBot = buddyBot;
+    window.worldState = worldState;
     window.input = input;
     window.ramps = ramps;
     window.worldColliders = worldColliders;
