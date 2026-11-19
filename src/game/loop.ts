@@ -65,7 +65,7 @@ export function savePlayerMapPosition(force = false) {
         progression.playerBotType = player.botType;
         progression.playerMode = player.mode;
         progression.buddyBotType = buddyBot.botType;
-        saveProgression();
+        saveProgression({ immediate: force });
     }
 }
 
@@ -88,7 +88,7 @@ export function savePlayerMapPosition(force = false) {
             }
 
             positionSaveTimer += dt;
-            if (positionSaveTimer >= 1.0) {
+            if (positionSaveTimer >= 3.0) {
                 positionSaveTimer = 0;
                 savePlayerMapPosition();
             }
@@ -1106,4 +1106,9 @@ if (typeof window !== 'undefined') {
     window.savePlayerMapPosition = savePlayerMapPosition;
     window.addEventListener('beforeunload', () => savePlayerMapPosition(true));
     window.addEventListener('pagehide', () => savePlayerMapPosition(true));
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) savePlayerMapPosition(true);
+        });
+    }
 }

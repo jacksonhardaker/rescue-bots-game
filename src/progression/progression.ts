@@ -248,7 +248,6 @@ export function loadProgression(options: Record<string, any> = {}) {
 
     try {
         window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(progression));
-        window.localStorage.setItem(PROGRESSION_STORAGE_KEY, JSON.stringify(progression));
     } catch(e){}
 
     lastKnownRankLevel = getRescueStarRank(progression).level;
@@ -263,6 +262,26 @@ export function loadProgression(options: Record<string, any> = {}) {
     }
 }
 
+let _saveDirty = false;
+let _saveTimer: ReturnType<typeof setTimeout> | null = null;
+const SAVE_DEBOUNCE_MS = 5000;
+
+export function flushProgressionSave() {
+    if (!_saveDirty) return;
+    if (_saveTimer) {
+        clearTimeout(_saveTimer);
+        _saveTimer = null;
+    }
+    _saveDirty = false;
+    try {
+        progression.saveVersion = CURRENT_SAVE_VERSION;
+        progression.releaseVersion = RELEASE_VERSION;
+        window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(progression));
+    } catch (err) {
+        // Ignore storage quota / private mode restrictions
+    }
+}
+
 export function saveProgression(options: Record<string, any> = {}) {
     const sfx = options.sfx || window.sfx;
     const player = options.player || window.player;
@@ -274,14 +293,16 @@ export function saveProgression(options: Record<string, any> = {}) {
     const rankedUp = newRank.level > lastKnownRankLevel;
     lastKnownRankLevel = newRank.level;
 
-    try {
-        progression.saveVersion = CURRENT_SAVE_VERSION;
-        progression.releaseVersion = RELEASE_VERSION;
-        window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(progression));
-        window.localStorage.setItem(PROGRESSION_STORAGE_KEY, JSON.stringify(progression));
-    } catch (err) {
-        // Ignore storage quota / private mode restrictions
+    progression.saveVersion = CURRENT_SAVE_VERSION;
+    progression.releaseVersion = RELEASE_VERSION;
+    _saveDirty = true;
+
+    if (options.immediate === true) {
+        flushProgressionSave();
+    } else if (!_saveTimer) {
+        _saveTimer = setTimeout(() => flushProgressionSave(), SAVE_DEBOUNCE_MS);
     }
+
     syncProgressionHUD();
 
     if (rankedUp) {
@@ -300,34 +321,100 @@ export function saveProgression(options: Record<string, any> = {}) {
     }
 }
 
+let _lastHudSnap: {
+    em: number;
+    cit: number;
+    en: number;
+    landmarks: number;
+    crests: number;
+    allies: number;
+    rankLevel: number;
+    rankTitle: string;
+} | null = null;
+let _hudEls: Record<string, HTMLElement | null> | null = null;
+
 export function syncProgressionHUD() {
-    const totalEmEl = document.getElementById('stat-total-emergencies');
-    const totalCitEl = document.getElementById('stat-total-citizens');
-    const totalEnEl = document.getElementById('stat-total-energon');
-    const totalLandmarksEl = document.getElementById('stat-total-landmarks');
-    const totalCrestsEl = document.getElementById('stat-total-crests');
-    const totalAlliesEl = document.getElementById('stat-total-allies');
-    if (totalEmEl) totalEmEl.textContent = String(progression.totalEmergenciesResolved);
-    if (totalCitEl) totalCitEl.textContent = String(progression.totalCitizensRescued);
-    if (totalEnEl) totalEnEl.textContent = String(progression.totalEnergonCubes);
-    if (totalLandmarksEl) totalLandmarksEl.textContent = String(Array.isArray(progression.discoveredLandmarks) ? progression.discoveredLandmarks.length : 0);
-    if (totalCrestsEl) totalCrestsEl.textContent = String(Array.isArray(progression.collectedCrests) ? progression.collectedCrests.length : 0);
-    if (totalAlliesEl) {
-        const count = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies.length : 0;
-        totalAlliesEl.textContent = String(count);
-        totalAlliesEl.className = count >= 6 ? 'text-emerald-400 font-extrabold' : 'text-purple-300 font-bold';
+    if (typeof document === 'undefined') return;
+    if (!_hudEls) {
+        _hudEls = {
+            em: document.getElementById('stat-total-emergencies'),
+            cit: document.getElementById('stat-total-citizens'),
+            en: document.getElementById('stat-total-energon'),
+            landmarks: document.getElementById('stat-total-landmarks'),
+            crests: document.getElementById('stat-total-crests'),
+            allies: document.getElementById('stat-total-allies'),
+            rankBadge: document.getElementById('stat-rank-badge'),
+            rankStars: document.getElementById('stat-rank-stars'),
+            rankTitle: document.getElementById('stat-rank-title')
+        };
     }
 
+    const em = progression.totalEmergenciesResolved || 0;
+    const cit = progression.totalCitizensRescued || 0;
+    const en = progression.totalEnergonCubes || 0;
+    const landmarks = Array.isArray(progression.discoveredLandmarks) ? progression.discoveredLandmarks.length : 0;
+    const crests = Array.isArray(progression.collectedCrests) ? progression.collectedCrests.length : 0;
+    const allies = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies.length : 0;
     const rankInfo = getRescueStarRank(progression);
-    const rankBadgeEl = document.getElementById('stat-rank-badge');
-    const rankStarsEl = document.getElementById('stat-rank-stars');
-    const rankTitleEl = document.getElementById('stat-rank-title');
-    if (rankStarsEl && rankTitleEl) {
-        rankStarsEl.innerHTML = renderStarSVGs(rankInfo.level);
-        rankTitleEl.textContent = rankInfo.title;
-    } else if (rankBadgeEl) {
-        rankBadgeEl.innerHTML = `<span id="stat-rank-stars" class="flex items-center gap-0.5">${renderStarSVGs(rankInfo.level)}</span><span id="stat-rank-title">${rankInfo.title}</span>`;
+
+    const prev = _lastHudSnap;
+    if (
+        prev &&
+        prev.em === em &&
+        prev.cit === cit &&
+        prev.en === en &&
+        prev.landmarks === landmarks &&
+        prev.crests === crests &&
+        prev.allies === allies &&
+        prev.rankLevel === rankInfo.level &&
+        prev.rankTitle === rankInfo.title
+    ) {
+        return;
     }
+
+    if (!prev || prev.em !== em) {
+        if (_hudEls.em) _hudEls.em.textContent = String(em);
+    }
+    if (!prev || prev.cit !== cit) {
+        if (_hudEls.cit) _hudEls.cit.textContent = String(cit);
+    }
+    if (!prev || prev.en !== en) {
+        if (_hudEls.en) _hudEls.en.textContent = String(en);
+    }
+    if (!prev || prev.landmarks !== landmarks) {
+        if (_hudEls.landmarks) _hudEls.landmarks.textContent = String(landmarks);
+    }
+    if (!prev || prev.crests !== crests) {
+        if (_hudEls.crests) _hudEls.crests.textContent = String(crests);
+    }
+    if (!prev || prev.allies !== allies) {
+        if (_hudEls.allies) {
+            _hudEls.allies.textContent = String(allies);
+            _hudEls.allies.className = allies >= 6 ? 'text-emerald-400 font-extrabold' : 'text-purple-300 font-bold';
+        }
+    }
+
+    if (!prev || prev.rankLevel !== rankInfo.level || prev.rankTitle !== rankInfo.title) {
+        if (_hudEls.rankStars && _hudEls.rankTitle) {
+            _hudEls.rankStars.innerHTML = renderStarSVGs(rankInfo.level);
+            _hudEls.rankTitle.textContent = rankInfo.title;
+        } else if (_hudEls.rankBadge) {
+            _hudEls.rankBadge.innerHTML = `<span id="stat-rank-stars" class="flex items-center gap-0.5">${renderStarSVGs(rankInfo.level)}</span><span id="stat-rank-title">${rankInfo.title}</span>`;
+            _hudEls.rankStars = document.getElementById('stat-rank-stars');
+            _hudEls.rankTitle = document.getElementById('stat-rank-title');
+        }
+    }
+
+    _lastHudSnap = {
+        em,
+        cit,
+        en,
+        landmarks,
+        crests,
+        allies,
+        rankLevel: rankInfo.level,
+        rankTitle: rankInfo.title
+    };
 }
 
 export function exportSaveData() {
@@ -356,7 +443,7 @@ export function importSaveData(file: any, onComplete?: () => void) {
                 if (typeof parsed.buddyBotType === 'string' && (window.BOT_METADATA ? window.BOT_METADATA[parsed.buddyBotType] : true)) {
                     progression.buddyBotType = parsed.buddyBotType;
                 }
-                saveProgression();
+                saveProgression({ immediate: true });
                 if (onComplete) onComplete();
                 else window.location.reload();
             }
@@ -385,17 +472,36 @@ export function resetCareerProgress(onComplete) {
         progression.playerMode = 'BOT';
         progression.playerPosition = null;
         progression.completedMissions = [];
-        saveProgression();
+        try {
+            for (const k of LEGACY_SAVE_KEYS) {
+                window.localStorage.removeItem(k);
+            }
+            const toRemove: string[] = [];
+            for (let i = 0; i < window.localStorage.length; i++) {
+                const k = window.localStorage.key(i);
+                if (k && k.startsWith(PROGRESSION_STORAGE_PREFIX)) toRemove.push(k);
+            }
+            toRemove.forEach(k => window.localStorage.removeItem(k));
+        } catch (e) {}
+        saveProgression({ immediate: true });
         if (onComplete) onComplete();
         else window.location.reload();
     }
 }
 
 if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', () => flushProgressionSave());
+    window.addEventListener('beforeunload', () => flushProgressionSave());
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) flushProgressionSave();
+        });
+    }
     Object.assign(window, {
         progression,
         loadProgression,
         saveProgression,
+        flushProgressionSave,
         getRescueStarRank,
         getBotDockedKey,
         isBotDocked,
