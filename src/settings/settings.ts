@@ -1,5 +1,6 @@
 // Persistent Game Settings & Control Remapping
 // Stored in `rescue_bots_settings_v1` - persists independently across game releases
+import { isMobileDevice } from '../rendering/scene.js';
 
 export const SETTINGS_STORAGE_KEY = 'rescue_bots_settings_v1';
 
@@ -53,17 +54,21 @@ export const ACTION_LABELS = {
 
 export function loadGameSettings() {
     let s = null;
+    let raw: string | null = null;
     try {
-        const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+        raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
         if (raw) s = JSON.parse(raw);
     } catch (e) {
         console.warn('Could not read settings from localStorage', e);
     }
     if (!s || typeof s !== 'object') s = {};
+    const defaultGraphics = !raw && isMobileDevice
+        ? { preset: 'medium', shadows: 'low', outlines: true, drawDistance: 'medium', resolution: 'medium' }
+        : DEFAULT_SETTINGS.graphics;
     return {
         version: 1,
         audio: { ...DEFAULT_SETTINGS.audio, ...(s.audio || {}) },
-        graphics: { ...DEFAULT_SETTINGS.graphics, ...(s.graphics || {}) },
+        graphics: { ...defaultGraphics, ...(s.graphics || {}) },
         controls: { ...DEFAULT_SETTINGS.controls, ...(s.controls || {}) }
     };
 }
@@ -168,16 +173,23 @@ export function applyGameSettings(options: Record<string, any> = {}) {
         } else {
             renderer.shadowMap.enabled = true;
             sunLight.castShadow = true;
-            let mapSize = 4096;
-            let radius = 380;
+            let mapSize = isMobileDevice ? 2048 : 4096;
+            let radius = isMobileDevice ? 320 : 380;
             if (sh === 'low') {
                 mapSize = 1024;
                 radius = 180;
             } else if (sh === 'medium') {
-                mapSize = 2048;
-                radius = 280;
+                mapSize = isMobileDevice ? 1024 : 2048;
+                radius = isMobileDevice ? 240 : 280;
             }
-            sunLight.shadow.mapSize.set(mapSize, mapSize);
+            if (sunLight.shadow.mapSize.width !== mapSize || sunLight.shadow.mapSize.height !== mapSize) {
+                sunLight.shadow.mapSize.set(mapSize, mapSize);
+                if (sunLight.shadow.map) {
+                    sunLight.shadow.map.dispose();
+                    sunLight.shadow.map = null;
+                }
+                renderer.shadowMap.needsUpdate = true;
+            }
             sunLight.shadow.camera.left = -radius;
             sunLight.shadow.camera.right = radius;
             sunLight.shadow.camera.top = radius;
@@ -208,11 +220,12 @@ export function applyGameSettings(options: Record<string, any> = {}) {
     // 5. Internal Resolution
     if (renderer) {
         const res = gameSettings.graphics.resolution;
-        let pr = Math.min(window.devicePixelRatio || 1, 2.0);
+        const rawDpr = window.devicePixelRatio || 1;
+        let pr = Math.min(rawDpr, isMobileDevice ? 1.5 : 2.0);
         if (res === 'low') {
             pr = 1.0;
         } else if (res === 'medium') {
-            pr = Math.min(window.devicePixelRatio || 1, 1.35);
+            pr = Math.min(rawDpr, isMobileDevice ? 1.25 : 1.35);
         }
         renderer.setPixelRatio(pr);
         renderer.setSize(window.innerWidth, window.innerHeight);

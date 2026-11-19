@@ -1,6 +1,6 @@
 // Main Render Loop & Animation Frame Dispatcher
 import * as THREE from 'three';
-import { renderer, scene, camera, sunLight } from '../rendering/scene.js';
+import { renderer, scene, camera, sunLight, isMobileDevice } from '../rendering/scene.js';
 import { player, buddyBot, botRigs, input } from '../state/gameState.js';
 import { updatePhysics, waypointGroup, wpOuterRing, wpArrowCone } from '../physics/movement.js';
 import { updateAllBotTransforms, speakBotCatchphrase, syncHUDToActiveBot } from '../physics/player.js';
@@ -48,6 +48,7 @@ let lightningFlashTimer = 0;
 let lightningTimer = 0;
 let positionSaveTimer = 0;
 let hudWaterCheckTimer = 0;
+let shadowFrameToggle = 1;
 let lastSavedPos = { x: 0, y: 0, z: 0, heading: 0 };
 
 const _bubbleWorldPos = new THREE.Vector3();
@@ -1090,6 +1091,16 @@ export function savePlayerMapPosition(force = false) {
                         }
                     }
                 }
+            }
+
+            if (isMobileDevice && renderer && renderer.shadowMap.enabled) {
+                renderer.shadowMap.autoUpdate = false;
+                shadowFrameToggle = (shadowFrameToggle + 1) & 1;
+                if (shadowFrameToggle === 0) {
+                    renderer.shadowMap.needsUpdate = true;
+                }
+            } else if (renderer) {
+                renderer.shadowMap.autoUpdate = true;
             }
 
             const _perfTRender0 = performance.now();

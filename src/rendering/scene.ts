@@ -15,8 +15,8 @@ scene.add(hemiLight);
 export const sunLight = new THREE.DirectionalLight(0xfffbeb, 1.15);
 sunLight.position.set(220, 340, 180);
 sunLight.castShadow = true;
-const isMobile = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1));
-const shadowDim = isMobile ? 2048 : 4096;
+export const isMobileDevice = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod|Android/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1));
+const shadowDim = isMobileDevice ? 1024 : 4096;
 sunLight.shadow.mapSize.width = shadowDim;
 sunLight.shadow.mapSize.height = shadowDim;
 sunLight.shadow.camera.near = 20;
@@ -39,6 +39,7 @@ if (typeof window !== 'undefined') {
     window.camera = camera;
     window.sunLight = sunLight;
     window.hemiLight = hemiLight;
+    (window as any).isMobileDevice = isMobileDevice;
 }
 
 export function initScene(customCanvas?: any) {
@@ -56,9 +57,10 @@ export function initScene(customCanvas?: any) {
         powerPreference: 'high-performance'
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobileDevice ? 1.5 : 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = isMobileDevice ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+    renderer.shadowMap.autoUpdate = !isMobileDevice;
     renderer.outputEncoding = THREE.sRGBEncoding;
 
     camera.aspect = window.innerWidth / window.innerHeight;
