@@ -5,6 +5,7 @@ import {
     syncUndergroundBotRigs, checkUndergroundBoulderStrike,
     triggerNearbyDinoReaction, updateCavernHUD
 } from '../world/underground.js';
+import { syncMoonBotRigs, checkMoonBoulderStrike } from '../world/moon.js';
 import { BOT_METADATA, HQ_PARKING_SLOTS } from '../bots/botMeta.js';
 import { applyBotRigMorph, getBotScale, setHighTideRigMega, setOptimusRigMega, setBotRigMega } from '../bots/botRigs.js';
 import { sfx } from '../audio/soundFX.js';
@@ -757,13 +758,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             const backDist = 7.5;
             const sideDist = 4.2;
             buddyBot.heading = player.heading;
-            if (worldState.activeArea === 'UNDERGROUND') {
+            if (worldState.activeArea === 'UNDERGROUND' || worldState.activeArea === 'MOON') {
                 buddyBot.pos.set(
                     player.pos.x - Math.sin(player.heading) * 6.0,
                     player.pos.y,
                     player.pos.z - Math.cos(player.heading) * 6.0
                 );
-                syncUndergroundBotRigs();
+                if (worldState.activeArea === 'UNDERGROUND') syncUndergroundBotRigs();
+                else syncMoonBotRigs();
             } else if (player.botType === 'HIGHTIDE' && (isPointInWater(player.pos.x, player.pos.z) || player.mode === 'VEHICLE' || player.pos.y < 0.25)) {
                 // If High Tide is in water, keep or place buddy safely on land
                 if (!isPointInWater(buddyBot.pos.x, buddyBot.pos.z) && buddyBot.pos.y >= 0.35) {
@@ -846,6 +848,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             if (worldState.activeArea === 'UNDERGROUND') {
                 syncUndergroundBotRigs(oldBotType, newBotType);
+            } else if (worldState.activeArea === 'MOON') {
+                syncMoonBotRigs();
             } else {
                 // High Tide Megabot Docking Persistence:
                 if (newBotType === 'HIGHTIDE') {
@@ -1929,6 +1933,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
             if (isUnderground) {
                 checkUndergroundBoulderStrike(player.pos.x, player.pos.y, player.pos.z, player.heading);
+            } else if (worldState.activeArea === 'MOON') {
+                checkMoonBoulderStrike(player.pos.x, player.pos.y, player.pos.z, player.heading, 10.5);
             } else {
                 checkBoulderScoopAttack(player.pos.x, player.pos.y, player.pos.z, player.heading, 8.5);
                 beacons.forEach(beacon => {

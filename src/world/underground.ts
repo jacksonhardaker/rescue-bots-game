@@ -159,9 +159,74 @@ const _dinos: CavernDino[] = [];
 const _exitShafts: ExitShaft[] = [];
 const _animatedMeshes: Array<{ obj: THREE.Object3D; kind: string; baseY: number; phase: number }> = [];
 
-// Lagoon & Magma Coordinates
+// Lagoon, Magma & Sigma Coordinates
 const LAGOON_CENTER = { x: 144, z: 126, rx: 32, rz: 20 };
 const MAGMA_CENTER = { x: 0, z: -198, r: 28 };
+export const SIGMA_CAVERN_POS = { x: -144, z: -162 };
+
+export interface SigmaRepairPartDef {
+    id: string;
+    name: string;
+    hint: string;
+    x: number;
+    z: number;
+    color: number;
+}
+
+export const SIGMA_REPAIR_PART_DEFS: SigmaRepairPartDef[] = [
+    {
+        id: 'WARP_CORE',
+        name: 'Energon Warp Core',
+        hint: 'Southwest corner of the Great Energon Crystal Cache (Northeast Cavern)',
+        x: 108,
+        z: -108,
+        color: 0xf59e0b
+    },
+    {
+        id: 'NAV_GYRO',
+        name: 'Nav-Beacon Gyro',
+        hint: 'On the Mt. Griffin Magma Core Bridge (North Cavern)',
+        x: 0,
+        z: -172,
+        color: 0x22d3ee
+    },
+    {
+        id: 'THRUSTER_FIN',
+        name: 'Thruster Stabilizer Fin',
+        hint: 'Inside the Ancient Dinobot Shrine (West Cavern)',
+        x: -184,
+        z: -18,
+        color: 0xef4444
+    }
+];
+
+interface SigmaPartRuntime extends SigmaRepairPartDef {
+    group: THREE.Group;
+    spinner: THREE.Group;
+    collected: boolean;
+}
+
+const _sigmaParts: SigmaPartRuntime[] = [];
+let _sigmaCavernRoot: THREE.Group | null = null;
+let _onLaunchSigma: (() => void) | null = null;
+
+export function setSigmaLaunchHandler(fn: () => void) {
+    _onLaunchSigma = fn;
+}
+
+export function getSigmaCavernRoot(): THREE.Group | null {
+    return _sigmaCavernRoot;
+}
+
+export function getSigmaRepairPartsStatus() {
+    const found: string[] = Array.isArray(progression.sigmaPartsFound) ? progression.sigmaPartsFound : [];
+    const installed: string[] = Array.isArray(progression.sigmaInstalledParts) ? progression.sigmaInstalledParts : [];
+    return SIGMA_REPAIR_PART_DEFS.map(def => ({
+        ...def,
+        found: found.includes(def.id) || progression.sigmaRepaired,
+        installed: installed.includes(def.id) || progression.sigmaRepaired
+    }));
+}
 const GALLERY_CELLS = [
     { r: 11, c: 5 }, { r: 11, c: 6 }, { r: 11, c: 7 },
     { r: 12, c: 5 }, { r: 12, c: 6 }, { r: 12, c: 7 }
@@ -1347,7 +1412,77 @@ function buildHiddenDiscoveries() {
     // -----------------------------------------------------------------
     // 2. CRASHED RESCUE BOTS STARSHIP: THE SIGMA (-144, -162)
     // -----------------------------------------------------------------
-    buildCrashedSpaceshipSigma(cavernWorldGroup, _animatedMeshes, _staticColliders);
+    _sigmaCavernRoot = buildCrashedSpaceshipSigma(cavernWorldGroup, _animatedMeshes, _staticColliders);
+    syncSigmaRepairVisuals();
+
+    // Build 3 Glowing Collectible Sigma Repair Parts Across the Caverns
+    _sigmaParts.length = 0;
+    const alreadyFound: string[] = Array.isArray(progression.sigmaPartsFound) ? progression.sigmaPartsFound : [];
+    SIGMA_REPAIR_PART_DEFS.forEach((def) => {
+        const partGroup = new THREE.Group();
+        partGroup.position.set(def.x, 0, def.z);
+
+        const padRing = new THREE.Mesh(
+            new THREE.RingGeometry(2.6, 4.0, 28).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: def.color, transparent: true, opacity: 0.92, side: THREE.DoubleSide })
+        );
+        padRing.position.y = 0.16;
+        const outerPadRing = new THREE.Mesh(
+            new THREE.RingGeometry(4.5, 5.2, 28).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.72, side: THREE.DoubleSide })
+        );
+        outerPadRing.position.y = 0.15;
+        const pedestal = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.4, 2.0, 1.1, 10),
+            new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 })
+        );
+        pedestal.position.y = 0.55;
+        const beam = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.5, 2.9, 26, 16, 1, true),
+            new THREE.MeshBasicMaterial({ color: def.color, transparent: true, opacity: 0.30, side: THREE.DoubleSide, depthWrite: false })
+        );
+        beam.position.y = 13.0;
+
+        const spinner = new THREE.Group();
+        spinner.position.y = 3.2;
+        spinner.scale.setScalar(1.38);
+        const matPartMain = new THREE.MeshToonMaterial({ color: def.color, gradientMap: toonGrad3 });
+        const matPartSilver = new THREE.MeshToonMaterial({ color: 0xe2e8f0, gradientMap: toonGrad3 });
+        const matPartDark = new THREE.MeshToonMaterial({ color: 0x334155, gradientMap: toonGrad3 });
+
+        if (def.id === 'WARP_CORE') {
+            const core = new THREE.Mesh(new THREE.OctahedronGeometry(1.25, 0), new THREE.MeshBasicMaterial({ color: 0x67e8f9 }));
+            const ring1 = new THREE.Mesh(new THREE.TorusGeometry(1.65, 0.18, 8, 20), matPartSilver);
+            const ring2 = new THREE.Mesh(new THREE.TorusGeometry(1.65, 0.18, 8, 20), matPartMain);
+            ring2.rotation.x = Math.PI / 2;
+            spinner.add(core, ring1, ring2);
+        } else if (def.id === 'NAV_GYRO') {
+            const hub = new THREE.Mesh(new THREE.SphereGeometry(0.75, 12, 10), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+            const g1 = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.16, 8, 20), matPartMain);
+            const g2 = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.14, 8, 20), matPartSilver);
+            g2.rotation.y = Math.PI / 2;
+            spinner.add(hub, g1, g2);
+        } else {
+            const fin = new THREE.Mesh(new THREE.BoxGeometry(0.45, 2.5, 1.9), matPartMain);
+            const mount = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.8, 1.6, 10), matPartDark);
+            mount.rotation.z = Math.PI / 2;
+            mount.position.set(0, -0.8, 0);
+            const trim = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.4, 2.05), matPartSilver);
+            trim.position.y = 0.3;
+            spinner.add(fin, mount, trim);
+        }
+
+        partGroup.add(padRing, outerPadRing, pedestal, beam, spinner);
+        const isCollected = progression.sigmaRepaired || alreadyFound.includes(def.id);
+        partGroup.visible = !isCollected;
+        cavernWorldGroup.add(partGroup);
+        _sigmaParts.push({
+            ...def,
+            group: partGroup,
+            spinner,
+            collected: isCollected
+        });
+    });
 
     // -----------------------------------------------------------------
     // 3. BIOLUMINESCENT UNDERGROUND LAGOON (144, 126)
@@ -2180,6 +2315,92 @@ export function syncUndergroundBotRigs(oldBotType?: string, newBotType?: string)
     }
 }
 
+export function syncSigmaRepairVisuals() {
+    if (!_sigmaCavernRoot || !_sigmaCavernRoot.userData?.sigmaControl) return;
+    const installedCount = progression.sigmaRepaired
+        ? 3
+        : (Array.isArray(progression.sigmaInstalledParts) ? progression.sigmaInstalledParts.length : 0);
+    _sigmaCavernRoot.userData.sigmaControl.setRepairStage(installedCount);
+}
+
+export function installSigmaParts() {
+    if (!Array.isArray(progression.sigmaPartsFound)) progression.sigmaPartsFound = [];
+    if (!Array.isArray(progression.sigmaInstalledParts)) progression.sigmaInstalledParts = [];
+
+    const toInstall = progression.sigmaPartsFound.filter(
+        (id: string) => !progression.sigmaInstalledParts.includes(id)
+    );
+    if (toInstall.length === 0) return false;
+
+    toInstall.forEach((id: string) => {
+        if (!progression.sigmaInstalledParts.includes(id)) {
+            progression.sigmaInstalledParts.push(id);
+        }
+    });
+
+    const installedCount = progression.sigmaInstalledParts.length;
+    if (installedCount >= SIGMA_REPAIR_PART_DEFS.length) {
+        progression.sigmaRepaired = true;
+    }
+
+    syncSigmaRepairVisuals();
+    saveProgression({ immediate: true });
+    sfx.playRankUp();
+    spawnSparkleGlints(SIGMA_CAVERN_POS.x, 5.0, SIGMA_CAVERN_POS.z, 26);
+    spawnEnergonLightningParticles(SIGMA_CAVERN_POS.x, 4.5, SIGMA_CAVERN_POS.z);
+
+    if (progression.sigmaRepaired) {
+        showToast('STARSHIP SIGMA REPAIRED!', 'All 3 systems online! Press LAUNCH SIGMA to blast off into Space!');
+        triggerNPCSpeech(
+            'HEATWAVE',
+            'Rescue Bots Leader',
+            'Systems green, thrusters ignited! The Sigma is flight-ready—let us launch into orbit!',
+            player,
+            true
+        );
+    } else {
+        const remaining = SIGMA_REPAIR_PART_DEFS.length - installedCount;
+        showToast(
+            `SIGMA REPAIR ${installedCount} / ${SIGMA_REPAIR_PART_DEFS.length}!`,
+            `Installed ${toInstall.length} component${toInstall.length > 1 ? 's' : ''}! Find ${remaining} more part${remaining > 1 ? 's' : ''} in the caverns.`
+        );
+        triggerNPCSpeech(
+            'BOULDER',
+            'Chief Engineer',
+            `Great work! ${installedCount} of 3 Sigma systems restored. Only ${remaining} more part${remaining > 1 ? 's' : ''} to go!`,
+            player,
+            true
+        );
+    }
+
+    updateCavernHUD();
+    return true;
+}
+
+export function triggerSigmaCavernAction() {
+    if (worldState.activeArea !== 'UNDERGROUND') return;
+    if (progression.sigmaRepaired) {
+        if (_onLaunchSigma) {
+            _onLaunchSigma();
+        } else if (typeof (window as any).startSpaceTransition === 'function') {
+            (window as any).startSpaceTransition('TO_SPACE');
+        }
+        return;
+    }
+    const found: string[] = Array.isArray(progression.sigmaPartsFound) ? progression.sigmaPartsFound : [];
+    const installed: string[] = Array.isArray(progression.sigmaInstalledParts) ? progression.sigmaInstalledParts : [];
+    const unInstalled = found.filter(id => !installed.includes(id));
+    if (unInstalled.length > 0) {
+        installSigmaParts();
+    } else {
+        const nextPart = SIGMA_REPAIR_PART_DEFS.find(d => !found.includes(d.id));
+        showToast(
+            'SIGMA NEEDS REPAIR PARTS',
+            nextPart ? `Find ${nextPart.name}: ${nextPart.hint}` : 'Search the caverns for Sigma parts!'
+        );
+    }
+}
+
 export function updateCavernHUD() {
     if (typeof document === 'undefined') return;
     const pill = document.getElementById('cavern-hud-pill');
@@ -2199,6 +2420,39 @@ export function updateCavernHUD() {
             exitEl.classList.remove('hidden');
         } else {
             exitEl.classList.add('hidden');
+        }
+    }
+
+    const sigmaBtn = document.getElementById('sigma-action-btn');
+    const sigmaIcon = document.getElementById('sigma-action-icon');
+    const sigmaLabel = document.getElementById('sigma-action-label');
+    const sigmaSub = document.getElementById('sigma-action-sub');
+    if (sigmaBtn && sigmaIcon && sigmaLabel && sigmaSub) {
+        if (worldState.activeArea === 'UNDERGROUND' && worldState.nearSigmaShip && !worldState.drillAnim?.active && !worldState.spaceLaunch?.active) {
+            const found: string[] = Array.isArray(progression.sigmaPartsFound) ? progression.sigmaPartsFound : [];
+            const installed: string[] = Array.isArray(progression.sigmaInstalledParts) ? progression.sigmaInstalledParts : [];
+            const unInstalled = found.filter(id => !installed.includes(id));
+
+            sigmaBtn.classList.remove('hidden');
+            if (progression.sigmaRepaired) {
+                worldState.sigmaActionMode = 'LAUNCH';
+                sigmaIcon.innerHTML = SVG_ICONS.ROCKET || '';
+                sigmaLabel.textContent = 'LAUNCH SIGMA';
+                sigmaSub.textContent = 'BLAST OFF TO SPACE';
+            } else if (unInstalled.length > 0) {
+                worldState.sigmaActionMode = 'INSTALL_PART';
+                sigmaIcon.innerHTML = SVG_ICONS.WRENCH || '';
+                sigmaLabel.textContent = `REPAIR SIGMA (+${unInstalled.length})`;
+                sigmaSub.textContent = `${installed.length}/${SIGMA_REPAIR_PART_DEFS.length} INSTALLED`;
+            } else {
+                worldState.sigmaActionMode = 'NEED_PARTS';
+                sigmaIcon.innerHTML = SVG_ICONS.WRENCH || '';
+                sigmaLabel.textContent = `SIGMA PARTS: ${found.length}/${SIGMA_REPAIR_PART_DEFS.length}`;
+                sigmaSub.textContent = 'FIND PARTS IN CAVERNS';
+            }
+        } else if (worldState.activeArea === 'UNDERGROUND') {
+            sigmaBtn.classList.add('hidden');
+            worldState.sigmaActionMode = '';
         }
     }
 }
@@ -2546,6 +2800,49 @@ export function updateUnderground(dt: number, now: number) {
         }
     }
 
+    // 2B. Check Collectible Sigma Repair Parts
+    for (let i = 0; i < _sigmaParts.length; i++) {
+        const part = _sigmaParts[i];
+        if (part.collected) continue;
+        part.spinner.rotation.y += dt * 1.9;
+        part.spinner.rotation.x = Math.sin(nowSec * 2.2 + i) * 0.22;
+        part.spinner.position.y = 3.2 + Math.sin(nowSec * 3.1 + i) * 0.45;
+        if (Math.hypot(player.pos.x - part.x, player.pos.z - part.z) < 9.0) {
+            part.collected = true;
+            part.group.visible = false;
+            if (!Array.isArray(progression.sigmaPartsFound)) progression.sigmaPartsFound = [];
+            if (!progression.sigmaPartsFound.includes(part.id)) {
+                progression.sigmaPartsFound.push(part.id);
+            }
+            saveProgression({ immediate: true });
+            sfx.playRelicFound();
+            spawnSparkleGlints(part.x, 3.0, part.z, 22);
+            const foundCount = progression.sigmaPartsFound.length;
+            showToast(
+                `SIGMA PART FOUND (${foundCount}/3)!`,
+                `${part.name} recovered! Bring it back to the Crashed Sigma in the NW Cavern.`
+            );
+            triggerNPCSpeech(
+                'CHASE',
+                'Tactical Unit',
+                foundCount >= 3
+                    ? `That is all 3 Sigma components! Return to the Starship Sigma to complete repairs and launch!`
+                    : `Recovered the ${part.name}! ${3 - foundCount} Sigma part${3 - foundCount > 1 ? 's' : ''} remaining in the caverns.`,
+                player,
+                true
+            );
+            updateCavernHUD();
+        }
+    }
+
+    // 2C. Check Proximity to Crashed / Repaired Starship Sigma
+    const distToSigma = Math.hypot(player.pos.x - SIGMA_CAVERN_POS.x, player.pos.z - SIGMA_CAVERN_POS.z);
+    const nearSigma = distToSigma < 34.0;
+    if (worldState.nearSigmaShip !== nearSigma) {
+        worldState.nearSigmaShip = nearSigma;
+        updateCavernHUD();
+    }
+
     // 3. Animate Landmarks & Exit Shafts
     for (let i = 0; i < _animatedMeshes.length; i++) {
         const am = _animatedMeshes[i];
@@ -2708,6 +3005,8 @@ export function getUndergroundMapData() {
         gems: _gems,
         lagoon: LAGOON_CENTER,
         magma: MAGMA_CENTER,
+        sigmaPos: SIGMA_CAVERN_POS,
+        sigmaParts: _sigmaParts,
         exploredSet: _exploredSet
     };
 }
@@ -2719,6 +3018,9 @@ if (typeof window !== 'undefined') {
         exitUndergroundViaShaft,
         swapToUnderground,
         swapToSurface,
-        getUndergroundMapData
+        getUndergroundMapData,
+        installSigmaParts,
+        triggerSigmaCavernAction,
+        syncSigmaRepairVisuals
     });
 }

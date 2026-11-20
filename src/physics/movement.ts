@@ -7,6 +7,8 @@ import {
     resolveUndergroundCollisions, getUndergroundCameraClamp,
     triggerNearbyDinoReaction, registerUndergroundFXCallbacks
 } from '../world/underground.js';
+import { resolveMoonCollisions, checkMoonBoulderStrike } from '../world/moon.js';
+import { setSpaceDestinationFromScreenPoint } from '../world/space.js';
 import { sfx } from '../audio/soundFX.js';
 import { isActionActive } from '../settings/settings.js';
 import { progression, saveProgression, isBotDocked } from '../progression/progression.js';
@@ -237,6 +239,10 @@ export let wpArrowCone = null;
         }
 
         export function setDestinationFromScreenPoint(clientX, clientY, playChime = false) {
+            if (worldState.activeArea === 'SPACE') {
+                setSpaceDestinationFromScreenPoint(clientX, clientY, playChime);
+                return;
+            }
             pointerNDC.x = (clientX / window.innerWidth) * 2 - 1;
             pointerNDC.y = -(clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(pointerNDC, camera);
@@ -371,6 +377,8 @@ export let wpArrowCone = null;
                 target.closest('#morbot-victory-modal') ||
                 target.closest('#tactical-map-modal') ||
                 target.closest('#cavern-exit-prompt') ||
+                target.closest('#space-controls-bar') ||
+                target.closest('#sigma-action-btn') ||
                 target.closest('#minimap-container')
             );
         }
@@ -413,6 +421,9 @@ export let wpArrowCone = null;
                 const t = e.touches[0];
                 pointerScreenX = t.clientX;
                 pointerScreenY = t.clientY;
+                if (worldState.activeArea === 'SPACE') {
+                    setSpaceDestinationFromScreenPoint(pointerScreenX, pointerScreenY, false);
+                }
             }
         }, { passive: false });
 
@@ -443,6 +454,9 @@ export let wpArrowCone = null;
             if (!activePointerDown) return;
             pointerScreenX = e.clientX;
             pointerScreenY = e.clientY;
+            if (worldState.activeArea === 'SPACE') {
+                setSpaceDestinationFromScreenPoint(pointerScreenX, pointerScreenY, false);
+            }
         });
 
         window.addEventListener('mouseup', () => {
@@ -528,8 +542,12 @@ export let wpArrowCone = null;
             if (player.smashTimer > 0) player.smashTimer = Math.max(0, player.smashTimer - dt);
             if (player.scoopTimer > 0) {
                 player.scoopTimer = Math.max(0, player.scoopTimer - dt);
-                if (player.botType === 'BOULDER' && !isUnderground) {
-                    checkBoulderScoopAttack(player.pos.x, player.pos.y, player.pos.z, player.heading, 6.0);
+                if (player.botType === 'BOULDER') {
+                    if (worldState.activeArea === 'MOON') {
+                        checkMoonBoulderStrike(player.pos.x, player.pos.y, player.pos.z, player.heading, 7.5);
+                    } else if (!isUnderground) {
+                        checkBoulderScoopAttack(player.pos.x, player.pos.y, player.pos.z, player.heading, 6.0);
+                    }
                 }
             }
             if (player.winchTimer > 0) player.winchTimer = Math.max(0, player.winchTimer - dt);
@@ -912,6 +930,8 @@ export let wpArrowCone = null;
                 player.pos.x = Math.max(-228, Math.min(228, player.pos.x));
                 player.pos.z = Math.max(-228, Math.min(228, player.pos.z));
                 resolveUndergroundCollisions(player, dt, now);
+            } else if (worldState.activeArea === 'MOON') {
+                resolveMoonCollisions(player.pos, 2.3, true);
             } else if (!player.inCrane && currentClearance < 12) {
                 const playerRadius = 2.4;
                 const nearbyColliders = queryNearbyColliders(player.pos.x, player.pos.z, playerRadius + 16, _playerNearbyColliders);
@@ -1180,7 +1200,8 @@ export let wpArrowCone = null;
                 });
 
                 if (!player.grounded || player.pos.y > targetGroundY + 0.35) {
-                    player.vy -= 44 * dt;
+                    const gravAccel = worldState.activeArea === 'MOON' ? 15.5 : 44;
+                    player.vy -= gravAccel * dt;
                     player.pos.y += player.vy * dt;
                     if (player.pos.y <= targetGroundY) {
                         player.pos.y = targetGroundY;

@@ -3,6 +3,8 @@ import * as THREE from 'three';
 import { renderer, scene, camera, sunLight, isMobileDevice } from '../rendering/scene.js';
 import { player, buddyBot, botRigs, input, worldState } from '../state/gameState.js';
 import { undergroundScene, updateUnderground, updateDrillTransition } from '../world/underground.js';
+import { spaceScene, updateSpace, updateSpaceLaunchTransition } from '../world/space.js';
+import { moonScene, updateMoon } from '../world/moon.js';
 import { updatePhysics, waypointGroup, wpOuterRing, wpArrowCone } from '../physics/movement.js';
 import { updateAllBotTransforms, speakBotCatchphrase, syncHUDToActiveBot } from '../physics/player.js';
 import { updateIslandTrain, islandTrain } from '../world/railway.js';
@@ -63,9 +65,9 @@ let _worldBubbleTailEl: HTMLElement | null = null;
 
 export function savePlayerMapPosition(force = false) {
     if (!player || !player.pos) return;
-    const isUg = worldState.activeArea === 'UNDERGROUND' && worldState.savedSurfacePos;
-    const refPos = isUg ? worldState.savedSurfacePos : player.pos;
-    const refHeading = isUg ? (worldState.savedSurfaceHeading || 0) : player.heading;
+    const isOffSurface = worldState.activeArea !== 'SURFACE' && worldState.savedSurfacePos;
+    const refPos = isOffSurface ? worldState.savedSurfacePos : player.pos;
+    const refHeading = isOffSurface ? (worldState.savedSurfaceHeading || 0) : player.heading;
     const px = Math.round(refPos.x * 10) / 10;
     const py = Math.round(refPos.y * 10) / 10;
     const pz = Math.round(refPos.z * 10) / 10;
@@ -224,6 +226,27 @@ function updateSpeechBubbleProjection(dt: number) {
                 wpOuterRing.rotation.z += dt * 1.8;
                 wpArrowCone.position.y = 4.2 + Math.sin(now * 0.012) * 1.1;
                 wpArrowCone.rotation.y += dt * 3.0;
+            }
+
+            if (updateSpaceLaunchTransition(dt, now)) {
+                return;
+            }
+
+            if (worldState.activeArea === 'SPACE') {
+                updateSpace(dt, now);
+                updateSpeechBubbleProjection(dt);
+                if (renderer) renderer.render(spaceScene, camera);
+                return;
+            }
+
+            if (worldState.activeArea === 'MOON') {
+                updatePhysics(dt, now);
+                updateBuddyBotAI(dt, now);
+                updateAllBotTransforms(dt, now);
+                updateMoon(dt, now);
+                updateSpeechBubbleProjection(dt);
+                if (renderer) renderer.render(moonScene, camera);
+                return;
             }
 
             if (worldState.activeArea === 'UNDERGROUND') {

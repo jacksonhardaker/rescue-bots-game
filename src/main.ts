@@ -24,6 +24,8 @@ import { initProps } from './world/props.js';
 import { initDumpsters } from './world/dumpsters.js';
 import { initWeather, WEATHER_MODES, cycleWeatherMode } from './world/weather.js';
 import { initUnderground } from './world/underground.js';
+import './world/space.js';
+import './world/moon.js';
 import { buildHazardSites, beacons, activeParticles, prewarmParticlePool } from './world/emergencies.js';
 import { buildEnergonCubes, initGoldenCrests } from './world/collectibles.js';
 import { initEmergentRescues } from './world/emergencies.js';

@@ -216,7 +216,7 @@ function createSigmaWingMarkingTexture(): THREE.CanvasTexture {
 }
 
 export function buildCrashedSpaceshipSigma(
-    cavernWorldGroup: THREE.Group,
+    cavernWorldGroup: THREE.Object3D,
     animatedMeshes: SigmaAnimatedEntry[],
     staticColliders?: SigmaColliderEntry[] | null,
     options: SigmaBuildOptions = {}
@@ -492,12 +492,14 @@ export function buildCrashedSpaceshipSigma(
     rightWingGeo.rotateX(Math.PI / 2);
     normalizePlanarUVs(rightWingGeo, 'x', 'z', true);
 
+    const wingPivots: THREE.Group[] = [];
     [-1, 1].forEach(side => {
         const wingPivot = new THREE.Group();
         wingPivot.position.set(side * 5.2, -0.25, -2.0);
-        // Crash-bent starboard/port tilt difference
-        wingPivot.rotation.z = side === -1 ? -0.14 : -0.05;
-        wingPivot.rotation.x = side === -1 ? 0.08 : 0.0;
+        // Crash-bent starboard/port tilt difference (straightened when flatLevel or repaired)
+        wingPivot.rotation.z = flatLevel ? 0 : (side === -1 ? -0.14 : -0.05);
+        wingPivot.rotation.x = flatLevel ? 0 : (side === -1 ? 0.08 : 0.0);
+        wingPivots.push(wingPivot);
 
         const wingGeo = side === 1 ? rightWingGeo : (() => {
             const mirrorShape = new THREE.Shape();
@@ -561,6 +563,11 @@ export function buildCrashedSpaceshipSigma(
     // -----------------------------------------------------------------
     // 7. HIGH-FIDELITY FTL ENGINE NACELLES & VECTORING EXHAUST NOZZLES
     // -----------------------------------------------------------------
+    const thrusterFlames: Array<{
+        group: THREE.Group;
+        outerMat: THREE.MeshBasicMaterial;
+        innerMat: THREE.MeshBasicMaterial;
+    }> = [];
     [-1, 1].forEach(side => {
         const nacGroup = new THREE.Group();
         nacGroup.position.set(side * 6.4, 2.1, -9.2);
@@ -611,6 +618,38 @@ export function buildCrashedSpaceshipSigma(
         exhaustCore.userData.noOutline = true;
         nacGroup.add(exhaustCore);
         animatedMeshes.push({ obj: exhaustCore, kind: 'FLICKER', baseY: 0, phase: side });
+
+        // Dynamic Flight / Launch Plasma Exhaust Plumes (scaled by setThrusterPower)
+        const flameGroup = new THREE.Group();
+        flameGroup.position.set(0, 0, -5.85);
+        flameGroup.visible = false;
+        const outerFlameGeo = new THREE.ConeGeometry(1.65, 8.5, 12);
+        outerFlameGeo.rotateX(-Math.PI / 2);
+        outerFlameGeo.translate(0, 0, -4.25);
+        const outerFlameMat = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            transparent: true,
+            opacity: 0.78,
+            depthWrite: false
+        });
+        const outerFlame = new THREE.Mesh(outerFlameGeo, outerFlameMat);
+        outerFlame.userData.noOutline = true;
+
+        const innerFlameGeo = new THREE.ConeGeometry(0.95, 5.6, 10);
+        innerFlameGeo.rotateX(-Math.PI / 2);
+        innerFlameGeo.translate(0, 0, -2.8);
+        const innerFlameMat = new THREE.MeshBasicMaterial({
+            color: 0xfef08a,
+            transparent: true,
+            opacity: 0.92,
+            depthWrite: false
+        });
+        const innerFlame = new THREE.Mesh(innerFlameGeo, innerFlameMat);
+        innerFlame.userData.noOutline = true;
+
+        flameGroup.add(outerFlame, innerFlame);
+        nacGroup.add(flameGroup);
+        thrusterFlames.push({ group: flameGroup, outerMat: outerFlameMat, innerMat: innerFlameMat });
 
         shipGroup.add(nacGroup);
 
@@ -784,6 +823,85 @@ export function buildCrashedSpaceshipSigma(
         sigmaRoot.add(beaconMount, holoSpinner);
         animatedMeshes.push({ obj: holoSpinner, kind: 'SPIN_PULSE', baseY: 5.4, phase: 1.2 });
     }
+
+    // Flight-Ready Launch Pad Ring (activated when all 3 Sigma parts are installed)
+    const launchPadRing = new THREE.Group();
+    launchPadRing.visible = false;
+    const outerPadRing = new THREE.Mesh(
+        new THREE.RingGeometry(16.5, 19.2, 48).rotateX(-Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.72, side: THREE.DoubleSide })
+    );
+    outerPadRing.position.y = 0.16;
+    const innerPadRing = new THREE.Mesh(
+        new THREE.RingGeometry(12.2, 13.4, 36).rotateX(-Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.65, side: THREE.DoubleSide })
+    );
+    innerPadRing.position.y = 0.18;
+    const padBeam = new THREE.Mesh(
+        new THREE.CylinderGeometry(14.5, 16.5, 36, 28, 1, true),
+        new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false })
+    );
+    padBeam.position.y = 18.0;
+    launchPadRing.add(outerPadRing, innerPadRing, padBeam);
+    sigmaRoot.add(launchPadRing);
+
+    const setThrusterPower = (power: number, warpMode = false) => {
+        const clamped = Math.max(0, power);
+        thrusterFlames.forEach(({ group, outerMat, innerMat }) => {
+            group.visible = clamped > 0.02;
+            if (group.visible) {
+                const widthScale = 0.65 + Math.min(1.1, clamped * 0.45);
+                const lenScale = 0.45 + clamped * 1.15;
+                group.scale.set(widthScale, widthScale, lenScale);
+                outerMat.color.setHex(warpMode ? 0xf59e0b : 0x38bdf8);
+                innerMat.color.setHex(warpMode ? 0xffffff : 0xfef08a);
+                outerMat.opacity = Math.min(0.95, 0.45 + clamped * 0.35);
+            }
+        });
+    };
+
+    const setRepairStage = (stage: number) => {
+        const s = Math.max(0, Math.min(3, Math.floor(stage)));
+        if (!flatLevel) {
+            if (s === 0) {
+                shipGroup.position.set(0, 2.2, 0);
+                shipGroup.rotation.set(0.20, 0.62, -0.26);
+                wingPivots.forEach((wp, idx) => {
+                    wp.rotation.z = idx === 0 ? -0.14 : -0.05;
+                    wp.rotation.x = idx === 0 ? 0.08 : 0.0;
+                });
+            } else if (s === 1) {
+                shipGroup.position.set(0, 2.75, 0);
+                shipGroup.rotation.set(0.13, 0.62, -0.17);
+                wingPivots.forEach((wp, idx) => {
+                    wp.rotation.z = idx === 0 ? -0.09 : -0.03;
+                    wp.rotation.x = idx === 0 ? 0.04 : 0.0;
+                });
+            } else if (s === 2) {
+                shipGroup.position.set(0, 3.35, 0);
+                shipGroup.rotation.set(0.06, 0.62, -0.07);
+                wingPivots.forEach(wp => wp.rotation.set(0, 0, 0));
+            } else {
+                // Stage 3: Fully repaired, leveled & flight-ready!
+                shipGroup.position.set(0, 4.1, 0);
+                shipGroup.rotation.set(0, 0.62, 0);
+                wingPivots.forEach(wp => wp.rotation.set(0, 0, 0));
+            }
+        }
+        matThrusterCyan.color.setHex(s === 0 ? 0x1e3a5f : (s === 1 ? 0x0284c7 : (s === 2 ? 0x38bdf8 : 0x7dd3fc)));
+        matConduitCyan.color.setHex(s === 0 ? 0x155e75 : (s >= 2 ? 0x22d3ee : 0x0ea5e9));
+        matFloodLight.color.setHex(s === 0 ? 0x94a3b8 : 0xfef08a);
+        launchPadRing.visible = s >= 3;
+        setThrusterPower(s >= 3 ? 0.55 : (s === 2 ? 0.2 : 0), false);
+    };
+
+    sigmaRoot.userData.sigmaControl = {
+        shipGroup,
+        launchPadRing,
+        thrusterFlames,
+        setRepairStage,
+        setThrusterPower
+    };
 
     cavernWorldGroup.add(sigmaRoot);
 

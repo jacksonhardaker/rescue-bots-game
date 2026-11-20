@@ -439,6 +439,55 @@ export const SVG_ICONS = {
             </svg>`,
             TROPHY: `<svg viewBox="0 0 24 24" class="w-10 h-10 stroke-amber-300 fill-amber-400" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M6 9H4a2 2 0 01-2-2V5a2 2 0 012-2h2M18 9h2a2 2 0 002-2V5a2 2 0 00-2-2h-2M4 5h16v6a7 7 0 01-14 0V5zM12 18v3M8 21h8"/>
+            </svg>`,
+
+            // Sigma Starship, Space Flight & Lunar Base Icons
+            ROCKET: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 3C20.5 7 22 12.5 22 18L19 22H13L10 18C10 12.5 11.5 7 16 3Z" fill="#e2e8f0" stroke="#0f172a" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M16 3C18.2 5 19.6 7.4 20.4 10H11.6C12.4 7.4 13.8 5 16 3Z" fill="#dc2626"/>
+                <circle cx="16" cy="13.5" r="2.6" fill="#38bdf8" stroke="#0f172a" stroke-width="1.2"/>
+                <path d="M10 16L5 21L7 24L12 21V16H10Z" fill="#dc2626" stroke="#0f172a" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M22 16L27 21L25 24L20 21V16H22Z" fill="#dc2626" stroke="#0f172a" stroke-width="1.4" stroke-linejoin="round"/>
+                <path d="M13.5 22L16 29L18.5 22H13.5Z" fill="#fbbf24" stroke="#f97316" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>`,
+            WRENCH: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a4.5 4.5 0 00-6.1 6.1l-5 5a1.5 1.5 0 002.1 2.1l5-5a4.5 4.5 0 006.1-6.1l-2.3 2.3-2.1-2.1 2.3-2.3z" fill="#fbbf24" stroke="#0f172a" stroke-width="1.6"/>
+                <circle cx="5.2" cy="18.8" r="0.8" fill="#0f172a"/>
+            </svg>`,
+            PLANET: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="7.5" fill="#0284c7" stroke="#0f172a" stroke-width="1.5"/>
+                <path d="M8.5 7.5C10 8.5 11.5 8 12.5 9.5C13.5 11 11 12.5 12 14.5C12.8 16 14.5 16.5 16 15.5" fill="#22c55e" stroke="#15803d" stroke-width="1.2"/>
+                <path d="M6.5 13.5C7.8 12.5 9.2 13.2 9.8 14.8C10.2 15.8 9.2 17 8 17.5" fill="#22c55e" stroke="#15803d" stroke-width="1.1"/>
+                <ellipse cx="12" cy="12" rx="10.5" ry="3.2" transform="rotate(-22 12 12)" stroke="#38bdf8" stroke-width="1.4" stroke-opacity="0.85"/>
+            </svg>`,
+            MOON: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="8.5" fill="#cbd5e1" stroke="#0f172a" stroke-width="1.5"/>
+                <circle cx="9.2" cy="9.5" r="2.1" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+                <circle cx="15.2" cy="13.8" r="2.6" fill="#94a3b8" stroke="#475569" stroke-width="1"/>
+                <circle cx="14.5" cy="8" r="1.2" fill="#94a3b8"/>
+                <circle cx="8.5" cy="15.2" r="1.1" fill="#94a3b8"/>
+            </svg>`,
+            LASER: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12h11" stroke="#22d3ee" stroke-width="3.2"/>
+                <path d="M3 12h11" stroke="#f8fafc" stroke-width="1.2"/>
+                <polygon points="15,6 22,12 15,18 17,12" fill="#fbbf24" stroke="#f97316" stroke-width="1.2"/>
+                <line x1="16" y1="4" x2="18" y2="6" stroke="#38bdf8" stroke-width="1.6"/>
+                <line x1="16" y1="20" x2="18" y2="18" stroke="#38bdf8" stroke-width="1.6"/>
+            </svg>`,
+            TRACTOR: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 4L4 20h16L12 4z" fill="#38bdf8" fill-opacity="0.24" stroke="#22d3ee" stroke-width="1.6"/>
+                <path d="M8.5 14h7M6.5 17.5h11" stroke="#38bdf8" stroke-width="1.6" stroke-dasharray="2 1.5"/>
+                <circle cx="12" cy="5" r="2.2" fill="#fbbf24" stroke="#0f172a" stroke-width="1.2"/>
+            </svg>`,
+            ASTEROID: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12,3 19,6 21,13 17,20 9,21 4,16 5,8" fill="#78716c" stroke="#0f172a" stroke-width="1.5"/>
+                <circle cx="10" cy="10" r="1.8" fill="#57534e"/>
+                <circle cx="15" cy="14.5" r="2.2" fill="#57534e"/>
+                <path d="M13 7l3 2-1.5 2.5" stroke="#f97316" stroke-width="1.4"/>
+            </svg>`,
+            RING: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="8" stroke="#22d3ee" stroke-width="2.6"/>
+                <circle cx="12" cy="12" r="5" stroke="#fbbf24" stroke-width="1.4" stroke-dasharray="3 2"/>
             </svg>`
         };
 

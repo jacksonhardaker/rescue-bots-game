@@ -8,7 +8,11 @@ import {
 import { player, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { SVG_ICONS } from './icons.js';
-import { triggerBoulderDrillTransition, exitUndergroundViaShaft, swapToSurface } from '../world/underground.js';
+import { triggerBoulderDrillTransition, exitUndergroundViaShaft, swapToSurface, triggerSigmaCavernAction } from '../world/underground.js';
+import {
+    startSpaceTransition, fireSigmaCannons, triggerSpaceBoost,
+    setSpaceTouchControl
+} from '../world/space.js';
 
 import { HQ_SWAP_PAD } from '../world/buildings.js';
 import { waypointGroup } from '../physics/movement.js';
@@ -49,6 +53,41 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         if (cGem) cGem.innerHTML = SVG_ICONS.CAVERN_GEM;
         const cExitIcon = document.getElementById('cavern-exit-icon');
         if (cExitIcon) cExitIcon.innerHTML = SVG_ICONS.DRILL_UP;
+
+        // Sigma Repair / Launch, Space Flight & Moon Base HUD Icons & Bindings
+        const injectIcon = (id: string, svg: string | undefined) => {
+            const el = document.getElementById(id);
+            if (el && svg) el.innerHTML = svg;
+        };
+        injectIcon('space-ast-icon', SVG_ICONS.ASTEROID);
+        injectIcon('space-res-icon', SVG_ICONS.TRACTOR);
+        injectIcon('space-ring-icon', SVG_ICONS.RING);
+        injectIcon('moon-relic-icon', SVG_ICONS.STAR);
+        injectIcon('space-fire-icon', SVG_ICONS.LASER);
+        injectIcon('space-boost-icon', SVG_ICONS.BOLT);
+        injectIcon('space-moon-icon', SVG_ICONS.MOON);
+        injectIcon('space-earth-icon', SVG_ICONS.PLANET);
+        injectIcon('moon-orbit-icon', SVG_ICONS.ROCKET);
+        injectIcon('moon-earth-icon', SVG_ICONS.PLANET);
+
+        bindButton('btn-sigma-action', triggerSigmaCavernAction);
+        bindButton('space-fire-btn', fireSigmaCannons);
+        bindButton('space-boost-btn', triggerSpaceBoost);
+        bindButton('space-land-moon-btn', () => startSpaceTransition('TO_MOON'));
+        bindButton('space-return-earth-btn', () => startSpaceTransition('TO_EARTH'));
+        bindButton('moon-orbit-btn', () => startSpaceTransition('MOON_TO_SPACE'));
+        bindButton('moon-earth-btn', () => startSpaceTransition('TO_EARTH'));
+
+        const bindHold = (id: string, onDown: () => void, onUp: () => void) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('pointerdown', (e) => { e.preventDefault(); onDown(); });
+            el.addEventListener('pointerup', onUp);
+            el.addEventListener('pointerleave', onUp);
+            el.addEventListener('pointercancel', onUp);
+        };
+        bindHold('space-climb-up-btn', () => setSpaceTouchControl('climb', 1), () => setSpaceTouchControl('climb', 0));
+        bindHold('space-climb-dn-btn', () => setSpaceTouchControl('climb', -1), () => setSpaceTouchControl('climb', 0));
         bindButton('btn-dock', () => {
             dockActiveBotMegabot();
         });
@@ -89,6 +128,11 @@ import { buildEnergonCubes } from '../world/collectibles.js';
 
         // Warp to Rescue Bots Headquarters Button
         bindButton('btn-hq-warp', () => {
+            if (worldState.activeArea === 'SPACE' || worldState.activeArea === 'MOON') {
+                closeUtilityMenu();
+                startSpaceTransition('TO_EARTH');
+                return;
+            }
             if (worldState.activeArea === 'UNDERGROUND') swapToSurface(true);
             player.pos.set(HQ_SWAP_PAD.x, getTerrainHeight(HQ_SWAP_PAD.x, HQ_SWAP_PAD.z) + 0.5, HQ_SWAP_PAD.z);
             player.heading = 0;

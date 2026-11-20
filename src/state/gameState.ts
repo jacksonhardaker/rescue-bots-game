@@ -57,13 +57,18 @@ export const player: Record<string, any> = {
 };
 
 export const worldState: Record<string, any> = {
-    activeArea: 'SURFACE', // 'SURFACE' | 'UNDERGROUND'
+    activeArea: 'SURFACE', // 'SURFACE' | 'UNDERGROUND' | 'SPACE' | 'MOON'
     savedSurfacePos: new THREE.Vector3(0, 5, -15),
     savedSurfaceHeading: 0,
     savedUndergroundPos: new THREE.Vector3(0, 1.0, 6),
     savedUndergroundHeading: 0,
     hasVisitedUnderground: false,
     nearExitShaft: false,
+    nearSigmaShip: false,
+    sigmaActionMode: '', // '' | 'NEED_PARTS' | 'INSTALL_PART' | 'LAUNCH'
+    nearMoonLanding: false,
+    nearMoonSigma: false,
+    nearMoonFlag: false,
     drillAnim: {
         active: false,
         direction: 'DOWN', // 'DOWN' | 'UP'
@@ -74,6 +79,13 @@ export const worldState: Record<string, any> = {
         startY: 0,
         startZ: 0,
         lastParticleTime: 0
+    },
+    spaceLaunch: {
+        active: false,
+        mode: 'TO_SPACE', // 'TO_SPACE' | 'TO_MOON' | 'MOON_TO_SPACE' | 'TO_EARTH'
+        timer: 0,
+        duration: 7.0,
+        swapped: false
     }
 };
 

@@ -431,6 +431,29 @@ function ensureMinimapBgCache(w: number, h: number) {
                 ctx.stroke();
             }
 
+            // Draw Uncollected Sigma Repair Parts (pulsing cyan/amber beacons!)
+            if (Array.isArray(ug.sigmaParts)) {
+                ug.sigmaParts.forEach((part: any) => {
+                    if (part.collected) return;
+                    const px = cx + part.x * mapScale;
+                    const pz = cy + part.z * mapScale;
+                    const pulse = 1 + Math.sin(now * 0.008) * 0.25;
+                    ctx.fillStyle = '#22d3ee';
+                    ctx.beginPath();
+                    ctx.arc(px, pz, (isFullMap ? 6 : 3.6) * pulse, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#fbbf24';
+                    ctx.lineWidth = isFullMap ? 2 : 1.2;
+                    ctx.stroke();
+                    if (isFullMap) {
+                        ctx.font = '700 10px Fredoka, sans-serif';
+                        ctx.fillStyle = '#67e8f9';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(part.name, px, pz - 10);
+                    }
+                });
+            }
+
             // Buddy & Player Chevrons
             if (buddyBot && buddyBot.botType && buddyBot.botType !== player.botType) {
                 drawMapChevron(ctx, cx + buddyBot.pos.x * mapScale, cy + buddyBot.pos.z * mapScale, buddyBot.heading, isFullMap ? 7 : 4.2, '#38bdf8', '#ffffff');
@@ -472,6 +495,105 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const ugMiniScale = (cx * 0.80) / 234;
                 renderUndergroundRadar(mCtx, w, h, ugMiniScale, false);
                 mCtx.restore();
+                return;
+            }
+
+            if (worldState.activeArea === 'SPACE') {
+                const sp = (window as any).getSpaceMapData?.();
+                mCtx.clearRect(0, 0, w, h);
+                mCtx.save();
+                mCtx.beginPath();
+                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
+                mCtx.clip();
+                mCtx.fillStyle = '#020617';
+                mCtx.fillRect(0, 0, w, h);
+                // Radar grid rings
+                mCtx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+                mCtx.lineWidth = 1;
+                [0.32, 0.62, 0.9].forEach(r => {
+                    mCtx.beginPath();
+                    mCtx.arc(cx, cy, cx * r, 0, Math.PI * 2);
+                    mCtx.stroke();
+                });
+                if (sp) {
+                    const sc = (cx * 0.85) / (sp.bounds || 460);
+                    // Moon
+                    mCtx.fillStyle = '#cbd5e1';
+                    mCtx.beginPath();
+                    mCtx.arc(cx + sp.moonPos.x * sc, cy + sp.moonPos.z * sc, 9, 0, Math.PI * 2);
+                    mCtx.fill();
+                    mCtx.strokeStyle = '#22d3ee';
+                    mCtx.lineWidth = 1.5;
+                    mCtx.stroke();
+                    // Autobot Orbital Station
+                    mCtx.fillStyle = '#4ade80';
+                    mCtx.fillRect(cx + sp.stationPos.x * sc - 4, cy + sp.stationPos.z * sc - 4, 8, 8);
+                    // Satellites & Stranded Pods
+                    sp.satellites?.forEach((s: any) => {
+                        mCtx.fillStyle = s.repaired ? '#22d3ee' : '#ef4444';
+                        mCtx.beginPath();
+                        mCtx.arc(cx + s.pos.x * sc, cy + s.pos.z * sc, 3, 0, Math.PI * 2);
+                        mCtx.fill();
+                    });
+                    sp.pods?.forEach((p: any) => {
+                        if (p.rescued) return;
+                        mCtx.fillStyle = '#fbbf24';
+                        mCtx.beginPath();
+                        mCtx.arc(cx + p.pos.x * sc, cy + p.pos.z * sc, 3.2, 0, Math.PI * 2);
+                        mCtx.fill();
+                    });
+                    // Active Star-Ring
+                    const activeRing = sp.starRings?.[sp.ship.activeRingIdx];
+                    if (activeRing) {
+                        mCtx.strokeStyle = '#fbbf24';
+                        mCtx.lineWidth = 2;
+                        mCtx.beginPath();
+                        mCtx.arc(cx + activeRing.pos.x * sc, cy + activeRing.pos.z * sc, 5, 0, Math.PI * 2);
+                        mCtx.stroke();
+                    }
+                    // Starship Sigma Chevron
+                    drawMapChevron(mCtx, cx + sp.ship.pos.x * sc, cy + sp.ship.pos.z * sc, sp.ship.yaw + Math.PI, 5.5, '#38bdf8', '#ffffff');
+                }
+                mCtx.restore();
+                setNearestHintText('Orbit: Blast Asteroids • Repair Sats • Land on Moon!');
+                return;
+            }
+
+            if (worldState.activeArea === 'MOON') {
+                const md = (window as any).getMoonMapData?.();
+                mCtx.clearRect(0, 0, w, h);
+                mCtx.save();
+                mCtx.beginPath();
+                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
+                mCtx.clip();
+                mCtx.fillStyle = '#1e293b';
+                mCtx.fillRect(0, 0, w, h);
+                if (md) {
+                    const sc = (cx * 0.85) / (md.radius || 185);
+                    md.craters?.forEach((c: any) => {
+                        mCtx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+                        mCtx.lineWidth = 1.2;
+                        mCtx.beginPath();
+                        mCtx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                        mCtx.stroke();
+                    });
+                    // Sigma Pad
+                    mCtx.fillStyle = '#22d3ee';
+                    mCtx.beginPath();
+                    mCtx.arc(cx + md.sigmaPos.x * sc, cy + md.sigmaPos.z * sc, 5, 0, Math.PI * 2);
+                    mCtx.fill();
+                    // Uncollected Lunar Relics
+                    md.relics?.forEach((r: any) => {
+                        if (r.collected) return;
+                        mCtx.fillStyle = '#fbbf24';
+                        mCtx.beginPath();
+                        mCtx.arc(cx + r.x * sc, cy + r.z * sc, 3.5, 0, Math.PI * 2);
+                        mCtx.fill();
+                    });
+                    drawMapChevron(mCtx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 5.2, '#facc15', '#ffffff');
+                }
+                mCtx.restore();
+                setNearestHintText(`Moon Base • Relics: ${(progression.moonRelicsFound || []).length}/5 • 0.35G`);
                 return;
             }
 

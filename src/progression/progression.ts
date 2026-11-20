@@ -38,7 +38,15 @@ export const progression: Record<string, any> = {
     discoveredCavernLandmarks: [],
     cavernGemsCollected: 0,
     exploredCavernCells: [],
-    brokenCavernWalls: []
+    brokenCavernWalls: [],
+    sigmaPartsFound: [],
+    sigmaInstalledParts: [],
+    sigmaRepaired: false,
+    spaceAsteroidsCleared: 0,
+    spaceRescuesDone: 0,
+    spaceRingsCompleted: 0,
+    moonRelicsFound: [],
+    moonFlagPlanted: false
 };
 
 export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'];
@@ -91,7 +99,10 @@ export function getHeroPoints(prog = progression) {
     const allyPts = (Array.isArray(prog.discoveredAllies) ? prog.discoveredAllies.length * 10 : 0);
     const cavernLandmarkPts = (Array.isArray(prog.discoveredCavernLandmarks) ? prog.discoveredCavernLandmarks.length * 4 : 0);
     const cavernGemPts = Math.floor((prog.cavernGemsCollected || 0) / 3);
-    return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts + cavernLandmarkPts + cavernGemPts;
+    const sigmaPts = (prog.sigmaRepaired ? 12 : 0) + (Array.isArray(prog.sigmaInstalledParts) ? prog.sigmaInstalledParts.length * 3 : 0);
+    const spacePts = (prog.spaceAsteroidsCleared || 0) + (prog.spaceRescuesDone || 0) * 5 + (prog.spaceRingsCompleted || 0) * 8;
+    const moonPts = (Array.isArray(prog.moonRelicsFound) ? prog.moonRelicsFound.length * 5 : 0) + (prog.moonFlagPlanted ? 6 : 0);
+    return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts + cavernLandmarkPts + cavernGemPts + sigmaPts + spacePts + moonPts;
 }
 
 export function getRescueStarRank(prog = progression) {
@@ -266,6 +277,30 @@ export function loadProgression(options: Record<string, any> = {}) {
     }
     if (Array.isArray(target.brokenCavernWalls)) {
         progression.brokenCavernWalls = target.brokenCavernWalls.filter(x => typeof x === 'string');
+    }
+    if (Array.isArray(target.sigmaPartsFound)) {
+        progression.sigmaPartsFound = target.sigmaPartsFound.filter(x => typeof x === 'string');
+    }
+    if (Array.isArray(target.sigmaInstalledParts)) {
+        progression.sigmaInstalledParts = target.sigmaInstalledParts.filter(x => typeof x === 'string');
+    }
+    if (typeof target.sigmaRepaired === 'boolean') {
+        progression.sigmaRepaired = target.sigmaRepaired;
+    }
+    if (Number.isFinite(target.spaceAsteroidsCleared) && target.spaceAsteroidsCleared >= 0) {
+        progression.spaceAsteroidsCleared = Math.floor(target.spaceAsteroidsCleared);
+    }
+    if (Number.isFinite(target.spaceRescuesDone) && target.spaceRescuesDone >= 0) {
+        progression.spaceRescuesDone = Math.floor(target.spaceRescuesDone);
+    }
+    if (Number.isFinite(target.spaceRingsCompleted) && target.spaceRingsCompleted >= 0) {
+        progression.spaceRingsCompleted = Math.floor(target.spaceRingsCompleted);
+    }
+    if (Array.isArray(target.moonRelicsFound)) {
+        progression.moonRelicsFound = target.moonRelicsFound.filter(x => typeof x === 'string');
+    }
+    if (typeof target.moonFlagPlanted === 'boolean') {
+        progression.moonFlagPlanted = target.moonFlagPlanted;
     }
 
     progression.saveVersion = CURRENT_SAVE_VERSION;

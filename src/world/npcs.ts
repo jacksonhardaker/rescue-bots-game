@@ -9,6 +9,7 @@ import {
 import { texWindshieldCyan } from '../rendering/textures.js';
 import { player, buddyBot, botRigs, humanNPCs, vehicleNPCs, worldColliders, queryNearbyColliders, worldState } from '../state/gameState.js';
 import { resolveUndergroundPointCollision } from './underground.js';
+import { resolveMoonCollisions } from './moon.js';
 const _buddyNearbyColliders: any[] = [];
 import { sfx } from '../audio/soundFX.js';
 import { triggerNPCSpeech } from '../ui/dialogs.js';
@@ -991,9 +992,11 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 buddyBot.pos.z = nextBz;
             }
 
-            // Buddy Bot Obstacle Collision against Cavern Maze OR Surface Rocks, Trees & Buildings
+            // Buddy Bot Obstacle Collision against Cavern Maze, Moon Base OR Surface Rocks, Trees & Buildings
             if (worldState.activeArea === 'UNDERGROUND') {
                 resolveUndergroundPointCollision(buddyBot.pos, 2.3);
+            } else if (worldState.activeArea === 'MOON') {
+                resolveMoonCollisions(buddyBot.pos, 2.3);
             } else if (worldColliders && worldColliders.length > 0) {
                 const buddyRadius = 2.4;
                 const nearbyColliders = queryNearbyColliders(buddyBot.pos.x, buddyBot.pos.z, buddyRadius + 16, _buddyNearbyColliders);
