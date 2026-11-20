@@ -1,7 +1,8 @@
 // Sector-Chunked Instanced Forests, Bushes & Rocks for Viewport Culling
 import * as THREE from 'three';
 import { getTerrainHeight, isPointInWater, getRailwayRadius, isPointOnRoad } from './terrain.js';
-import { toonGrad3, toonGrad4, matInkOutline } from '../rendering/materials.js';
+import { toonGrad3, toonGrad4, matInkOutline, OUTLINE_LAYER } from '../rendering/materials.js';
+import { freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
 import { registerCullableObject, worldColliders, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { showToast } from '../ui/dialogs.js';
@@ -380,6 +381,8 @@ export function buildInstancedVegetation(scene) {
             const iTrunks = new THREE.InstancedMesh(arch.trunkGeo, arch.trunkMat, n);
             const iLeaves = new THREE.InstancedMesh(arch.leavesGeo, matTreeLeavesBase, n);
             const iOutline = new THREE.InstancedMesh(arch.leavesGeo, matInkOutline, n);
+            iOutline.userData.isOutline = true;
+            iOutline.layers.set(OUTLINE_LAYER);
             iTrunks.castShadow = true;
             iLeaves.castShadow = true;
             bucket.treeMeshes[archIdx] = { iTrunks, iLeaves, iOutline };
@@ -425,6 +428,8 @@ export function buildInstancedVegetation(scene) {
             const n = bucket.bushes.length;
             const iBushes = new THREE.InstancedMesh(bushGeo, matBushToon, n);
             const iBushOut = new THREE.InstancedMesh(bushGeo, matInkOutline, n);
+            iBushOut.userData.isOutline = true;
+            iBushOut.layers.set(OUTLINE_LAYER);
             iBushes.castShadow = true;
             iBushes.receiveShadow = true;
             bucket.bushMeshes = { iBushes, iBushOut };
@@ -455,6 +460,8 @@ export function buildInstancedVegetation(scene) {
             const n = bucket.rocks.length;
             const iRocks = new THREE.InstancedMesh(envRockGeo, matRockToon, n);
             const iRockOut = new THREE.InstancedMesh(envRockGeo, matInkOutline, n);
+            iRockOut.userData.isOutline = true;
+            iRockOut.layers.set(OUTLINE_LAYER);
             iRocks.castShadow = true;
             iRocks.receiveShadow = true;
             bucket.rockMeshes = { iRocks, iRockOut };
@@ -482,6 +489,7 @@ export function buildInstancedVegetation(scene) {
             sectorGroup.add(iRocks, iRockOut);
         }
 
+        freezeStaticHierarchy(sectorGroup);
         s.add(sectorGroup);
         registerCullableObject(sectorGroup, bucket.cx, 12, bucket.cz, SECTOR_STEP * 0.78);
     });

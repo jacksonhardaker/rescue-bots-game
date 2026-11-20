@@ -1,7 +1,7 @@
 // Underground Cavern & Braided Tunnel System Game Mode
 import * as THREE from 'three';
 import { scene, camera, renderer } from '../rendering/scene.js';
-import { toonGrad3, matInkOutline, applyCartoonInkOutlines } from '../rendering/materials.js';
+import { toonGrad3, matInkOutline, applyCartoonInkOutlines, OUTLINE_LAYER } from '../rendering/materials.js';
 import { player, buddyBot, botRigs, worldState } from '../state/gameState.js';
 import { progression, saveProgression, isBotDocked } from '../progression/progression.js';
 import { setUndergroundTerrainHooks, getZoneName } from './terrain.js';
@@ -1075,6 +1075,8 @@ function buildCavernArchitecture(rand: () => number) {
         const rubbleGeo = createCraggyBoulderSkirtGeometry();
         const rubbleInst = new THREE.InstancedMesh(rubbleGeo, matRockWall, rubbleSpecs.length);
         const rubbleOutInst = new THREE.InstancedMesh(rubbleGeo, matInkOutline, rubbleSpecs.length);
+        rubbleOutInst.userData.isOutline = true;
+        rubbleOutInst.layers.set(OUTLINE_LAYER);
         rubbleSpecs.forEach((rb, i) => {
             dummy.position.set(rb.x, rb.sy * 0.25, rb.z);
             dummy.rotation.set(0, rb.rotY, 0);
@@ -1137,6 +1139,8 @@ function buildCavernArchitecture(rand: () => number) {
     if (stagSpecs.length > 0) {
         const stagInst = new THREE.InstancedMesh(spireUpGeo, matRockAccent, stagSpecs.length);
         const stagOutInst = new THREE.InstancedMesh(spireUpGeo, matInkOutline, stagSpecs.length);
+        stagOutInst.userData.isOutline = true;
+        stagOutInst.layers.set(OUTLINE_LAYER);
         stagSpecs.forEach((st, i) => {
             dummy.position.set(st.x, st.h * 0.45, st.z);
             dummy.rotation.set(0, st.rotY, 0);

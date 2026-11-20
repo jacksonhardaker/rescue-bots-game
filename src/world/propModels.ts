@@ -4,6 +4,7 @@ import {
     toonGrad3,
     matDarkSteel,
     matInkOutline,
+    OUTLINE_LAYER,
     applyCartoonInkOutlines
 } from '../rendering/materials.js';
 
@@ -25,6 +26,7 @@ export function createStreetlampMesh() {
     postOut.position.y = 3.6;
     postOut.scale.set(1.08, 1.01, 1.08);
     postOut.userData.isOutline = true;
+    postOut.layers.set(OUTLINE_LAYER);
 
     const bulb = new THREE.Mesh(streetlampGeos.bulbGeo, matStreetlampBulb);
     bulb.position.y = 7.4;
@@ -37,6 +39,7 @@ export function createStreetlampMesh() {
     capOut.position.y = 7.95;
     capOut.scale.setScalar(1.08);
     capOut.userData.isOutline = true;
+    capOut.layers.set(OUTLINE_LAYER);
 
     root.add(post, postOut, bulb, cap, capOut);
     return root;
@@ -124,6 +127,7 @@ export function createDumpsterMesh() {
     outline.position.y = 1.15;
     outline.scale.set(1.05, 1.05, 1.05);
     outline.userData.isOutline = true;
+    outline.layers.set(OUTLINE_LAYER);
     root.add(outline);
 
     [-1.44, 1.44].forEach(px => {
@@ -166,6 +170,7 @@ export function createDumpsterMesh() {
         lidOutline.position.set(lx, 0.06, 0.98);
         lidOutline.scale.set(1.06, 1.18, 1.06);
         lidOutline.userData.isOutline = true;
+        lidOutline.layers.set(OUTLINE_LAYER);
 
         const handle = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.14, 0.14), matDarkSteel);
         handle.position.set(lx, 0.18, 1.88);
@@ -231,6 +236,7 @@ export function createEnergonCubeMesh() {
     const outline = new THREE.Mesh(energonShellGeo, matInkOutline);
     outline.scale.setScalar(1.09);
     outline.userData.isOutline = true;
+    outline.layers.set(OUTLINE_LAYER);
 
     cubePivot.add(core, shell, outline);
     root.add(cubePivot);
@@ -312,6 +318,7 @@ export function createHazardFireMesh() {
     flameOutline.position.y = 2.4;
     flameOutline.scale.setScalar(1.09);
     flameOutline.userData.isOutline = true;
+    flameOutline.layers.set(OUTLINE_LAYER);
     nodeMesh.add(flameOutline);
     return nodeMesh;
 }
@@ -348,6 +355,7 @@ export function createMagmaDebrisMesh() {
     const outline = new THREE.Mesh(rockGeo, matInkOutline);
     outline.scale.setScalar(1.08);
     outline.userData.isOutline = true;
+    outline.layers.set(OUTLINE_LAYER);
     group.add(outline);
 
     return { group, mesh: rockMesh, coreMesh };
@@ -447,6 +455,7 @@ export function createTreeArchetypeMesh(archIdx: number) {
         arch.leavesScale[2] * arch.outlineScale[2]
     );
     outline.userData.isOutline = true;
+    outline.layers.set(OUTLINE_LAYER);
 
     grp.add(trunk, leaves, outline);
     return grp;
@@ -464,6 +473,7 @@ export function createBushMesh() {
     out.position.y = 0.65;
     out.scale.set(1.25 * 1.09, 0.78 * 1.09, 1.15 * 1.09);
     out.userData.isOutline = true;
+    out.layers.set(OUTLINE_LAYER);
 
     grp.add(bush, out);
     return grp;
@@ -481,6 +491,7 @@ export function createIslandRockMesh() {
     out.position.y = 1.45;
     out.scale.set(1.35 * 1.08, 1.15 * 1.08, 1.25 * 1.08);
     out.userData.isOutline = true;
+    out.layers.set(OUTLINE_LAYER);
 
     grp.add(rock, out);
     return grp;

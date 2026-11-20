@@ -1,6 +1,6 @@
 // Standalone Visual Check Studio for All Unique Set-Piece, Building, Vehicle, Ally, Villain & Creature Models
 import * as THREE from 'three';
-import { matInkOutline, matInkEdgeLine } from '../rendering/materials.js';
+import { matInkOutline, matInkEdgeLine, OUTLINE_LAYER } from '../rendering/materials.js';
 import { buildCrashedSpaceshipSigma } from '../world/spaceshipSigma.js';
 import {
     CavernAnimatedEntry,
@@ -1042,7 +1042,7 @@ export const MODEL_CATALOG: ModelCatalogEntry[] = [
                 root,
                 animatedEntries: [],
                 onAnimate: (dt, nowSec) => {
-                    res.envelopeG.position.y = 21.0 + Math.sin(nowSec * 1.4) * 0.45;
+                    res.envelopeG.position.y = 21.5 + Math.sin(nowSec * 1.4) * 0.45;
                     res.blimpProps.forEach(p => {
                         p.rotation.z += dt * 16;
                     });
@@ -1800,6 +1800,7 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
     mcScene.add(gridHelper);
 
     const mcCamera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.5, 10000);
+    mcCamera.layers.enable(OUTLINE_LAYER);
 
     function applyEnvironment(env: EnvPreset) {
         const cfg = ENV_PRESETS[env] || ENV_PRESETS.studio;
@@ -1815,6 +1816,8 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
     }
 
     function applyOutlineToggle(enabled: boolean) {
+        if (enabled) mcCamera.layers.enable(OUTLINE_LAYER);
+        else mcCamera.layers.disable(OUTLINE_LAYER);
         if (matInkOutline) matInkOutline.visible = enabled;
         if (matInkEdgeLine) matInkEdgeLine.visible = enabled;
     }

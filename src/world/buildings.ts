@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { getTerrainHeight } from './terrain.js';
 import { toonGrad3, applyCartoonInkOutlines } from '../rendering/materials.js';
+import { mergeStaticMeshesInGroup, freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
 import { worldColliders, registerCullableObject, ramps, stateHolder } from '../state/gameState.js';
 import {
     buildFirehouseHQMesh,
@@ -101,6 +102,7 @@ export function initBuildings(scene?: THREE.Scene) {
     swapPadRing = hqRes.swapPadRing;
     const hqY = getTerrainHeight(HQ_POS.x, HQ_POS.z);
     hqGroup.position.set(HQ_POS.x, hqY, HQ_POS.z);
+    mergeStaticMeshesInGroup(hqGroup, [hqRadarPivot, swapPadRing]);
     s.add(hqGroup);
     registerCullableObject(hqGroup, HQ_POS.x, hqY + 12, HQ_POS.z, 55);
     worldColliders.push({ x: HQ_POS.x, z: HQ_POS.z, r: 19.5 });
@@ -115,6 +117,7 @@ export function initBuildings(scene?: THREE.Scene) {
     rwTopBrush = rwRes.rwTopBrush;
     rwY = getTerrainHeight(ROBO_WASH_POS.x, ROBO_WASH_POS.z);
     roboWashGroup.position.set(ROBO_WASH_POS.x, rwY, ROBO_WASH_POS.z);
+    mergeStaticMeshesInGroup(roboWashGroup, [rwLeftBrush, rwRightBrush, rwTopBrush]);
     s.add(roboWashGroup);
     registerCullableObject(roboWashGroup, ROBO_WASH_POS.x, rwY + 5, ROBO_WASH_POS.z, 28);
     worldColliders.push({ x: ROBO_WASH_POS.x - 6.2, z: ROBO_WASH_POS.z, r: 2.2 });
@@ -130,6 +133,7 @@ export function initBuildings(scene?: THREE.Scene) {
     catapultStrobes.push(...catRes.catapultStrobes);
     catY = getTerrainHeight(CATAPULT_POS.x, CATAPULT_POS.z);
     catapultGroup.position.set(CATAPULT_POS.x, catY, CATAPULT_POS.z);
+    mergeStaticMeshesInGroup(catapultGroup, [catapultCarriage, ...catapultStrobes]);
     s.add(catapultGroup);
     registerCullableObject(catapultGroup, CATAPULT_POS.x, catY + 5, CATAPULT_POS.z, 28);
     worldColliders.push({ x: CATAPULT_POS.x - 6.2, z: CATAPULT_POS.z, r: 2.2 });
@@ -144,6 +148,7 @@ export function initBuildings(scene?: THREE.Scene) {
     dinerBurgerGroup = dinerRes.dinerBurgerGroup;
     dinerY = getTerrainHeight(DINER_POS.x, DINER_POS.z);
     dinerGroup.position.set(DINER_POS.x, dinerY, DINER_POS.z);
+    mergeStaticMeshesInGroup(dinerGroup, [dinerBurgerGroup]);
     s.add(dinerGroup);
     registerCullableObject(dinerGroup, DINER_POS.x, dinerY + 6, DINER_POS.z, 32);
     worldColliders.push({ x: DINER_POS.x + 4.2, z: DINER_POS.z, r: 8.5 });
@@ -161,6 +166,7 @@ export function initBuildings(scene?: THREE.Scene) {
     energonOrbs.push(...chgRes.energonOrbs);
     chargerY = getTerrainHeight(CHARGER_POS.x, CHARGER_POS.z);
     chargerGroup.position.set(CHARGER_POS.x, chargerY, CHARGER_POS.z);
+    mergeStaticMeshesInGroup(chargerGroup, [...energonCoilRings, ...energonOrbs]);
     s.add(chargerGroup);
     registerCullableObject(chargerGroup, CHARGER_POS.x, chargerY + 6, CHARGER_POS.z, 30);
     worldColliders.push({ x: CHARGER_POS.x - 6.5, z: CHARGER_POS.z, r: 2.8 });
@@ -183,6 +189,7 @@ export function initBuildings(scene?: THREE.Scene) {
         const gbY = getTerrainHeight(cfg.x, cfg.z);
         gbGroup.position.set(cfg.x, gbY, cfg.z);
         gbGroup.rotation.y = cfg.rotY;
+        mergeStaticMeshesInGroup(gbGroup, [gbRes.irisRing1, gbRes.irisRing2, gbRes.irisRing3, gbRes.vortexDisc]);
         s.add(gbGroup);
         registerCullableObject(gbGroup, cfg.x, gbY + 8, cfg.z, 28);
 
@@ -213,6 +220,7 @@ export function initBuildings(scene?: THREE.Scene) {
         const gy = getTerrainHeight(x, z);
         group.position.set(x, gy, z);
         group.rotation.y = rotY;
+        mergeStaticMeshesInGroup(group);
         s.add(group);
         registerCullableObject(group, x, gy + h * 0.5, z, Math.max(w, d, h) + 12);
         worldColliders.push({ x, z, r: Math.max(w, d) * 0.58 });
@@ -251,6 +259,7 @@ export function initBuildings(scene?: THREE.Scene) {
     lhBeamPivot = lhRes.lhBeamPivot;
     const lhY = getTerrainHeight(lhX, lhZ);
     lighthouseGroup.position.set(lhX, lhY, lhZ);
+    mergeStaticMeshesInGroup(lighthouseGroup, [lhBeamPivot]);
     s.add(lighthouseGroup);
     registerCullableObject(lighthouseGroup, lhX, lhY + 24, lhZ, 95);
     worldColliders.push({ x: lhX, z: lhZ, r: 8.5 });
@@ -263,12 +272,14 @@ export function initBuildings(scene?: THREE.Scene) {
     harborSeawall.position.set(0, -0.4, 1183.5);
     harborSeawall.receiveShadow = true;
     applyCartoonInkOutlines(harborSeawall, 1.02, true);
+    freezeStaticHierarchy(harborSeawall);
     s.add(harborSeawall);
     registerCullableObject(harborSeawall, 0, 1, 1184, 115);
 
     // South Harbor Pier Dock (centered around local 0,0,0 -> placed at z = 1228)
     const { root: pierGroup } = buildHarborPierMesh();
     pierGroup.position.set(0, 0, 1228);
+    mergeStaticMeshesInGroup(pierGroup);
     s.add(pierGroup);
     registerCullableObject(pierGroup, 0, 2, 1228, 65);
 
@@ -278,6 +289,7 @@ export function initBuildings(scene?: THREE.Scene) {
         const cy = Math.max(0.5, getTerrainHeight(craneX, craneZ));
         const { root: craneGroup } = buildDockCargoCraneMesh();
         craneGroup.position.set(craneX, cy, craneZ);
+        mergeStaticMeshesInGroup(craneGroup);
         s.add(craneGroup);
         registerCullableObject(craneGroup, craneX, cy + 16, craneZ + 8, 42);
         worldColliders.push({ x: craneX, z: craneZ, r: 6.5 });
@@ -310,6 +322,7 @@ export function initBuildings(scene?: THREE.Scene) {
         craneInteractive.boomPivot = magCraneRes.boomPivot;
         craneInteractive.cableMesh = magCraneRes.cableMesh;
         craneInteractive.magnetGroup = magCraneRes.magnetGroup;
+        mergeStaticMeshesInGroup(craneGroup, [magCraneRes.boomPivot]);
         s.add(craneGroup);
         registerCullableObject(craneGroup, craneInteractive.craneX, cy + 16, craneInteractive.craneZ, 48);
         worldColliders.push({ x: craneInteractive.craneX, z: craneInteractive.craneZ, r: 6.5 });
@@ -356,6 +369,7 @@ export function initBuildings(scene?: THREE.Scene) {
         const { root: yardGroup } = buildCargoContainerYardMesh(yIdx);
         yardGroup.position.set(yard.x, yy, yard.z);
         yardGroup.rotation.y = yard.rotY;
+        mergeStaticMeshesInGroup(yardGroup);
         s.add(yardGroup);
         registerCullableObject(yardGroup, yard.x, yy + 8, yard.z, 24);
         worldColliders.push({ x: yard.x, z: yard.z, r: 9.5 });
@@ -395,6 +409,8 @@ export function initBuildings(scene?: THREE.Scene) {
     harborFerryGroup = ferryRes.root;
     harborFerryGroup.position.copy(ferryController.dockPos);
     ferryController.rampMesh = ferryRes.ferryRampPivot;
+    mergeStaticMeshesInGroup(harborFerryGroup, [ferryRes.ferryRampPivot]);
+    harborFerryGroup.matrixAutoUpdate = true;
     harborFerryGroup.traverse((child: any) => {
         child.frustumCulled = false;
     });
@@ -403,6 +419,7 @@ export function initBuildings(scene?: THREE.Scene) {
     // Fixed Pier Boarding Bridge connecting South Harbor Pier Deck to Ferry Mooring Slip
     const { root: boardingBridgeGroup } = buildFerryBoardingBridgeMesh();
     boardingBridgeGroup.position.set(26, 0, 1221.5);
+    mergeStaticMeshesInGroup(boardingBridgeGroup);
     s.add(boardingBridgeGroup);
     registerCullableObject(boardingBridgeGroup, 26, 4, 1220, 35);
 
@@ -435,6 +452,7 @@ export function initBuildings(scene?: THREE.Scene) {
             cooldown: 0
         });
     });
+    mergeStaticMeshesInGroup(testYardGroup, [tyRes.bounceMembrane, ...tyRes.targetEntries.map(t => t.mesh)]);
     s.add(testYardGroup);
     registerCullableObject(testYardGroup, testYard.baseX, testYardY + 5, testYard.baseZ, 55);
     worldColliders.push({ x: testYard.baseX - 35, z: testYard.baseZ, r: 2.5 });
@@ -449,6 +467,7 @@ export function initBuildings(scene?: THREE.Scene) {
     volcanoSmokePuffs.length = 0;
     volcanoSmokePuffs.push(...volcRes.volcanoSmokePuffs);
     volcanoGroup.position.set(volcX, volcY, volcZ);
+    mergeStaticMeshesInGroup(volcanoGroup, [volcanoLavaPool, ...volcanoSmokePuffs]);
     s.add(volcanoGroup);
     registerCullableObject(volcanoGroup, volcX, volcY + 25, volcZ, 68);
     worldColliders.push({ x: volcX, z: volcZ, r: 24.0 });
@@ -460,6 +479,7 @@ export function initBuildings(scene?: THREE.Scene) {
     const observatoryGroup = obsRes.root;
     observatoryDomePivot = obsRes.observatoryDomePivot;
     observatoryGroup.position.set(obsX, obsY, obsZ);
+    mergeStaticMeshesInGroup(observatoryGroup, [observatoryDomePivot]);
     s.add(observatoryGroup);
     registerCullableObject(observatoryGroup, obsX, obsY + 15, obsZ, 55);
     worldColliders.push({ x: obsX, z: obsZ, r: 17.5 });
@@ -472,6 +492,7 @@ export function initBuildings(scene?: THREE.Scene) {
     windTurbineRotors.length = 0;
     windTurbineRotors.push(...techRes.rotors);
     techLabGroup.position.set(techX, techY, techZ);
+    mergeStaticMeshesInGroup(techLabGroup, windTurbineRotors);
     s.add(techLabGroup);
     registerCullableObject(techLabGroup, techX - 10, techY + 20, techZ, 78);
     worldColliders.push({ x: techX, z: techZ, r: 19.0 });
@@ -480,6 +501,7 @@ export function initBuildings(scene?: THREE.Scene) {
     const arrY = getTerrainHeight(780, -780);
     const { root: arrayGroup } = buildSkyCommsArrayMesh();
     arrayGroup.position.set(780, arrY, -780);
+    freezeStaticHierarchy(arrayGroup);
     s.add(arrayGroup);
     registerCullableObject(arrayGroup, 780, arrY + 18, -780, 48);
     worldColliders.push({ x: 780, z: -780, r: 6.0 });
@@ -506,6 +528,7 @@ export function initBuildings(scene?: THREE.Scene) {
         });
     });
     dinoRidgeGroup.position.set(drX, drY, drZ);
+    mergeStaticMeshesInGroup(dinoRidgeGroup, [amberSpire, ...babyDinos.map(bd => bd.group)]);
     s.add(dinoRidgeGroup);
     registerCullableObject(dinoRidgeGroup, drX, drY + 12, drZ, 85);
     worldColliders.push({ x: drX, z: drZ, r: 16 });
@@ -522,6 +545,7 @@ export function initBuildings(scene?: THREE.Scene) {
     ferrisGondolas.length = 0;
     ferrisGondolas.push(...bwRes.ferrisGondolas);
     boardwalkGroup.position.set(bwX, bwY, bwZ);
+    mergeStaticMeshesInGroup(boardwalkGroup, [ferrisWheelPivot]);
     s.add(boardwalkGroup);
     registerCullableObject(boardwalkGroup, bwX, bwY + 22, bwZ, 85);
     worldColliders.push({ x: bwX, z: bwZ - 12, r: 12 });
@@ -561,10 +585,12 @@ export function initBuildings(scene?: THREE.Scene) {
     const { root: waywardPierGroup } = buildWaywardPierMesh();
     waywardPierGroup.position.set(pierCenterX, 0, pierCenterZ);
     waywardPierGroup.rotation.y = -2.548;
+    mergeStaticMeshesInGroup(waywardPierGroup);
     s.add(waywardPierGroup);
     registerCullableObject(waywardPierGroup, pierCenterX, 2.2, pierCenterZ, 70);
 
     // Note: all 4 Wayward sub-assemblies already include ink outlines from buildingModels.ts
+    mergeStaticMeshesInGroup(waywardIslandGroup, [waywardEnergonShard]);
     s.add(waywardIslandGroup);
     registerCullableObject(waywardIslandGroup, wiX, wiY + 20, wiZ, 450);
     worldColliders.push({ x: wiX, z: wiZ, r: 28 });
@@ -603,6 +629,7 @@ export function initBuildings(scene?: THREE.Scene) {
         });
         ramp.position.set(x, gyCenter, z);
         ramp.rotation.y = rotY;
+        freezeStaticHierarchy(ramp);
         s.add(ramp);
         registerCullableObject(ramp, x, gyCenter + 2, z, 20);
 

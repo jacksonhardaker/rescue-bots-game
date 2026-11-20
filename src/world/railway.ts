@@ -4,6 +4,7 @@ import { scene } from '../rendering/scene.js';
 import { getTerrainHeight, getSurfaceHeight, getRailwayRadius, RAILWAY_LOOP_RADIUS } from './terrain.js';
 import { toonGrad3 } from '../rendering/materials.js';
 import { registerCullableObject, player } from '../state/gameState.js';
+import { mergeStaticMeshesInGroup, freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
 import { createRoadRibbon } from './roads.js';
 import { sfx } from '../audio/soundFX.js';
 import {
@@ -432,6 +433,7 @@ export function initRailway(scene) {
     sharedRailTrackTexture = makeProceduralRailTrackTexture();
     const railTex = sharedRailTrackTexture;
     railwayLoopMesh = createRoadRibbon(ptsRail, 14.8, true, -1.25, -5.5, railTex, 8.0, 0.22);
+    freezeStaticHierarchy(railwayLoopMesh);
     s.add(railwayLoopMesh);
 
     // 4 Grade Crossings
@@ -440,8 +442,16 @@ export function initRailway(scene) {
     createRailroadCrossing(0, -730, true);      // North NS Highway Crossing
     createRailroadCrossing(765, 25, false);     // East EW Highway Crossing
     createRailroadCrossing(-765, 25, false);    // West EW Highway Crossing
+    railroadCrossings.forEach((cr: any) => {
+        if (cr.group) {
+            mergeStaticMeshesInGroup(cr.group, (cr.lamps || []).map((l: any) => l.mesh));
+        }
+    });
 
     centralStationGroup = buildCentralRailwayStation();
+    if (centralStationGroup) {
+        mergeStaticMeshesInGroup(centralStationGroup);
+    }
 
     buildIslandTrainSystem();
 

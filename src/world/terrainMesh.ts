@@ -2,13 +2,16 @@
 import * as THREE from 'three';
 import { getTerrainHeight, getInnerRoadRadius, getOuterRoadRadius, WORLD_SIZE } from './terrain.js';
 import { toonGrad3 } from '../rendering/materials.js';
+import { isMobileDevice } from '../rendering/scene.js';
+import { gameSettings } from '../settings/settings.js';
+import { freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
 
 export let terrainMesh = null;
 export let waterMesh = null;
 export let shorelineFoamRing = null;
 
         export function createHighResTerrainTexture() {
-            const TEX_SIZE = 4096;
+            const TEX_SIZE = (isMobileDevice || gameSettings.graphics.preset === 'low' || gameSettings.graphics.resolution === 'ultralow') ? 2048 : 4096;
             const c = document.createElement('canvas');
             c.width = TEX_SIZE;
             c.height = TEX_SIZE;
@@ -304,6 +307,7 @@ export function buildTerrainMesh(scene) {
         })
     );
     terrainMesh.receiveShadow = true;
+    freezeStaticHierarchy(terrainMesh);
     if (scene) scene.add(terrainMesh);
 
     // Cel-Shaded Cartoon Ocean Water Plane + Animated White Foam Ripples (Scaled for 10X World)

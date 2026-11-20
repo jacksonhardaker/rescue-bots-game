@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { scene } from '../rendering/scene.js';
 import { getTerrainHeight, getSurfaceHeight, isPointInWater } from './terrain.js';
-import { toonGrad3, toonGrad4, matDarkSteel, matChrome, matInkOutline } from '../rendering/materials.js';
+import { toonGrad3, toonGrad4, matDarkSteel, matChrome, matInkOutline, OUTLINE_LAYER } from '../rendering/materials.js';
 import { player, buddyBot, botRigs, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { progression, saveProgression } from '../progression/progression.js';
@@ -342,6 +342,8 @@ function acquireParticleMesh(
             grp = new THREE.Group();
             const inner = new THREE.Mesh(geo, mat);
             const outline = new THREE.Mesh(geo, matInkOutline);
+            outline.userData.isOutline = true;
+            outline.layers.set(OUTLINE_LAYER);
             outline.scale.setScalar(outlineScale);
             grp.add(inner);
             grp.add(outline);

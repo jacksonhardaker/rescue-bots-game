@@ -489,8 +489,11 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             setCivilianVehicleHeadlights(curMode.headlightIntensity > 0);
         }
 
+        let _npcUpdateTick = 0;
+
         export function updateLivingWorldNPCs(dt, now) {
             const nowSec = now * 0.001;
+            _npcUpdateTick = (_npcUpdateTick + 1) % 24;
 
             // 1. Update Human Citizens (Patrol sidewalks, wave at Rescue Bot, and speak when approached)
             for (let i = 0; i < humanNPCs.length; i++) {
@@ -498,6 +501,13 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 const distToPlayer = Math.hypot(player.pos.x - npc.x, player.pos.z - npc.z);
 
                 if (npc.waveTimer > 0) npc.waveTimer = Math.max(0, npc.waveTimer - dt);
+
+                // Throttle far-away/off-screen human NPCs to 1/6th update rate
+                const isFarNpc = distToPlayer > 220 || !npc.rig.root.visible;
+                if (isFarNpc && ((_npcUpdateTick + i) % 6 !== 0)) {
+                    continue;
+                }
+                const stepDt = isFarNpc ? dt * 6 : dt;
 
                 if (distToPlayer < 22.0) {
                     // Stop walking, face the Rescue Bot, and wave!
@@ -517,7 +527,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                     }
                 } else {
                     // Stroll along a gentle figure-8 / circular plaza sidewalk path
-                    npc.phase += (npc.speed / Math.max(8, npc.patrolR)) * dt;
+                    npc.phase += (npc.speed / Math.max(8, npc.patrolR)) * stepDt;
                     const nextX = npc.homeX + Math.cos(npc.phase) * npc.patrolR;
                     const nextZ = npc.homeZ + Math.sin(npc.phase * 2) * (npc.patrolR * 0.55);
                     const dx = nextX - npc.x;
@@ -531,18 +541,22 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                     npc.rig.root.position.set(npc.x, npc.y, npc.z);
                     npc.rig.root.rotation.y = npc.heading;
 
-                    // Walking arm & leg swing
-                    const walkSwing = Math.sin(nowSec * 6.5 + i) * 0.55;
-                    npc.rig.leftLegPivot.rotation.x = walkSwing;
-                    npc.rig.rightLegPivot.rotation.x = -walkSwing;
-                    npc.rig.leftArmPivot.rotation.x = -walkSwing * 0.75;
-                    npc.rig.rightArmPivot.rotation.x = walkSwing * 0.75;
-                    npc.rig.rightArmPivot.rotation.z = 0;
+                    if (npc.rig.root.visible) {
+                        // Walking arm & leg swing
+                        const walkSwing = Math.sin(nowSec * 6.5 + i) * 0.55;
+                        npc.rig.leftLegPivot.rotation.x = walkSwing;
+                        npc.rig.rightLegPivot.rotation.x = -walkSwing;
+                        npc.rig.leftArmPivot.rotation.x = -walkSwing * 0.75;
+                        npc.rig.rightArmPivot.rotation.x = walkSwing * 0.75;
+                        npc.rig.rightArmPivot.rotation.z = 0;
+                    }
                 }
 
-                // Spin floating radio crystal above NPC head
-                npc.rig.radioGem.rotation.y += dt * 2.6;
-                npc.rig.radioGem.position.y = 4.85 + Math.sin(nowSec * 3.5 + i) * 0.22;
+                // Spin floating radio crystal above NPC head (only when visible)
+                if (npc.rig.root.visible) {
+                    npc.rig.radioGem.rotation.y += stepDt * 2.6;
+                    npc.rig.radioGem.position.y = 4.85 + Math.sin(nowSec * 3.5 + i) * 0.22;
+                }
             }
 
             // 1B. Update Stranded Citizens at the 8 Emergency Sites (Wave both arms & call out for rescue in English!)
@@ -550,9 +564,11 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 const b = beacons[bIdx];
                 if (!b.strandedCitizens) continue;
                 const distToSite = Math.hypot(player.pos.x - b.x, player.pos.z - b.z);
+                if (distToSite > 260) continue;
 
                 for (let cIdx = 0; cIdx < b.strandedCitizens.length; cIdx++) {
                     const sc = b.strandedCitizens[cIdx];
+                    if (!sc.rig.root.visible) continue;
                     const targetYaw = Math.atan2(player.pos.x - sc.x, player.pos.z - sc.z);
                     sc.rig.root.rotation.y = targetYaw;
 
@@ -777,36 +793,45 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                     v.heading = v.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
                 }
 
-                // Smooth terrain suspension and pitch alignment for civilian traffic
-                const vFrontX = v.x + Math.sin(v.heading) * 2.0;
-                const vFrontZ = v.z + Math.cos(v.heading) * 2.0;
-                const vRearX = v.x - Math.sin(v.heading) * 2.0;
-                const vRearZ = v.z - Math.cos(v.heading) * 2.0;
-                const vFrontY = Math.max(0.5, getSurfaceHeight(vFrontX, vFrontZ));
-                const vRearY = Math.max(0.5, getSurfaceHeight(vRearX, vRearZ));
-                const vTargetY = (vFrontY + vRearY) * 0.5;
-                v.y = THREE.MathUtils.lerp(v.y || vTargetY, vTargetY, Math.min(1.0, dt * 18.0));
-                const vTargetPitch = Math.max(-0.6, Math.min(0.6, Math.atan2(vFrontY - vRearY, 4.0)));
-                v.pitch = THREE.MathUtils.lerp(v.pitch || 0, vTargetPitch, Math.min(1.0, dt * 14.0));
+                const isNearVehicle = distToPlayer < 260 && v.root.visible;
+                if (isNearVehicle) {
+                    // Smooth terrain suspension and pitch alignment for nearby visible civilian traffic
+                    const vFrontX = v.x + Math.sin(v.heading) * 2.0;
+                    const vFrontZ = v.z + Math.cos(v.heading) * 2.0;
+                    const vRearX = v.x - Math.sin(v.heading) * 2.0;
+                    const vRearZ = v.z - Math.cos(v.heading) * 2.0;
+                    const vFrontY = Math.max(0.5, getSurfaceHeight(vFrontX, vFrontZ));
+                    const vRearY = Math.max(0.5, getSurfaceHeight(vRearX, vRearZ));
+                    const vTargetY = (vFrontY + vRearY) * 0.5;
+                    v.y = THREE.MathUtils.lerp(v.y || vTargetY, vTargetY, Math.min(1.0, dt * 18.0));
+                    const vTargetPitch = Math.max(-0.6, Math.min(0.6, Math.atan2(vFrontY - vRearY, 4.0)));
+                    v.pitch = THREE.MathUtils.lerp(v.pitch || 0, vTargetPitch, Math.min(1.0, dt * 14.0));
 
-                v.root.position.set(v.x, v.y, v.z);
-                v.root.rotation.y = v.heading;
-                v.root.rotation.x = -v.pitch;
+                    v.root.position.set(v.x, v.y, v.z);
+                    v.root.rotation.y = v.heading;
+                    v.root.rotation.x = -v.pitch;
 
-                // Spin wheels when moving
-                if (effSpeed > 0.1) {
-                    const wheelRot = effSpeed * dt * 1.1;
-                    for (let w = 0; w < v.wheels.length; w++) {
-                        v.wheels[w].rotation.x += wheelRot;
+                    // Spin wheels when moving
+                    if (effSpeed > 0.1) {
+                        const wheelRot = effSpeed * dt * 1.1;
+                        for (let w = 0; w < v.wheels.length; w++) {
+                            v.wheels[w].rotation.x += wheelRot;
+                        }
                     }
+                } else if ((_npcUpdateTick + i) % 4 === 0) {
+                    v.root.position.set(v.x, v.y, v.z);
+                    v.root.rotation.y = v.heading;
+                    v.root.rotation.x = 0;
                 }
             }
 
-            // 2B. Civilian Vehicle vs Civilian Vehicle OBB Physical Separation
+            // 2B. Civilian Vehicle vs Civilian Vehicle OBB Physical Separation (only near player)
             for (let i = 0; i < vehicleNPCs.length; i++) {
                 const vA = vehicleNPCs[i];
+                if (!vA.root.visible) continue;
                 for (let j = i + 1; j < vehicleNPCs.length; j++) {
                     const vB = vehicleNPCs[j];
+                    if (!vB.root.visible) continue;
                     const dx = vB.x - vA.x;
                     const dz = vB.z - vA.z;
                     if (dx * dx + dz * dz > 144) continue; // > 12m away

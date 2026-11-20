@@ -1,7 +1,7 @@
 // Standalone Visual Check Studio for Ground Clearance, Morph Inspection & Boat Mode Verification
 import * as THREE from 'three';
 import { buildRescueBotModel, applyBotRigMorph, setBotRigMega } from '../bots/botRigs.js';
-import { toonGrad3 } from '../rendering/materials.js';
+import { toonGrad3, OUTLINE_LAYER } from '../rendering/materials.js';
 import { SVG_ICONS } from '../ui/icons.js';
 
 export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
@@ -82,6 +82,7 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
     bcScene.add(grid);
 
     const bcCamera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.5, 4000);
+    bcCamera.layers.enable(OUTLINE_LAYER);
 
     // --- Lazy Rig Construction: build only visible cell(s) ---
     function makeRig(id: string) {

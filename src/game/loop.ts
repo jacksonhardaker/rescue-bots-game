@@ -38,6 +38,7 @@ import { renderMinimap, renderTacticalMap } from '../ui/tacticalMap.js';
 import { WEATHER_MODES, currentWeatherIdx, rainSystem, volcanoEmberSystem, starField, auroraMesh, updateWeather } from '../world/weather.js';
 import { waterMesh, shorelineFoamRing } from '../world/terrainMesh.js';
 import { sfx } from '../audio/soundFX.js';
+import { gameSettings } from '../settings/settings.js';
 
 let lastTime = performance.now();
 let frameCount = 0;
@@ -132,9 +133,9 @@ function updateSpeechBubbleProjection(dt: number) {
 
         const scale = THREE.MathUtils.clamp(1.0 - (distToCam - 14) * 0.004, 0.82, 1.12);
 
-        bubbleEl.style.left = `${clampX}px`;
-        bubbleEl.style.top = `${clampY}px`;
-        bubbleEl.style.transform = `translate(-50%, -100%) scale(${scale})`;
+        bubbleEl.style.left = '0px';
+        bubbleEl.style.top = '0px';
+        bubbleEl.style.transform = `translate3d(${clampX.toFixed(1)}px, ${clampY.toFixed(1)}px, 0) translate(-50%, -100%) scale(${scale.toFixed(3)})`;
         bubbleEl.style.opacity = '1';
 
         if (bubbleTail) {
@@ -171,7 +172,7 @@ function updateSpeechBubbleProjection(dt: number) {
             }
 
             positionSaveTimer += dt;
-            if (positionSaveTimer >= 3.0) {
+            if (positionSaveTimer >= 12.0) {
                 positionSaveTimer = 0;
                 savePlayerMapPosition();
             }
@@ -196,7 +197,8 @@ function updateSpeechBubbleProjection(dt: number) {
             }
 
             minimapTimer += dt;
-            if (minimapTimer >= 0.085) {
+            const minimapInterval = gameSettings?.graphics?.preset === 'low' ? 0.2 : 0.085;
+            if (minimapTimer >= minimapInterval) {
                 minimapTimer = 0;
                 renderMinimap();
             }
@@ -1056,7 +1058,10 @@ function updateSpeechBubbleProjection(dt: number) {
             });
 
             const nowSec = now * 0.001;
-            const restoredCount = beacons.filter(b => b.restored).length;
+            let restoredCount = 0;
+            for (let i = 0; i < beacons.length; i++) {
+                if (beacons[i].restored) restoredCount++;
+            }
 
             beacons.forEach(b => {
                 if (!b.restored) {
@@ -1111,7 +1116,10 @@ function updateSpeechBubbleProjection(dt: number) {
             // Update 3D Comic Speech Bubble Screen Projection
             updateSpeechBubbleProjection(dt);
 
-            if (isMobileDevice && renderer && renderer.shadowMap.enabled) {
+            const halfRateShadows = isMobileDevice ||
+                gameSettings?.graphics?.shadows === 'low' ||
+                gameSettings?.graphics?.shadows === 'medium';
+            if (halfRateShadows && renderer && renderer.shadowMap.enabled) {
                 renderer.shadowMap.autoUpdate = false;
                 shadowFrameToggle = (shadowFrameToggle + 1) & 1;
                 if (shadowFrameToggle === 0) {

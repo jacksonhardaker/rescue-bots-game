@@ -1,11 +1,13 @@
 // Three.js Scene, WebGLRenderer, Perspective Camera & Directional Sun Lighting
 import * as THREE from 'three';
+import { OUTLINE_LAYER } from './materials.js';
 
 export const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x4cc9f0);
 scene.fog = new THREE.FogExp2(0x4cc9f0, 0.00042);
 
 export const camera = new THREE.PerspectiveCamera(58, 16 / 9, 0.6, 2200);
+camera.layers.enable(OUTLINE_LAYER);
 camera.position.set(0, 14.5, 8.5);
 camera.lookAt(0, 8.2, -15);
 
@@ -51,9 +53,20 @@ export function initScene(customCanvas?: any) {
         canvas = document.createElement('canvas');
     }
 
+    let preferAntialias = true;
+    try {
+        const raw = window.localStorage.getItem('rescue_bots_settings_v1');
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.graphics?.preset === 'low' || parsed?.graphics?.resolution === 'ultralow') {
+                preferAntialias = false;
+            }
+        }
+    } catch {}
+
     renderer = new THREE.WebGLRenderer({
         canvas,
-        antialias: true,
+        antialias: preferAntialias,
         powerPreference: 'high-performance'
     });
     renderer.setSize(window.innerWidth, window.innerHeight);

@@ -1,7 +1,7 @@
 // Instanced Streetlamps & Interactive Road Breakables (Cones, Barricades)
 import * as THREE from 'three';
 import { getTerrainHeight, getSurfaceHeight } from './terrain.js';
-import { toonGrad3, matDarkSteel, matInkOutline } from '../rendering/materials.js';
+import { toonGrad3, matDarkSteel, matInkOutline, OUTLINE_LAYER } from '../rendering/materials.js';
 import { player, worldColliders } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import {
@@ -47,6 +47,10 @@ export const interactiveRoadProps = [];
             const iCaps = new THREE.InstancedMesh(capGeo, matDarkSteel, count);
             const iOutlines = new THREE.InstancedMesh(postGeo, matInkOutline, count);
             const iCapOutlines = new THREE.InstancedMesh(capGeo, matInkOutline, count);
+            iOutlines.userData.isOutline = true;
+            iOutlines.layers.set(OUTLINE_LAYER);
+            iCapOutlines.userData.isOutline = true;
+            iCapOutlines.layers.set(OUTLINE_LAYER);
 
             iPosts.castShadow = true;
             iCaps.castShadow = true;

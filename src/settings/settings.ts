@@ -1,6 +1,7 @@
 // Persistent Game Settings & Control Remapping
 // Stored in `rescue_bots_settings_v1` - persists independently across game releases
 import { isMobileDevice } from '../rendering/scene.js';
+import { OUTLINE_LAYER } from '../rendering/materials.js';
 
 export const SETTINGS_STORAGE_KEY = 'rescue_bots_settings_v1';
 
@@ -160,10 +161,15 @@ export function applyGameSettings(options: Record<string, any> = {}) {
         soundLabel.textContent = gameSettings.audio.muted ? 'Sounds: OFF' : 'Sounds: ON';
     }
 
-    // 2. Outlines Material Visibility
+    // 2. Outlines Material Visibility & Camera Layer Culling (skips outline nodes completely when OFF)
+    const showOutlines = Boolean(gameSettings.graphics.outlines);
+    if (camera && camera.layers) {
+        if (showOutlines) camera.layers.enable(OUTLINE_LAYER);
+        else camera.layers.disable(OUTLINE_LAYER);
+    }
     if (matInkOutline && matInkEdgeLine) {
-        matInkOutline.visible = Boolean(gameSettings.graphics.outlines);
-        matInkEdgeLine.visible = Boolean(gameSettings.graphics.outlines);
+        matInkOutline.visible = showOutlines;
+        matInkEdgeLine.visible = showOutlines;
     }
 
     // 3. Directional Shadows
@@ -206,11 +212,11 @@ export function applyGameSettings(options: Record<string, any> = {}) {
         let far = 2400;
         let fogD = 0.00038;
         if (dd === 'low') {
-            far = 1300;
-            fogD = 0.00065;
+            far = 950;
+            fogD = 0.00105;
         } else if (dd === 'medium') {
-            far = 1800;
-            fogD = 0.00048;
+            far = 1600;
+            fogD = 0.00055;
         }
         camera.far = far;
         camera.updateProjectionMatrix();
@@ -224,7 +230,9 @@ export function applyGameSettings(options: Record<string, any> = {}) {
         const res = gameSettings.graphics.resolution;
         const rawDpr = window.devicePixelRatio || 1;
         let pr = Math.min(rawDpr, isMobileDevice ? 1.5 : 2.0);
-        if (res === 'low') {
+        if (res === 'ultralow') {
+            pr = 0.75;
+        } else if (res === 'low') {
             pr = 1.0;
         } else if (res === 'medium') {
             pr = Math.min(rawDpr, isMobileDevice ? 1.25 : 1.35);

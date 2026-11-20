@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { scene } from '../rendering/scene.js';
 import { getTerrainHeight, getSurfaceHeight, getInnerRoadRadius, getOuterRoadRadius } from './terrain.js';
 import { toonGrad3 } from '../rendering/materials.js';
+import { freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
 import { registerCullableObject } from '../state/gameState.js';
 
         export function makeProceduralRoadTexture() {
@@ -281,6 +282,7 @@ export let roadTexture = null;
 
             const mesh = new THREE.Mesh(geo, roadMat);
             mesh.receiveShadow = true;
+            freezeStaticHierarchy(mesh);
             return mesh;
         }
 
@@ -320,6 +322,7 @@ export let roadTexture = null;
             );
             padG.add(curbMesh);
 
+            freezeStaticHierarchy(padG);
             scene.add(padG);
             registerCullableObject(padG, cx, gy + 1, cz, radius * 1.5);
             return padG;

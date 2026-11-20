@@ -5,6 +5,7 @@ import { player, cullableWorldObjects, humanNPCs, vehicleNPCs, input } from '../
 import { sectorChunks } from '../world/vegetation.js';
 import { islandTrain } from '../world/railway.js';
 import { beacons } from '../world/emergencies.js';
+import { gameSettings } from '../settings/settings.js';
 
         /***********************************************************************
          * 8C. VIEWPORT FRUSTUM & DISTANCE RENDERING CULLER (10X WORLD OPTIMIZER)
@@ -21,7 +22,19 @@ import { beacons } from '../world/emergencies.js';
             const camX = camera.position.x;
             const camY = camera.position.y;
             const camZ = camera.position.z;
-            const maxWorldDrawDist = input.camZoomMode === 1 ? 1350 : 1050;
+            const dd = gameSettings?.graphics?.drawDistance || 'high';
+            const isLowDD = dd === 'low';
+            const isMedDD = dd === 'medium';
+
+            const maxWorldDrawDist = isLowDD
+                ? (input.camZoomMode === 1 ? 720 : 560)
+                : (isMedDD
+                    ? (input.camZoomMode === 1 ? 1050 : 820)
+                    : (input.camZoomMode === 1 ? 1400 : 1100));
+            const humanMaxDist = isLowDD ? 220 : (isMedDD ? 360 : 520);
+            const vehicleMaxDist = isLowDD ? 300 : (isMedDD ? 480 : 680);
+            const trainMaxDist = isLowDD ? 420 : (isMedDD ? 600 : 750);
+            const beaconNodeMaxDist = isLowDD ? 360 : (isMedDD ? 550 : 750);
 
             // 1. Cull Static Buildings, Landmarks, Streetlamps & 16 Spatial Vegetation Sectors
             for (let i = 0; i < cullableWorldObjects.length; i++) {
@@ -45,11 +58,11 @@ import { beacons } from '../world/emergencies.js';
                 item.obj.visible = _cullFrustum.intersectsSphere(_cullSphere);
             }
 
-            // 2. Cull Human NPCs outside camera frustum or beyond 520m
+            // 2. Cull Human NPCs outside camera frustum or beyond draw-distance threshold
             for (let i = 0; i < humanNPCs.length; i++) {
                 const npc = humanNPCs[i];
                 const dist = Math.hypot(npc.x - camX, npc.z - camZ);
-                if (dist > 520) {
+                if (dist > humanMaxDist) {
                     npc.rig.root.visible = false;
                     continue;
                 }
@@ -62,12 +75,12 @@ import { beacons } from '../world/emergencies.js';
                 npc.rig.root.visible = _cullFrustum.intersectsSphere(_cullSphere);
             }
 
-            // 3B. Cull Griffin Rock Island Train Cars outside camera frustum or beyond 750m
+            // 3B. Cull Griffin Rock Island Train Cars outside camera frustum or beyond draw-distance threshold
             if (typeof islandTrain !== 'undefined' && islandTrain.cars.length > 0) {
                 for (let i = 0; i < islandTrain.cars.length; i++) {
                     const car = islandTrain.cars[i];
                     const dist = Math.hypot(car.x - camX, car.z - camZ);
-                    if (dist > 750) {
+                    if (dist > trainMaxDist) {
                         car.root.visible = false;
                         continue;
                     }
@@ -81,11 +94,11 @@ import { beacons } from '../world/emergencies.js';
                 }
             }
 
-            // 3. Cull Civilian Vehicle NPCs outside camera frustum or beyond 680m
+            // 3. Cull Civilian Vehicle NPCs outside camera frustum or beyond draw-distance threshold
             for (let i = 0; i < vehicleNPCs.length; i++) {
                 const v = vehicleNPCs[i];
                 const dist = Math.hypot(v.x - camX, v.z - camZ);
-                if (dist > 680) {
+                if (dist > vehicleMaxDist) {
                     v.root.visible = false;
                     continue;
                 }
@@ -98,7 +111,7 @@ import { beacons } from '../world/emergencies.js';
                 v.root.visible = _cullFrustum.intersectsSphere(_cullSphere);
             }
 
-            // 4. Cull Emergency Beacon Hazard Nodes when off-screen (keep Sky Beams visible up to 1750m when in frustum)
+            // 4. Cull Emergency Beacon Hazard Nodes when off-screen
             for (let i = 0; i < beacons.length; i++) {
                 const b = beacons[i];
                 _cullSphere.center.set(b.x, 45, b.z);
@@ -107,7 +120,7 @@ import { beacons } from '../world/emergencies.js';
                 b.group.visible = beaconInView;
 
                 const distToBeacon = Math.hypot(b.x - camX, b.z - camZ);
-                const showNodes = beaconInView && distToBeacon < 750;
+                const showNodes = beaconInView && distToBeacon < beaconNodeMaxDist;
                 for (let j = 0; j < b.nodes.length; j++) {
                     const n = b.nodes[j];
                     if (!n.cleared) {

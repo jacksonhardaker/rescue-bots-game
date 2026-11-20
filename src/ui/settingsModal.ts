@@ -123,7 +123,7 @@ let activeRebindAction = null;
             // Graphics Draw Distance
             const labelDrawDist = document.getElementById('label-gfx-drawdist');
             if (labelDrawDist) {
-                const map = { low: 'Near (1300m)', medium: 'Med (1800m)', high: 'Far (2400m)' };
+                const map = { low: 'Near (950m)', medium: 'Med (1600m)', high: 'Far (2400m)' };
                 labelDrawDist.textContent = map[gameSettings.graphics.drawDistance] || 'Far';
             }
             document.querySelectorAll('.gfx-opt-btn[data-opt="drawDistance"]').forEach(b => {
@@ -135,8 +135,8 @@ let activeRebindAction = null;
             // Graphics Resolution
             const labelRes = document.getElementById('label-gfx-res');
             if (labelRes) {
-                const map = { low: '1x Native', medium: '1.35x Balanced', high: '2x Retina Sharp' };
-                labelRes.textContent = map[gameSettings.graphics.resolution] || '2x Retina';
+                const map = { ultralow: '0.75x Turbo', low: '1x Perf', medium: '1.35x Med', high: '2x Sharp' };
+                labelRes.textContent = map[gameSettings.graphics.resolution] || '2x Sharp';
             }
             document.querySelectorAll('.gfx-opt-btn[data-opt="resolution"]').forEach(b => {
                 const active = b.dataset.val === gameSettings.graphics.resolution;
@@ -343,7 +343,7 @@ function _localReset() {
                     gameSettings.graphics.shadows = 'off';
                     gameSettings.graphics.outlines = false;
                     gameSettings.graphics.drawDistance = 'low';
-                    gameSettings.graphics.resolution = 'low';
+                    gameSettings.graphics.resolution = 'ultralow';
                 } else if (p === 'medium') {
                     gameSettings.graphics.shadows = 'low';
                     gameSettings.graphics.outlines = true;

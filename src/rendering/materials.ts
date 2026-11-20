@@ -32,6 +32,8 @@ export const toonGrad3 = createToonGradientMap([110, 205, 255]);
 export const toonGrad4 = createToonGradientMap([88, 158, 222, 255]);
 export const toonGradGlossy = createToonGradientMap([105, 185, 225, 255]);
 
+export const OUTLINE_LAYER = 1;
+
 export const matInkOutline = new THREE.MeshBasicMaterial({
     color: 0x0b0f19,
     side: THREE.BackSide
@@ -54,6 +56,7 @@ export function applyCartoonInkOutlines(rootObj, scaleThickness = 1.055, addCrea
         // 1. Inverted-Hull Black Ink Silhouette
         const outlineMesh = new THREE.Mesh(mesh.geometry, matInkOutline);
         outlineMesh.userData.isOutline = true;
+        outlineMesh.layers.set(OUTLINE_LAYER);
         outlineMesh.scale.setScalar(scaleThickness);
         mesh.add(outlineMesh);
 
@@ -62,6 +65,7 @@ export function applyCartoonInkOutlines(rootObj, scaleThickness = 1.055, addCrea
             const edgesGeo = new THREE.EdgesGeometry(mesh.geometry, 32);
             const line = new THREE.LineSegments(edgesGeo, matInkEdgeLine);
             line.userData.isOutline = true;
+            line.layers.set(OUTLINE_LAYER);
             mesh.add(line);
         }
     });
