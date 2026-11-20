@@ -7,6 +7,14 @@ import { sfx } from '../audio/soundFX.js';
 import { showToast } from '../ui/dialogs.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
+import {
+    TREE_ARCHETYPES,
+    bushGeo,
+    envRockGeo,
+    matTreeLeavesBase,
+    matBushToon,
+    matRockToon
+} from './propModels.js';
 
 export let sectorChunks: any[] = [];
 
@@ -113,86 +121,6 @@ let lastColossalToastTime = 0;
         // 5C. SECTOR-CHUNKED INSTANCED FORESTS, BUSHES & ROCKS FOR VIEWPORT CULLING
         //     (16 Spatial Sector Chunks across the 4x4 Island Grid -> Culled when off-screen!)
         // =====================================================================
-        // =====================================================================
-        // 5C. SECTOR-CHUNKED INSTANCED FORESTS, BUSHES & ROCKS FOR VIEWPORT CULLING
-        //     (5 Diverse Tree Archetypes across 16 Spatial Sector Chunks with Biome Color Palettes)
-        // =====================================================================
-        const matTrunkPine = new THREE.MeshToonMaterial({ color: 0x78350f, gradientMap: toonGrad3 });
-        const matTrunkFir = new THREE.MeshToonMaterial({ color: 0x5c2410, gradientMap: toonGrad3 });
-        const matTrunkOak = new THREE.MeshToonMaterial({ color: 0x451a03, gradientMap: toonGrad3 });
-        const matTrunkBirch = new THREE.MeshToonMaterial({ color: 0xf1f5f9, gradientMap: toonGrad3 });
-        const matTrunkCoastal = new THREE.MeshToonMaterial({ color: 0x9a3412, gradientMap: toonGrad3 });
-
-        // Base Foliage Toon Material (white base color allows instanced setColorAt to tint smoothly)
-        const matTreeLeavesBase = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad3 });
-        const matBushToon = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad3 });
-        const matRockToon = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad3 });
-
-        const bushGeo = new THREE.DodecahedronGeometry(1.35, 0);
-        const envRockGeo = new THREE.DodecahedronGeometry(1.85, 0);
-
-        const TREE_ARCHETYPES = [
-            // 0: Classic Island Spire Pine (Sharp tall conical evergreen)
-            {
-                name: "SPIRE_PINE",
-                trunkGeo: new THREE.CylinderGeometry(0.52, 0.82, 4.4, 6),
-                trunkMat: matTrunkPine,
-                leavesGeo: new THREE.ConeGeometry(3.2, 10.2, 7),
-                trunkY: 2.2,
-                leavesY: 7.2,
-                leavesScale: [1.0, 1.0, 1.0],
-                outlineScale: [1.07, 1.05, 1.07],
-                colors: [0x15803d, 0x166534, 0x14532d, 0x16a34a, 0x1b4332, 0x1e3a1e]
-            },
-            // 1: Broad Alpine Mountain Fir (Wide pyramidal mountain fir)
-            {
-                name: "ALPINE_FIR",
-                trunkGeo: new THREE.CylinderGeometry(0.65, 0.95, 3.8, 6),
-                trunkMat: matTrunkFir,
-                leavesGeo: new THREE.ConeGeometry(4.6, 7.6, 7),
-                trunkY: 1.9,
-                leavesY: 5.6,
-                leavesScale: [1.0, 1.0, 1.0],
-                outlineScale: [1.07, 1.05, 1.07],
-                colors: [0x0f766e, 0x047857, 0x065f46, 0x115e59, 0x166534, 0x2d6a4f]
-            },
-            // 2: Griffin Town Deciduous Oak (Round, fluffy, faceted low-poly crown)
-            {
-                name: "TOWN_OAK",
-                trunkGeo: new THREE.CylinderGeometry(0.75, 1.15, 4.0, 6),
-                trunkMat: matTrunkOak,
-                leavesGeo: new THREE.DodecahedronGeometry(3.7, 1),
-                trunkY: 2.0,
-                leavesY: 5.8,
-                leavesScale: [1.28, 0.95, 1.18],
-                outlineScale: [1.08, 1.08, 1.08],
-                colors: [0x22c55e, 0x16a34a, 0x4ade80, 0x65a30d, 0x84cc16, 0x4d7c0f]
-            },
-            // 3: Golden Mountain Birch / Aspen (Slender pale white trunk with radiant gold/amber crown)
-            {
-                name: "GOLDEN_BIRCH",
-                trunkGeo: new THREE.CylinderGeometry(0.36, 0.52, 5.6, 6),
-                trunkMat: matTrunkBirch,
-                leavesGeo: new THREE.DodecahedronGeometry(3.0, 1),
-                trunkY: 2.8,
-                leavesY: 7.6,
-                leavesScale: [0.88, 1.42, 0.88],
-                outlineScale: [1.08, 1.06, 1.08],
-                colors: [0xf59e0b, 0xeab308, 0xfacc15, 0xd97706, 0xb45309, 0xa3e635]
-            },
-            // 4: Coastal Island Umbrella Pine (Flared broad umbrella top, coastal harbor feel)
-            {
-                name: "COASTAL_UMBRELLA",
-                trunkGeo: new THREE.CylinderGeometry(0.48, 0.78, 5.4, 6),
-                trunkMat: matTrunkCoastal,
-                leavesGeo: new THREE.ConeGeometry(5.2, 4.4, 8),
-                trunkY: 2.7,
-                leavesY: 6.8,
-                leavesScale: [1.08, 0.92, 1.08],
-                outlineScale: [1.07, 1.06, 1.07],
-                colors: [0x0d9488, 0x10b981, 0x059669, 0x14b8a6, 0x34d399, 0x047857]
-            }
-        ];
 
         const SECTOR_GRID = 4;
         const SECTOR_SPAN = 3400; // Covers -1700 .. +1700 island landmass

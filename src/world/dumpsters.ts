@@ -7,6 +7,9 @@ import { sfx } from '../audio/soundFX.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
+import { createDumpsterMesh } from './propModels.js';
+
+export { createDumpsterMesh };
 
 export interface DumpsterInstance {
     id: number;
@@ -28,114 +31,6 @@ export interface DumpsterInstance {
 }
 
 export const activeDumpsters: DumpsterInstance[] = [];
-
-// Cel-shaded Materials
-const matDumpsterGreen = new THREE.MeshToonMaterial({ color: 0x15803d, gradientMap: toonGrad3 });
-const matDumpsterLid = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
-const matDumpsterPocket = new THREE.MeshToonMaterial({ color: 0xea580c, gradientMap: toonGrad3 }); // Safety Orange Fork Pockets
-const matDumpsterStripe = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
-const matDumpsterDecal = new THREE.MeshBasicMaterial({ color: 0x84cc16 });
-
-export function createDumpsterMesh() {
-    const root = new THREE.Group();
-
-    // 1. Heavy Steel Slanted Commercial Dumpster Body (Width: 2.8m, Height: 1.8m, Depth: 2.0m)
-    const bodyGeo = new THREE.BoxGeometry(2.75, 1.75, 1.95);
-    const bodyMesh = new THREE.Mesh(bodyGeo, matDumpsterGreen);
-    bodyMesh.position.y = 1.15;
-    bodyMesh.castShadow = true;
-    bodyMesh.receiveShadow = true;
-    root.add(bodyMesh);
-
-    // Inverted-hull cartoon ink outline
-    const outline = new THREE.Mesh(bodyGeo, matInkOutline);
-    outline.position.y = 1.15;
-    outline.scale.set(1.05, 1.05, 1.05);
-    root.add(outline);
-
-    // 2. Forklift / Loader Arm Lifting Pockets on Left & Right Sides (Orange tubular channels)
-    [-1.44, 1.44].forEach(px => {
-        const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.36, 1.98), matDumpsterPocket);
-        pocket.position.set(px, 1.15, 0);
-        pocket.castShadow = true;
-        root.add(pocket);
-
-        // Flanged funnel mouth at front of pocket
-        const flange = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.44, 0.14), matDumpsterPocket);
-        flange.position.set(px, 1.15, 1.0);
-        root.add(flange);
-    });
-
-    // 3. Front Embossed Corrugation Ribs
-    [-0.85, 0, 0.85].forEach(rx => {
-        const strake = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.45, 0.12), matDarkSteel);
-        strake.position.set(rx, 1.15, 1.0);
-        root.add(strake);
-    });
-
-    // 4. Yellow Safety Hazard Stripe across Front Rim
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.65, 0.18, 0.08), matDumpsterStripe);
-    stripe.position.set(0, 1.88, 1.0);
-    stripe.userData.noOutline = true;
-    root.add(stripe);
-
-    // 5. Universal Recycling ♻ Emblem Plate on Front Center
-    const recyclePlate = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.55, 0.08), matDumpsterDecal);
-    recyclePlate.position.set(0, 1.25, 1.01);
-    recyclePlate.userData.noOutline = true;
-    root.add(recyclePlate);
-
-    // 6. Split Hinged Polymer Lids on Top
-    // Hinged along rear top edge (Y: 2.05, Z: -0.98)
-    const lidGroup = new THREE.Group();
-    lidGroup.position.set(0, 2.05, -0.98);
-
-    [-0.72, 0.72].forEach(lx => {
-        const lid = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.12, 1.95), matDumpsterLid);
-        lid.position.set(lx, 0.06, 0.98);
-        lid.rotation.x = -0.06;
-        lid.castShadow = true;
-
-        const lidOutline = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.12, 1.95), matInkOutline);
-        lidOutline.position.set(lx, 0.06, 0.98);
-        lidOutline.scale.set(1.06, 1.18, 1.06);
-
-        // Molded Grab Handle on Front Edge
-        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.14, 0.14), matDarkSteel);
-        handle.position.set(lx, 0.18, 1.88);
-
-        lidGroup.add(lid, lidOutline, handle);
-    });
-    root.add(lidGroup);
-
-    // 7. Internal Recyclable Scrap Content (Bottles, Cans, Cartons inside)
-    const trashGroup = new THREE.Group();
-    trashGroup.position.set(0, 1.2, 0);
-
-    const scrapColors = [0x38bdf8, 0xef4444, 0xfacc15, 0x84cc16, 0xd97706, 0xa855f7];
-    for (let i = 0; i < 8; i++) {
-        const cGeo = i % 2 === 0 ? new THREE.CylinderGeometry(0.18, 0.18, 0.55, 6) : new THREE.BoxGeometry(0.35, 0.35, 0.35);
-        const cMat = new THREE.MeshBasicMaterial({ color: scrapColors[i % scrapColors.length] });
-        const item = new THREE.Mesh(cGeo, cMat);
-        item.position.set((Math.random() - 0.5) * 1.8, Math.random() * 0.45, (Math.random() - 0.5) * 1.2);
-        item.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-        item.userData.noOutline = true;
-        trashGroup.add(item);
-    }
-    root.add(trashGroup);
-
-    // 8. 4 Corner Heavy-Duty Caster Wheels
-    [[-1.15, -0.75], [1.15, -0.75], [-1.15, 0.75], [1.15, 0.75]].forEach(([cx, cz]) => {
-        const caster = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.18, 0.18, 0.22, 10).rotateZ(Math.PI / 2),
-            matDarkSteel
-        );
-        caster.position.set(cx, 0.18, cz);
-        root.add(caster);
-    });
-
-    return { root, bodyMesh, lidGroup, trashGroup };
-}
 
 // ---------------------------------------------------------------------
 // Dumpster Locations across Griffin Rock

@@ -7,6 +7,13 @@ import { sfx } from '../audio/soundFX.js';
 import { showToast } from '../ui/dialogs.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { player, buddyBot } from '../state/gameState.js';
+import {
+    matVolcanoRock,
+    matVolcanoQuenched,
+    matMoltenCore,
+    matMoltenVeins,
+    createMagmaDebrisMesh
+} from './propModels.js';
 
 export interface MagmaDebris {
     id: number;
@@ -26,12 +33,6 @@ export let activeMagmaDebris: MagmaDebris[] = [];
 export let lightningStrikeMesh: THREE.Line | null = null;
 export let lightningStrikeTimer = 0;
 export let nextLightningTime = 12.0;
-
-// Shared Materials for Volcanic Debris
-const matVolcanoRock = new THREE.MeshToonMaterial({ color: 0x1c1917, gradientMap: toonGrad3 });
-const matVolcanoQuenched = new THREE.MeshToonMaterial({ color: 0x44403c, gradientMap: toonGrad3 });
-const matMoltenCore = new THREE.MeshBasicMaterial({ color: 0xff3b30 });
-const matMoltenVeins = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
 
 // Steam & Particle Pool
 interface WeatherParticle {
@@ -103,25 +104,8 @@ export function initWeatherHazards(sceneNode: THREE.Scene) {
 }
 
 function createMagmaDebrisNode(id: number, x: number, y: number, z: number): MagmaDebris {
-    const group = new THREE.Group();
+    const { group, mesh: rockMesh, coreMesh } = createMagmaDebrisMesh();
     group.position.set(x, y + 0.8, z);
-
-    // Main jagged basalt rock
-    const rockGeo = new THREE.DodecahedronGeometry(1.85, 0);
-    const rockMesh = new THREE.Mesh(rockGeo, matVolcanoRock);
-    rockMesh.castShadow = true;
-    group.add(rockMesh);
-
-    // Glowing molten magma fissures inside the crevices
-    const coreGeo = new THREE.DodecahedronGeometry(1.5, 0);
-    const coreMesh = new THREE.Mesh(coreGeo, matMoltenCore);
-    coreMesh.userData.noOutline = true;
-    group.add(coreMesh);
-
-    // Ink outline for cartoon aesthetic
-    const outline = new THREE.Mesh(rockGeo, matInkOutline);
-    outline.scale.setScalar(1.08);
-    group.add(outline);
 
     return {
         id,

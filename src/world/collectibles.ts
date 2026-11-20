@@ -7,49 +7,15 @@ import { sfx } from '../audio/soundFX.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { showToast } from '../ui/dialogs.js';
 import { spawnBurstParticles } from './emergencies.js';
+import { createEnergonCubeMesh, createGoldenCrestMesh } from './propModels.js';
+
+export { createEnergonCubeMesh, createGoldenCrestMesh };
 
 export const energonCubes = [];
 export const goldenCrests = [];
 
-        // energonCubes exported above
-        const energonCoreGeo = new THREE.OctahedronGeometry(1.05, 0);
-        const energonShellGeo = new THREE.BoxGeometry(1.75, 1.75, 1.75);
-        const energonRingGeo = new THREE.RingGeometry(1.35, 1.85, 20).rotateX(-Math.PI / 2);
-        const matEnergonCore = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-        const matEnergonGold = new THREE.MeshBasicMaterial({
-            color: 0xfacc15,
-            transparent: true,
-            opacity: 0.72,
-            side: THREE.DoubleSide
-        });
-        const matEnergonRing = new THREE.MeshBasicMaterial({
-            color: 0xfef08a,
-            transparent: true,
-            opacity: 0.75,
-            side: THREE.DoubleSide
-        });
         const RAINBOW_TRAIL_COLORS = [0xef4444, 0xf97316, 0xfacc15, 0x4ade80, 0x38bdf8, 0xa855f7];
         let rainbowTrailIdx = 0;
-
-        export function createEnergonCubeMesh() {
-            const root = new THREE.Group();
-            const cubePivot = new THREE.Group();
-            cubePivot.position.y = 2.4;
-
-            const core = new THREE.Mesh(energonCoreGeo, matEnergonCore);
-            const shell = new THREE.Mesh(energonShellGeo, matEnergonGold);
-            const outline = new THREE.Mesh(energonShellGeo, matInkOutline);
-            outline.scale.setScalar(1.09);
-
-            cubePivot.add(core, shell, outline);
-            root.add(cubePivot);
-
-            const baseRing = new THREE.Mesh(energonRingGeo, matEnergonRing);
-            baseRing.position.y = 0.28;
-            root.add(baseRing);
-
-            return { root, cubePivot, baseRing };
-        }
 
         const ENERGON_SPAWN_SITES = [
             // Immediate HQ & Town Square Ring (Easy instant pickups right from the start for the 3-year-old!)
@@ -276,56 +242,6 @@ export const goldenCrests = [];
             { id: "crest_wind_ridge", name: "Wind Turbine Plateau Crest", x: 760, y: 32.0, z: -780 },
             { id: "crest_volcano_rim", name: "Mount Griffin Rim Crest", x: -650, y: 48.0, z: 650 }
         ];
-
-        // goldenCrests exported above
-        export function createGoldenCrestMesh() {
-            const grp = new THREE.Group();
-            const matGold = new THREE.MeshStandardMaterial({
-                color: 0xffd700,
-                metalness: 0.88,
-                roughness: 0.22,
-                emissive: 0x785600,
-                emissiveIntensity: 0.35
-            });
-            const matSilverTrim = new THREE.MeshStandardMaterial({
-                color: 0xf1f5f9,
-                metalness: 0.92,
-                roughness: 0.15
-            });
-
-            const shield = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.8, 0.45), matGold);
-            shield.castShadow = true;
-            grp.add(shield);
-
-            const tip = new THREE.Mesh(new THREE.ConeGeometry(1.2, 1.4, 4), matGold);
-            tip.rotation.y = Math.PI / 4;
-            tip.rotation.x = Math.PI;
-            tip.position.y = -1.6;
-            grp.add(tip);
-
-            [-0.26, 0.26].forEach(zPos => {
-                const emblemCenter = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.18), matSilverTrim);
-                emblemCenter.position.set(0, 0.2, zPos);
-                grp.add(emblemCenter);
-
-                const emblemBrow = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.35, 0.18), matSilverTrim);
-                emblemBrow.position.set(0, 0.9, zPos);
-                grp.add(emblemBrow);
-
-                const emblemNose = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.6, 0.18), matSilverTrim);
-                emblemNose.position.set(0, -0.4, zPos);
-                grp.add(emblemNose);
-            });
-
-            const halo = new THREE.Mesh(
-                new THREE.TorusGeometry(2.2, 0.12, 8, 24),
-                new THREE.MeshBasicMaterial({ color: 0xffe066, transparent: true, opacity: 0.75 })
-            );
-            halo.rotation.x = Math.PI / 2;
-            grp.add(halo);
-
-            return grp;
-        }
 
         export function initGoldenCrests(scene) {
             if (!Array.isArray(progression.collectedCrests)) {

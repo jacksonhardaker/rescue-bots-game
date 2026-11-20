@@ -110,6 +110,10 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         _minY: number;
         _flag: string;
         _boundsReady: boolean;
+        _lastTransform: string;
+        _lastLabelText: string;
+        _lastLabelBg: string;
+        _lastLabelVisible: boolean;
     }
 
     const cells: BotCheckCell[] = [];
@@ -124,7 +128,7 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         bcScene.add(holder);
 
         const label = document.createElement('div');
-        label.style.cssText = 'position:absolute;transform:translate(-50%,0);white-space:nowrap;padding:2px 6px;border-radius:6px;background:rgba(15,23,42,.78);color:#fff;';
+        label.style.cssText = 'position:absolute;left:0;top:0;white-space:nowrap;padding:2px 6px;border-radius:6px;background:rgba(15,23,42,.78);color:#fff;will-change:transform;contain:layout style;';
         labelLayer.appendChild(label);
 
         c.rig = rig;
@@ -158,7 +162,11 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
                 _size: new THREE.Vector3(),
                 _minY: 0,
                 _flag: '',
-                _boundsReady: false
+                _boundsReady: false,
+                _lastTransform: '',
+                _lastLabelText: '',
+                _lastLabelBg: '',
+                _lastLabelVisible: true
             });
         });
         rowZ += rowGap / 2;
@@ -281,6 +289,9 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
     const _center = new THREE.Vector3();
     const _size = new THREE.Vector3();
     const _camTarget = new THREE.Vector3();
+    const _camDir = new THREE.Vector3();
+    (window as any).__botCheckCamera = bcCamera;
+    (window as any).__botCheckCamTarget = _camTarget;
     let lastNow = performance.now();
     let walkCycle = 0;
     let reportTimer = 0;
@@ -312,7 +323,6 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         const emitReport = reportTimer <= 0;
         if (emitReport) {
             reportTimer = 0.5;
-            needsBoundsRefresh = true;
         }
 
         const issues: string[] = [];
@@ -347,7 +357,10 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
 
             if (!show) {
                 if (c.holder) c.holder.visible = false;
-                if (c.label) c.label.style.display = 'none';
+                if (c.label && c._lastLabelVisible) {
+                    c.label.style.display = 'none';
+                    c._lastLabelVisible = false;
+                }
                 continue;
             }
 
@@ -355,7 +368,6 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
             const holder = c.holder!;
             const label = c.label!;
             holder.visible = true;
-            label.style.display = '';
 
             if (!isFocus) {
                 holder.position.copy(c.gridPos);
@@ -368,7 +380,8 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
 
             applyBotRigMorph(c.rig, m, d, walk, speed, smash, t, 0, bm);
 
-            if (needsBoundsRefresh || !c._boundsReady) {
+            const refreshFullBounds = needsBoundsRefresh || !c._boundsReady;
+            if (refreshFullBounds || emitReport) {
                 const b = visibleBounds(holder);
                 const minY = b.isEmpty() ? 0 : b.min.y;
                 const activeMode = isFocus ? state.mode : c.mode;
@@ -376,11 +389,13 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
                 const flag = minY < -0.15 ? '[SINK]' : (minY > 0.6 && !isFlightVehicle ? '[FLOAT]' : '');
                 c._minY = minY;
                 c._flag = flag;
-                b.getCenter(_center);
-                b.getSize(_size);
-                c._center.copy(_center);
-                c._size.copy(_size);
-                c._boundsReady = true;
+                if (refreshFullBounds) {
+                    b.getCenter(_center);
+                    b.getSize(_size);
+                    c._center.copy(_center);
+                    c._size.copy(_size);
+                    c._boundsReady = true;
+                }
             }
 
             if (c._flag) {
@@ -412,21 +427,57 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
             hasTarget = true;
         }
         if (hasTarget) bcCamera.lookAt(_camTarget);
+        bcCamera.updateMatrixWorld(true);
+        bcCamera.matrixWorldInverse.copy(bcCamera.matrixWorld).invert();
 
-        // Labels
+        _camDir.set(bcCamera.position.x - _camTarget.x, 0, bcCamera.position.z - _camTarget.z);
+        if (_camDir.lengthSq() > 1e-6) _camDir.normalize();
+        else _camDir.set(0, 0, 1);
+
+        const vw = renderer.domElement.clientWidth || window.innerWidth;
+        const vh = renderer.domElement.clientHeight || window.innerHeight;
+
+        // Labels (GPU-composited transform, cached DOM writes, synchronized camera matrix)
         for (let i = 0; i < cells.length; i++) {
             const c = cells[i];
             if (!c.holder || !c.holder.visible || !c.label) continue;
-            _v.set(c.holder.position.x, -0.5, c.holder.position.z + (c.isMega ? 6 : 3)).project(bcCamera);
-            const onScreen = _v.z < 1 && Math.abs(_v.x) < 1.1 && Math.abs(_v.y) < 1.1;
-            c.label.style.display = onScreen ? '' : 'none';
-            if (!onScreen) continue;
-            c.label.style.left = ((_v.x + 1) / 2 * window.innerWidth) + 'px';
-            c.label.style.top = ((1 - _v.y) / 2 * window.innerHeight) + 'px';
+            const anchorR = c.isMega ? 5.6 : 2.8;
+            _v.set(
+                c.holder.position.x + _camDir.x * anchorR,
+                -0.45,
+                c.holder.position.z + _camDir.z * anchorR
+            ).project(bcCamera);
+            const onScreen = _v.z >= -1 && _v.z < 1 && Math.abs(_v.x) < 1.15 && Math.abs(_v.y) < 1.15;
+            if (!onScreen) {
+                if (c._lastLabelVisible) {
+                    c.label.style.display = 'none';
+                    c._lastLabelVisible = false;
+                }
+                continue;
+            }
+            if (!c._lastLabelVisible) {
+                c.label.style.display = '';
+                c._lastLabelVisible = true;
+            }
+            const sx = (_v.x + 1) * 0.5 * vw;
+            const sy = (1 - _v.y) * 0.5 * vh;
+            const tr = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0) translate(-50%, 0)`;
+            if (tr !== c._lastTransform) {
+                c.label.style.transform = tr;
+                c._lastTransform = tr;
+            }
             const modeName = !isFocus ? c.mode : `${state.mode} ${state.morph.toFixed(2)}`;
             const displayName = c.id.endsWith('_MEGA') ? `${c.id.replace('_MEGA', '')} (MEGA)` : c.id;
-            c.label.textContent = `${displayName} · ${modeName}${c._flag ? ' ' + c._flag : ''}`;
-            c.label.style.background = c._flag ? 'rgba(220,38,38,.9)' : 'rgba(15,23,42,.78)';
+            const nextText = `${displayName} · ${modeName}${c._flag ? ' ' + c._flag : ''}`;
+            if (nextText !== c._lastLabelText) {
+                c.label.textContent = nextText;
+                c._lastLabelText = nextText;
+            }
+            const nextBg = c._flag ? 'rgba(220,38,38,.9)' : 'rgba(15,23,42,.78)';
+            if (nextBg !== c._lastLabelBg) {
+                c.label.style.background = nextBg;
+                c._lastLabelBg = nextBg;
+            }
         }
 
         if (emitReport) {

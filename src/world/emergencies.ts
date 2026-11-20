@@ -78,12 +78,14 @@ export const emergentRescues = [];
 
 
 
-const fireConeGeo = new THREE.ConeGeometry(0.85, 2.8, 8);
-const matFireCore = new THREE.MeshBasicMaterial({ color: 0xff5400 });
-const matFireTip = new THREE.MeshBasicMaterial({ color: 0xffd60a });
-const boulderGeo = new THREE.DodecahedronGeometry(2.3, 0);
+import {
+    boulderGeo,
+    matBoulder,
+    createHazardFireMesh,
+    createHazardRockslideMesh
+} from './propModels.js';
+
 const rockGeo = new THREE.DodecahedronGeometry(1.6, 0);
-const matBoulder = new THREE.MeshToonMaterial({ color: 0x78716c, gradientMap: toonGrad3 });
 const matBeaconRed = new THREE.MeshBasicMaterial({ color: 0xff1e42 });
 const matBeaconOrange = new THREE.MeshBasicMaterial({ color: 0xff6414 });
 const matBeaconCyan = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
@@ -104,27 +106,12 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                 const nodeType = isFireNode ? 'FIRE' : 'ROCKSLIDE';
 
                 if (isFireNode) {
-                    nodeMesh = new THREE.Group();
-                    const outerFlame = new THREE.Mesh(fireConeGeo, matFireCore);
-                    outerFlame.position.y = 2.4;
-                    nodeMesh.add(outerFlame);
-                    const innerFlame = new THREE.Mesh(new THREE.ConeGeometry(1.3, 4.0, 6), matFireTip);
-                    innerFlame.position.y = 1.8;
-                    nodeMesh.add(innerFlame);
-                    const flameOutline = new THREE.Mesh(fireConeGeo, matInkOutline);
-                    flameOutline.position.y = 2.4;
-                    flameOutline.scale.setScalar(1.09);
-                    nodeMesh.add(flameOutline);
+                    nodeMesh = createHazardFireMesh();
                     nodeMesh.position.set(nx, ny, nz);
                     nodeMesh.scale.setScalar(s);
                 } else {
-                    nodeMesh = new THREE.Mesh(boulderGeo, matBoulder);
-                    nodeMesh.scale.set(s * 1.2, s * 0.95, s);
+                    nodeMesh = createHazardRockslideMesh(s, i, i * 1.3);
                     nodeMesh.position.set(nx, ny + s * 1.1, nz);
-                    nodeMesh.rotation.set(i, i * 1.3, 0);
-                    nodeMesh.castShadow = true;
-                    nodeMesh.receiveShadow = true;
-                    applyCartoonInkOutlines(nodeMesh, 1.075, true);
                 }
                 (scene || (typeof window !== "undefined" ? window.scene : null)).add(nodeMesh);
 

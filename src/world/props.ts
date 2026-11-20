@@ -4,6 +4,14 @@ import { getTerrainHeight, getSurfaceHeight } from './terrain.js';
 import { toonGrad3, matDarkSteel, matInkOutline } from '../rendering/materials.js';
 import { player, worldColliders } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
+import {
+    streetlampGeos,
+    matStreetlampBulb,
+    createTrafficConeMesh,
+    createBarricadeMesh
+} from './propModels.js';
+
+export { createTrafficConeMesh, createBarricadeMesh, matStreetlampBulb };
 
 export const interactiveRoadProps = [];
 
@@ -28,14 +36,11 @@ export const interactiveRoadProps = [];
             [-14, -1145], [14, -1145], [-14, -1095], [14, -1095]
         ];
 
-        export const matStreetlampBulb = new THREE.MeshBasicMaterial({ color: 0xfef08a });
         if (typeof window !== 'undefined') (window as any).matStreetlampBulb = matStreetlampBulb;
 
         export function buildInstancedStreetlamps(scene) {
             const count = streetlampCoords.length;
-            const postGeo = new THREE.CylinderGeometry(0.18, 0.28, 7.2, 8);
-            const bulbGeo = new THREE.SphereGeometry(0.68, 8, 8);
-            const capGeo = new THREE.ConeGeometry(0.95, 0.55, 8);
+            const { postGeo, bulbGeo, capGeo } = streetlampGeos;
 
             const iPosts = new THREE.InstancedMesh(postGeo, matDarkSteel, count);
             const iBulbs = new THREE.InstancedMesh(bulbGeo, matStreetlampBulb, count);
@@ -96,66 +101,6 @@ export const interactiveRoadProps = [];
 
 
         // interactiveRoadProps exported above
-
-        export function createTrafficConeMesh() {
-            const grp = new THREE.Group();
-            const matBase = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
-            const matCone = new THREE.MeshToonMaterial({ color: 0xff6b00, gradientMap: toonGrad3 });
-            const matWhiteStripe = new THREE.MeshBasicMaterial({ color: 0xffffff });
-
-            const base = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.16, 1.2), matBase);
-            base.position.y = 0.08;
-            grp.add(base);
-
-            const cone = new THREE.Mesh(new THREE.ConeGeometry(0.44, 1.5, 12), matCone);
-            cone.position.y = 0.83;
-            grp.add(cone);
-
-            const band = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.33, 0.36, 12), matWhiteStripe);
-            band.position.y = 0.78;
-            grp.add(band);
-
-            return grp;
-        }
-
-        export function createBarricadeMesh() {
-            const grp = new THREE.Group();
-            const matLegs = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: toonGrad3 });
-            const matBoard = new THREE.MeshToonMaterial({ color: 0xffa500, gradientMap: toonGrad3 });
-            const matBlackStripe = new THREE.MeshBasicMaterial({ color: 0x0f172a });
-
-            [-1.3, 1.3].forEach(lx => {
-                const legL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.6, 0.14), matLegs);
-                legL.rotation.z = 0.18;
-                legL.position.set(lx - 0.12, 0.8, 0);
-                grp.add(legL);
-
-                const legR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.6, 0.14), matLegs);
-                legR.rotation.z = -0.18;
-                legR.position.set(lx + 0.12, 0.8, 0);
-                grp.add(legR);
-            });
-
-            const board = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.55, 0.14), matBoard);
-            board.position.set(0, 1.15, 0);
-            grp.add(board);
-
-            [-1.0, -0.4, 0.2, 0.8].forEach(sx => {
-                const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.58, 0.16), matBlackStripe);
-                stripe.rotation.z = -0.45;
-                stripe.position.set(sx, 1.15, 0);
-                grp.add(stripe);
-            });
-
-            const amberLight = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.18, 0.22, 0.28, 10),
-                new THREE.MeshBasicMaterial({ color: 0xffaa00 })
-            );
-            amberLight.position.set(0, 1.58, 0);
-            grp.add(amberLight);
-
-            return grp;
-        }
 
         export function initInteractiveRoadProps(scene) {
             const coneSpawns = [
