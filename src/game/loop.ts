@@ -55,6 +55,7 @@ let hudWaterCheckTimer = 0;
 let shadowFrameToggle = 1;
 let renderedFrames = 0;
 let loadingOverlayDismissed = false;
+let _autoFpsGoodStreak = 0;
 let lastSavedPos = { x: 0, y: 0, z: 0, heading: 0 };
 
 const _bubbleWorldPos = new THREE.Vector3();
@@ -171,6 +172,35 @@ function updateSpeechBubbleProjection(dt: number) {
                 const fps = Math.round(frameCount / fpsTimer);
                 if (!_fpsCounterEl) _fpsCounterEl = document.getElementById('fps-counter');
                 if (_fpsCounterEl) _fpsCounterEl.textContent = `${fps} FPS`;
+
+                // Auto-FPS Adaptive Resolution Governor (keeps framerate smooth on older laptops)
+                if (renderedFrames > 24 && renderer && gameSettings?.graphics?.autoFpsGovernor) {
+                    const curPr = renderer.getPixelRatio();
+                    const resSetting = gameSettings.graphics.resolution;
+                    const rawDpr = window.devicePixelRatio || 1;
+                    const maxTargetPr = resSetting === 'ultralow' ? 0.75 : (resSetting === 'low' ? 1.0 : (resSetting === 'medium' ? Math.min(rawDpr, 1.35) : Math.min(rawDpr, 2.0)));
+                    if (fps < 42 && curPr > 0.75) {
+                        _autoFpsGoodStreak = 0;
+                        const nextPr = Math.max(0.75, Math.round((curPr - 0.25) * 100) / 100);
+                        if (nextPr !== curPr) {
+                            renderer.setPixelRatio(nextPr);
+                            renderer.setSize(window.innerWidth, window.innerHeight);
+                        }
+                    } else if (fps >= 56 && curPr < maxTargetPr) {
+                        _autoFpsGoodStreak++;
+                        if (_autoFpsGoodStreak >= 6) {
+                            _autoFpsGoodStreak = 0;
+                            const nextPr = Math.min(maxTargetPr, Math.round((curPr + 0.25) * 100) / 100);
+                            if (nextPr !== curPr) {
+                                renderer.setPixelRatio(nextPr);
+                                renderer.setSize(window.innerWidth, window.innerHeight);
+                            }
+                        }
+                    } else {
+                        _autoFpsGoodStreak = 0;
+                    }
+                }
+
                 frameCount = 0;
                 fpsTimer = 0;
             }

@@ -96,10 +96,20 @@ let activeRebindAction = null;
             if (btnOutlines) {
                 if (gameSettings.graphics.outlines) {
                     btnOutlines.textContent = 'ON';
-                    btnOutlines.className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-400';
+                    btnOutlines.className = 'px-3.5 py-2 rounded-xl font-bold text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-400 shrink-0 cursor-pointer';
                 } else {
                     btnOutlines.textContent = 'OFF';
-                    btnOutlines.className = 'px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-800 text-slate-400 border border-slate-700';
+                    btnOutlines.className = 'px-3.5 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 border border-slate-700 shrink-0 cursor-pointer';
+                }
+            }
+            const btnAutoFps = document.getElementById('btn-toggle-autofps');
+            if (btnAutoFps) {
+                if (gameSettings.graphics.autoFpsGovernor !== false) {
+                    btnAutoFps.textContent = 'ON';
+                    btnAutoFps.className = 'px-3.5 py-2 rounded-xl font-bold text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-400 shrink-0 cursor-pointer';
+                } else {
+                    btnAutoFps.textContent = 'OFF';
+                    btnAutoFps.className = 'px-3.5 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 border border-slate-700 shrink-0 cursor-pointer';
                 }
             }
             const outlineStatsEl = document.getElementById('settings-outline-stats');
@@ -336,9 +346,14 @@ function _localReset() {
             applyGameSettings();
         });
 
-        // Graphics Outlines Toggle
+        // Graphics Outlines & Auto-FPS Governor Toggles
         bindButton('btn-toggle-outlines', () => {
             gameSettings.graphics.outlines = !gameSettings.graphics.outlines;
+            saveGameSettings();
+            applyGameSettings();
+        });
+        bindButton('btn-toggle-autofps', () => {
+            gameSettings.graphics.autoFpsGovernor = !(gameSettings.graphics.autoFpsGovernor !== false);
             saveGameSettings();
             applyGameSettings();
         });

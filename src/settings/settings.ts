@@ -18,7 +18,8 @@ export const DEFAULT_SETTINGS = {
         shadows: 'high', // 'off' | 'low' | 'medium' | 'high'
         outlines: true,
         drawDistance: 'high', // 'low' (1300) | 'medium' (1800) | 'high' (2400)
-        resolution: 'high' // 'low' (1x) | 'medium' (1.35x) | 'high' (2x)
+        resolution: 'high', // 'ultralow' (0.75x) | 'low' (1x) | 'medium' (1.35x) | 'high' (2x)
+        autoFpsGovernor: true
     },
     controls: {
         forward: ['KeyW', 'ArrowUp'],

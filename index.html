@@ -1336,7 +1336,7 @@
             <div class="relative bg-white/95 text-slate-900 border-2 border-slate-950 px-3.5 py-2 rounded-2xl shadow-2xl max-w-[280px] sm:max-w-[340px] flex flex-col gap-0.5">
                 <!-- Speaker Header: Avatar + Role Badge + Name -->
                 <div class="flex items-center gap-1.5 leading-none">
-                    <span id="world-speaker-avatar" class="text-base shrink-0">💬</span>
+                    <span id="world-speaker-avatar" class="w-5 h-5 flex items-center justify-center shrink-0"></span>
                     <span id="world-speaker-role" class="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-amber-400 text-slate-950">RESCUE BOT</span>
                     <span id="world-speaker-name" class="text-[11px] font-black tracking-wide text-slate-900 uppercase truncate">HEATWAVE</span>
                 </div>
@@ -1853,7 +1853,8 @@
             <div class="overflow-y-auto py-4 space-y-3.5 text-xs text-slate-300 leading-relaxed pr-1">
                 <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-400/40 text-amber-200">
                     <div class="font-bold text-[11px] uppercase tracking-wide text-amber-300 mb-1 flex items-center gap-1.5">
-                        <span>⚠️</span> Unofficial Fan Tribute
+                        <svg viewBox="0 0 24 24" class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span>Unofficial Fan Tribute</span>
                     </div>
                     This is an independent, non-commercial fan game created out of love for the <em>Transformers: Rescue Bots</em> animated series for educational and personal enjoyment.
                 </div>
@@ -2007,6 +2008,17 @@
                             <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="resolution" data-val="medium">Med (1.35x)</button>
                             <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="resolution" data-val="high">Sharp (2x)</button>
                         </div>
+                    </div>
+
+                    <!-- Auto-FPS Resolution Governor -->
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3">
+                        <div>
+                            <div class="font-bold text-white text-xs">Auto-FPS Resolution Governor</div>
+                            <div class="text-[11px] text-slate-300 mt-0.5">Dynamically scales resolution down to 0.75x when FPS dips below 42 on older laptops.</div>
+                        </div>
+                        <button id="btn-toggle-autofps" class="px-3.5 py-2 rounded-xl font-bold text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-400 shrink-0 cursor-pointer">
+                            ON
+                        </button>
                     </div>
                 </div>
 
@@ -2261,15 +2273,16 @@
                 "Well, well, Rescue Bots! Do you truly believe your machines can withstand my 3-unit MorBot fleet? Alpha, Beta, and Gamma are primed for destruction!"
             </p>
             <div class="text-[10px] sm:text-[11px] text-amber-300 font-bold mt-2.5 flex items-center justify-center gap-1.5">
-                <span>⚡ Defeat all 3 MorBots across High-Speed Pursuits & Robot Showdowns!</span>
+                <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#fbbf24" stroke="#d97706" stroke-width="1.4"/></svg>
+                <span>Defeat all 3 MorBots across High-Speed Pursuits &amp; Robot Showdowns!</span>
             </div>
 
             <div class="mt-5 flex gap-3 justify-center">
                 <button id="btn-close-morbot" class="tactile-btn bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs sm:text-sm border border-white/10">
-                    ↩️ Keep Driving
+                    Keep Driving
                 </button>
                 <button id="btn-start-morbot" class="tactile-btn bg-gradient-to-r from-red-600 via-rose-600 to-purple-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-xs sm:text-sm border-2 border-red-300 shadow-lg shadow-red-900/50">
-                    ⚔️ START BATTLE!
+                    START BATTLE!
                 </button>
             </div>
         </div>
@@ -2320,9 +2333,15 @@
                 Heroic victory! All 3 of Dr. Morocco's rogue MorBots (Alpha, Beta, and Gamma) have been neutralized, and Dr. Morocco was forced to flee the island in his escape rocket!
             </p>
             <div class="mt-3 px-4 py-2.5 rounded-2xl bg-slate-900/80 border border-amber-400/50 text-xs sm:text-sm font-bold text-amber-300 flex items-center justify-center gap-3">
-                <span>⚡ +75 Energon Cubes Awarded!</span>
+                <span class="flex items-center gap-1">
+                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 shrink-0" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="#fbbf24" stroke="#d97706" stroke-width="1.4"/></svg>
+                    <span>+75 Energon Cubes Awarded!</span>
+                </span>
                 <span>•</span>
-                <span>🏆 3/3 Bosses Defeated!</span>
+                <span class="flex items-center gap-1">
+                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 stroke-amber-300 fill-amber-400 shrink-0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 01-2-2V5a2 2 0 012-2h2M18 9h2a2 2 0 002-2V5a2 2 0 00-2-2h-2M4 5h16v6a7 7 0 01-14 0V5zM12 18v3M8 21h8"/></svg>
+                    <span>3/3 Bosses Defeated!</span>
+                </span>
             </div>
             <div class="mt-5 flex gap-3 justify-center">
                 <button id="btn-morbot-victory-ok" class="tactile-btn bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black px-6 py-3 rounded-xl text-sm border-2 border-yellow-200 shadow-lg">
@@ -2338,7 +2357,9 @@
             <!-- Modal Header -->
             <div class="flex items-center justify-between px-3.5 py-2.5 sm:px-5 sm:py-3 border-b border-cyan-500/30 bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-900 shrink-0">
                 <div class="flex items-center gap-2.5 sm:gap-3">
-                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-cyan-500/20 border border-cyan-400/60 flex items-center justify-center text-cyan-300 text-lg shadow-inner">🗺️</div>
+                    <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-cyan-500/20 border border-cyan-400/60 flex items-center justify-center text-cyan-300 text-lg shadow-inner">
+                        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+                    </div>
                     <div>
                         <div class="flex items-center gap-2">
                             <h2 id="tactical-map-title" class="text-sm sm:text-lg font-black text-amber-300 tracking-wide font-sans">GRIFFIN ROCK TACTICAL MAP</h2>

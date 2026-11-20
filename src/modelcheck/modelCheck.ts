@@ -3,6 +3,15 @@ import * as THREE from 'three';
 import { matInkOutline, matInkEdgeLine, OUTLINE_LAYER } from '../rendering/materials.js';
 import { buildCrashedSpaceshipSigma } from '../world/spaceshipSigma.js';
 import {
+    buildAutobotOrbitalStationMesh,
+    buildMoroccoOrbitalStationMesh,
+    buildOrbitalSatelliteMesh,
+    buildStrandedPodMesh,
+    buildLunarOutpostMesh,
+    buildLunarRoverMesh,
+    buildLunarStuntHoopMesh
+} from '../world/spaceModels.js';
+import {
     CavernAnimatedEntry,
     DinoSpecies,
     buildEnergonCacheMesh,
@@ -228,6 +237,106 @@ export const MODEL_CATALOG: ModelCatalogEntry[] = [
                 flatLevel: true
             });
             return { root: container, animatedEntries: anims };
+        }
+    },
+    {
+        id: 'SPACE_AUTOBOT_STATION',
+        name: 'Autobot Orbital Station',
+        category: 'Starship & Space',
+        defaultYawDeg: 35,
+        defaultPitch: 0.32,
+        gridSpanX: 78,
+        gridSpanZ: 78,
+        build: () => {
+            const root = liftMinYToFloor(buildAutobotOrbitalStationMesh(), 0.2);
+            return { root, animatedEntries: [] };
+        }
+    },
+    {
+        id: 'SPACE_MOROCCO_STATION',
+        name: "Dr. Morocco's Orbital Laser Station",
+        category: 'Starship & Space',
+        defaultYawDeg: 32,
+        defaultPitch: 0.30,
+        gridSpanX: 78,
+        gridSpanZ: 112,
+        build: () => {
+            const { root: station, dishPivot } = buildMoroccoOrbitalStationMesh();
+            const root = liftMinYToFloor(station, 0.2);
+            return {
+                root,
+                animatedEntries: [{ obj: dishPivot, kind: 'SPIN_Y', baseY: dishPivot.position.y, phase: 0 }]
+            };
+        }
+    },
+    {
+        id: 'SPACE_GREENE_SATELLITE',
+        name: 'Dr. Greene Orbital Satellite',
+        category: 'Starship & Space',
+        defaultYawDeg: 38,
+        defaultPitch: 0.30,
+        gridSpanX: 30,
+        gridSpanZ: 24,
+        build: () => {
+            const { group } = buildOrbitalSatelliteMesh(true);
+            const root = liftMinYToFloor(group, 0.2);
+            return { root, animatedEntries: [] };
+        }
+    },
+    {
+        id: 'SPACE_RESCUE_POD',
+        name: 'Stranded Orbital Rescue Pod',
+        category: 'Starship & Space',
+        defaultYawDeg: 34,
+        defaultPitch: 0.30,
+        gridSpanX: 20,
+        gridSpanZ: 20,
+        build: () => {
+            const root = liftMinYToFloor(buildStrandedPodMesh(), 0.2);
+            return { root, animatedEntries: [] };
+        }
+    },
+    {
+        id: 'MOON_LUNAR_OUTPOST',
+        name: 'Griffin Rock Lunar Outpost Alpha',
+        category: 'Starship & Space',
+        defaultYawDeg: 36,
+        defaultPitch: 0.32,
+        gridSpanX: 36,
+        gridSpanZ: 36,
+        build: () => {
+            const { outpostGroup, dishPivot } = buildLunarOutpostMesh();
+            return {
+                root: outpostGroup,
+                animatedEntries: [{ obj: dishPivot, kind: 'SPIN_Y', baseY: dishPivot.position.y, phase: 0 }]
+            };
+        }
+    },
+    {
+        id: 'MOON_LUNAR_ROVER',
+        name: 'Griffin Rock 6-Wheel Lunar Rover',
+        category: 'Starship & Space',
+        defaultYawDeg: 38,
+        defaultPitch: 0.28,
+        gridSpanX: 16,
+        gridSpanZ: 16,
+        build: () => {
+            const { rover } = buildLunarRoverMesh();
+            return { root: rover, animatedEntries: [] };
+        }
+    },
+    {
+        id: 'MOON_CRATER_HOOP',
+        name: 'Low-Gravity Lunar Stunt Hoop',
+        category: 'Starship & Space',
+        defaultYawDeg: 30,
+        defaultPitch: 0.28,
+        gridSpanX: 18,
+        gridSpanZ: 18,
+        build: () => {
+            const { group } = buildLunarStuntHoopMesh();
+            const root = liftMinYToFloor(group, 0.2);
+            return { root, animatedEntries: [] };
         }
     },
 

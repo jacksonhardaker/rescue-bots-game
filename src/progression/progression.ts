@@ -45,8 +45,10 @@ export const progression: Record<string, any> = {
     spaceAsteroidsCleared: 0,
     spaceRescuesDone: 0,
     spaceRingsCompleted: 0,
+    spaceMoroccoDefeated: false,
     moonRelicsFound: [],
-    moonFlagPlanted: false
+    moonFlagPlanted: false,
+    moonHoopsCleared: 0
 };
 
 export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'];
@@ -100,8 +102,8 @@ export function getHeroPoints(prog = progression) {
     const cavernLandmarkPts = (Array.isArray(prog.discoveredCavernLandmarks) ? prog.discoveredCavernLandmarks.length * 4 : 0);
     const cavernGemPts = Math.floor((prog.cavernGemsCollected || 0) / 3);
     const sigmaPts = (prog.sigmaRepaired ? 12 : 0) + (Array.isArray(prog.sigmaInstalledParts) ? prog.sigmaInstalledParts.length * 3 : 0);
-    const spacePts = (prog.spaceAsteroidsCleared || 0) + (prog.spaceRescuesDone || 0) * 5 + (prog.spaceRingsCompleted || 0) * 8;
-    const moonPts = (Array.isArray(prog.moonRelicsFound) ? prog.moonRelicsFound.length * 5 : 0) + (prog.moonFlagPlanted ? 6 : 0);
+    const spacePts = (prog.spaceAsteroidsCleared || 0) + (prog.spaceRescuesDone || 0) * 5 + (prog.spaceRingsCompleted || 0) * 8 + (prog.spaceMoroccoDefeated ? 20 : 0);
+    const moonPts = (Array.isArray(prog.moonRelicsFound) ? prog.moonRelicsFound.length * 5 : 0) + (prog.moonFlagPlanted ? 6 : 0) + (prog.moonHoopsCleared || 0) * 2;
     return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts + cavernLandmarkPts + cavernGemPts + sigmaPts + spacePts + moonPts;
 }
 
@@ -301,6 +303,12 @@ export function loadProgression(options: Record<string, any> = {}) {
     }
     if (typeof target.moonFlagPlanted === 'boolean') {
         progression.moonFlagPlanted = target.moonFlagPlanted;
+    }
+    if (typeof target.spaceMoroccoDefeated === 'boolean') {
+        progression.spaceMoroccoDefeated = target.spaceMoroccoDefeated;
+    }
+    if (Number.isFinite(target.moonHoopsCleared) && target.moonHoopsCleared >= 0) {
+        progression.moonHoopsCleared = Math.floor(target.moonHoopsCleared);
     }
 
     progression.saveVersion = CURRENT_SAVE_VERSION;

@@ -20,17 +20,17 @@ import { visitingAutobots, WORLD_MEGA_LOCATIONS } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
 import { isBotDocked } from '../progression/progression.js';
 
-const MEGA_ATTACHMENT_META: Record<string, { name: string, icon: string, color: string }> = {
-    HEATWAVE:    { name: 'HEATWAVE LADDER',    icon: '🚒', color: '#ef4444' },
-    OPTIMUS:     { name: 'OPTIMUS SUPER RIG',  icon: '🚛', color: '#dc2626' },
-    BOULDER:     { name: 'BOULDER BUCKET',     icon: '🚜', color: '#84cc16' },
-    CHASE:       { name: 'CHASE TRAILER',      icon: '🚓', color: '#3b82f6' },
-    BLADES:      { name: 'BLADES SKY-CRANE',   icon: '🚁', color: '#f97316' },
-    BUMBLEBEE:   { name: 'BUMBLEBEE MONSTER',  icon: '🐝', color: '#facc15' },
-    BLURR:       { name: 'BLURR SPEED RIG',    icon: '⚡', color: '#a855f7' },
-    SALVAGE:     { name: 'SALVAGE DUMPSTER',   icon: '♻️', color: '#65a30d' },
-    QUICKSHADOW: { name: 'QUICKSHADOW BOMBER', icon: '✈️', color: '#0ea5e9' },
-    HIGHTIDE:    { name: 'HIGH TIDE RIG',      icon: '🚢', color: '#06b6d4' }
+const MEGA_ATTACHMENT_META: Record<string, { name: string, color: string }> = {
+    HEATWAVE:    { name: 'HEATWAVE LADDER',    color: '#ef4444' },
+    OPTIMUS:     { name: 'OPTIMUS SUPER RIG',  color: '#dc2626' },
+    BOULDER:     { name: 'BOULDER BUCKET',     color: '#84cc16' },
+    CHASE:       { name: 'CHASE TRAILER',      color: '#3b82f6' },
+    BLADES:      { name: 'BLADES SKY-CRANE',   color: '#f97316' },
+    BUMBLEBEE:   { name: 'BUMBLEBEE MONSTER',  color: '#facc15' },
+    BLURR:       { name: 'BLURR SPEED RIG',    color: '#a855f7' },
+    SALVAGE:     { name: 'SALVAGE DUMPSTER',   color: '#65a30d' },
+    QUICKSHADOW: { name: 'QUICKSHADOW BOMBER', color: '#0ea5e9' },
+    HIGHTIDE:    { name: 'HIGH TIDE RIG',      color: '#06b6d4' }
 };
 window.lastTacticalMapToggleTime = 0;
 
@@ -81,6 +81,66 @@ export function handleTacticalMapTap(clientX, clientY) {
                 const canvasY = (clientY - rect.top) * (tacticalMapCanvas.height / rect.height);
                 const cx = tacticalMapCanvas.width / 2;
                 const cy = tacticalMapCanvas.height / 2;
+
+                if (worldState.activeArea === 'SPACE') {
+                    const sp = (window as any).getSpaceMapData?.();
+                    if (sp) {
+                        const spScale = (cx * 0.84) / (sp.bounds || 460);
+                        let wx = Math.max(-sp.bounds + 20, Math.min(sp.bounds - 20, (canvasX - cx) / spScale));
+                        let wz = Math.max(-sp.bounds + 20, Math.min(sp.bounds - 20, (canvasY - cy) / spScale));
+                        let wy = sp.ship.pos.y;
+                        let snapLabel = `(${Math.round(wx)}, ${Math.round(wz)})`;
+                        // Snap to nearest orbital target if tapped within 45m
+                        const checkSnap = (tx: number, ty: number, tz: number, label: string, r = 45) => {
+                            if (Math.hypot(wx - tx, wz - tz) < r) {
+                                wx = tx; wy = ty; wz = tz; snapLabel = label;
+                            }
+                        };
+                        checkSnap(sp.moonLandingPos?.x ?? 0, sp.moonLandingPos?.y ?? 45, sp.moonLandingPos?.z ?? -238, 'Lunar Landing Zone', 55);
+                        checkSnap(sp.stationPos.x, sp.stationPos.y, sp.stationPos.z, 'Autobot Orbital Station', 55);
+                        if (sp.moroccoStation && !sp.moroccoStation.defeated) {
+                            checkSnap(sp.moroccoStation.pos.x, sp.moroccoStation.pos.y, sp.moroccoStation.pos.z, "Dr. Morocco's Orbital Station", 55);
+                        }
+                        sp.satellites?.forEach((s: any) => { if (!s.repaired) checkSnap(s.pos.x, s.pos.y, s.pos.z, s.name, 42); });
+                        sp.pods?.forEach((p: any) => { if (!p.rescued) checkSnap(p.pos.x, p.pos.y, p.pos.z, p.name, 42); });
+                        const activeRing = sp.starRings?.[sp.ship.activeRingIdx];
+                        if (activeRing) checkSnap(activeRing.pos.x, activeRing.pos.y, activeRing.pos.z, 'Active Star-Ring Gate', 42);
+
+                        if (typeof (window as any).setSpaceWaypointWorld === 'function') {
+                            (window as any).setSpaceWaypointWorld(wx, wy, wz);
+                        } else {
+                            sp.ship.waypoint.set(wx, wy, wz);
+                            sp.ship.hasWaypoint = true;
+                        }
+                        if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
+                        showToast('ORBITAL COURSE LOCKED', `Starship Sigma flying to ${snapLabel}`);
+                    }
+                    closeTacticalMap();
+                    return;
+                }
+
+                if (worldState.activeArea === 'MOON') {
+                    const md = (window as any).getMoonMapData?.();
+                    const moonR = md?.radius || 185;
+                    const moonScale = (cx * 0.84) / moonR;
+                    let wx = (canvasX - cx) / moonScale;
+                    let wz = (canvasY - cy) / moonScale;
+                    const d = Math.hypot(wx, wz);
+                    if (d > moonR - 8) {
+                        wx *= (moonR - 8) / d;
+                        wz *= (moonR - 8) / d;
+                    }
+                    const ty = getSurfaceHeight(wx, wz);
+                    player.waypoint.set(wx, ty, wz);
+                    player.hasWaypoint = true;
+                    waypointGroup.position.set(wx, ty, wz);
+                    waypointGroup.visible = true;
+                    if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
+                    spawnBurstParticles(wx, ty + 0.5, wz, 0xfacc15, 6, 0.8);
+                    showToast('LUNAR WAYPOINT SET', `Navigating across Moon to (${Math.round(wx)}, ${Math.round(wz)})`);
+                    closeTacticalMap();
+                    return;
+                }
 
                 if (worldState.activeArea === 'UNDERGROUND') {
                     const ug = getUndergroundMapData();
@@ -762,6 +822,212 @@ function ensureMinimapBgCache(w: number, h: number) {
                 return;
             }
 
+            if (worldState.activeArea === 'SPACE') {
+                const sp = (window as any).getSpaceMapData?.();
+                const titleEl = document.getElementById('tactical-map-title');
+                const subEl = document.getElementById('tactical-map-subtitle');
+                const pillEl = document.getElementById('tactical-map-status-pill');
+                const gridEl = document.getElementById('tactical-map-grid-pill');
+                const countEl = document.getElementById('tactical-active-emergencies-count');
+                if (titleEl) titleEl.textContent = 'GRIFFIN ROCK ORBITAL COMMAND RADAR';
+                if (subEl) subEl.textContent = 'Deep-Space Telemetry • Tap any station, satellite, ring or coordinate to auto-fly';
+                if (pillEl) pillEl.textContent = 'ORBITAL SCAN';
+                if (gridEl) gridEl.textContent = 'SECTOR: SOL-3 // ORBIT';
+                if (countEl) countEl.textContent = `ASTEROIDS: ${progression.spaceAsteroidsCleared || 0} • RESCUES: ${progression.spaceRescuesDone || 0}`;
+
+                const bgGrad = tCtx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
+                bgGrad.addColorStop(0, '#07142b');
+                bgGrad.addColorStop(0.7, '#030917');
+                bgGrad.addColorStop(1, '#01040a');
+                tCtx.fillStyle = bgGrad;
+                tCtx.fillRect(0, 0, w, h);
+
+                const sc = (cx * 0.84) / (sp?.bounds || 460);
+                // Radar range rings
+                [150, 300, 450].forEach(dist => {
+                    tCtx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+                    tCtx.setLineDash([4, 6]);
+                    tCtx.beginPath();
+                    tCtx.arc(cx, cy, dist * sc, 0, Math.PI * 2);
+                    tCtx.stroke();
+                    tCtx.fillStyle = 'rgba(56, 189, 248, 0.5)';
+                    tCtx.font = 'bold 9px "JetBrains Mono", monospace';
+                    tCtx.textAlign = 'center';
+                    tCtx.fillText(`${dist}M`, cx, cy - dist * sc - 4);
+                });
+                tCtx.setLineDash([]);
+
+                if (sp) {
+                    const drawPin = (wx: number, wz: number, r: number, col: string, label: string) => {
+                        const px = cx + wx * sc;
+                        const pz = cy + wz * sc;
+                        tCtx.fillStyle = col;
+                        tCtx.beginPath();
+                        tCtx.arc(px, pz, r, 0, Math.PI * 2);
+                        tCtx.fill();
+                        tCtx.strokeStyle = '#ffffff';
+                        tCtx.lineWidth = 1.5;
+                        tCtx.stroke();
+                        tCtx.font = 'bold 9.5px Fredoka, sans-serif';
+                        const tw = tCtx.measureText(label).width;
+                        tCtx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+                        tCtx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
+                        tCtx.fillStyle = '#f8fafc';
+                        tCtx.textAlign = 'center';
+                        tCtx.fillText(label, px, pz + r + 14);
+                    };
+
+                    // Star-Ring Course Loop
+                    if (Array.isArray(sp.starRings) && sp.starRings.length > 0) {
+                        tCtx.strokeStyle = 'rgba(34, 211, 238, 0.25)';
+                        tCtx.setLineDash([5, 5]);
+                        tCtx.beginPath();
+                        sp.starRings.forEach((r: any, idx: number) => {
+                            const rx = cx + r.pos.x * sc;
+                            const rz = cy + r.pos.z * sc;
+                            if (idx === 0) tCtx.moveTo(rx, rz);
+                            else tCtx.lineTo(rx, rz);
+                        });
+                        tCtx.closePath();
+                        tCtx.stroke();
+                        tCtx.setLineDash([]);
+
+                        sp.starRings.forEach((r: any, idx: number) => {
+                            const isAct = idx === sp.ship.activeRingIdx;
+                            const rx = cx + r.pos.x * sc;
+                            const rz = cy + r.pos.z * sc;
+                            tCtx.strokeStyle = isAct ? '#fbbf24' : '#22d3ee';
+                            tCtx.lineWidth = isAct ? 2.5 : 1.3;
+                            tCtx.beginPath();
+                            tCtx.arc(rx, rz, isAct ? 8 : 5, 0, Math.PI * 2);
+                            tCtx.stroke();
+                        });
+                    }
+
+                    // Asteroids
+                    sp.asteroids?.forEach((a: any) => {
+                        if (!a.alive) return;
+                        tCtx.fillStyle = '#78716c';
+                        tCtx.beginPath();
+                        tCtx.arc(cx + a.pos.x * sc, cy + a.pos.z * sc, 3.2, 0, Math.PI * 2);
+                        tCtx.fill();
+                    });
+
+                    // Moon & Lunar Landing Ring
+                    drawPin(sp.moonPos.x, sp.moonPos.z, 26, '#94a3b8', 'THE MOON');
+                    drawPin(sp.moonLandingPos?.x ?? 0, sp.moonLandingPos?.z ?? -238, 8, '#22d3ee', 'LUNAR LANDING ZONE');
+
+                    // Autobot Orbital Station
+                    drawPin(sp.stationPos.x, sp.stationPos.z, 10, '#4ade80', 'AUTOBOT ORBITAL STATION');
+
+                    // Dr. Morocco's Orbital Laser Station
+                    if (sp.moroccoStation) {
+                        const ms = sp.moroccoStation;
+                        drawPin(
+                            ms.pos.x,
+                            ms.pos.z,
+                            11,
+                            ms.defeated ? '#64748b' : '#a855f7',
+                            ms.defeated ? "MOROCCO STATION (DISABLED)" : `MOROCCO LASER STATION (${ms.hp}/${ms.maxHp} HP)`
+                        );
+                    }
+
+                    // Satellites & Pods
+                    sp.satellites?.forEach((s: any) => {
+                        drawPin(s.pos.x, s.pos.z, 5.5, s.repaired ? '#38bdf8' : '#ef4444', s.name);
+                    });
+                    sp.pods?.forEach((p: any) => {
+                        if (!p.rescued) drawPin(p.pos.x, p.pos.z, 5.5, '#fbbf24', p.name);
+                    });
+
+                    // Starship Sigma Chevron
+                    drawMapChevron(tCtx, cx + sp.ship.pos.x * sc, cy + sp.ship.pos.z * sc, sp.ship.yaw + Math.PI, 9.5, '#38bdf8', '#ffffff');
+                }
+                return;
+            }
+
+            if (worldState.activeArea === 'MOON') {
+                const md = (window as any).getMoonMapData?.();
+                const titleEl = document.getElementById('tactical-map-title');
+                const subEl = document.getElementById('tactical-map-subtitle');
+                const pillEl = document.getElementById('tactical-map-status-pill');
+                const gridEl = document.getElementById('tactical-map-grid-pill');
+                const countEl = document.getElementById('tactical-active-emergencies-count');
+                if (titleEl) titleEl.textContent = 'LUNAR OUTPOST TACTICAL SURVEY MAP';
+                if (subEl) subEl.textContent = 'Tranquility Crater Basin • Tap anywhere to navigate across the Moon';
+                if (pillEl) pillEl.textContent = '0.35G LUNAR';
+                if (gridEl) gridEl.textContent = 'SECTOR: LUNA-01';
+                if (countEl) countEl.textContent = `RELICS: ${(progression.moonRelicsFound || []).length} / 5`;
+
+                const bgGrad = tCtx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
+                bgGrad.addColorStop(0, '#334155');
+                bgGrad.addColorStop(0.75, '#1e293b');
+                bgGrad.addColorStop(1, '#0f172a');
+                tCtx.fillStyle = bgGrad;
+                tCtx.fillRect(0, 0, w, h);
+
+                const sc = (cx * 0.84) / (md?.radius || 185);
+                if (md) {
+                    md.craters?.forEach((c: any) => {
+                        tCtx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+                        tCtx.strokeStyle = 'rgba(203, 213, 225, 0.45)';
+                        tCtx.lineWidth = 2;
+                        tCtx.beginPath();
+                        tCtx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                        tCtx.fill();
+                        tCtx.stroke();
+                    });
+
+                    const drawLunarPin = (wx: number, wz: number, r: number, col: string, label: string) => {
+                        const px = cx + wx * sc;
+                        const pz = cy + wz * sc;
+                        tCtx.fillStyle = col;
+                        tCtx.beginPath();
+                        tCtx.arc(px, pz, r, 0, Math.PI * 2);
+                        tCtx.fill();
+                        tCtx.strokeStyle = '#ffffff';
+                        tCtx.lineWidth = 1.5;
+                        tCtx.stroke();
+                        tCtx.font = 'bold 9.5px Fredoka, sans-serif';
+                        const tw = tCtx.measureText(label).width;
+                        tCtx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+                        tCtx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
+                        tCtx.fillStyle = '#f8fafc';
+                        tCtx.textAlign = 'center';
+                        tCtx.fillText(label, px, pz + r + 14);
+                    };
+
+                    drawLunarPin(md.sigmaPos.x, md.sigmaPos.z, 9, '#22d3ee', 'STARSHIP SIGMA PAD');
+                    drawLunarPin(36, -8, 8.5, '#f8fafc', 'LUNAR OUTPOST ALPHA');
+                    if (md.roverPos) {
+                        drawLunarPin(md.roverPos.x, md.roverPos.z, 6, '#facc15', 'LUNAR ROVER');
+                    }
+                    md.jumpPads?.forEach((jp: any) => {
+                        tCtx.strokeStyle = '#22d3ee';
+                        tCtx.lineWidth = 2;
+                        tCtx.beginPath();
+                        tCtx.arc(cx + jp.x * sc, cy + jp.z * sc, 5, 0, Math.PI * 2);
+                        tCtx.stroke();
+                    });
+                    md.hoops?.forEach((hp: any) => {
+                        tCtx.strokeStyle = hp.cleared ? '#4ade80' : '#f59e0b';
+                        tCtx.lineWidth = 2;
+                        tCtx.beginPath();
+                        tCtx.arc(cx + hp.x * sc, cy + hp.z * sc, 6, 0, Math.PI * 2);
+                        tCtx.stroke();
+                    });
+                    md.relics?.forEach((rel: any) => {
+                        if (!rel.collected) drawLunarPin(rel.x, rel.z, 6, '#fbbf24', rel.name);
+                    });
+
+                    if (buddyBot && buddyBot.botType && buddyBot.botType !== player.botType) {
+                        drawMapChevron(tCtx, cx + buddyBot.pos.x * sc, cy + buddyBot.pos.z * sc, buddyBot.heading, 7.5, '#38bdf8', '#ffffff');
+                    }
+                    drawMapChevron(tCtx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 9.5, '#facc15', '#ffffff');
+                }
+                return;
+            }
+
             // Ensure surface Tactical Map header text is active
             const titleEl = document.getElementById('tactical-map-title');
             const subEl = document.getElementById('tactical-map-subtitle');
@@ -1069,13 +1335,13 @@ function ensureMinimapBgCache(w: number, h: number) {
 
             // Layer 6: Key Island Landmarks with Badges
             const landmarks = [
-                { name: "RESCUE BOTS HQ", x: HQ_SWAP_PAD.x, z: HQ_SWAP_PAD.z, color: '#06b6d4', icon: '🏛️' },
-                { name: "DINO RIDGE", x: -750, z: -750, color: '#22c55e', icon: '🦖' },
-                { name: "BOARDWALK", x: bwX, z: bwZ, color: '#f59e0b', icon: '🎡' },
-                { name: "DR. GREENE'S LAB", x: testYard.baseX, z: testYard.baseZ, color: '#38bdf8', icon: '⚡' },
-                { name: "EAST LIGHTHOUSE", x: 1320, z: 60, color: '#f43f5e', icon: '🚨' },
-                { name: "WAYWARD RUINS", x: 1960, z: 540, color: '#c084fc', icon: '🗿' },
-                { name: "MOROCCO'S LAIR", x: -820, z: -1180, color: '#a855f7', icon: '🛸' }
+                { name: "RESCUE BOTS HQ", x: HQ_SWAP_PAD.x, z: HQ_SWAP_PAD.z, color: '#06b6d4' },
+                { name: "DINO RIDGE", x: -750, z: -750, color: '#22c55e' },
+                { name: "BOARDWALK", x: bwX, z: bwZ, color: '#f59e0b' },
+                { name: "DR. GREENE'S LAB", x: testYard.baseX, z: testYard.baseZ, color: '#38bdf8' },
+                { name: "EAST LIGHTHOUSE", x: 1320, z: 60, color: '#f43f5e' },
+                { name: "WAYWARD RUINS", x: 1960, z: 540, color: '#c084fc' },
+                { name: "MOROCCO'S LAIR", x: -820, z: -1180, color: '#a855f7' }
             ];
 
             landmarks.forEach(lm => {
@@ -1138,7 +1404,7 @@ function ensureMinimapBgCache(w: number, h: number) {
                     if (!loc || isBotDocked(botKey)) return;
                     const ax = cx + loc.x * mapScale;
                     const az = cy + loc.z * mapScale;
-                    const meta = MEGA_ATTACHMENT_META[botKey] || { name: `${botKey} RIG`, icon: '⭐', color: '#f59e0b' };
+                    const meta = MEGA_ATTACHMENT_META[botKey] || { name: `${botKey} RIG`, color: '#f59e0b' };
 
                     // Radar pulse halo
                     const aPulse = Math.sin(now * 0.005 + loc.x * 0.01) * 2.2;
@@ -1159,7 +1425,7 @@ function ensureMinimapBgCache(w: number, h: number) {
 
                     // Label callout badge
                     const isCurrentBot = player.botType === botKey;
-                    const labelText = `${meta.icon} ${meta.name}`;
+                    const labelText = meta.name;
                     tCtx.font = isCurrentBot ? 'bold 9.2px "JetBrains Mono", monospace' : 'bold 8.2px "JetBrains Mono", monospace';
                     const lw = tCtx.measureText(labelText).width;
                     tCtx.fillStyle = isCurrentBot ? 'rgba(30, 41, 59, 0.96)' : 'rgba(15, 23, 42, 0.88)';

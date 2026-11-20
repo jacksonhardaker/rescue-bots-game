@@ -76,15 +76,126 @@ interface MoonRockRuntime {
     destroyed: boolean;
 }
 
+interface MoonHoopRuntime {
+    x: number;
+    y: number;
+    z: number;
+    group: THREE.Group;
+    ringMat: THREE.MeshBasicMaterial;
+    cleared: boolean;
+}
+
+const MOON_HOOP_COORDS = [
+    { x: -34, z: -18, h: 12 },
+    { x: 42, z: -34, h: 12 },
+    { x: -42, z: 42, h: 12 },
+    { x: 36, z: 48, h: 12 },
+    { x: -68, z: -38, h: 10 },
+    { x: 76, z: -46, h: 10 }
+];
+
 const _moonAnimated: Array<{ obj: THREE.Object3D; kind: string; baseY: number; phase: number }> = [];
 const _moonRelics: MoonRelicRuntime[] = [];
 const _moonRocks: MoonRockRuntime[] = [];
+const _moonHoops: MoonHoopRuntime[] = [];
 const _moonColliders: Array<{ x: number; z: number; r: number }> = [];
 let _moonBuilt = false;
 let _moonSigmaRoot: THREE.Group | null = null;
 let _moonFlagBanner: THREE.Mesh | null = null;
 let _moonCommsDish: THREE.Object3D | null = null;
+let _moonRoverGroup: THREE.Group | null = null;
+let _moonRoverWheels: THREE.Mesh[] = [];
+const _moonRoverPos = new THREE.Vector3(18, 6, -16);
+let _inLunarRover = false;
+let _roverToggleCooldown = 0;
 let _moonJumpCooldown = 0;
+
+export function buildLunarOutpostMesh() {
+    const outpostGroup = new THREE.Group();
+    const domeBase = new THREE.Mesh(new THREE.CylinderGeometry(10.5, 11.2, 2.2, 16), matDarkSteel);
+    domeBase.position.y = 1.1;
+    const domeShell = new THREE.Mesh(
+        new THREE.SphereGeometry(9.6, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55),
+        new THREE.MeshToonMaterial({ color: 0xf1f5f9, gradientMap: toonGrad3 })
+    );
+    domeShell.position.y = 1.8;
+    const domeStripe = new THREE.Mesh(new THREE.CylinderGeometry(9.75, 9.75, 1.1, 16), matOptimusRed);
+    domeStripe.position.y = 2.4;
+    const airlock = new THREE.Mesh(new THREE.BoxGeometry(5.2, 4.4, 6.2), matChrome);
+    airlock.position.set(-10.2, 2.2, 0);
+    const airlockDoor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3.2, 2.8), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
+    airlockDoor.position.set(-12.7, 1.9, 0);
+    airlockDoor.userData.noOutline = true;
+
+    [-1, 1].forEach(side => {
+        const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 5.2, 8), matChrome);
+        mast.position.set(0, 2.6, side * 13.5);
+        const panel = new THREE.Mesh(
+            new THREE.BoxGeometry(8.2, 0.22, 3.6),
+            new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad3 })
+        );
+        panel.position.set(0, 5.2, side * 13.5);
+        panel.rotation.x = side * 0.25;
+        outpostGroup.add(mast, panel);
+    });
+
+    const dishPivot = new THREE.Group();
+    dishPivot.position.set(0, 11.6, 0);
+    const dish = new THREE.Mesh(new THREE.ConeGeometry(3.4, 1.5, 14, 1, true), matChrome);
+    dish.rotation.x = Math.PI * 0.65;
+    const dishTip = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), new THREE.MeshBasicMaterial({ color: 0x22d3ee }));
+    dishTip.position.set(0, 0.8, 1.6);
+    dishTip.userData.noOutline = true;
+    dishPivot.add(dish, dishTip);
+
+    outpostGroup.add(domeBase, domeShell, domeStripe, airlock, airlockDoor, dishPivot);
+    applyCartoonInkOutlines(outpostGroup, 1.03, true);
+    return { outpostGroup, dishPivot };
+}
+
+export function buildLunarRoverMesh() {
+    const rover = new THREE.Group();
+    const wheels: THREE.Mesh[] = [];
+    const matFoilGold = new THREE.MeshToonMaterial({ color: 0xf59e0b, gradientMap: toonGrad3 });
+    const matRoverWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 });
+
+    const chassis = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.85, 6.2), matFoilGold);
+    chassis.position.y = 1.25;
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(3.5, 0.9, 2.2), matRoverWhite);
+    hood.position.set(0, 1.9, 1.8);
+    const rollBar = new THREE.Mesh(new THREE.TorusGeometry(1.75, 0.16, 8, 16, Math.PI), matChrome);
+    rollBar.position.set(0, 2.1, -0.5);
+    const dishMast = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.2, 8), matChrome);
+    dishMast.position.set(1.3, 2.6, -2.2);
+    const dish = new THREE.Mesh(new THREE.ConeGeometry(1.1, 0.55, 12, 1, true).rotateX(-Math.PI * 0.35), matChrome);
+    dish.position.set(1.3, 3.7, -2.2);
+
+    const wheelGeo = new THREE.CylinderGeometry(0.95, 0.95, 0.72, 14).rotateZ(Math.PI / 2);
+    [-2.1, 2.1].forEach(wx => {
+        [-2.2, 0, 2.2].forEach(wz => {
+            const w = new THREE.Mesh(wheelGeo, matDarkSteel);
+            w.position.set(wx, 0.95, wz);
+            rover.add(w);
+            wheels.push(w);
+        });
+    });
+
+    rover.add(chassis, hood, rollBar, dishMast, dish);
+    applyCartoonInkOutlines(rover, 1.04, true);
+    return { rover, wheels };
+}
+
+export function buildLunarStuntHoopMesh() {
+    const group = new THREE.Group();
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(5.5, 0.55, 10, 28), ringMat);
+    const inner = new THREE.Mesh(
+        new THREE.TorusGeometry(4.4, 0.22, 8, 24),
+        new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.75 })
+    );
+    group.add(ring, inner);
+    return { group, ringMat };
+}
 
 export function getMoonSurfaceHeight(x: number, z: number): number {
     // Keep central Landing Pad & Lunar Outpost area smoothly level
@@ -275,58 +386,33 @@ function buildMoonWorld() {
     }
 
     // Griffin Rock Lunar Outpost (Geodesic Dome + Solar Wings + Comms Dish)
-    const outpostGroup = new THREE.Group();
     const outX = 36;
     const outZ = -8;
     const outY = getMoonSurfaceHeight(outX, outZ);
+    const { outpostGroup, dishPivot } = buildLunarOutpostMesh();
     outpostGroup.position.set(outX, outY, outZ);
-
-    const domeBase = new THREE.Mesh(new THREE.CylinderGeometry(10.5, 11.2, 2.2, 16), matDarkSteel);
-    domeBase.position.y = 1.1;
-    const domeShell = new THREE.Mesh(
-        new THREE.SphereGeometry(9.6, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55),
-        new THREE.MeshToonMaterial({ color: 0xf1f5f9, gradientMap: toonGrad3 })
-    );
-    domeShell.position.y = 1.8;
-    const domeStripe = new THREE.Mesh(new THREE.CylinderGeometry(9.75, 9.75, 1.1, 16), matOptimusRed);
-    domeStripe.position.y = 2.4;
-    const airlock = new THREE.Mesh(new THREE.BoxGeometry(5.2, 4.4, 6.2), matChrome);
-    airlock.position.set(-10.2, 2.2, 0);
-    const airlockDoor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3.2, 2.8), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }));
-    airlockDoor.position.set(-12.7, 1.9, 0);
-    airlockDoor.userData.noOutline = true;
-
-    // Solar Wing Arrays
-    [-1, 1].forEach(side => {
-        const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 5.2, 8), matChrome);
-        mast.position.set(0, 2.6, side * 13.5);
-        const panel = new THREE.Mesh(
-            new THREE.BoxGeometry(8.2, 0.22, 3.6),
-            new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad3 })
-        );
-        panel.position.set(0, 5.2, side * 13.5);
-        panel.rotation.x = side * 0.25;
-        outpostGroup.add(mast, panel);
-    });
-
-    // Rotating Comms Dish
-    const dishPivot = new THREE.Group();
-    dishPivot.position.set(0, 11.6, 0);
-    const dish = new THREE.Mesh(
-        new THREE.ConeGeometry(3.4, 1.5, 14, 1, true),
-        matChrome
-    );
-    dish.rotation.x = Math.PI * 0.65;
-    const dishTip = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), new THREE.MeshBasicMaterial({ color: 0x22d3ee }));
-    dishTip.position.set(0, 0.8, 1.6);
-    dishTip.userData.noOutline = true;
-    dishPivot.add(dish, dishTip);
     _moonCommsDish = dishPivot;
-
-    outpostGroup.add(domeBase, domeShell, domeStripe, airlock, airlockDoor, dishPivot);
-    applyCartoonInkOutlines(outpostGroup, 1.03, true);
     moonScene.add(outpostGroup);
     _moonColliders.push({ x: outX, z: outZ, r: 12.0 });
+
+    // Driveable Griffin Rock Lunar Rover parked beside Lunar Outpost
+    const roverBuilt = buildLunarRoverMesh();
+    _moonRoverGroup = roverBuilt.rover;
+    _moonRoverWheels = roverBuilt.wheels;
+    _moonRoverPos.set(20, getMoonSurfaceHeight(20, -18), -18);
+    _moonRoverGroup.position.copy(_moonRoverPos);
+    moonScene.add(_moonRoverGroup);
+
+    // 6-Hoop Low-Gravity Crater Stunt Course
+    _moonHoops.length = 0;
+    MOON_HOOP_COORDS.forEach(hc => {
+        const hy = getMoonSurfaceHeight(hc.x, hc.z) + hc.h;
+        const { group, ringMat } = buildLunarStuntHoopMesh();
+        group.position.set(hc.x, hy, hc.z);
+        group.lookAt(0, hy, 0);
+        moonScene.add(group);
+        _moonHoops.push({ x: hc.x, y: hy, z: hc.z, group, ringMat, cleared: false });
+    });
 
     // Interactive Rescue Bots Lunar Flagpole
     const flagGroup = new THREE.Group();
@@ -727,6 +813,55 @@ export function updateMoon(dt: number, now: number) {
     // Proximity to Parked Sigma for Launch-to-Orbit highlight
     const distSigma = Math.hypot(player.pos.x - MOON_SIGMA_POS.x, player.pos.z - MOON_SIGMA_POS.z);
     worldState.nearMoonSigma = distSigma < 28.0;
+
+    // Driveable Lunar Rover Boarding & Riding
+    if (_roverToggleCooldown > 0) _roverToggleCooldown = Math.max(0, _roverToggleCooldown - dt);
+    if (_moonRoverGroup) {
+        if (!_inLunarRover) {
+            const dRover = Math.hypot(player.pos.x - _moonRoverPos.x, player.pos.z - _moonRoverPos.z);
+            if (_roverToggleCooldown <= 0 && dRover < 5.5) {
+                _inLunarRover = true;
+                _roverToggleCooldown = 2.5;
+                sfx.playStuntChime();
+                showToast('LUNAR ROVER BOARDED!', 'Cruising the Moon in the 6-wheel Griffin Rock Lunar Rover!');
+            }
+        } else {
+            _moonRoverPos.set(player.pos.x, player.pos.y, player.pos.z);
+            _moonRoverGroup.position.copy(_moonRoverPos);
+            _moonRoverGroup.rotation.y = player.heading;
+            player.energonBoostTimer = Math.max(player.energonBoostTimer || 0, 0.15);
+            for (let w = 0; w < _moonRoverWheels.length; w++) {
+                _moonRoverWheels[w].rotation.x += player.speed * dt * 0.8;
+            }
+            if (_roverToggleCooldown <= 0 && distSigma < 15.0) {
+                _inLunarRover = false;
+                _roverToggleCooldown = 2.5;
+                _moonRoverPos.set(18, getMoonSurfaceHeight(18, -18), -18);
+                _moonRoverGroup.position.copy(_moonRoverPos);
+                showToast('LUNAR ROVER PARKED', 'Returned Lunar Rover to Outpost berth.');
+            }
+        }
+    }
+
+    // 6-Hoop Low-Gravity Crater Stunt Course
+    for (let i = 0; i < _moonHoops.length; i++) {
+        const hp = _moonHoops[i];
+        hp.group.children[1].rotation.z += dt * 1.8;
+        if (!hp.cleared) {
+            const d3 = Math.hypot(player.pos.x - hp.x, player.pos.y - hp.y, player.pos.z - hp.z);
+            if (d3 < 7.2) {
+                hp.cleared = true;
+                hp.ringMat.color.setHex(0x4ade80);
+                progression.totalStuntsCompleted = (progression.totalStuntsCompleted || 0) + 1;
+                progression.moonHoopsCleared = (progression.moonHoopsCleared || 0) + 1;
+                progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 2;
+                saveProgression();
+                sfx.playStuntChime();
+                spawnSparkleGlints(hp.x, hp.y, hp.z, 18);
+                showToast('LUNAR SKY STUNT!', '+2 Energon Cubes & +2 Hero Points!');
+            }
+        }
+    }
 }
 
 export function getMoonMapData() {
@@ -735,6 +870,8 @@ export function getMoonMapData() {
         craters: MOON_CRATERS,
         sigmaPos: MOON_SIGMA_POS,
         flagPos: MOON_FLAG_POS,
+        roverPos: _moonRoverPos,
+        hoops: _moonHoops,
         relics: _moonRelics,
         jumpPads: MOON_JUMP_PADS
     };

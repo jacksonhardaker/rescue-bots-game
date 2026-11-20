@@ -22,6 +22,117 @@ export const SPACE_BOUNDS = 460;
 export const SPACE_MOON_POS = new THREE.Vector3(0, 45, -320);
 export const SPACE_MOON_LANDING_POS = new THREE.Vector3(0, 45, -238);
 export const SPACE_STATION_POS = new THREE.Vector3(190, 22, -70);
+export const SPACE_MOROCCO_POS = new THREE.Vector3(-195, 38, -165);
+
+interface MoroccoRelay {
+    group: THREE.Group;
+    beam: THREE.Mesh;
+    pos: THREE.Vector3;
+    angle: number;
+    hp: number;
+    alive: boolean;
+}
+
+const _moroccoStation = {
+    group: null as THREE.Group | null,
+    dishPivot: null as THREE.Group | null,
+    shieldDome: null as THREE.Mesh | null,
+    coreMat: null as THREE.MeshBasicMaterial | null,
+    pos: SPACE_MOROCCO_POS.clone(),
+    hp: 6,
+    maxHp: 6,
+    defeated: false,
+    relays: [] as MoroccoRelay[]
+};
+
+export function buildAutobotOrbitalStationMesh(): THREE.Group {
+    const stationGroup = new THREE.Group();
+    const stCore = new THREE.Mesh(new THREE.CylinderGeometry(12, 14, 28, 12), matChrome);
+    const stRing = new THREE.Mesh(new THREE.TorusGeometry(26, 3.2, 10, 28).rotateX(Math.PI / 2), matOptimusBlue);
+    const stTrim = new THREE.Mesh(new THREE.TorusGeometry(26, 3.4, 8, 28).rotateX(Math.PI / 2), matOptimusRed);
+    stTrim.scale.set(1, 0.32, 1);
+    const stBeacon = new THREE.Mesh(
+        new THREE.SphereGeometry(5.5, 14, 12),
+        new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.85 })
+    );
+    stBeacon.position.y = 18;
+    const dockRing = new THREE.Mesh(
+        new THREE.TorusGeometry(36, 0.9, 8, 36).rotateX(Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.72 })
+    );
+    stationGroup.add(stCore, stRing, stTrim, stBeacon, dockRing);
+    applyCartoonInkOutlines(stCore, 1.03, true);
+    return stationGroup;
+}
+
+export function buildOrbitalSatelliteMesh(repaired = false): { group: THREE.Group; beaconMat: THREE.MeshBasicMaterial } {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 7.5, 10), matChrome);
+    const wingL = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 4.2), matOptimusBlue);
+    wingL.position.x = -9.5;
+    const wingR = wingL.clone();
+    wingR.position.x = 9.5;
+    const beaconMat = new THREE.MeshBasicMaterial({ color: repaired ? 0x22d3ee : 0xef4444 });
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(2.2, 10, 10), beaconMat);
+    beacon.position.y = 5.4;
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(9.5, 0.45, 8, 24), beaconMat);
+    g.add(body, wingL, wingR, beacon, halo);
+    applyCartoonInkOutlines(body, 1.04, true);
+    return { group: g, beaconMat };
+}
+
+export function buildStrandedPodMesh(): THREE.Group {
+    const g = new THREE.Group();
+    const capsule = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 3.2, 7.5, 10), matOptimusRed);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(2.6, 10, 8), matChrome);
+    cap.position.y = 3.8;
+    const beacon = new THREE.Mesh(
+        new THREE.TorusGeometry(5.2, 0.38, 8, 24),
+        new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
+    );
+    g.add(capsule, cap, beacon);
+    applyCartoonInkOutlines(capsule, 1.04, true);
+    return g;
+}
+
+export function buildMoroccoOrbitalStationMesh() {
+    const root = new THREE.Group();
+    const matMoroccoPlum = new THREE.MeshToonMaterial({ color: 0x3b0764, gradientMap: toonGrad3 });
+    const matMoroccoBrass = new THREE.MeshToonMaterial({ color: 0xd97706, gradientMap: toonGrad3 });
+    const coreMat = new THREE.MeshBasicMaterial({ color: 0xc084fc });
+
+    // Victorian Steampunk Fortress Core & Spires
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(11, 13, 26, 10), matMoroccoPlum);
+    const spireTop = new THREE.Mesh(new THREE.ConeGeometry(8.5, 14, 10), matMoroccoBrass);
+    spireTop.position.y = 20;
+    const spireBot = new THREE.Mesh(new THREE.ConeGeometry(7.5, 12, 10).rotateX(Math.PI), matMoroccoBrass);
+    spireBot.position.y = -19;
+    const ringOuter = new THREE.Mesh(new THREE.TorusGeometry(22, 2.6, 10, 24).rotateX(Math.PI / 2), matMoroccoPlum);
+    const ringBrass = new THREE.Mesh(new THREE.TorusGeometry(22, 2.8, 8, 24).rotateX(Math.PI / 2), matMoroccoBrass);
+    ringBrass.scale.set(1, 0.35, 1);
+
+    const verneCore = new THREE.Mesh(new THREE.OctahedronGeometry(6.5, 1), coreMat);
+    const shieldDome = new THREE.Mesh(
+        new THREE.SphereGeometry(18.5, 20, 16),
+        new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.25, wireframe: true })
+    );
+
+    // Rotating Verne Laser Dish + Sweeping Purple Beam
+    const dishPivot = new THREE.Group();
+    dishPivot.position.y = 4;
+    const dish = new THREE.Mesh(new THREE.ConeGeometry(5.5, 3.2, 12, 1, true).rotateX(Math.PI / 2), matMoroccoBrass);
+    dish.position.z = 13.5;
+    const laserBeam = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.1, 2.8, 72, 10, 1, true).rotateX(Math.PI / 2),
+        new THREE.MeshBasicMaterial({ color: 0xd946ef, transparent: true, opacity: 0.38, side: THREE.DoubleSide, depthWrite: false })
+    );
+    laserBeam.position.z = 49.5;
+    dishPivot.add(dish, laserBeam);
+
+    root.add(body, spireTop, spireBot, ringOuter, ringBrass, verneCore, shieldDome, dishPivot);
+    applyCartoonInkOutlines(body, 1.03, true);
+    return { root, dishPivot, shieldDome, coreMat };
+}
 
 interface AsteroidItem {
     mesh: THREE.Mesh;
@@ -361,25 +472,59 @@ function buildSpaceWorld() {
     spaceScene.add(_spaceMoonBeaconRing);
 
     // Autobot Orbital Station (Drop-off Hub for Stranded Rescue Pods)
-    const stationGroup = new THREE.Group();
+    const stationGroup = buildAutobotOrbitalStationMesh();
     stationGroup.position.copy(SPACE_STATION_POS);
-    const stCore = new THREE.Mesh(new THREE.CylinderGeometry(12, 14, 28, 12), matChrome);
-    const stRing = new THREE.Mesh(new THREE.TorusGeometry(26, 3.2, 10, 28).rotateX(Math.PI / 2), matOptimusBlue);
-    const stTrim = new THREE.Mesh(new THREE.TorusGeometry(26, 3.4, 8, 28).rotateX(Math.PI / 2), matOptimusRed);
-    stTrim.scale.set(1, 0.32, 1);
-    const stBeacon = new THREE.Mesh(
-        new THREE.SphereGeometry(5.5, 14, 12),
-        new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.85 })
-    );
-    stBeacon.position.y = 18;
-    const dockRing = new THREE.Mesh(
-        new THREE.TorusGeometry(36, 0.9, 8, 36).rotateX(Math.PI / 2),
-        new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.72 })
-    );
-    stationGroup.add(stCore, stRing, stTrim, stBeacon, dockRing);
-    applyCartoonInkOutlines(stCore, 1.03, true);
     _spaceStationPivot = stationGroup;
     spaceScene.add(stationGroup);
+
+    // Dr. Morocco's Orbital Laser Station Boss Encounter (-195, 38, -165)
+    const mBuilt = buildMoroccoOrbitalStationMesh();
+    mBuilt.root.position.copy(SPACE_MOROCCO_POS);
+    spaceScene.add(mBuilt.root);
+    _moroccoStation.group = mBuilt.root;
+    _moroccoStation.dishPivot = mBuilt.dishPivot;
+    _moroccoStation.shieldDome = mBuilt.shieldDome;
+    _moroccoStation.coreMat = mBuilt.coreMat;
+    _moroccoStation.pos.copy(SPACE_MOROCCO_POS);
+    _moroccoStation.hp = 6;
+    _moroccoStation.maxHp = 6;
+    _moroccoStation.defeated = false;
+    _moroccoStation.relays = [];
+
+    const relayBeamMat = new THREE.MeshBasicMaterial({ color: 0xc084fc, transparent: true, opacity: 0.55 });
+    for (let r = 0; r < 3; r++) {
+        const ang = (r / 3) * Math.PI * 2;
+        const rg = new THREE.Group();
+        const rCore = new THREE.Mesh(
+            new THREE.OctahedronGeometry(3.8, 0),
+            new THREE.MeshBasicMaterial({ color: 0xe879f9 })
+        );
+        const rRing = new THREE.Mesh(
+            new THREE.TorusGeometry(5.4, 0.5, 8, 20),
+            new THREE.MeshToonMaterial({ color: 0xd97706, gradientMap: toonGrad3 })
+        );
+        rg.add(rCore, rRing);
+        const rPos = new THREE.Vector3(
+            SPACE_MOROCCO_POS.x + Math.cos(ang) * 38,
+            SPACE_MOROCCO_POS.y + (r - 1) * 8,
+            SPACE_MOROCCO_POS.z + Math.sin(ang) * 38
+        );
+        rg.position.copy(rPos);
+        spaceScene.add(rg);
+
+        const beamGeo = new THREE.CylinderGeometry(0.45, 0.45, 38, 6).rotateX(Math.PI / 2);
+        const beamMesh = new THREE.Mesh(beamGeo, relayBeamMat);
+        spaceScene.add(beamMesh);
+
+        _moroccoStation.relays.push({
+            group: rg,
+            beam: beamMesh,
+            pos: rPos,
+            angle: ang,
+            hp: 2,
+            alive: true
+        });
+    }
 
     // Player-Piloted Starship Sigma (scaled cleanly for space combat/flight)
     _spaceSigmaRoot = buildCrashedSpaceshipSigma(spaceScene, _spaceAnimated, null, {
@@ -461,22 +606,8 @@ function buildSpaceWorld() {
         { id: 'SAT_SOLAR', name: 'Dr. Greene Solar Sat-3', pos: new THREE.Vector3(-125, -18, -210) }
     ];
     satDefs.forEach(def => {
-        const g = new THREE.Group();
+        const { group: g, beaconMat } = buildOrbitalSatelliteMesh(false);
         g.position.copy(def.pos);
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 7.5, 10), matChrome);
-        const wingL = new THREE.Mesh(new THREE.BoxGeometry(14, 0.4, 4.2), matOptimusBlue);
-        wingL.position.x = -9.5;
-        const wingR = wingL.clone();
-        wingR.position.x = 9.5;
-        const beaconMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
-        const beacon = new THREE.Mesh(new THREE.SphereGeometry(2.2, 10, 10), beaconMat);
-        beacon.position.y = 5.4;
-        const halo = new THREE.Mesh(
-            new THREE.TorusGeometry(9.5, 0.45, 8, 24),
-            beaconMat
-        );
-        g.add(body, wingL, wingR, beacon, halo);
-        applyCartoonInkOutlines(body, 1.04, true);
         spaceScene.add(g);
         _satellites.push({
             id: def.id,
@@ -496,17 +627,8 @@ function buildSpaceWorld() {
         { id: 'POD_BETA', name: 'Stranded Probe Beta', pos: new THREE.Vector3(65, -24, -140) }
     ];
     podDefs.forEach(def => {
-        const g = new THREE.Group();
+        const g = buildStrandedPodMesh();
         g.position.copy(def.pos);
-        const capsule = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 3.2, 7.5, 10), matOptimusRed);
-        const cap = new THREE.Mesh(new THREE.SphereGeometry(2.6, 10, 8), matChrome);
-        cap.position.y = 3.8;
-        const beacon = new THREE.Mesh(
-            new THREE.TorusGeometry(5.2, 0.38, 8, 24),
-            new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
-        );
-        g.add(capsule, cap, beacon);
-        applyCartoonInkOutlines(capsule, 1.04, true);
         spaceScene.add(g);
         _pods.push({
             id: def.id,
@@ -647,6 +769,15 @@ export function swapToSpace(fromMoon = false) {
     );
 }
 
+export function setSpaceWaypointWorld(wx: number, wy: number, wz: number) {
+    sigmaShip.waypoint.set(wx, wy, wz);
+    sigmaShip.hasWaypoint = true;
+    if (_spaceWaypointGroup) {
+        _spaceWaypointGroup.position.set(wx, wy, wz);
+        _spaceWaypointGroup.visible = true;
+    }
+}
+
 export function clearSpaceWaypoint() {
     sigmaShip.hasWaypoint = false;
     if (_spaceWaypointGroup) _spaceWaypointGroup.visible = false;
@@ -676,9 +807,13 @@ export function setSpaceDestinationFromScreenPoint(clientX: number, clientY: num
         }
     };
 
-    // Snap cleanly to tapped Moon Landing Zone, Orbital Station, Active Ring, Satellites, Pods or Asteroids
+    // Snap cleanly to tapped Moon Landing Zone, Orbital Station, Morocco Boss, Active Ring, Satellites, Pods or Asteroids
     considerTarget(SPACE_MOON_LANDING_POS, 34);
     considerTarget(SPACE_STATION_POS, 42);
+    if (!_moroccoStation.defeated) {
+        _moroccoStation.relays.forEach(rel => { if (rel.alive) considerTarget(rel.pos, 18, true); });
+        considerTarget(_moroccoStation.pos, 32, true);
+    }
     const activeRing = _starRings[sigmaShip.activeRingIdx];
     if (activeRing) considerTarget(activeRing.pos, 26);
     _satellites.forEach(s => { if (!s.repaired) considerTarget(s.pos, 22); });
@@ -1110,9 +1245,25 @@ export function updateSpace(dt: number, now: number) {
     _tmpLookGoal.copy(sigmaShip.pos).addScaledVector(_tmpForward, 36);
     camera.lookAt(_tmpLookGoal);
 
-    // 2. Animate Background Earth, Station & Moon Landing Beacon
+    // Animate Background Earth, Station, Morocco Boss & Moon Landing Beacon
     if (_spaceEarthMesh) _spaceEarthMesh.rotation.y += dt * 0.025;
     if (_spaceStationPivot) _spaceStationPivot.rotation.y += dt * 0.22;
+    if (_moroccoStation.group && !_moroccoStation.defeated) {
+        if (_moroccoStation.dishPivot) _moroccoStation.dishPivot.rotation.y += dt * 0.75;
+        _moroccoStation.relays.forEach((rel, idx) => {
+            if (!rel.alive) return;
+            rel.angle += dt * 0.85;
+            rel.pos.set(
+                SPACE_MOROCCO_POS.x + Math.cos(rel.angle) * 38,
+                SPACE_MOROCCO_POS.y + Math.sin(nowSec * 1.8 + idx) * 7,
+                SPACE_MOROCCO_POS.z + Math.sin(rel.angle) * 38
+            );
+            rel.group.position.copy(rel.pos);
+            rel.group.rotation.y += dt * 2.2;
+            rel.beam.position.copy(rel.pos).lerp(SPACE_MOROCCO_POS, 0.5);
+            rel.beam.lookAt(SPACE_MOROCCO_POS);
+        });
+    }
     if (_spaceMoonBeaconRing) {
         _spaceMoonBeaconRing.rotation.z += dt * 1.2;
         const sc = 1.0 + Math.sin(nowSec * 3.2) * 0.08;
@@ -1159,6 +1310,68 @@ export function updateSpace(dt: number, now: number) {
                     updateSpaceHUD();
                 }
                 break;
+            }
+        }
+
+        // Check laser bolt hits against Dr. Morocco's Orbital Laser Station & 3 Shield Relays!
+        if (!hit && !_moroccoStation.defeated) {
+            for (let r = 0; r < _moroccoStation.relays.length; r++) {
+                const rel = _moroccoStation.relays[r];
+                if (!rel.alive) continue;
+                if (bolt.pos.distanceTo(rel.pos) < 8.5) {
+                    hit = true;
+                    rel.hp -= (sigmaShip.boostTimer > 0 ? 2 : 1);
+                    spawnSpaceBurst(bolt.pos, 0xe879f9, 8);
+                    if (rel.hp <= 0) {
+                        rel.alive = false;
+                        rel.group.visible = false;
+                        rel.beam.visible = false;
+                        spawnSpaceBurst(rel.pos, 0xf59e0b, 18);
+                        sfx.playRockBreak();
+                        const aliveCount = _moroccoStation.relays.filter(x => x.alive).length;
+                        if (aliveCount === 0) {
+                            if (_moroccoStation.shieldDome) _moroccoStation.shieldDome.visible = false;
+                            if (_moroccoStation.coreMat) _moroccoStation.coreMat.color.setHex(0xfacc15);
+                            showToast('MOROCCO SHIELDS DOWN!', 'All 3 Shield Relays destroyed! Blast the central Verne Laser Core!');
+                        } else {
+                            showToast('SHIELD RELAY DESTROYED!', `${aliveCount} orbiting Shield Relay${aliveCount > 1 ? 's' : ''} remaining!`);
+                        }
+                    }
+                    break;
+                }
+            }
+            if (!hit && bolt.pos.distanceTo(_moroccoStation.pos) < 20.0) {
+                hit = true;
+                const aliveRelays = _moroccoStation.relays.filter(x => x.alive).length;
+                if (aliveRelays > 0) {
+                    spawnSpaceBurst(bolt.pos, 0xa855f7, 6);
+                    showToast('ORBITAL SHIELD ACTIVE!', `Destroy the ${aliveRelays} orbiting purple Shield Relay${aliveRelays > 1 ? 's' : ''} first!`);
+                } else {
+                    _moroccoStation.hp -= (sigmaShip.boostTimer > 0 ? 2 : 1);
+                    spawnSpaceBurst(bolt.pos, 0xf59e0b, 12);
+                    sfx.playRockBreak();
+                    if (_moroccoStation.hp <= 0) {
+                        _moroccoStation.defeated = true;
+                        if (_moroccoStation.dishPivot) _moroccoStation.dishPivot.visible = false;
+                        if (_moroccoStation.coreMat) _moroccoStation.coreMat.color.setHex(0x475569);
+                        spawnSpaceBurst(_moroccoStation.pos, 0xfacc15, 28);
+                        progression.spaceMoroccoDefeated = true;
+                        progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 15;
+                        saveProgression({ immediate: true });
+                        sfx.playRankUp();
+                        showToast('MOROCCO ORBITAL STATION DISABLED!', '+20 Hero Points & +15 Energon Cubes! The orbital laser is offline!');
+                        triggerNPCSpeech(
+                            'DR. MOROCCO',
+                            'Arch-Nemesis',
+                            'Curse you, Rescue Bots! My orbital weather-disruptor satellite took months to launch!',
+                            player,
+                            true
+                        );
+                        updateSpaceHUD();
+                    } else {
+                        showToast('VERNE CORE HIT!', `Dr. Morocco's Orbital Station: ${_moroccoStation.hp}/${_moroccoStation.maxHp} HP remaining!`);
+                    }
+                }
             }
         }
 
@@ -1312,7 +1525,9 @@ export function getSpaceMapData() {
         bounds: SPACE_BOUNDS,
         ship: sigmaShip,
         moonPos: SPACE_MOON_POS,
+        moonLandingPos: SPACE_MOON_LANDING_POS,
         stationPos: SPACE_STATION_POS,
+        moroccoStation: _moroccoStation,
         asteroids: _asteroids,
         satellites: _satellites,
         pods: _pods,
@@ -1334,6 +1549,7 @@ if (typeof window !== 'undefined') {
         triggerSpaceBoost,
         setSpaceTouchControl,
         setSpaceDestinationFromScreenPoint,
+        setSpaceWaypointWorld,
         clearSpaceWaypoint,
         getSpaceMapData
     });

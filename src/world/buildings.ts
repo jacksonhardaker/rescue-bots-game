@@ -272,7 +272,7 @@ export function initBuildings(scene?: THREE.Scene) {
     harborSeawall.position.set(0, -0.4, 1183.5);
     harborSeawall.receiveShadow = true;
     applyCartoonInkOutlines(harborSeawall, 1.02, true);
-    freezeStaticHierarchy(harborSeawall);
+    mergeStaticMeshesInGroup(harborSeawall);
     s.add(harborSeawall);
     registerCullableObject(harborSeawall, 0, 1, 1184, 115);
 
@@ -501,7 +501,7 @@ export function initBuildings(scene?: THREE.Scene) {
     const arrY = getTerrainHeight(780, -780);
     const { root: arrayGroup } = buildSkyCommsArrayMesh();
     arrayGroup.position.set(780, arrY, -780);
-    freezeStaticHierarchy(arrayGroup);
+    mergeStaticMeshesInGroup(arrayGroup);
     s.add(arrayGroup);
     registerCullableObject(arrayGroup, 780, arrY + 18, -780, 48);
     worldColliders.push({ x: 780, z: -780, r: 6.0 });

@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { getTerrainHeight, getSurfaceHeight } from './terrain.js';
 import { toonGrad3, matDarkSteel, matInkOutline, OUTLINE_LAYER } from '../rendering/materials.js';
+import { mergeStaticMeshesInGroup, freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
 import { player, worldColliders } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import {
@@ -99,6 +100,7 @@ export const interactiveRoadProps = [];
             grp.add(iCaps);
             grp.add(iOutlines);
             grp.add(iCapOutlines);
+            freezeStaticHierarchy(grp);
             (scene || (typeof window !== "undefined" ? window.scene : null)).add(grp);
         }
         // buildInstancedStreetlamps called via initProps
@@ -118,6 +120,8 @@ export const interactiveRoadProps = [];
 
             coneSpawns.forEach(p => {
                 const mesh = createTrafficConeMesh();
+                mergeStaticMeshesInGroup(mesh);
+                mesh.matrixAutoUpdate = true;
                 const groundY = getSurfaceHeight(p.x, p.z);
                 mesh.position.set(p.x, groundY, p.z);
                 (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
@@ -147,6 +151,8 @@ export const interactiveRoadProps = [];
 
             barricadeSpawns.forEach(p => {
                 const mesh = createBarricadeMesh();
+                mergeStaticMeshesInGroup(mesh);
+                mesh.matrixAutoUpdate = true;
                 const groundY = getSurfaceHeight(p.x, p.z);
                 mesh.position.set(p.x, groundY, p.z);
                 mesh.rotation.y = p.rotY || 0;

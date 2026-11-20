@@ -2,57 +2,35 @@
 import { player, buddyBot, humanNPCs } from '../state/gameState.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
 import { sfx } from '../audio/soundFX.js';
+import { SVG_ICONS } from './icons.js';
 
-export const SPEAKER_AVATARS = {
-    'HEATWAVE': '🚒',
-    'CHASE': '🚓',
-    'BLADES': '🚁',
-    'BOULDER': '🚜',
-    'CHIEF CHARLIE BURNS': '👮‍♂️',
-    'CODY BURNS': '👦',
-    'DANI BURNS': '👩‍✈️',
-    'KADE BURNS': '👨‍🚒',
-    'GRAHAM BURNS': '👷‍♂️',
-    'DOC GREENE': '👨‍🔬',
-    'DOC EZRA GREENE': '👨‍🔬',
-    'FRANKIE GREENE': '👧',
-    'MAYOR LUSKEY': '🎩',
-    'HUXLEY PRESCOTT': '🎙️',
-    'CAPTAIN SHAW': '⚓',
-    'RANGER TAYLOR': '🌲',
-    'DINER': '🍔',
-    'GRIFFIN DINER': '🍔',
-    'DRIVE-THRU': '🍔',
-    'INTERCOM': '📻',
-    'CATAPULT': '🚀',
-    'GROUNDBRIDGE': '🌀',
-    'ENERGON': '⚡',
-    'FERRY': '🚢',
-    'CRANE': '🏗️',
-    'TESTING YARD': '🧪',
-    'BOUNCE': '🦘',
-    'TARGET': '🎯',
-    'OPTIMUS PRIME': '🚛',
-    'OPTIMUS': '🚛',
-    'BUMBLEBEE': '🏎️',
-    'BLURR': '🏎️💨',
-    'SALVAGE': '🚛♻️',
-    'HIGH TIDE': '🚢⚓',
-    'SERVO': '🤖🐶'
+export const SPEAKER_AVATARS: Record<string, string> = {
+    'HEATWAVE': SVG_ICONS.HEATWAVE,
+    'CHASE': SVG_ICONS.CHASE,
+    'BLADES': SVG_ICONS.BLADES,
+    'BOULDER': SVG_ICONS.BOULDER,
+    'OPTIMUS PRIME': SVG_ICONS.OPTIMUS,
+    'OPTIMUS': SVG_ICONS.OPTIMUS,
+    'BUMBLEBEE': SVG_ICONS.BUMBLEBEE,
+    'BLURR': SVG_ICONS.BLURR,
+    'SALVAGE': SVG_ICONS.SALVAGE,
+    'HIGH TIDE': SVG_ICONS.HIGHTIDE,
+    'HIGHTIDE': SVG_ICONS.HIGHTIDE,
+    'QUICKSHADOW': SVG_ICONS.QUICKSHADOW,
+    'ENERGON': SVG_ICONS.BOLT,
+    'CATAPULT': SVG_ICONS.ROCKET,
+    'SIGMA': SVG_ICONS.ROCKET,
+    'MOON': SVG_ICONS.MOON
 };
 
-export function getSpeakerAvatar(name, role) {
+export function getSpeakerAvatar(name: string, role: string): string {
     const upper = (name || '').toUpperCase();
     for (const key in SPEAKER_AVATARS) {
-        if (upper.includes(key)) return SPEAKER_AVATARS[key];
+        if (upper.includes(key) && SPEAKER_AVATARS[key]) return SPEAKER_AVATARS[key];
     }
-    if (/CHIEF|POLICE/i.test(role)) return '👮‍♂️';
-    if (/PILOT|FLIGHT/i.test(role)) return '👩‍✈️';
-    if (/FIRE/i.test(role)) return '👨‍🚒';
-    if (/ENGINEER|CREW/i.test(role)) return '👷‍♂️';
-    if (/SCIENTIST|TECH/i.test(role)) return '👨‍🔬';
-    if (/CITIZEN|RESCUED/i.test(role)) return '🙋';
-    return '💬';
+    if (/RESCUE|BOT|AUTOBOT|COMMANDER/i.test(role)) return SVG_ICONS.STAR;
+    if (/SCIENTIST|TECH|ENGINEER/i.test(role)) return SVG_ICONS.BOLT;
+    return SVG_ICONS.PEOPLE;
 }
 
 export function findSpeakerSource(speakerName) {
@@ -105,11 +83,11 @@ export function triggerNPCSpeech(speakerName, speakerRole, speechText, targetOrP
     }
     lastGlobalVoiceTime = nowSec;
 
-    const bubble = document.getElementById('speech-bubble');
-    const speakerEl = document.getElementById('speech-speaker');
-    const roleEl = document.getElementById('speech-role');
-    const textEl = document.getElementById('speech-text');
-    const avatarEl = document.getElementById('speech-avatar');
+    const bubble = document.getElementById('npc-world-bubble') || document.getElementById('speech-bubble');
+    const speakerEl = document.getElementById('world-speaker-name') || document.getElementById('speech-speaker');
+    const roleEl = document.getElementById('world-speaker-role') || document.getElementById('speech-role');
+    const textEl = document.getElementById('world-speech-text') || document.getElementById('speech-text');
+    const avatarEl = document.getElementById('world-speaker-avatar') || document.getElementById('speech-avatar');
 
     if (!bubble || !speakerEl || !textEl) return;
 
@@ -118,7 +96,7 @@ export function triggerNPCSpeech(speakerName, speakerRole, speechText, targetOrP
     speakerEl.textContent = speakerName || 'Griffin Rock Citizen';
     if (roleEl) roleEl.textContent = speakerRole || 'Islander';
     textEl.textContent = speechText;
-    if (avatarEl) avatarEl.textContent = getSpeakerAvatar(speakerName, speakerRole);
+    if (avatarEl) avatarEl.innerHTML = getSpeakerAvatar(speakerName, speakerRole);
 
     let pitch = 1.0;
     if (typeof targetOrPitch === 'number') {
@@ -127,8 +105,8 @@ export function triggerNPCSpeech(speakerName, speakerRole, speechText, targetOrP
         pitch = targetOrPitch.voicePitch;
     }
 
-    if (sfx) {
-        sfx.playNPCSpeech(speechText, pitch);
+    if (sfx && typeof sfx.playSpeechPop === 'function') {
+        sfx.playSpeechPop();
     }
 
     bubble.classList.remove('hidden');
@@ -147,13 +125,15 @@ export function triggerNPCSpeech(speakerName, speakerRole, speechText, targetOrP
     }, duration);
 }
 
+const _STRIP_EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{2300}-\u{23FF}\u{FE0F}]/gu;
+
 export function showToast(subtitle, title) {
     const banner = document.getElementById('toast-banner');
     if (!banner) return;
     const sub = document.getElementById('toast-subtitle');
     const tit = document.getElementById('toast-title');
-    if (sub) sub.textContent = subtitle;
-    if (tit) tit.textContent = title;
+    if (sub) sub.textContent = String(subtitle || '').replace(_STRIP_EMOJI_RE, '').trim();
+    if (tit) tit.textContent = String(title || '').replace(_STRIP_EMOJI_RE, '').trim();
     banner.classList.remove('hidden');
     clearTimeout(window._toastTimeout);
     window._toastTimeout = setTimeout(() => {

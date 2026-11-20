@@ -436,8 +436,8 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                 spawnMagnetSparkParticles(this.pos.x, this.pos.y + 1.5, this.pos.z, 24);
 
                 const hitLabel = attackName ? `${attackName} HIT!` : "CRITICAL HIT!";
-                showToast("💥 " + hitLabel, `${cfg.name} took damage! (${this.hp}/${this.maxHp} HP remaining)`);
-                this.redrawOverheadBar("💥 -1 HP! " + (attackName || "DIRECT HIT!"));
+                showToast(hitLabel, `${cfg.name} took damage! (${this.hp}/${this.maxHp} HP remaining)`);
+                this.redrawOverheadBar("-1 HP! " + (attackName || "DIRECT HIT!"));
                 setTimeout(() => {
                     if (this.overheadCtx && (this.state === 'PURSUIT' || this.state === 'ROBOT')) {
                         this.redrawOverheadBar("");
@@ -481,8 +481,8 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                         if (sub) sub.textContent = `Battle giant Robot ${cfg.name}! Use Bot Powers & Dinobot attacks to defeat him!`;
 
                         this.updateHPHUD();
-                        this.redrawOverheadBar("⚠️ ROBOT SHOWDOWN!");
-                        showToast(`⚠️ ${cfg.name} TRANSFORMED!`, `${cfg.name} entered giant Robot combat mode! Deliver the final blows!`);
+                        this.redrawOverheadBar("ROBOT SHOWDOWN!");
+                        showToast(`${cfg.name} TRANSFORMED!`, `${cfg.name} entered giant Robot combat mode! Deliver the final blows!`);
                     }
                     return;
                 }
@@ -526,7 +526,7 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                     showToast(`💥 ${cfg.name} DEFEATED! (${this.fleetIndex + 1}/3)`, `Dr. Morocco: "Deploy ${nextCfg.name} immediately!"`);
 
                     const title = document.getElementById('morbot-boss-title');
-                    if (title) title.textContent = `⚠️ INCOMING: ${nextCfg.name} (${nextIndex + 1}/3)`;
+                    if (title) title.textContent = `INCOMING: ${nextCfg.name} (${nextIndex + 1}/3)`;
                     const sub = document.getElementById('morbot-boss-subtitle');
                     if (sub) sub.textContent = `Prepare for ${nextCfg.name}!`;
 
@@ -559,12 +559,12 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                 spawnSparkleGlints(player.pos.x, player.pos.y + 3.0, player.pos.z, 45);
 
                 const title = document.getElementById('morbot-boss-title');
-                if (title) title.textContent = "🏆 MORBOT FLEET NEUTRALIZED!";
+                if (title) title.textContent = "MORBOT FLEET NEUTRALIZED!";
                 const sub = document.getElementById('morbot-boss-subtitle');
                 if (sub) sub.textContent = "Dr. Morocco is escaping in his rocket! Griffin Rock is saved!";
 
                 this.updateHPHUD();
-                this.redrawOverheadBar("🏆 [ FLEET DEFEATED ]");
+                this.redrawOverheadBar("[ FLEET DEFEATED ]");
 
                 // 1. Create Battlefield Escape Rocket Capsule shooting out from MorBot Gamma into space!
                 if (!this.battlefieldRocket) {
