@@ -1075,12 +1075,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     showToast(`${bName} MODE!`, `${BOT_METADATA[player.botType].name} transformed into ${bName}!`);
                 }
             } else if (nextMode === 'DINO') {
-                if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
-                    showToast("WATER REQUIRED TO DIVE", "High Tide's plesiosaur dinobot mode requires water! Head to the harbor or shoreline!");
-                    sfx.playSpeechPop();
-                    return;
-                }
-                // If bot is in deep open water, prevent transforming to dry land dino mode
+                // High Tide's Plesiosaur / Titan Mosasaur Dino Mode is fully amphibious (works on land AND water!).
+                // Other bots in deep open water must steer back to shore before leaving Boat Mode.
                 if (player.botType !== 'HIGHTIDE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
                     showToast("RETURN TO SHORE", `${BOT_METADATA[player.botType].name} must steer to the beach or harbor dock before transforming out of Boat Mode!`);
                     sfx.playSpeechPop();
@@ -1097,6 +1093,10 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     player.grounded = false;
                 } else {
                     player.flightAlt = 0;
+                }
+                if (player.botType === 'HIGHTIDE') {
+                    const isMega = Boolean(progression.highTideDocked);
+                    showToast("AMPHIBIOUS DINO MODE", `High Tide transformed into ${isMega ? 'Titan Mosasaur' : 'Amphibious Plesiosaur'}!`);
                 }
                 const meta = BOT_METADATA[player.botType];
                 showToast("DINOBOT MODE!", `${meta.name} • ${meta.dinoName}!`);
@@ -1352,8 +1352,6 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     } else {
                         // High Tide's Dino Mode is fully amphibious and can roam seamlessly on land or ocean water!
                         setPlayerMode('DINO');
-                        const isMega = Boolean(progression.highTideDocked);
-                        showToast("🦖 AMPHIBIOUS DINO MODE", `High Tide transformed into ${isMega ? 'Titan Mosasaur' : 'Amphibious Plesiosaur'}!`);
                     }
                 } else if (player.mode === 'VEHICLE') {
                     setPlayerMode('DINO');

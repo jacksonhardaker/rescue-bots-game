@@ -563,16 +563,217 @@
 
         .bg-amber-400 { background-color: #fbbf24; }
         .bg-amber-400\/20 { background-color: rgba(251, 191, 36, 0.2); }
+        .bg-amber-500 { background-color: #f59e0b; }
+        .bg-amber-500\/10 { background-color: rgba(245, 158, 11, 0.12); }
+        .bg-amber-950\/80 { background-color: rgba(69, 26, 3, 0.85); }
+        .bg-yellow-400 { background-color: #facc15; }
         .bg-cyan-400 { background-color: #22d3ee; }
+        .bg-cyan-500 { background-color: #06b6d4; }
+        .bg-cyan-500\/20 { background-color: rgba(6, 182, 212, 0.22); }
+        .bg-cyan-500\/30 { background-color: rgba(6, 182, 212, 0.32); }
+        .bg-sky-400 { background-color: #38bdf8; }
         .bg-lime-400 { background-color: #a3e635; }
+        .bg-emerald-400 { background-color: #34d399; }
+        .bg-emerald-500\/20 { background-color: rgba(16, 185, 129, 0.22); }
+        .bg-rose-500 { background-color: #f43f5e; }
+        .bg-rose-500\/10 { background-color: rgba(244, 63, 94, 0.14); }
+        .bg-rose-500\/20 { background-color: rgba(244, 63, 94, 0.24); }
+        .bg-rose-600 { background-color: #e11d48; }
+        .bg-red-600\/30 { background-color: rgba(220, 38, 38, 0.3); }
+        .bg-red-950 { background-color: #450a0a; }
+        .bg-purple-600\/30 { background-color: rgba(147, 51, 234, 0.3); }
+        .bg-purple-950\/80 { background-color: rgba(59, 7, 100, 0.85); }
         .bg-slate-700 { background-color: #334155; }
-        .bg-slate-800\/90 { background-color: rgba(30, 41, 59, 0.9); }
-        .bg-slate-900\/80 { background-color: rgba(15, 23, 42, 0.8); }
-        .bg-slate-950\/70 { background-color: rgba(2, 6, 23, 0.7); }
-        .bg-slate-950\/80 { background-color: rgba(2, 6, 23, 0.8); }
-        .bg-slate-950\/85 { background-color: rgba(2, 6, 23, 0.85); }
-        .bg-slate-950\/90 { background-color: rgba(2, 6, 23, 0.9); }
+        .bg-slate-800 { background-color: #1e293b; }
+        .bg-slate-800\/50 { background-color: rgba(30, 41, 59, 0.65); }
+        .bg-slate-800\/80 { background-color: rgba(30, 41, 59, 0.85); }
+        .bg-slate-800\/90 { background-color: rgba(30, 41, 59, 0.92); }
+        .bg-slate-900\/60 { background-color: rgba(15, 23, 42, 0.72); }
+        .bg-slate-900\/70 { background-color: rgba(15, 23, 42, 0.78); }
+        .bg-slate-900\/80 { background-color: rgba(15, 23, 42, 0.85); }
+        .bg-slate-950\/70 { background-color: rgba(2, 6, 23, 0.75); }
+        .bg-slate-950\/80 { background-color: rgba(2, 6, 23, 0.82); }
+        .bg-slate-950\/85 { background-color: rgba(2, 6, 23, 0.88); }
+        .bg-slate-950\/90 { background-color: rgba(2, 6, 23, 0.92); }
+        .bg-slate-950\/95 { background-color: rgba(2, 6, 23, 0.96); }
+        .bg-white\/20 { background-color: rgba(255, 255, 255, 0.2); }
         .bg-white\/95 { background-color: rgba(255, 255, 255, 0.95); }
+
+        .hover\:bg-cyan-400:hover { background-color: #22d3ee; }
+        .hover\:bg-rose-500:hover { background-color: #f43f5e; }
+        .hover\:bg-slate-700:hover { background-color: #334155; }
+        .hover\:bg-slate-800\/90:hover { background-color: rgba(30, 41, 59, 0.92); }
+        .active\:bg-slate-900:active { background-color: #0f172a; }
+        .hover\:text-white:hover { color: #ffffff; }
+        .hover\:border-amber-400:hover { border-color: #fbbf24; }
+        .hover\:scale-105:hover { transform: scale(1.05); }
+
+        /* Ensure every button has a solid default background & readable contrast */
+        button {
+            background-color: #1e293b;
+            color: #f8fafc;
+            font-family: inherit;
+        }
+        #btn-ack-settings, #btn-ack-about {
+            background: linear-gradient(180deg, #22d3ee 0%, #06b6d4 100%) !important;
+            color: #020617 !important;
+            border: 2px solid #a5f3fc !important;
+            box-shadow: 0 4px 16px rgba(6, 182, 212, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+        }
+        #btn-ack-settings:hover, #btn-ack-about:hover {
+            background: linear-gradient(180deg, #67e8f9 0%, #22d3ee 100%) !important;
+        }
+        #btn-reset-career {
+            background: linear-gradient(180deg, #f43f5e 0%, #e11d48 100%) !important;
+            color: #ffffff !important;
+            border: 1.5px solid #fda4af !important;
+        }
+
+        /* Complete spacing, layout, border & typography utility coverage */
+        .block { display: block; }
+        .inline-block { display: inline-block; }
+        .grid { display: grid; }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .justify-end { justify-content: flex-end; }
+        .min-w-0 { min-width: 0px; }
+        .overflow-y-auto { overflow-y: auto; }
+        .overflow-x-auto { overflow-x: auto; }
+        .max-w-lg { max-width: 32rem; }
+        .max-w-xl { max-width: 36rem; }
+        .max-h-\[64vh\] { max-height: 64vh; }
+        .max-h-\[90vh\] { max-height: 90vh; }
+        .max-h-\[92vh\] { max-height: 92vh; }
+        .min-h-\[28px\] { min-height: 28px; }
+        .max-h-\[28px\] { max-height: 28px; }
+        .w-44 { width: 11rem; }
+        .w-32 { width: 8rem; }
+        .h-32 { height: 8rem; }
+        .w-4\.5 { width: 1.125rem; }
+        .h-4\.5 { height: 1.125rem; }
+        .h-1 { height: 0.25rem; }
+        .w-\[94\%\] { width: 94%; }
+
+        .p-2\.5 { padding: 0.625rem; }
+        .p-3 { padding: 0.85rem; }
+        .p-3\.5 { padding: 0.95rem; }
+        .p-4 { padding: 1.05rem; }
+        .p-5 { padding: 1.25rem; }
+        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .py-3\.5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
+        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+        .pt-2 { padding-top: 0.5rem; }
+        .pt-3 { padding-top: 0.75rem; }
+        .pb-2 { padding-bottom: 0.5rem; }
+        .pb-3 { padding-bottom: 0.75rem; }
+        .pr-0\.5 { padding-right: 0.125rem; }
+        .pr-1 { padding-right: 0.25rem; }
+        .pr-2 { padding-right: 0.5rem; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mt-1\.5 { margin-top: 0.375rem; }
+        .mt-2\.5 { margin-top: 0.625rem; }
+        .ml-0\.5 { margin-left: 0.125rem; }
+        .ml-1 { margin-left: 0.25rem; }
+        .gap-3\.5 { gap: 0.875rem; }
+        .gap-4 { gap: 1rem; }
+
+        .space-y-1\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.45rem; }
+        .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.6rem; }
+        .space-y-2\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
+        .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.875rem; }
+        .space-y-3\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
+        .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.15rem; }
+
+        .rounded-sm { border-radius: 0.125rem; }
+        .rounded-md { border-radius: 0.375rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .border-b { border-bottom-width: 1px; border-bottom-style: solid; }
+        .border-t-2 { border-top-width: 2px; border-top-style: solid; }
+        .border-dashed { border-style: dashed; }
+        .border-transparent { border-color: transparent; }
+        .border-white { border-color: #ffffff; }
+        .border-slate-200 { border-color: #e2e8f0; }
+        .border-slate-400 { border-color: #94a3b8; }
+        .border-slate-700 { border-color: #334155; }
+        .border-slate-700\/60 { border-color: rgba(51, 65, 85, 0.65); }
+        .border-slate-700\/80 { border-color: rgba(51, 65, 85, 0.85); }
+        .border-slate-800 { border-color: #1e293b; }
+        .border-slate-800\/80 { border-color: rgba(30, 41, 59, 0.85); }
+        .border-cyan-300\/40 { border-color: rgba(103, 232, 249, 0.4); }
+        .border-cyan-400\/60 { border-color: rgba(34, 211, 238, 0.6); }
+        .border-cyan-400\/80 { border-color: rgba(34, 211, 238, 0.8); }
+        .border-cyan-500\/30 { border-color: rgba(6, 182, 212, 0.35); }
+        .border-cyan-500\/40 { border-color: rgba(6, 182, 212, 0.45); }
+        .border-amber-300 { border-color: #fcd34d; }
+        .border-amber-400\/50 { border-color: rgba(251, 191, 36, 0.5); }
+        .border-amber-500\/40 { border-color: rgba(245, 158, 11, 0.4); }
+        .border-yellow-300\/60 { border-color: rgba(253, 224, 71, 0.6); }
+        .border-lime-300\/60 { border-color: rgba(190, 242, 100, 0.6); }
+        .border-lime-400\/60 { border-color: rgba(163, 230, 53, 0.6); }
+        .border-emerald-300 { border-color: #6ee7b7; }
+        .border-emerald-400\/50 { border-color: rgba(52, 211, 153, 0.5); }
+        .border-sky-400 { border-color: #38bdf8; }
+        .border-sky-400\/50 { border-color: rgba(56, 189, 248, 0.5); }
+        .border-purple-300\/50 { border-color: rgba(216, 180, 254, 0.5); }
+        .border-purple-400 { border-color: #c084fc; }
+        .border-purple-500\/40 { border-color: rgba(168, 85, 247, 0.45); }
+        .border-purple-500\/80 { border-color: rgba(168, 85, 247, 0.8); }
+        .border-rose-400\/50 { border-color: rgba(251, 113, 133, 0.5); }
+        .border-rose-500 { border-color: #f43f5e; }
+        .border-rose-500\/30 { border-color: rgba(244, 63, 94, 0.35); }
+        .border-red-400\/50 { border-color: rgba(248, 113, 113, 0.5); }
+        .border-red-500 { border-color: #ef4444; }
+
+        .text-slate-400 { color: #94a3b8; }
+        .text-slate-500 { color: #94a3b8; }
+        .text-amber-200 { color: #fde68a; }
+        .text-yellow-100 { color: #fef9c3; }
+        .text-emerald-300 { color: #6ee7b7; }
+        .text-purple-200 { color: #e9d5ff; }
+        .text-purple-300 { color: #d8b4fe; }
+        .text-purple-400 { color: #c084fc; }
+        .text-rose-300 { color: #fda4af; }
+        .text-rose-200\/80 { color: rgba(254, 205, 211, 0.88); }
+        .text-red-400 { color: #f87171; }
+        .text-orange-300 { color: #fdba74; }
+        .text-blue-200 { color: #bfdbfe; }
+        .text-cyan-300\/90 { color: rgba(103, 232, 249, 0.9); }
+        .text-\[9\.5px\] { font-size: 9.5px; }
+        .text-\[10\.5px\] { font-size: 10.5px; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Fredoka', sans-serif; }
+        .font-medium { font-weight: 500; }
+        .italic { font-style: italic; }
+        .accent-cyan-400 { accent-color: #22d3ee; }
+        .shadow { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35); }
+        .shadow-sm { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); }
+        .shadow-md { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4); }
+        .shadow-inner { box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35); }
+
+        .from-slate-800\/90 { --tw-gradient-from: rgba(30, 41, 59, 0.9); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(30, 41, 59, 0)); }
+        .from-slate-900 { --tw-gradient-from: #0f172a; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(15, 23, 42, 0)); }
+        .via-slate-900 { --tw-gradient-stops: var(--tw-gradient-from), #0f172a, var(--tw-gradient-to, rgba(15, 23, 42, 0)); }
+        .via-slate-900\/90 { --tw-gradient-stops: var(--tw-gradient-from), rgba(15, 23, 42, 0.9), var(--tw-gradient-to, rgba(15, 23, 42, 0)); }
+        .to-slate-900\/90 { --tw-gradient-to: rgba(15, 23, 42, 0.9); }
+        .to-slate-950 { --tw-gradient-to: #020617; }
+        .to-slate-950\/90 { --tw-gradient-to: rgba(2, 6, 23, 0.9); }
+        .from-blue-700\/90 { --tw-gradient-from: rgba(29, 78, 216, 0.9); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(29, 78, 216, 0)); }
+        .via-blue-700\/90 { --tw-gradient-stops: var(--tw-gradient-from), rgba(29, 78, 216, 0.9), var(--tw-gradient-to, rgba(29, 78, 216, 0)); }
+        .via-blue-900\/90 { --tw-gradient-stops: var(--tw-gradient-from), rgba(30, 58, 138, 0.9), var(--tw-gradient-to, rgba(30, 58, 138, 0)); }
+        .via-sky-900\/90 { --tw-gradient-stops: var(--tw-gradient-from), rgba(12, 74, 110, 0.9), var(--tw-gradient-to, rgba(12, 74, 110, 0)); }
+        .to-blue-950\/90 { --tw-gradient-to: rgba(23, 37, 84, 0.9); }
+        .to-cyan-950\/90 { --tw-gradient-to: rgba(8, 51, 68, 0.9); }
+        .via-red-600\/90 { --tw-gradient-stops: var(--tw-gradient-from), rgba(220, 38, 38, 0.9), var(--tw-gradient-to, rgba(220, 38, 38, 0)); }
+        .from-amber-500\/90 { --tw-gradient-from: rgba(245, 158, 11, 0.9); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(245, 158, 11, 0)); }
+        .to-yellow-700\/90 { --tw-gradient-to: rgba(161, 98, 7, 0.9); }
+        .from-purple-600\/90 { --tw-gradient-from: rgba(147, 51, 234, 0.9); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(147, 51, 234, 0)); }
+        .from-purple-900\/90 { --tw-gradient-from: rgba(88, 28, 135, 0.9); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(88, 28, 135, 0)); }
+        .to-violet-950\/90 { --tw-gradient-to: rgba(46, 16, 101, 0.9); }
+        .from-red-600 { --tw-gradient-from: #dc2626; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(220, 38, 38, 0)); }
+        .via-rose-600 { --tw-gradient-stops: var(--tw-gradient-from), #e11d48, var(--tw-gradient-to, rgba(225, 29, 72, 0)); }
+        .to-purple-700 { --tw-gradient-to: #7e22ce; }
 
         .bg-gradient-to-r { background-image: linear-gradient(to right, var(--tw-gradient-stops)); }
         .bg-gradient-to-b { background-image: linear-gradient(to bottom, var(--tw-gradient-stops)); }
@@ -845,10 +1046,15 @@
         .animate-ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
 
         @media (min-width: 640px) {
+            .sm\:inline-block { display: inline-block; }
+            .sm\:w-6 { width: 1.5rem; }
+            .sm\:h-6 { height: 1.5rem; }
             .sm\:w-7 { width: 1.75rem; }
             .sm\:h-7 { height: 1.75rem; }
             .sm\:w-8 { width: 2rem; }
             .sm\:h-8 { height: 2rem; }
+            .sm\:w-9 { width: 2.25rem; }
+            .sm\:h-9 { height: 2.25rem; }
             .sm\:w-10 { width: 2.5rem; }
             .sm\:h-10 { height: 2.5rem; }
             .sm\:w-11 { width: 2.75rem; }
@@ -865,15 +1071,30 @@
             .sm\:h-28 { height: 7rem; }
             .sm\:w-36 { width: 9rem; }
             .sm\:h-36 { height: 9rem; }
+            .sm\:w-48 { width: 12rem; }
+            .sm\:max-h-\[72vh\] { max-height: 72vh; }
+            .sm\:p-2 { padding: 0.5rem; }
+            .sm\:p-4 { padding: 1rem; }
+            .sm\:p-6 { padding: 1.5rem; }
+            .sm\:px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+            .sm\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+            .sm\:py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+            .sm\:py-3\.5 { padding-top: 0.875rem; padding-bottom: 0.875rem; }
             .sm\:bottom-9 { bottom: 2.25rem; }
             .sm\:left-8 { left: 2rem; }
             .sm\:right-9 { right: 2.25rem; }
+            .sm\:gap-1\.5 { gap: 0.375rem; }
+            .sm\:gap-2 { gap: 0.5rem; }
             .sm\:gap-3 { gap: 0.75rem; }
             .sm\:text-\[9px\] { font-size: 9px; }
+            .sm\:text-\[9\.5px\] { font-size: 9.5px; }
             .sm\:text-\[10px\] { font-size: 10px; }
+            .sm\:text-\[10\.5px\] { font-size: 10.5px; }
             .sm\:text-\[11px\] { font-size: 11px; }
             .sm\:text-xs { font-size: 0.75rem; line-height: 1rem; }
             .sm\:text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+            .sm\:text-base { font-size: 1rem; line-height: 1.5rem; }
+            .sm\:text-lg { font-size: 1.125rem; line-height: 1.75rem; }
             .sm\:text-xl { font-size: 1.25rem; line-height: 1.75rem; }
             .sm\:text-2xl { font-size: 1.5rem; line-height: 2rem; }
             .sm\:text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
@@ -1672,46 +1893,53 @@
             <!-- Header -->
             <div class="flex items-center justify-between pb-3 border-b border-slate-700/80">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 font-black">
-                        ⚙️
+                    <div class="w-9 h-9 rounded-xl bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-cyan-300 font-black">
+                        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                        </svg>
                     </div>
                     <div>
-                        <h2 class="text-base sm:text-lg font-bold text-white leading-tight">Settings & Controls</h2>
+                        <h2 class="text-base sm:text-lg font-bold text-white leading-tight">Settings &amp; Controls</h2>
                         <p class="text-[10px] text-cyan-300 font-mono">Griffin Rock System Preferences</p>
                     </div>
                 </div>
-                <button id="btn-close-settings" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center font-bold text-lg" title="Close">
+                <button id="btn-close-settings" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 flex items-center justify-center font-bold text-lg cursor-pointer" title="Close">
                     ✕
                 </button>
             </div>
 
             <!-- Tab Navigation Bar -->
-            <div class="flex gap-1.5 sm:gap-2 pt-3 pb-2 border-b border-slate-800/80 overflow-x-auto select-none">
-                <button id="tab-btn-controls" class="settings-tab-btn active px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-cyan-500/30 border border-cyan-400" data-tab="controls">
-                    🎮 Controls
+            <div class="flex gap-2 pt-3 pb-3 border-b border-slate-800/80 overflow-x-auto select-none">
+                <button id="tab-btn-controls" class="settings-tab-btn active px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-cyan-500/30 border border-cyan-400 flex items-center gap-1.5 cursor-pointer" data-tab="controls">
+                    <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4M8 10v4"/><circle cx="15" cy="11" r="1" fill="currentColor"/><circle cx="17" cy="13" r="1" fill="currentColor"/></svg>
+                    <span>Controls</span>
                 </button>
-                <button id="tab-btn-graphics" class="settings-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800/50 border border-transparent" data-tab="graphics">
-                    🖥️ Graphics
+                <button id="tab-btn-graphics" class="settings-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-800/80 border border-slate-700 flex items-center gap-1.5 cursor-pointer" data-tab="graphics">
+                    <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                    <span>Graphics</span>
                 </button>
-                <button id="tab-btn-audio" class="settings-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800/50 border border-transparent" data-tab="audio">
-                    🔊 Audio
+                <button id="tab-btn-audio" class="settings-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-800/80 border border-slate-700 flex items-center gap-1.5 cursor-pointer" data-tab="audio">
+                    <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14"/></svg>
+                    <span>Audio</span>
                 </button>
-                <button id="tab-btn-save" class="settings-tab-btn px-3 py-1.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white bg-slate-800/50 border border-transparent" data-tab="save">
-                    💾 Save Data
+                <button id="tab-btn-save" class="settings-tab-btn px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-slate-800/80 border border-slate-700 flex items-center gap-1.5 cursor-pointer" data-tab="save">
+                    <svg viewBox="0 0 24 24" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    <span>Save Data</span>
                 </button>
             </div>
 
             <!-- Scrollable Tab Content Container -->
-            <div class="overflow-y-auto py-3 space-y-4 text-xs text-slate-300 leading-relaxed pr-1 flex-1">
+            <div class="overflow-y-auto py-4 px-1 space-y-4 text-xs text-slate-300 leading-relaxed flex-1">
                 <!-- 1. CONTROLS TAB -->
-                <div id="tab-pane-controls" class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-slate-400 text-[11px]">Click any button below, then press any key to rebind.</span>
-                        <button id="btn-reset-controls" class="text-[10px] px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg border border-cyan-500/30 font-bold">
+                <div id="tab-pane-controls" class="space-y-3.5">
+                    <div class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-900/70 border border-slate-800">
+                        <span class="text-slate-300 text-[11px]">Click any action below, then press any key to rebind.</span>
+                        <button id="btn-reset-controls" class="text-[11px] px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg border border-cyan-400/50 font-bold cursor-pointer shrink-0">
                             Reset Defaults
                         </button>
                     </div>
-                    <div id="settings-controls-list" class="space-y-2">
+                    <div id="settings-controls-list" class="space-y-2.5">
                         <!-- Dynamically populated keybind rows -->
                     </div>
                 </div>
@@ -1719,104 +1947,104 @@
                 <!-- 2. GRAPHICS TAB -->
                 <div id="tab-pane-graphics" class="hidden space-y-4">
                     <!-- Presets -->
-                    <div>
-                        <label class="block font-bold text-white text-[11px] uppercase tracking-wider mb-1.5">Quick Quality Preset</label>
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-2.5">
+                        <label class="block font-bold text-white text-[11px] uppercase tracking-wider">Quick Quality Preset</label>
                         <div class="grid grid-cols-4 gap-2">
-                            <button class="gfx-preset-btn px-2 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white" data-preset="low">Low</button>
-                            <button class="gfx-preset-btn px-2 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white" data-preset="medium">Medium</button>
-                            <button class="gfx-preset-btn px-2 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white" data-preset="high">High</button>
-                            <button class="gfx-preset-btn px-2 py-2 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white" data-preset="ultra">Ultra</button>
+                            <button class="gfx-preset-btn px-3 py-2.5 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white cursor-pointer" data-preset="low">Low</button>
+                            <button class="gfx-preset-btn px-3 py-2.5 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white cursor-pointer" data-preset="medium">Medium</button>
+                            <button class="gfx-preset-btn px-3 py-2.5 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white cursor-pointer" data-preset="high">High</button>
+                            <button class="gfx-preset-btn px-3 py-2.5 rounded-xl text-xs font-bold bg-slate-800 border border-slate-700 hover:border-cyan-400 text-white cursor-pointer" data-preset="ultra">Ultra</button>
                         </div>
                     </div>
 
                     <!-- Shadows -->
-                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-2.5">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-white text-xs">Shadow Distance & Quality</span>
-                            <span id="label-gfx-shadows" class="text-cyan-400 font-mono text-[11px]">High (380m)</span>
+                            <span class="font-bold text-white text-xs">Shadow Distance &amp; Quality</span>
+                            <span id="label-gfx-shadows" class="text-cyan-300 font-mono text-[11px] font-bold">High (380m)</span>
                         </div>
-                        <div class="grid grid-cols-4 gap-1.5 pt-1">
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="shadows" data-val="off">Off</button>
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="shadows" data-val="low">Low</button>
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="shadows" data-val="medium">Med</button>
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="shadows" data-val="high">High</button>
+                        <div class="grid grid-cols-4 gap-2 pt-1">
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="shadows" data-val="off">Off</button>
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="shadows" data-val="low">Low</button>
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="shadows" data-val="medium">Med</button>
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="shadows" data-val="high">High</button>
                         </div>
                     </div>
 
                     <!-- Comic Ink Outlines -->
-                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3">
                         <div>
                             <div class="font-bold text-white text-xs">Comic Ink Outlines</div>
-                            <div id="settings-outline-stats" class="text-[10px] text-slate-400">Inverted-hull black ink cartoon edges. Turn off for ~40% FPS boost!</div>
+                            <div id="settings-outline-stats" class="text-[11px] text-slate-300 mt-0.5">Inverted-hull black ink cartoon edges. Turn off for ~40% FPS boost!</div>
                         </div>
-                        <button id="btn-toggle-outlines" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-400">
+                        <button id="btn-toggle-outlines" class="px-3.5 py-2 rounded-xl font-bold text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-400 shrink-0 cursor-pointer">
                             ON
                         </button>
                     </div>
 
                     <!-- Scenery Draw Distance -->
-                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-2.5">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-white text-xs">Scenery Draw Distance & Fog</span>
-                            <span id="label-gfx-drawdist" class="text-cyan-400 font-mono text-[11px]">Far (2400m)</span>
+                            <span class="font-bold text-white text-xs">Scenery Draw Distance &amp; Fog</span>
+                            <span id="label-gfx-drawdist" class="text-cyan-300 font-mono text-[11px] font-bold">Far (2400m)</span>
                         </div>
-                        <div class="grid grid-cols-3 gap-1.5 pt-1">
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="drawDistance" data-val="low">Near (950m)</button>
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="drawDistance" data-val="medium">Med (1600m)</button>
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="drawDistance" data-val="high">Far (2400m)</button>
+                        <div class="grid grid-cols-3 gap-2 pt-1">
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="drawDistance" data-val="low">Near (950m)</button>
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="drawDistance" data-val="medium">Med (1600m)</button>
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="drawDistance" data-val="high">Far (2400m)</button>
                         </div>
                     </div>
 
                     <!-- Resolution Scale -->
-                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-1.5">
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-2.5">
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-white text-xs">Internal Render Resolution</span>
-                            <span id="label-gfx-res" class="text-cyan-400 font-mono text-[11px]">Native / Sharp</span>
+                            <span id="label-gfx-res" class="text-cyan-300 font-mono text-[11px] font-bold">Native / Sharp</span>
                         </div>
-                        <div class="grid grid-cols-4 gap-1.5 pt-1">
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="resolution" data-val="ultralow">Turbo (0.75x)</button>
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="resolution" data-val="low">Perf (1x)</button>
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="resolution" data-val="medium">Med (1.35x)</button>
-                            <button class="gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-300" data-opt="resolution" data-val="high">Sharp (2x)</button>
+                        <div class="grid grid-cols-4 gap-2 pt-1">
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="resolution" data-val="ultralow">Turbo (0.75x)</button>
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="resolution" data-val="low">Perf (1x)</button>
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="resolution" data-val="medium">Med (1.35x)</button>
+                            <button class="gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold bg-slate-800 border border-slate-700 text-slate-200 cursor-pointer" data-opt="resolution" data-val="high">Sharp (2x)</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- 3. AUDIO TAB -->
                 <div id="tab-pane-audio" class="hidden space-y-4">
-                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 flex items-center justify-between gap-3">
                         <div>
-                            <span class="font-bold text-white text-xs">Mute All Audio</span>
-                            <div class="text-[10px] text-slate-400">Quickly silence master output</div>
+                            <div class="font-bold text-white text-xs">Mute All Audio</div>
+                            <div class="text-[11px] text-slate-300 mt-0.5">Quickly silence master output</div>
                         </div>
-                        <button id="btn-toggle-mute" class="px-3 py-1.5 rounded-xl font-bold text-xs bg-slate-800 text-slate-300 border border-slate-700">
+                        <button id="btn-toggle-mute" class="px-3.5 py-2 rounded-xl font-bold text-xs bg-slate-800 text-slate-200 border border-slate-700 shrink-0 cursor-pointer">
                             UNMUTED
                         </button>
                     </div>
 
                     <!-- Master Volume -->
-                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-2.5">
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-white text-xs">Master Volume</span>
-                            <span id="label-vol-master" class="text-cyan-400 font-mono text-xs">100%</span>
+                            <span id="label-vol-master" class="text-cyan-300 font-mono text-xs font-bold">100%</span>
                         </div>
                         <input id="slider-vol-master" type="range" min="0" max="100" value="100" class="w-full accent-cyan-400 cursor-pointer">
                     </div>
 
                     <!-- SFX Volume -->
-                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-2.5">
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-white text-xs">Sound Effects (Transform, Horn, Sirens)</span>
-                            <span id="label-vol-sfx" class="text-cyan-400 font-mono text-xs">100%</span>
+                            <span id="label-vol-sfx" class="text-cyan-300 font-mono text-xs font-bold">100%</span>
                         </div>
                         <input id="slider-vol-sfx" type="range" min="0" max="100" value="100" class="w-full accent-cyan-400 cursor-pointer">
                     </div>
 
                     <!-- Engine & Rotor Loops Volume -->
-                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-2.5">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-white text-xs">Engine & Helicopter Rotor Sounds</span>
-                            <span id="label-vol-engine" class="text-cyan-400 font-mono text-xs">75%</span>
+                            <span class="font-bold text-white text-xs">Engine &amp; Helicopter Rotor Sounds</span>
+                            <span id="label-vol-engine" class="text-cyan-300 font-mono text-xs font-bold">75%</span>
                         </div>
                         <input id="slider-vol-engine" type="range" min="0" max="100" value="75" class="w-full accent-cyan-400 cursor-pointer">
                     </div>
@@ -1824,32 +2052,34 @@
 
                 <!-- 4. SAVE DATA TAB -->
                 <div id="tab-pane-save" class="hidden space-y-4">
-                    <div class="p-3 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
+                    <div class="p-4 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-3">
                         <div class="flex items-center justify-between">
                             <span class="font-bold text-white text-xs">Career Save Status</span>
-                            <span id="settings-save-version" class="text-emerald-400 font-mono text-[10px] font-bold">V4 (Migrated & Synchronized)</span>
+                            <span id="settings-save-version" class="text-emerald-300 font-mono text-[11px] font-bold">V4 (Migrated &amp; Synchronized)</span>
                         </div>
-                        <div id="settings-save-stats" class="grid grid-cols-2 gap-2 text-[11px] text-slate-300 pt-1">
+                        <div id="settings-save-stats" class="grid grid-cols-2 gap-2.5 text-[11px] text-slate-200 pt-1">
                             <!-- Populated in syncProgressionHUD -->
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2 pt-1">
-                        <button id="btn-export-save" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-1.5">
-                            <span>📥</span> Export Save JSON
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="btn-export-save" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 cursor-pointer">
+                            <svg viewBox="0 0 24 24" class="w-4 h-4 text-cyan-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            <span>Export Save JSON</span>
                         </button>
-                        <label class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-1.5 cursor-pointer text-center">
-                            <span>📤</span> Import Save JSON
+                        <label class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700 flex items-center justify-center gap-2 cursor-pointer text-center">
+                            <svg viewBox="0 0 24 24" class="w-4 h-4 text-amber-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span>Import Save JSON</span>
                             <input id="file-import-save" type="file" accept=".json" class="hidden">
                         </label>
                     </div>
 
-                    <div class="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between">
+                    <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-3">
                         <div>
                             <div class="font-bold text-rose-300 text-xs">Reset Career Progress</div>
-                            <div class="text-[10px] text-rose-200/80">Wipes island emergency & energon stats. Settings are preserved.</div>
+                            <div class="text-[11px] text-rose-200/80 mt-0.5">Wipes island emergency &amp; energon stats. Settings are preserved.</div>
                         </div>
-                        <button id="btn-reset-career" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs">
+                        <button id="btn-reset-career" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shrink-0 cursor-pointer">
                             Reset
                         </button>
                     </div>
@@ -1858,7 +2088,7 @@
 
             <!-- Footer -->
             <div class="pt-3 border-t border-slate-700/80 flex justify-end">
-                <button id="btn-ack-settings" class="tactile-btn bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold px-5 py-2 rounded-xl text-xs sm:text-sm">
+                <button id="btn-ack-settings" class="tactile-btn bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold px-6 py-2.5 rounded-xl text-xs sm:text-sm cursor-pointer">
                     Done
                 </button>
             </div>

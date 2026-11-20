@@ -30,18 +30,18 @@ let activeRebindAction = null;
 
             Object.keys(ACTION_LABELS).forEach(action => {
                 const row = document.createElement('div');
-                row.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-xs';
+                row.className = 'flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/80 text-xs';
 
                 const label = document.createElement('span');
-                label.className = 'font-bold text-slate-200';
+                label.className = 'font-bold text-slate-200 pr-2';
                 label.textContent = ACTION_LABELS[action];
                 row.appendChild(label);
 
                 const btn = document.createElement('button');
-                btn.className = 'px-2.5 py-1 rounded-lg font-mono text-[11px] font-bold border transition-colors ' +
+                btn.className = 'px-3 py-1.5 rounded-lg font-mono text-[11px] font-bold border transition-colors shrink-0 ' +
                     (activeRebindAction === action
-                        ? 'bg-amber-500 text-slate-950 border-amber-300 animate-pulse'
-                        : 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border-cyan-500/40');
+                        ? 'bg-amber-400 text-slate-950 border-amber-200 animate-pulse'
+                        : 'bg-slate-800 hover:bg-slate-700 text-cyan-300 border-cyan-400/50');
 
                 const keys = gameSettings.controls[action] || [];
                 btn.textContent = activeRebindAction === action ? 'PRESS KEY...' : keys.map(formatKeyName).join(' / ') || 'Unbound';
@@ -108,16 +108,25 @@ let activeRebindAction = null;
                 outlineStatsEl.textContent = `Inverted-hull cartoon edges. Currently ${stats.outlineMeshes} meshes (${stats.ratio}% of scene meshes).`;
             }
 
+            // Graphics Preset Buttons Active Highlight
+            document.querySelectorAll('.gfx-preset-btn').forEach((b: any) => {
+                const active = b.dataset.preset === gameSettings.graphics.preset;
+                b.className = 'gfx-preset-btn px-3 py-2.5 rounded-xl text-xs font-bold border transition-colors ' +
+                    (active
+                        ? 'bg-cyan-500/30 text-white border-cyan-400'
+                        : 'bg-slate-800 border-slate-700 hover:border-cyan-400 text-slate-200');
+            });
+
             // Graphics Shadows Label & Buttons
             const labelShadows = document.getElementById('label-gfx-shadows');
             if (labelShadows) {
                 const map = { off: 'Disabled', low: 'Low (180m)', medium: 'Med (280m)', high: 'High (380m)' };
                 labelShadows.textContent = map[gameSettings.graphics.shadows] || 'High';
             }
-            document.querySelectorAll('.gfx-opt-btn[data-opt="shadows"]').forEach(b => {
+            document.querySelectorAll('.gfx-opt-btn[data-opt="shadows"]').forEach((b: any) => {
                 const active = b.dataset.val === gameSettings.graphics.shadows;
-                b.className = 'gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold border ' +
-                    (active ? 'bg-cyan-500/30 text-cyan-300 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-300');
+                b.className = 'gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold border transition-colors ' +
+                    (active ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700');
             });
 
             // Graphics Draw Distance
@@ -126,10 +135,10 @@ let activeRebindAction = null;
                 const map = { low: 'Near (950m)', medium: 'Med (1600m)', high: 'Far (2400m)' };
                 labelDrawDist.textContent = map[gameSettings.graphics.drawDistance] || 'Far';
             }
-            document.querySelectorAll('.gfx-opt-btn[data-opt="drawDistance"]').forEach(b => {
+            document.querySelectorAll('.gfx-opt-btn[data-opt="drawDistance"]').forEach((b: any) => {
                 const active = b.dataset.val === gameSettings.graphics.drawDistance;
-                b.className = 'gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold border ' +
-                    (active ? 'bg-cyan-500/30 text-cyan-300 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-300');
+                b.className = 'gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold border transition-colors ' +
+                    (active ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700');
             });
 
             // Graphics Resolution
@@ -138,10 +147,10 @@ let activeRebindAction = null;
                 const map = { ultralow: '0.75x Turbo', low: '1x Perf', medium: '1.35x Med', high: '2x Sharp' };
                 labelRes.textContent = map[gameSettings.graphics.resolution] || '2x Sharp';
             }
-            document.querySelectorAll('.gfx-opt-btn[data-opt="resolution"]').forEach(b => {
+            document.querySelectorAll('.gfx-opt-btn[data-opt="resolution"]').forEach((b: any) => {
                 const active = b.dataset.val === gameSettings.graphics.resolution;
-                b.className = 'gfx-opt-btn px-2 py-1.5 rounded-lg text-xs font-bold border ' +
-                    (active ? 'bg-cyan-500/30 text-cyan-300 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-300');
+                b.className = 'gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold border transition-colors ' +
+                    (active ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700');
             });
 
             // Career Save Stats
@@ -149,21 +158,21 @@ let activeRebindAction = null;
             if (saveStatsEl && typeof getRescueStarRank === 'function' && typeof progression !== 'undefined') {
                 const rankInfo = getRescueStarRank(progression);
                 saveStatsEl.innerHTML = `
-                    <div class="bg-slate-800/80 p-2 rounded-xl border border-slate-700/60">
-                        <div class="text-slate-400 text-[10px]">RESCUE RANK</div>
-                        <div class="font-bold text-amber-300 text-xs">${rankInfo.title} (${rankInfo.level}★)</div>
+                    <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                        <div class="text-slate-300 text-[10px] font-semibold">RESCUE RANK</div>
+                        <div class="font-bold text-amber-300 text-xs mt-0.5">${rankInfo.title} (${rankInfo.level} Star)</div>
                     </div>
-                    <div class="bg-slate-800/80 p-2 rounded-xl border border-slate-700/60">
-                        <div class="text-slate-400 text-[10px]">HERO POINTS</div>
-                        <div class="font-bold text-cyan-300 text-xs">${rankInfo.pts} Pts</div>
+                    <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                        <div class="text-slate-300 text-[10px] font-semibold">HERO POINTS</div>
+                        <div class="font-bold text-cyan-300 text-xs mt-0.5">${rankInfo.pts} Pts</div>
                     </div>
-                    <div class="bg-slate-800/80 p-2 rounded-xl border border-slate-700/60">
-                        <div class="text-slate-400 text-[10px]">EMERGENCIES</div>
-                        <div class="font-bold text-emerald-300 text-xs">${progression.totalEmergenciesResolved} Resolved</div>
+                    <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                        <div class="text-slate-300 text-[10px] font-semibold">EMERGENCIES</div>
+                        <div class="font-bold text-emerald-300 text-xs mt-0.5">${progression.totalEmergenciesResolved} Resolved</div>
                     </div>
-                    <div class="bg-slate-800/80 p-2 rounded-xl border border-slate-700/60">
-                        <div class="text-slate-400 text-[10px]">ENERGON CUBES</div>
-                        <div class="font-bold text-yellow-300 text-xs">${progression.totalEnergonCubes} Collected</div>
+                    <div class="bg-slate-800/90 p-3 rounded-xl border border-slate-700">
+                        <div class="text-slate-300 text-[10px] font-semibold">ENERGON CUBES</div>
+                        <div class="font-bold text-yellow-300 text-xs mt-0.5">${progression.totalEnergonCubes} Collected</div>
                     </div>
                 `;
             }
@@ -280,9 +289,9 @@ function _localReset() {
                 const tabKey = tabBtn.dataset.tab;
                 document.querySelectorAll('.settings-tab-btn').forEach(b => {
                     b.classList.remove('active', 'bg-cyan-500/30', 'border-cyan-400', 'text-white');
-                    b.classList.add('bg-slate-800/50', 'border-transparent', 'text-slate-400');
+                    b.classList.add('bg-slate-800/80', 'border-slate-700', 'text-slate-300');
                 });
-                tabBtn.classList.remove('bg-slate-800/50', 'border-transparent', 'text-slate-400');
+                tabBtn.classList.remove('bg-slate-800/80', 'border-slate-700', 'text-slate-300');
                 tabBtn.classList.add('active', 'bg-cyan-500/30', 'border-cyan-400', 'text-white');
 
                 ['controls', 'graphics', 'audio', 'save'].forEach(t => {
