@@ -134,11 +134,14 @@ export function initGame() {
     requestAnimationFrame(animate);
 }
 
-// Auto-run on DOM ready
+// Auto-run on DOM ready (yield one paint frame so the loading splash renders immediately)
 if (typeof window !== 'undefined') {
+    const startInit = () => {
+        requestAnimationFrame(() => setTimeout(initGame, 0));
+    };
     if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', initGame);
+        window.addEventListener('DOMContentLoaded', startInit);
     } else {
-        initGame();
+        startInit();
     }
 }

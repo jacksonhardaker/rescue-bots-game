@@ -51,6 +51,8 @@ let lightningTimer = 0;
 let positionSaveTimer = 0;
 let hudWaterCheckTimer = 0;
 let shadowFrameToggle = 1;
+let renderedFrames = 0;
+let loadingOverlayDismissed = false;
 let lastSavedPos = { x: 0, y: 0, z: 0, heading: 0 };
 
 const _bubbleWorldPos = new THREE.Vector3();
@@ -1133,8 +1135,18 @@ function updateSpeechBubbleProjection(dt: number) {
             renderer.render(scene, camera);
             const _perfTRender = performance.now() - _perfTRender0;
 
+            renderedFrames++;
+            if (!loadingOverlayDismissed && renderedFrames >= 4) {
+                loadingOverlayDismissed = true;
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) {
+                    overlay.classList.add('loading-overlay-hidden');
+                    setTimeout(() => overlay.remove(), 400);
+                }
+            }
+
             const _perfTotalMs = performance.now() - _perfT0;
-            if (_perfTotalMs > 24.0) {
+            if (renderedFrames > 4 && _perfTotalMs > 24.0) {
                 let distToTrain = 999;
                 if (typeof islandTrain !== 'undefined' && islandTrain.cars.length > 0) {
                     distToTrain = Math.hypot(player.pos.x - islandTrain.cars[0].x, player.pos.z - islandTrain.cars[0].z);
