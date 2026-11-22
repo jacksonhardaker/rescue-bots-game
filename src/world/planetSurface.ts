@@ -340,6 +340,17 @@ interface PlanetRockRuntime {
     destroyed: boolean;
 }
 
+interface PlanetLandmarkNode {
+    kind: 'MERCURY_MIRROR' | 'VENUS_PROBE' | 'MARS_RAMP' | 'PLUTO_SLIDE';
+    x: number;
+    z: number;
+    group: THREE.Group;
+    beaconMat?: THREE.MeshBasicMaterial;
+    pivot?: THREE.Object3D;
+    activated: boolean;
+    cooldown: number;
+}
+
 let _activeConfig: PlanetConfig = PLANET_CONFIGS.MARS;
 let _builtPlanetId: LandablePlanetId | null = null;
 let _worldGroup: THREE.Group | null = null;
@@ -350,6 +361,7 @@ let _frozenStarspeedFreed = false;
 const TRITON_FROZEN_POS = { x: -34, z: -42 };
 const _planetRelics: PlanetRelicRuntime[] = [];
 const _planetRocks: PlanetRockRuntime[] = [];
+const _planetLandmarks: PlanetLandmarkNode[] = [];
 const _planetAnimated: Array<{ obj: THREE.Object3D; kind: string; baseY: number; phase: number }> = [];
 let _ventCooldown = 0;
 
@@ -538,6 +550,7 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
     }
     _planetRelics.length = 0;
     _planetRocks.length = 0;
+    _planetLandmarks.length = 0;
     _planetAnimated.length = 0;
     _planetSigmaRoot = null;
     _frozenStarspeedGroup = null;
@@ -754,6 +767,81 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
             _frozenStarspeedGroup = tomb;
             _worldGroup.add(tomb);
         }
+    }
+
+    // Signature Interactive Landmarks for Mercury, Venus, Mars & Pluto!
+    if (cfg.id === 'MERCURY') {
+        // 3 Solar Mirror Collectors to align toward the giant blazing Sun
+        const coords = [{ x: -46, z: 24 }, { x: 46, z: 22 }, { x: 0, z: -68 }];
+        coords.forEach(pt => {
+            const py = getPlanetSurfaceHeight(pt.x, pt.z);
+            const g = new THREE.Group();
+            g.position.set(pt.x, py, pt.z);
+            const ped = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.8, 3.2, 10), matDarkSteel);
+            ped.position.y = 1.6;
+            const pivot = new THREE.Group();
+            pivot.position.y = 4.2;
+            pivot.rotation.x = 0.55;
+            const dish = new THREE.Mesh(new THREE.BoxGeometry(5.6, 4.2, 0.35), matOptimusGold);
+            const beaconMat = new THREE.MeshBasicMaterial({ color: 0xf97316 });
+            const core = new THREE.Mesh(new THREE.SphereGeometry(0.95, 10, 8), beaconMat);
+            core.position.z = 0.45;
+            pivot.add(dish, core);
+            g.add(ped, pivot);
+            applyCartoonInkOutlines(ped, 1.04, true);
+            _worldGroup!.add(g);
+            _planetLandmarks.push({ kind: 'MERCURY_MIRROR', x: pt.x, z: pt.z, group: g, pivot, beaconMat, activated: false, cooldown: 0 });
+        });
+    } else if (cfg.id === 'VENUS') {
+        // 3 Atmospheric Weather Probes to repair
+        const coords = [{ x: -48, z: -18 }, { x: 48, z: -16 }, { x: 12, z: 60 }];
+        coords.forEach((pt, idx) => {
+            const py = getPlanetSurfaceHeight(pt.x, pt.z);
+            const g = new THREE.Group();
+            g.position.set(pt.x, py + 3.2, pt.z);
+            const body = new THREE.Mesh(new THREE.SphereGeometry(2.2, 12, 10), matChrome);
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(3.4, 0.35, 8, 22).rotateX(Math.PI / 2), matOptimusRed);
+            const beaconMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+            const light = new THREE.Mesh(new THREE.SphereGeometry(0.9, 10, 8), beaconMat);
+            light.position.y = 2.8;
+            g.add(body, ring, light);
+            applyCartoonInkOutlines(body, 1.04, true);
+            _worldGroup!.add(g);
+            _planetAnimated.push({ obj: g, kind: 'RELIC', baseY: py + 3.2, phase: idx * 1.5 });
+            _planetLandmarks.push({ kind: 'VENUS_PROBE', x: pt.x, z: pt.z, group: g, beaconMat, activated: false, cooldown: 0 });
+        });
+    } else if (cfg.id === 'MARS') {
+        // 2 Olympus Mega-Stunt Launch Ramps
+        const coords = [{ x: -24, z: 34, rot: 0.4 }, { x: 34, z: -22, rot: -0.6 }];
+        coords.forEach(pt => {
+            const py = getPlanetSurfaceHeight(pt.x, pt.z);
+            const g = new THREE.Group();
+            g.position.set(pt.x, py, pt.z);
+            g.rotation.y = pt.rot;
+            const wedge = new THREE.Mesh(new THREE.BoxGeometry(8.5, 1.2, 14).rotateX(-0.26), matDarkSteel);
+            wedge.position.y = 1.6;
+            const strip = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.25, 13.5).rotateX(-0.26), new THREE.MeshBasicMaterial({ color: 0x22d3ee }));
+            strip.position.y = 2.28;
+            g.add(wedge, strip);
+            _worldGroup!.add(g);
+            _planetLandmarks.push({ kind: 'MARS_RAMP', x: pt.x, z: pt.z, group: g, activated: false, cooldown: 0 });
+        });
+    } else if (cfg.id === 'PLUTO') {
+        // Charon Glacier Super-Slide Ice Runway
+        const py = getPlanetSurfaceHeight(0, 48);
+        const g = new THREE.Group();
+        g.position.set(0, py + 0.35, 48);
+        const runway = new THREE.Mesh(
+            new THREE.BoxGeometry(11, 0.4, 46),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.78 })
+        );
+        const railL = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.1, 46), new THREE.MeshBasicMaterial({ color: 0xe0f2fe }));
+        railL.position.set(-5.6, 0.45, 0);
+        const railR = railL.clone();
+        railR.position.x = 5.6;
+        g.add(runway, railL, railR);
+        _worldGroup!.add(g);
+        _planetLandmarks.push({ kind: 'PLUTO_SLIDE', x: 0, z: 48, group: g, activated: false, cooldown: 0 });
     }
 }
 
@@ -1007,6 +1095,54 @@ export function updatePlanetSurface(dt: number, now: number) {
                 player,
                 true
             );
+        }
+    }
+
+    // Check Signature Planetary Interactive Landmarks (Mercury Mirrors, Venus Probes, Mars Ramps, Pluto Ice Slide)
+    for (let i = 0; i < _planetLandmarks.length; i++) {
+        const lm = _planetLandmarks[i];
+        if (lm.cooldown > 0) lm.cooldown -= dt;
+        const dist = Math.hypot(player.pos.x - lm.x, player.pos.z - lm.z);
+
+        if (lm.kind === 'MERCURY_MIRROR' && !lm.activated && dist < 9.5) {
+            lm.activated = true;
+            if (lm.pivot) lm.pivot.rotation.x = -0.35;
+            if (lm.beaconMat) lm.beaconMat.color.setHex(0xfef08a);
+            sfx.playBeaconRestore();
+            spawnBurstParticles(lm.x, player.pos.y + 4, lm.z, 0xfef08a, 16, 1.2);
+            const doneCount = _planetLandmarks.filter(x => x.kind === 'MERCURY_MIRROR' && x.activated).length;
+            progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + (doneCount === 3 ? 10 : 3);
+            saveProgression();
+            showToast(
+                doneCount === 3 ? 'ALL MERCURY SOLAR MIRRORS ALIGNED!' : `SOLAR MIRROR ALIGNED (${doneCount}/3)!`,
+                doneCount === 3 ? '+10 Energon Bonus! Caloris Solar Array at 100% power!' : '+3 Energon! Align all 3 mirrors toward the Sun!'
+            );
+        } else if (lm.kind === 'VENUS_PROBE' && !lm.activated && dist < 9.5) {
+            lm.activated = true;
+            if (lm.beaconMat) lm.beaconMat.color.setHex(0x22d3ee);
+            sfx.playBeaconRestore();
+            spawnBurstParticles(lm.x, player.pos.y + 3, lm.z, 0x22d3ee, 16, 1.2);
+            const doneCount = _planetLandmarks.filter(x => x.kind === 'VENUS_PROBE' && x.activated).length;
+            progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + (doneCount === 3 ? 10 : 3);
+            saveProgression();
+            showToast(
+                doneCount === 3 ? 'ALL VENUS WEATHER PROBES ONLINE!' : `WEATHER PROBE REPAIRED (${doneCount}/3)!`,
+                doneCount === 3 ? '+10 Energon Bonus! Sulfuric storm telemetry restored!' : '+3 Energon! Repair all 3 atmospheric probes!'
+            );
+        } else if (lm.kind === 'MARS_RAMP' && lm.cooldown <= 0 && dist < 8.5) {
+            lm.cooldown = 2.0;
+            player.vy = 28.0;
+            player.grounded = false;
+            player.energonBoostTimer = 2.4;
+            sfx.playStuntChime();
+            spawnBurstParticles(lm.x, player.pos.y + 2, lm.z, 0x22d3ee, 16, 1.2);
+            showToast('OLYMPUS MEGA-LAUNCH!', 'Soaring over the Martian canyons in 0.38G!');
+        } else if (lm.kind === 'PLUTO_SLIDE' && lm.cooldown <= 0 && Math.abs(player.pos.x - lm.x) < 6.0 && Math.abs(player.pos.z - lm.z) < 22.0) {
+            lm.cooldown = 1.4;
+            player.boostTimer = 2.2;
+            player.speed = Math.max(player.speed, 62);
+            sfx.playEnergyCharge();
+            spawnSparkleGlints(player.pos.x, player.pos.y + 1.2, player.pos.z, 10);
         }
     }
 
