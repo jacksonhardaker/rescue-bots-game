@@ -54,7 +54,8 @@ export const progression: Record<string, any> = {
     planetRelicsFound: [],
     jupiterMoonsVisited: [],
     saturnBestLapSec: null,
-    saturnRacesCompleted: 0
+    saturnRacesCompleted: 0,
+    saturnWins: 0
 };
 
 export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED'];

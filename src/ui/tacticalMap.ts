@@ -726,6 +726,12 @@ function ensureMinimapBgCache(w: number, h: number) {
                         mCtx.arc(cx + Math.cos(nextG.angle) * rPx, cy + Math.sin(nextG.angle) * rPx, 4.5, 0, Math.PI * 2);
                         mCtx.fill();
                     }
+                    sr.rivals?.forEach((rv: any) => {
+                        mCtx.fillStyle = rv.colorHex || '#f472b6';
+                        mCtx.beginPath();
+                        mCtx.arc(cx + Math.cos(rv.angle) * rPx, cy + Math.sin(rv.angle) * rPx, 3.4, 0, Math.PI * 2);
+                        mCtx.fill();
+                    });
                     const px = cx + Math.cos(sr.angle) * rPx;
                     const py = cy + Math.sin(sr.angle) * rPx;
                     drawMapChevron(mCtx, px, py, player.heading, 5.2, '#22d3ee', '#ffffff');
@@ -1213,6 +1219,12 @@ function ensureMinimapBgCache(w: number, h: number) {
                         tCtx.fillStyle = isNext ? '#facc15' : (idx === 0 ? '#4ade80' : '#38bdf8');
                         tCtx.beginPath();
                         tCtx.arc(cx + Math.cos(g.angle) * rPx, cy + Math.sin(g.angle) * rPx, isNext ? 8 : 4.5, 0, Math.PI * 2);
+                        tCtx.fill();
+                    });
+                    sr.rivals?.forEach((rv: any) => {
+                        tCtx.fillStyle = rv.colorHex || '#f472b6';
+                        tCtx.beginPath();
+                        tCtx.arc(cx + Math.cos(rv.angle) * rPx, cy + Math.sin(rv.angle) * rPx, 6.2, 0, Math.PI * 2);
                         tCtx.fill();
                     });
                     const px = cx + Math.cos(sr.angle) * rPx;

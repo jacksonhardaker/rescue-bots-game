@@ -4,6 +4,7 @@ import { scene, camera, renderer } from '../rendering/scene.js';
 import { toonGrad3, applyCartoonInkOutlines } from '../rendering/materials.js';
 import { player, buddyBot, botRigs, input, worldState } from '../state/gameState.js';
 import { updateAllBotTransforms } from '../physics/player.js';
+import { buildRescueBotModel, applyBotRigMorph } from '../bots/botRigs.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { setActiveParticleScene, spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
 import { sfx } from '../audio/soundFX.js';
@@ -33,8 +34,22 @@ interface IceMoonlet {
     hitCooldown: number;
 }
 
+interface RivalRacer {
+    botType: string;
+    rig: any;
+    angle: number;
+    totalAngle: number;
+    radialOffset: number;
+    targetLane: number;
+    laneTimer: number;
+    baseSpeed: number;
+    walkCycle: number;
+    colorHex: string;
+}
+
 export const saturnRaceState = {
     angle: 0,           // Current angular position along ring (radians)
+    totalAngle: 0,      // Cumulative angle for 1st-4th placement
     radialOffset: 0,    // -HALF_WIDTH (inner) .. +HALF_WIDTH (outer)
     speed: 44,          // Linear speed along ring (m/s)
     radialVel: 0,
@@ -42,6 +57,7 @@ export const saturnRaceState = {
     jumpY: 0,
     jumpVy: 0,
     lap: 1,
+    rank: 1,            // 1..4 Grand Prix placement
     nextGateIdx: 1,
     lapStartTime: 0,
     currentLapTime: 0,
@@ -55,6 +71,7 @@ let _saturnBuilt = false;
 let _saturnPlanetMesh: THREE.Mesh | null = null;
 const _gates: RingGate[] = [];
 const _moonlets: IceMoonlet[] = [];
+const _rivals: RivalRacer[] = [];
 const _camGoal = new THREE.Vector3();
 const _lookGoal = new THREE.Vector3();
 
@@ -269,8 +286,49 @@ export function triggerSaturnRaceBoost() {
     sfx.playEnergyCharge();
 }
 
+function spawnSaturnRivals() {
+    _rivals.forEach(rv => {
+        if (rv.rig?.root) saturnRaceScene.remove(rv.rig.root);
+    });
+    _rivals.length = 0;
+
+    const allies: string[] = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies : [];
+    const pool = ['BLURR', 'BUMBLEBEE', 'QUICKSHADOW', 'CHASE', 'HEATWAVE'];
+    if (allies.includes('STARSPEED')) pool.unshift('STARSPEED');
+    const chosen = pool.filter(b => b !== player.botType).slice(0, 3);
+    const colors: Record<string, string> = {
+        STARSPEED: '#06b6d4',
+        BLURR: '#a855f7',
+        BUMBLEBEE: '#facc15',
+        QUICKSHADOW: '#38bdf8',
+        CHASE: '#3b82f6',
+        HEATWAVE: '#ef4444'
+    };
+
+    chosen.forEach((botType, idx) => {
+        const rig = buildRescueBotModel(botType);
+        applyBotRigMorph(rig, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        saturnRaceScene.add(rig.root);
+        const startAng = 0.03 + idx * 0.025;
+        const lane = (idx - 1) * 8.5;
+        _rivals.push({
+            botType,
+            rig,
+            angle: startAng,
+            totalAngle: startAng,
+            radialOffset: lane,
+            targetLane: lane,
+            laneTimer: 1.5 + idx * 0.9,
+            baseSpeed: 54 + idx * 3.8,
+            walkCycle: idx * 1.3,
+            colorHex: colors[botType] || '#f472b6'
+        });
+    });
+}
+
 export function resetSaturnRace() {
     saturnRaceState.angle = 0;
+    saturnRaceState.totalAngle = 0;
     saturnRaceState.radialOffset = 0;
     saturnRaceState.speed = 46;
     saturnRaceState.radialVel = 0;
@@ -278,6 +336,7 @@ export function resetSaturnRace() {
     saturnRaceState.jumpY = 0;
     saturnRaceState.jumpVy = 0;
     saturnRaceState.lap = 1;
+    saturnRaceState.rank = 4;
     saturnRaceState.nextGateIdx = 1;
     saturnRaceState.lapStartTime = performance.now() * 0.001;
     saturnRaceState.currentLapTime = 0;
@@ -285,6 +344,7 @@ export function resetSaturnRace() {
     saturnRaceState.touchSteer = 0;
     saturnRaceState.touchBoost = false;
     saturnRaceState.bestLapTime = typeof progression.saturnBestLapSec === 'number' ? progression.saturnBestLapSec : null;
+    spawnSaturnRivals();
     updateSaturnRaceHUD();
 }
 
@@ -295,6 +355,7 @@ export function updateSaturnRaceHUD() {
     if (!active) return;
 
     const lapEl = document.getElementById('saturn-lap-text');
+    const posEl = document.getElementById('saturn-pos-text');
     const timeEl = document.getElementById('saturn-time-text');
     const bestEl = document.getElementById('saturn-best-text');
     const speedEl = document.getElementById('saturn-speed-text');
@@ -303,6 +364,10 @@ export function updateSaturnRaceHUD() {
         lapEl.textContent = saturnRaceState.finished
             ? `FREE RUN • LAP ${saturnRaceState.lap}`
             : `LAP ${saturnRaceState.lap} / ${TOTAL_LAPS}`;
+    }
+    if (posEl) {
+        const suffix = saturnRaceState.rank === 1 ? 'ST' : (saturnRaceState.rank === 2 ? 'ND' : (saturnRaceState.rank === 3 ? 'RD' : 'TH'));
+        posEl.textContent = `${saturnRaceState.rank}${suffix} / ${_rivals.length + 1}`;
     }
     if (timeEl) timeEl.textContent = `${saturnRaceState.currentLapTime.toFixed(1)}s`;
     if (bestEl) bestEl.textContent = saturnRaceState.bestLapTime ? `BEST ${saturnRaceState.bestLapTime.toFixed(1)}s` : 'BEST --.-s';
@@ -443,9 +508,42 @@ export function updateSaturnRace(dt: number, now: number) {
 
     // Advance angle counter-clockwise around Saturn
     const curRadius = SATURN_TRACK_RADIUS + saturnRaceState.radialOffset;
-    const prevAngle = saturnRaceState.angle;
-    saturnRaceState.angle = (saturnRaceState.angle + (saturnRaceState.speed / curRadius) * dt) % (Math.PI * 2);
+    const dAng = (saturnRaceState.speed / curRadius) * dt;
+    saturnRaceState.angle = (saturnRaceState.angle + dAng) % (Math.PI * 2);
+    saturnRaceState.totalAngle += dAng;
     saturnRaceState.currentLapTime = Math.max(0, nowSec - saturnRaceState.lapStartTime);
+
+    // Update 3 AI Rescue Bot Rivals with rubber-banded competitive pacing!
+    let aheadCount = 0;
+    for (let rIdx = 0; rIdx < _rivals.length; rIdx++) {
+        const rv = _rivals[rIdx];
+        const gap = saturnRaceState.totalAngle - rv.totalAngle; // positive if player ahead
+        const rubberBand = THREE.MathUtils.clamp(gap * 14, -10, 14);
+        const rvSpeed = Math.max(36, rv.baseSpeed + rubberBand);
+        rv.laneTimer -= dt;
+        if (rv.laneTimer <= 0) {
+            rv.laneTimer = 2.0 + Math.random() * 2.4;
+            rv.targetLane = (Math.random() - 0.5) * (SATURN_TRACK_HALF_WIDTH * 1.45);
+        }
+        rv.radialOffset = THREE.MathUtils.lerp(rv.radialOffset, rv.targetLane, Math.min(1, dt * 2.2));
+        const rvR = SATURN_TRACK_RADIUS + rv.radialOffset;
+        const rvDAng = (rvSpeed / rvR) * dt;
+        rv.angle = (rv.angle + rvDAng) % (Math.PI * 2);
+        rv.totalAngle += rvDAng;
+        rv.walkCycle += dt * (rvSpeed * 0.34);
+
+        const rx = Math.cos(rv.angle) * rvR;
+        const rz = Math.sin(rv.angle) * rvR;
+        const rtx = -Math.sin(rv.angle);
+        const rtz = Math.cos(rv.angle);
+        if (rv.rig?.root) {
+            rv.rig.root.position.set(rx, 0, rz);
+            rv.rig.root.rotation.y = Math.atan2(rtx, rtz);
+            applyBotRigMorph(rv.rig, 0, 0, rv.walkCycle, rvSpeed * 0.5, 0, now, 0, 0, 0);
+        }
+        if (rv.totalAngle > saturnRaceState.totalAngle) aheadCount++;
+    }
+    saturnRaceState.rank = aheadCount + 1;
 
     // Compute 3D world position & forward tangent heading
     const wx = Math.cos(saturnRaceState.angle) * curRadius;
@@ -497,10 +595,15 @@ export function updateSaturnRace(dt: number, now: number) {
                     if (!saturnRaceState.finished && saturnRaceState.lap >= TOTAL_LAPS) {
                         saturnRaceState.finished = true;
                         progression.saturnRacesCompleted = (progression.saturnRacesCompleted || 0) + 1;
-                        progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 10;
+                        if (saturnRaceState.rank === 1) {
+                            progression.saturnWins = (progression.saturnWins || 0) + 1;
+                        }
+                        const reward = saturnRaceState.rank === 1 ? 15 : 10;
+                        progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + reward;
                         saveProgression({ immediate: true });
                         sfx.playRankUp();
-                        showToast('SATURN RING RACE COMPLETE!', `Best Lap: ${saturnRaceState.bestLapTime.toFixed(1)}s • +10 Hero Points & +10 Energon!`);
+                        const placeLabel = saturnRaceState.rank === 1 ? '1ST PLACE CHAMPION!' : `${saturnRaceState.rank}${saturnRaceState.rank === 2 ? 'ND' : (saturnRaceState.rank === 3 ? 'RD' : 'TH')} PLACE FINISH!`;
+                        showToast(`SATURN RING GRAND PRIX — ${placeLabel}`, `Best Lap: ${saturnRaceState.bestLapTime.toFixed(1)}s • +${reward} Energon!`);
                     } else {
                         saturnRaceState.lap++;
                         showToast(`LAP ${saturnRaceState.lap}!`, `Last lap: ${lapTime.toFixed(1)}s • Keep sprinting!`);
@@ -554,7 +657,8 @@ export function getSaturnRaceMapData() {
         angle: saturnRaceState.angle,
         radialOffset: saturnRaceState.radialOffset,
         nextGateIdx: saturnRaceState.nextGateIdx,
-        gates: _gates
+        gates: _gates,
+        rivals: _rivals.map(r => ({ angle: r.angle, colorHex: r.colorHex, botType: r.botType }))
     };
 }
 
