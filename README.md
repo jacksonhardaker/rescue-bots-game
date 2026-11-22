@@ -1,6 +1,6 @@
 # Griffin Rock Rescue Bots: 3D Open World
 
-An interactive, 3D open-world fan game inspired by *Transformers: Rescue Bots*. Explore the island of Griffin Rock, respond to emergencies, transform between Robot, Vehicle, and Dinobot modes, and team up with your AI wingman partner.
+An interactive 3D open-world fan game inspired by *Transformers: Rescue Bots*. Explore the 10x island of Griffin Rock, drill deep into the Subterranean Caverns, repair and launch **Starship Sigma**, chart the entire **3D Solar System**, race on Saturn's rings, and transform across **Bot, Vehicle, Boat, and Dinobot** modes with your AI wingman partner.
 
 ![Griffin Rock 3D Open World Gameplay](docs/screenshots/gameplay.png)
 
@@ -18,72 +18,105 @@ An interactive, 3D open-world fan game inspired by *Transformers: Rescue Bots*. 
 
 ---
 
-## 🎮 Features
+## Features
 
-- **10 Articulated Rescue Bots**:
-  - **Boulder** (Bulldozer / Triceratops)
-  - **Heatwave** (Fire Engine / Brachiosaur)
-  - **Chase** (Police Interceptor / Stegosaurus)
-  - **Blades** (Rescue Helicopter / Pterosaur)
-  - **Optimus Prime** (Heavy Semi-Truck Cab / T-Rex) — *Titan Commander Scale*
-  - **High Tide** (Armored Submersible / Plesiosaur) — *Deep-Ocean Titan Scale*
-  - **Bumblebee** (Sports Car / Velociraptor)
-  - **Blurr** (Racecar / Gallimimus)
-  - **Salvage** (Recycling Truck / Ankylosaur)
-  - **Quickshadow** (Covert Luxury Coupe / Dilophosaur)
-- **Triple-Mode Articulation**: Real-time smooth transformation between **Bot Mode**, **Vehicle Mode**, and **Dinobot Mode**.
-- **AI Wingman Buddy Bot**: Choose any bot to follow you into missions as your autonomous AI partner.
-- **Vast 3D Island of Griffin Rock**:
-  - **Rescue Bots HQ**: Working garage with transparent apparatus bays, rooftop helipad, and character swap bay.
-  - **Interactive Island Stations**: Super Catapult launch pad, Robo-Wash car wash, South Harbor magnetic crane, functioning Rescue Ferry, and Drive-Thru Diner.
-  - **Doc Greene's Anti-Gravity Testing Yard**: Supersonic speed strip, mega-bounce pad, color splat targets, and test arena.
-  - **GroundBridge Network**: Instant portal teleportation between island sectors.
-  - **Island Railway Loop**: Scenic railway circuit with the Griffin Rock Express train.
-  - **8 Island-Wide Emergencies & Dynamic Weather**: Responding to rockslides, blazes, and lava leaks with kid-friendly smart auto-rescue.
-- **Griffin Rock Tactical Island Map**: Full-screen radar overlay with live GPS tracking and tap-to-autopilot navigation.
+### 11 Playable Rescue Bots (4 Modes Each + Mega Modes)
+Transform seamlessly between **Bot Mode**, **Vehicle Mode**, **Amphibious Boat Mode** (automatic on water), and **Dinobot Mode**:
+
+| Rescue Bot | Vehicle Mode | Boat Mode | Dinobot Mode | Unlock |
+| :--- | :--- | :--- | :--- | :--- |
+| **Boulder** | Bulldozer | Channel Dredger | Triceratops | Starter |
+| **Heatwave** | Fire Engine | Rescue Fireboat | Brachiosaur | Starter |
+| **Chase** | Police Cruiser | Coast Guard Interceptor | Stegosaurus | Starter |
+| **Blades** | Rescue Helicopter | Air-Sea Hovercraft | Pterosaur | Starter |
+| **Optimus Prime** | Heavy Semi Cab | Command Flagship | T-Rex | Discoverable Ally |
+| **Bumblebee** | Sports Racer | Turbo Jetboat | Velociraptor | Discoverable Ally |
+| **Blurr** | Supersonic Speedster | Hydrofoil Racer | Gallimimus | Discoverable Ally |
+| **Salvage** | Recycling Compactor | Harbor Skimmer | Ankylosaur | Discoverable Ally |
+| **High Tide** | Armored Submersible | Armored Submersible | Amphibious Plesiosaur | Discoverable Ally |
+| **Quickshadow** | Covert Luxury Coupe | Stealth Speedboat | Dilophosaur | Discoverable Ally |
+| **Starspeed** | Cosmic Dirt Bike | Cosmic Jet Ski | Spinosaurus | Frozen solid on Neptune's moon **Triton**! |
+
+- **Megabot Docking**: Dock with trailers, carriers, and ocean rigs for Titan-scale Mega Modes.
+- **AI Wingman Buddy Bot**: Switch your autonomous partner bot on the fly.
 
 ---
 
-## 🚀 How to Run Locally
+### Griffin Rock Island & Subterranean Caverns
+- **10x Living Open World**: Rescue Bots HQ, Wayward Island, Dino Ridge Sanctuary, Sunny Sands Boardwalk, Volcano Quarry, Sky Array Peak, Lighthouse Peninsula, and Dr. Morocco's Cliffside Lair.
+- **Interactive Island Stations**: Super Catapult, Firehouse Robo-Wash, South Harbor Magnetic Crane & Rescue Ferry, Griffin Rock Drive-Thru Diner, Doc Greene's Anti-Gravity Testing Yard, GroundBridge Portal Network, and the Griffin Rock Express Railway.
+- **8 Dynamic Emergencies, MorBot Battles & Weather**: Clear rockslides, blazes, and lava leaks with dynamic Sunny, Rain, Volcano, and Night skies.
+- **Subterranean Caverns**: Use **Boulder's Ground Drill (`G`)** to descend beneath Griffin Rock, explore glowing crystal tunnels, break cracked cavern walls, and recover 3 missing parts to repair the crashed **Starship Sigma**.
 
-Because this game is built entirely in a self-contained, standalone web architecture, no build tools or package installations are required!
+---
 
-### Option 1: Direct Browser Launch
-Simply double-click `index.html` or open it directly in any modern web browser (Chrome, Safari, Firefox, Edge).
+### 3D Solar System Hub & 10 Space Destinations
+Once **Starship Sigma** is repaired in the caverns, launch through a 3-phase orbital liftoff cinematic into the **Animated 3D Solar System Destination Picker** — with all **10 destinations** immediately unlocked:
 
-### Option 2: Local HTTP Server (Recommended)
-Running through a local web server ensures optimal asset caching and audio context initialization:
+- **Earth**: Atmospheric re-entry straight back to Griffin Rock HQ.
+- **The Moon (Orbit + Surface)**: Zero-G Starship Sigma orbital arena with asteroids, malfunctioning satellites, stranded rescue pods, Star-Ring slalom, **Dr. Morocco's Orbital Laser Station** boss encounter, and a low-gravity (`0.35G`) **Moon Base** featuring a driveable **Lunar Rover**, Flagpole, smashable lunar rocks, 5 Relics, and a 6-Hoop Crater Stunt Course.
+- **Mercury (`0.38G`)**: Landable sun-scorched Caloris Basin craters, solar thermal geysers, and 3 Solar Relics.
+- **Venus (`0.90G`)**: Landable sulfuric cloud world with volcanic basalt mesas, thermal updrafts, and 3 Venusian Relics.
+- **Mars (`0.38G`)**: Landable crimson Olympus Outpost with swirling dust-devil updrafts and 3 Martian Relics.
+- **Jupiter (Orbital Sector + Landable Europa)**: Unlandable banded gas giant populated with all 4 Galilean moons (**Io, Europa, Ganymede, Callisto**), orbital missions, a Galilean Moon Tour tracker, and **landable icy Europa (`0.22G`)**.
+- **Saturn (Bot-Mode Ring Racing Circuit)**: Sprint in **Bot Mode** around massive banded Saturn on a 360° glowing icy ring highway through **12 sequential Turbo Boost Gates**, weaving around or smashing tumbling ice-moonlets with persistent lap records.
+- **Uranus (Orbital Sector + Landable Miranda)**: Tilted cyan ice giant with vertical translucent rings, **Titania**, orbital missions, and **landable Miranda (`0.16G`)**.
+- **Neptune (Orbital Sector + Landable Triton)**: Deep-azure stormy ice giant with orbital missions and **landable Triton (`0.20G`)**, where **Starspeed** is frozen solid in a cryo-ice crystal tomb waiting to be thawed and unlocked!
+- **Pluto (`0.18G`)**: Super-floaty Tombaugh Heart basin beneath Charon with nitrogen cryo-vents and 3 Kuiper Ice Relics.
 
+---
+
+### Tactical Maps, Settings & Performance
+- **Full-Screen Tactical Maps (`M`)**: Live radar with tap-to-autopilot across Griffin Rock, Subterranean Caverns, Space Sectors, and the Moon.
+- **Customizable Controls, Graphics & Audio**: Rebindable keybinds, Low/Medium/High/Ultra presets, Auto-FPS Resolution Governor, and persistent V4 `localStorage` save data.
+- **Built for Desktop & iPad**: First-class touch & tap-to-move / tap-to-fly / canvas tap-steering controls across every island, cavern, orbital, racing, and planetary scene.
+
+---
+
+## How to Run & Build Locally
+
+### Development Server (Vite + TypeScript)
 ```bash
-# Using Python 3:
-python3 -m http.server 8000
-
-# Or using Node:
-npx serve .
+pnpm install
+pnpm dev
 ```
 
-Then visit [http://localhost:8000](http://localhost:8000) in your browser.
+### Production Build (Single-File Bundles in `docs/`)
+```bash
+pnpm exec tsc --noEmit && pnpm run build
+```
+This builds three standalone bundles in `docs/`:
+- `docs/index.html` — Main Game
+- `docs/botcheck.html` — 3D Rescue Bot Visual Inspector (all 11 bots × Bot / Vehicle / Boat / Dino modes)
+- `docs/modelcheck.html` — 3D Props, Buildings, Space & Moon Model Inspector
+
+You can also serve the pre-built `docs/` directory directly with any static HTTP server:
+```bash
+python3 -m http.server 8000 --directory docs
+```
 
 ---
 
-## ⌨️ Controls
+## Controls
 
-| Action | Keyboard / Mouse | Touch / Mobile |
+| Action | Keyboard / Mouse | iPad / Touch |
 | :--- | :--- | :--- |
-| **Move / Drive** | `W`/`S` or `↑`/`↓` | Touch & drag or tap on terrain / road |
-| **Steer** | `A`/`D` or `←`/`→` | Tap to move or drag |
-| **Transform** | `Spacebar` / `T` | Yellow **TRANSFORM** button |
-| **Primary Power** | `E` / `Enter` | Blue **ACTION** button |
-| **Secondary Power / Ascend** | `Q` (Ascend for Blades) | Blue **ASCEND** button |
-| **Descend** | `C` (Descend for Blades) | Blue **DESCEND** button |
-| **Tactical Island Map** | `M` | Top-left **MINIMAP** / **MAP** button |
-| **Cycle Buddy Bot** | `B` | Buddy Bot pill button in roster |
-| **Change Camera View** | `V` | Menu -> **View Mode** |
-| **Emergency Siren** | `H` | In-game HUD toggle |
+| **Move / Drive / Fly** | `W`/`A`/`S`/`D` or Arrow Keys | Tap or hold-drag anywhere on terrain / space |
+| **Transform (Bot / Vehicle / Dino)** | `Spacebar` | **TRANSFORM** button |
+| **Primary Special / Space Cannons** | `E` / `Shift` | Bot **ACTION** / **CANNONS** button |
+| **Secondary / Ascend / Climb** | `Q` / `F` | **JUMP** / **ASCEND** / **UP** button |
+| **Descend** | `C` | **DESCEND** / **DOWN** button |
+| **Boulder Ground Drill (Caverns)** | `G` | **DRILL** button (when Boulder is active) |
+| **Dock / Undock Megabot** | `X` | **DOCK / UNDOCK** prompt |
+| **Saturn Ring Race Steering** | `A`/`D` or `←`/`→` + `Space`/`Shift` Boost | Hold **left/right half** of screen or **INNER / OUTER / TURBO** buttons |
+| **Solar System Hub Picker** | Click any 3D planet or bottom dock pill | Tap any 3D planet or bottom dock pill, then **WARP** |
+| **Tactical Map** | `M` | Top-left **MINIMAP** / **MAP** button |
+| **Cycle Buddy Bot** | `B` | **BUDDY** swap button in roster |
+| **Cycle Weather / Siren** | `T` (Weather) / `H` (Siren) | Utility menu / HUD toggle |
 
 ---
 
-## 📄 License & Attribution
+## License & Attribution
 
 - **Software Code**: Released under the [MIT License](LICENSE).
 - **Trademarks & Characters**: All *Transformers* and *Rescue Bots* names, likenesses, and logos are © & ™ **Hasbro, Inc.** See [NOTICE](NOTICE) for details.
