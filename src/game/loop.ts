@@ -5,6 +5,9 @@ import { player, buddyBot, botRigs, input, worldState } from '../state/gameState
 import { undergroundScene, updateUnderground, updateDrillTransition } from '../world/underground.js';
 import { spaceScene, updateSpace, updateSpaceLaunchTransition } from '../world/space.js';
 import { moonScene, updateMoon } from '../world/moon.js';
+import { solarHubScene, updateSolarHub } from '../world/solarSystem.js';
+import { planetSurfaceScene, updatePlanetSurface } from '../world/planetSurface.js';
+import { saturnRaceScene, updateSaturnRace } from '../world/saturnRace.js';
 import { updatePhysics, waypointGroup, wpOuterRing, wpArrowCone } from '../physics/movement.js';
 import { updateAllBotTransforms, speakBotCatchphrase, syncHUDToActiveBot } from '../physics/player.js';
 import { updateIslandTrain, islandTrain } from '../world/railway.js';
@@ -262,10 +265,33 @@ function updateSpeechBubbleProjection(dt: number) {
                 return;
             }
 
+            if (worldState.activeArea === 'SOLAR_HUB') {
+                updateSolarHub(dt, now);
+                if (renderer) renderer.render(solarHubScene, camera);
+                return;
+            }
+
+            if (worldState.activeArea === 'SATURN_RING_RACE') {
+                updateSaturnRace(dt, now);
+                updateSpeechBubbleProjection(dt);
+                if (renderer) renderer.render(saturnRaceScene, camera);
+                return;
+            }
+
             if (worldState.activeArea === 'SPACE') {
                 updateSpace(dt, now);
                 updateSpeechBubbleProjection(dt);
                 if (renderer) renderer.render(spaceScene, camera);
+                return;
+            }
+
+            if (worldState.activeArea === 'PLANET_SURFACE') {
+                updatePhysics(dt, now);
+                updateBuddyBotAI(dt, now);
+                updateAllBotTransforms(dt, now);
+                updatePlanetSurface(dt, now);
+                updateSpeechBubbleProjection(dt);
+                if (renderer) renderer.render(planetSurfaceScene, camera);
                 return;
             }
 

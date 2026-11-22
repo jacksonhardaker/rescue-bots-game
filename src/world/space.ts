@@ -10,6 +10,7 @@ import { player, buddyBot, botRigs, input, worldState } from '../state/gameState
 import { progression, saveProgression } from '../progression/progression.js';
 import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
 import { swapToMoon, updateMoonHUD } from './moon.js';
+import { swapToPlanetSurface, LandablePlanetId } from './planetSurface.js';
 import { swapToSurface, setSigmaLaunchHandler, updateCavernHUD } from './underground.js';
 import { sfx } from '../audio/soundFX.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
@@ -214,10 +215,43 @@ let _launchEarthDisk: THREE.Mesh | null = null;
 let _launchStars: THREE.Points | null = null;
 
 let _spaceStationPivot: THREE.Object3D | null = null;
+let _spaceEarthGroup: THREE.Group | null = null;
 let _spaceEarthMesh: THREE.Mesh | null = null;
+let _spaceMoonGroup: THREE.Group | null = null;
 let _spaceMoonBeaconRing: THREE.Mesh | null = null;
 let _tractorBeamMesh: THREE.Mesh | null = null;
 let _spaceWaypointGroup: THREE.Group | null = null;
+let _solarHubHandler: (() => void) | null = null;
+
+export type SpaceSectorId = 'MOON_ORBIT' | 'JUPITER' | 'URANUS' | 'NEPTUNE';
+
+interface SectorMoonRuntime {
+    id: string;
+    name: string;
+    pos: THREE.Vector3;
+    landingPos: THREE.Vector3;
+    radius: number;
+    landablePlanetId: LandablePlanetId | null;
+    group: THREE.Group;
+    beaconRing: THREE.Mesh | null;
+}
+
+let _activeSectorId: SpaceSectorId = 'MOON_ORBIT';
+let _sectorBackdropGroup: THREE.Group | null = null;
+let _giantBackdropPos = new THREE.Vector3(0, -290, 130);
+let _giantBackdropRadius = 185;
+let _gasWarningCooldown = 0;
+const _sectorMoons: SectorMoonRuntime[] = [];
+
+export function setSolarHubHandler(fn: () => void) {
+    _solarHubHandler = fn;
+}
+
+export function openSolarSystemHub() {
+    if (_solarHubHandler) {
+        _solarHubHandler();
+    }
+}
 const _spaceRaycaster = new THREE.Raycaster();
 const _spacePointerNDC = new THREE.Vector2();
 
@@ -446,6 +480,7 @@ function buildSpaceWorld() {
         new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.22, side: THREE.BackSide })
     );
     earthGroup.add(_spaceEarthMesh, earthAtmo);
+    _spaceEarthGroup = earthGroup;
     spaceScene.add(earthGroup);
 
     // Sculpted Moon Ahead + Glowing Lunar Landing Zone Ring
@@ -456,6 +491,7 @@ function buildSpaceWorld() {
         new THREE.MeshToonMaterial({ color: 0xe2e8f0, map: createMoonSphereTexture(), gradientMap: toonGrad4 })
     );
     moonGroup.add(moonSphere);
+    _spaceMoonGroup = moonGroup;
     spaceScene.add(moonGroup);
 
     // Lunar Landing Zone Beacon Ring (fly into it or click LAND ON MOON!)
@@ -694,6 +730,185 @@ export function setLaunchBanner(visible: boolean, title = '', subtitle = '') {
     }
 }
 
+function createGiantTexture(kind: 'JUPITER' | 'URANUS' | 'NEPTUNE'): THREE.CanvasTexture {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 256;
+    const ctx = c.getContext('2d')!;
+    if (kind === 'JUPITER') {
+        const bands = ['#c2410c', '#fef3c7', '#d97706', '#fde68a', '#9a3412', '#fef9c3', '#b45309', '#fed7aa', '#7c2d12'];
+        bands.forEach((col, i) => {
+            ctx.fillStyle = col;
+            ctx.fillRect(0, (i / bands.length) * 256, 512, 256 / bands.length + 2);
+        });
+        // Great Red Spot
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath(); ctx.ellipse(290, 152, 48, 26, -0.06, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#fef3c7'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.ellipse(290, 152, 52, 30, -0.06, 0, Math.PI * 2); ctx.stroke();
+    } else if (kind === 'URANUS') {
+        const grad = ctx.createLinearGradient(0, 0, 0, 256);
+        grad.addColorStop(0, '#a5f3fc');
+        grad.addColorStop(0.5, '#22d3ee');
+        grad.addColorStop(1, '#0891b2');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 512, 256);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillRect(0, 72, 512, 18);
+        ctx.fillRect(0, 168, 512, 14);
+    } else {
+        const grad = ctx.createLinearGradient(0, 0, 0, 256);
+        grad.addColorStop(0, '#1d4ed8');
+        grad.addColorStop(0.5, '#2563eb');
+        grad.addColorStop(1, '#1e3a8a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 512, 256);
+        ctx.fillStyle = 'rgba(147,197,253,0.35)';
+        ctx.fillRect(0, 62, 512, 14);
+        ctx.fillRect(0, 175, 512, 18);
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath(); ctx.ellipse(220, 134, 38, 20, 0, 0, Math.PI * 2); ctx.fill();
+    }
+    return new THREE.CanvasTexture(c);
+}
+
+function configureSpaceSector(sectorId: SpaceSectorId) {
+    _activeSectorId = sectorId;
+    worldState.activeSpaceSector = sectorId;
+    const isMoonOrbit = sectorId === 'MOON_ORBIT';
+
+    if (_spaceEarthGroup) _spaceEarthGroup.visible = isMoonOrbit;
+    if (_spaceMoonGroup) _spaceMoonGroup.visible = isMoonOrbit;
+    if (_spaceMoonBeaconRing) _spaceMoonBeaconRing.visible = isMoonOrbit;
+    if (_moroccoStation.group) _moroccoStation.group.visible = isMoonOrbit;
+    _moroccoStation.relays.forEach(r => {
+        r.group.visible = isMoonOrbit && r.alive;
+        r.beam.visible = isMoonOrbit && r.alive;
+    });
+
+    // Clear previous giant backdrop & moons
+    if (_sectorBackdropGroup) {
+        spaceScene.remove(_sectorBackdropGroup);
+        _sectorBackdropGroup = null;
+    }
+    _sectorMoons.length = 0;
+
+    if (isMoonOrbit) return;
+
+    _sectorBackdropGroup = new THREE.Group();
+    spaceScene.add(_sectorBackdropGroup);
+
+    const addSectorMoon = (
+        id: string,
+        name: string,
+        pos: THREE.Vector3,
+        radius: number,
+        color: number,
+        landablePlanetId: LandablePlanetId | null
+    ) => {
+        const mg = new THREE.Group();
+        mg.position.copy(pos);
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(radius, 28, 22),
+            new THREE.MeshToonMaterial({ color, map: createMoonSphereTexture(), gradientMap: toonGrad4 })
+        );
+        mg.add(sphere);
+
+        // Landing beacon ring if this moon is landable!
+        let beaconRing: THREE.Mesh | null = null;
+        const landingPos = pos.clone().add(new THREE.Vector3(0, 0, radius + 22));
+        if (landablePlanetId) {
+            beaconRing = new THREE.Mesh(
+                new THREE.TorusGeometry(19, 1.25, 10, 32),
+                new THREE.MeshBasicMaterial({ color: 0x22d3ee })
+            );
+            beaconRing.position.copy(landingPos);
+            const inner = new THREE.Mesh(
+                new THREE.RingGeometry(13, 17, 28),
+                new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
+            );
+            beaconRing.add(inner);
+            _sectorBackdropGroup!.add(beaconRing);
+        }
+
+        _sectorBackdropGroup!.add(mg);
+        _sectorMoons.push({ id, name, pos: pos.clone(), landingPos, radius, landablePlanetId, group: mg, beaconRing });
+    };
+
+    if (sectorId === 'JUPITER') {
+        // Massive banded Jupiter looming below/ahead (unlandable gas giant!)
+        _giantBackdropPos.set(0, -295, -80);
+        _giantBackdropRadius = 215;
+        const jup = new THREE.Mesh(
+            new THREE.SphereGeometry(_giantBackdropRadius, 42, 32),
+            new THREE.MeshBasicMaterial({ map: createGiantTexture('JUPITER') })
+        );
+        jup.position.copy(_giantBackdropPos);
+        const halo = new THREE.Mesh(
+            new THREE.SphereGeometry(_giantBackdropRadius + 10, 32, 24),
+            new THREE.MeshBasicMaterial({ color: 0xf59e0b, transparent: true, opacity: 0.16, side: THREE.BackSide })
+        );
+        halo.position.copy(_giantBackdropPos);
+        _sectorBackdropGroup.add(jup, halo);
+
+        // Populate with Jupiter's 4 iconic Galilean Moons (Europa is landable!)
+        addSectorMoon('IO', 'Io (Volcanic Moon)', new THREE.Vector3(-210, 48, -140), 34, 0xfde047, null);
+        addSectorMoon('EUROPA', 'Europa (Ice Moon)', new THREE.Vector3(0, 45, -295), 42, 0xbae6fd, 'EUROPA');
+        addSectorMoon('GANYMEDE', 'Ganymede (Giant Moon)', new THREE.Vector3(215, 56, -180), 48, 0xcbd5e1, null);
+        addSectorMoon('CALLISTO', 'Callisto (Crater Moon)', new THREE.Vector3(-165, 22, 130), 38, 0x94a3b8, null);
+    } else if (sectorId === 'URANUS') {
+        // Tilted pale-cyan Uranus with dramatic vertical translucent rings
+        _giantBackdropPos.set(0, -275, -110);
+        _giantBackdropRadius = 185;
+        const ura = new THREE.Mesh(
+            new THREE.SphereGeometry(_giantBackdropRadius, 36, 28),
+            new THREE.MeshBasicMaterial({ map: createGiantTexture('URANUS') })
+        );
+        ura.position.copy(_giantBackdropPos);
+        const vRing = new THREE.Mesh(
+            new THREE.RingGeometry(215, 278, 64),
+            new THREE.MeshBasicMaterial({ color: 0xa5f3fc, transparent: true, opacity: 0.34, side: THREE.DoubleSide })
+        );
+        vRing.position.copy(_giantBackdropPos);
+        vRing.rotation.set(0.15, Math.PI * 0.44, 0.08);
+        _sectorBackdropGroup.add(ura, vRing);
+
+        // Uranus Moons: Miranda (Landable!) & Titania
+        addSectorMoon('MIRANDA', 'Miranda (Canyon Moon)', new THREE.Vector3(0, 44, -290), 38, 0xcffafe, 'MIRANDA');
+        addSectorMoon('TITANIA', 'Titania (Ice Moon)', new THREE.Vector3(-195, 54, -135), 42, 0xe2e8f0, null);
+    } else if (sectorId === 'NEPTUNE') {
+        // Deep-azure stormy Neptune
+        _giantBackdropPos.set(0, -280, -105);
+        _giantBackdropRadius = 190;
+        const nep = new THREE.Mesh(
+            new THREE.SphereGeometry(_giantBackdropRadius, 36, 28),
+            new THREE.MeshBasicMaterial({ map: createGiantTexture('NEPTUNE') })
+        );
+        nep.position.copy(_giantBackdropPos);
+        const halo = new THREE.Mesh(
+            new THREE.SphereGeometry(_giantBackdropRadius + 10, 32, 24),
+            new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.2, side: THREE.BackSide })
+        );
+        halo.position.copy(_giantBackdropPos);
+        _sectorBackdropGroup.add(nep, halo);
+
+        // Neptune's giant retrograde moon Triton (Landable!)
+        addSectorMoon('TRITON', 'Triton (Cryo-Geyser Moon)', new THREE.Vector3(0, 46, -292), 44, 0xe2d4e8, 'TRITON');
+    }
+}
+
+export function landOnActiveSectorMoon() {
+    if (worldState.activeArea !== 'SPACE') return;
+    if (_activeSectorId === 'MOON_ORBIT') {
+        startSpaceTransition('TO_MOON');
+        return;
+    }
+    const landable = _sectorMoons.find(m => m.landablePlanetId);
+    if (landable && landable.landablePlanetId) {
+        swapToPlanetSurface(landable.landablePlanetId, _activeSectorId);
+    }
+}
+
 export function updateSpaceHUD() {
     if (typeof document === 'undefined') return;
     const isSpace = worldState.activeArea === 'SPACE' && !worldState.spaceLaunch?.active;
@@ -703,6 +918,7 @@ export function updateSpaceHUD() {
     const resEl = document.getElementById('space-stat-rescues');
     const ringEl = document.getElementById('space-stat-rings');
     const moonLandBtn = document.getElementById('space-land-moon-btn');
+    const moonLandLabel = moonLandBtn?.querySelector('span:last-child');
 
     if (spacePill) spacePill.classList.toggle('hidden', !isSpace);
     if (spaceBar) spaceBar.classList.toggle('hidden', !isSpace);
@@ -711,13 +927,20 @@ export function updateSpaceHUD() {
     if (ringEl) ringEl.textContent = `${sigmaShip.ringsHitInLap}/${_starRings.length || 8}`;
 
     if (moonLandBtn) {
+        if (moonLandLabel) {
+            if (_activeSectorId === 'JUPITER') moonLandLabel.textContent = 'LAND ON EUROPA';
+            else if (_activeSectorId === 'URANUS') moonLandLabel.textContent = 'LAND ON MIRANDA';
+            else if (_activeSectorId === 'NEPTUNE') moonLandLabel.textContent = 'LAND ON TRITON';
+            else moonLandLabel.textContent = 'LAND ON MOON';
+        }
         moonLandBtn.classList.toggle('ring-2', Boolean(worldState.nearMoonLanding));
         moonLandBtn.classList.toggle('ring-cyan-300', Boolean(worldState.nearMoonLanding));
     }
 }
 
-export function swapToSpace(fromMoon = false) {
+export function swapToSpace(fromMoon = false, sectorId: SpaceSectorId = 'MOON_ORBIT') {
     buildSpaceWorld();
+    configureSpaceSector(sectorId);
     if (renderer && camera) {
         try {
             renderer.compile(spaceScene, camera);
@@ -727,16 +950,25 @@ export function swapToSpace(fromMoon = false) {
     }
 
     worldState.activeArea = 'SPACE';
+    worldState.activePlanetId = sectorId === 'MOON_ORBIT' ? 'MOON' : sectorId;
     worldState.nearSigmaShip = false;
     worldState.nearExitShaft = false;
     worldState.nearMoonLanding = false;
 
+    // Record visited sector in progression
+    if (!Array.isArray(progression.visitedPlanets)) progression.visitedPlanets = [];
+    const visitKey = sectorId === 'MOON_ORBIT' ? 'MOON' : sectorId;
+    if (!progression.visitedPlanets.includes(visitKey)) {
+        progression.visitedPlanets.push(visitKey);
+        saveProgression({ immediate: true });
+    }
+
     if (fromMoon) {
         sigmaShip.pos.set(0, 50, -195);
-        sigmaShip.yaw = Math.PI; // Facing away from Moon back toward orbital hub
+        sigmaShip.yaw = Math.PI;
     } else {
         sigmaShip.pos.set(0, 24, 110);
-        sigmaShip.yaw = 0; // Facing -Z toward the Star-Rings & Moon
+        sigmaShip.yaw = 0;
     }
     sigmaShip.pitch = 0;
     sigmaShip.roll = 0;
@@ -746,27 +978,60 @@ export function swapToSpace(fromMoon = false) {
     sigmaShip.hasWaypoint = false;
     if (_spaceWaypointGroup) _spaceWaypointGroup.visible = false;
 
-    // Hide standard bot controls & cavern/moon pills; show Space Flight HUD
+    // Hide standard bot controls & other area panels; show Space Flight HUD
     const botControls = document.getElementById('bottom-controls-bar');
     if (botControls) botControls.classList.add('hidden');
     const cavernPill = document.getElementById('cavern-hud-pill');
     if (cavernPill) cavernPill.classList.add('hidden');
     const moonPill = document.getElementById('moon-hud-pill');
     if (moonPill) moonPill.classList.add('hidden');
+    const solarUi = document.getElementById('solar-hub-ui');
+    if (solarUi) solarUi.classList.add('hidden');
+    const saturnHud = document.getElementById('saturn-race-hud');
+    if (saturnHud) saturnHud.classList.add('hidden');
     const sigmaBtn = document.getElementById('sigma-action-btn');
     if (sigmaBtn) sigmaBtn.classList.add('hidden');
+    const moonOrbitBtn = document.getElementById('moon-orbit-btn');
+    if (moonOrbitBtn) moonOrbitBtn.classList.add('hidden');
+    const moonEarthBtn = document.getElementById('moon-earth-btn');
+    if (moonEarthBtn) moonEarthBtn.classList.add('hidden');
+    const planetSolarBtn = document.getElementById('planet-solar-btn');
+    if (planetSolarBtn) planetSolarBtn.classList.add('hidden');
+
     const zEl = document.getElementById('zone-label');
-    if (zEl) zEl.textContent = 'GRIFFIN ROCK ORBIT';
+    if (zEl) {
+        if (sectorId === 'JUPITER') zEl.textContent = 'JUPITER ORBIT — GALILEAN MOONS';
+        else if (sectorId === 'URANUS') zEl.textContent = 'URANUS ORBIT — VERTICAL RINGS';
+        else if (sectorId === 'NEPTUNE') zEl.textContent = 'NEPTUNE ORBIT — TRITON SECTOR';
+        else zEl.textContent = 'GRIFFIN ROCK ORBIT — THE MOON';
+    }
 
     updateCavernHUD();
     updateMoonHUD();
     updateSpaceHUD();
     if (typeof (window as any).renderMinimap === 'function') (window as any).renderMinimap();
 
-    showToast(
-        'WELCOME TO ORBIT — STARSHIP SIGMA!',
-        'TAP SCREEN or WASD to Fly • SPACE / CANNONS Fire • SHIFT Warp Boost • Fly to the Moon to land!'
-    );
+    if (sectorId === 'JUPITER') {
+        showToast(
+            'JUPITER ORBIT — GAS GIANT SECTOR!',
+            'Explore Io, Europa, Ganymede & Callisto! Jupiter is a gas giant (no landing), but you can land on EUROPA!'
+        );
+    } else if (sectorId === 'URANUS') {
+        showToast(
+            'URANUS ORBIT — ICE GIANT SECTOR!',
+            'Fly through Uranus’s tilted vertical rings, clear icy comets, or land on MIRANDA!'
+        );
+    } else if (sectorId === 'NEPTUNE') {
+        showToast(
+            'NEPTUNE ORBIT — DEEP SPACE SECTOR!',
+            'Complete orbital rescues around stormy Neptune, or descend onto TRITON!'
+        );
+    } else {
+        showToast(
+            'WELCOME TO EARTH/MOON ORBIT!',
+            'TAP SCREEN or WASD to Fly • CANNONS Fire • Fly through the Moon Beacon to land!'
+        );
+    }
 }
 
 export function setSpaceWaypointWorld(wx: number, wy: number, wz: number) {
@@ -808,12 +1073,18 @@ export function setSpaceDestinationFromScreenPoint(clientX: number, clientY: num
     };
 
     // Snap cleanly to tapped Moon Landing Zone, Orbital Station, Morocco Boss, Active Ring, Satellites, Pods or Asteroids
-    considerTarget(SPACE_MOON_LANDING_POS, 34);
-    considerTarget(SPACE_STATION_POS, 42);
-    if (!_moroccoStation.defeated) {
-        _moroccoStation.relays.forEach(rel => { if (rel.alive) considerTarget(rel.pos, 18, true); });
-        considerTarget(_moroccoStation.pos, 32, true);
+    if (_activeSectorId === 'MOON_ORBIT') {
+        considerTarget(SPACE_MOON_LANDING_POS, 34);
+        if (!_moroccoStation.defeated) {
+            _moroccoStation.relays.forEach(rel => { if (rel.alive) considerTarget(rel.pos, 18, true); });
+            considerTarget(_moroccoStation.pos, 32, true);
+        }
+    } else {
+        _sectorMoons.forEach(m => {
+            considerTarget(m.beaconRing ? m.landingPos : m.pos, m.radius + 16);
+        });
     }
+    considerTarget(SPACE_STATION_POS, 42);
     const activeRing = _starRings[sigmaShip.activeRingIdx];
     if (activeRing) considerTarget(activeRing.pos, 26);
     _satellites.forEach(s => { if (!s.repaired) considerTarget(s.pos, 22); });
@@ -1043,9 +1314,13 @@ export function updateSpaceLaunchTransition(dt: number, now: number): boolean {
         anim.active = false;
         setLaunchBanner(false);
         if (anim.mode === 'TO_SPACE') {
-            swapToSpace(false);
+            if (_solarHubHandler) {
+                _solarHubHandler();
+            } else {
+                swapToSpace(false, 'MOON_ORBIT');
+            }
         } else if (anim.mode === 'MOON_TO_SPACE') {
-            swapToSpace(true);
+            swapToSpace(true, _activeSectorId || 'MOON_ORBIT');
         } else if (anim.mode === 'TO_MOON') {
             swapToMoon();
         } else if (anim.mode === 'TO_EARTH') {
@@ -1056,6 +1331,12 @@ export function updateSpaceLaunchTransition(dt: number, now: number): boolean {
             if (spacePill) spacePill.classList.add('hidden');
             const moonPill = document.getElementById('moon-hud-pill');
             if (moonPill) moonPill.classList.add('hidden');
+            const solarUi = document.getElementById('solar-hub-ui');
+            if (solarUi) solarUi.classList.add('hidden');
+            const saturnHud = document.getElementById('saturn-race-hud');
+            if (saturnHud) saturnHud.classList.add('hidden');
+            const planetSolarBtn = document.getElementById('planet-solar-btn');
+            if (planetSolarBtn) planetSolarBtn.classList.add('hidden');
             const botControls = document.getElementById('bottom-controls-bar');
             if (botControls) botControls.classList.remove('hidden');
 
@@ -1210,11 +1491,52 @@ export function updateSpace(dt: number, now: number) {
     }
     sigmaShip.pos.y = THREE.MathUtils.clamp(sigmaShip.pos.y, -95, 165);
 
-    // Keep ship outside solid Moon core
-    const distMoonCenter = sigmaShip.pos.distanceTo(SPACE_MOON_POS);
-    if (distMoonCenter < 72) {
-        _tmpVecA.copy(sigmaShip.pos).sub(SPACE_MOON_POS).normalize();
-        sigmaShip.pos.copy(SPACE_MOON_POS).addScaledVector(_tmpVecA, 72);
+    // Keep ship outside solid Moon core (MOON_ORBIT) or Giant-Sector Moons & Gas Giant atmosphere
+    if (_activeSectorId === 'MOON_ORBIT') {
+        const distMoonCenter = sigmaShip.pos.distanceTo(SPACE_MOON_POS);
+        if (distMoonCenter < 72) {
+            _tmpVecA.copy(sigmaShip.pos).sub(SPACE_MOON_POS).normalize();
+            sigmaShip.pos.copy(SPACE_MOON_POS).addScaledVector(_tmpVecA, 72);
+        }
+    } else {
+        if (_gasWarningCooldown > 0) _gasWarningCooldown -= dt;
+        const distGiant = sigmaShip.pos.distanceTo(_giantBackdropPos);
+        if (distGiant < _giantBackdropRadius + 38) {
+            _tmpVecA.copy(sigmaShip.pos).sub(_giantBackdropPos).normalize();
+            sigmaShip.pos.copy(_giantBackdropPos).addScaledVector(_tmpVecA, _giantBackdropRadius + 38);
+            if (_gasWarningCooldown <= 0) {
+                _gasWarningCooldown = 4.5;
+                const giantType = _activeSectorId === 'JUPITER' ? 'Gas Giant' : 'Ice Giant';
+                showToast(`${_activeSectorId} — NO SOLID SURFACE!`, `${_activeSectorId} is a ${giantType}! Explore its moons & orbital missions instead!`);
+            }
+        }
+        for (let i = 0; i < _sectorMoons.length; i++) {
+            const sm = _sectorMoons[i];
+            sm.group.rotation.y += dt * 0.14;
+            if (sm.beaconRing) {
+                sm.beaconRing.rotation.z += dt * 1.25;
+                const sc = 1.0 + Math.sin(nowSec * 3.2) * 0.08;
+                sm.beaconRing.scale.setScalar(sc);
+            }
+            const dm = sigmaShip.pos.distanceTo(sm.pos);
+            if (dm < sm.radius + 10) {
+                _tmpVecA.copy(sigmaShip.pos).sub(sm.pos).normalize();
+                sigmaShip.pos.copy(sm.pos).addScaledVector(_tmpVecA, sm.radius + 10);
+            }
+            // Track Jupiter Galilean Moon Tour discovery!
+            if (_activeSectorId === 'JUPITER' && dm < sm.radius + 58) {
+                if (!Array.isArray(progression.jupiterMoonsVisited)) progression.jupiterMoonsVisited = [];
+                if (!progression.jupiterMoonsVisited.includes(sm.id)) {
+                    progression.jupiterMoonsVisited.push(sm.id);
+                    saveProgression({ immediate: true });
+                    sfx.playRelicFound();
+                    showToast(
+                        `DISCOVERED ${sm.name.toUpperCase()}!`,
+                        `Jupiter Moon Tour: ${progression.jupiterMoonsVisited.length}/4 Galilean Moons charted! +3 Hero Points!`
+                    );
+                }
+            }
+        }
     }
 
     // Apply Sigma Mesh Transform & Thruster Plumes
@@ -1270,17 +1592,33 @@ export function updateSpace(dt: number, now: number) {
         _spaceMoonBeaconRing.scale.setScalar(sc);
     }
 
-    // Check Moon Landing Beacon Proximity
-    const distMoonLanding = sigmaShip.pos.distanceTo(SPACE_MOON_LANDING_POS);
-    const nearMoon = distMoonLanding < 65;
-    if (worldState.nearMoonLanding !== nearMoon) {
-        worldState.nearMoonLanding = nearMoon;
-        updateSpaceHUD();
-    }
-    // Flying directly through the glowing Lunar Landing Ring auto-lands on the Moon!
-    if (distMoonLanding < 21) {
-        startSpaceTransition('TO_MOON');
-        return;
+    // Check Moon / Giant-Moon Landing Beacon Proximity
+    if (_activeSectorId === 'MOON_ORBIT') {
+        const distMoonLanding = sigmaShip.pos.distanceTo(SPACE_MOON_LANDING_POS);
+        const nearMoon = distMoonLanding < 65;
+        if (worldState.nearMoonLanding !== nearMoon) {
+            worldState.nearMoonLanding = nearMoon;
+            updateSpaceHUD();
+        }
+        // Flying directly through the glowing Lunar Landing Ring auto-lands on the Moon!
+        if (distMoonLanding < 21) {
+            startSpaceTransition('TO_MOON');
+            return;
+        }
+    } else {
+        const landable = _sectorMoons.find(m => m.landablePlanetId);
+        if (landable && landable.landablePlanetId) {
+            const distLand = sigmaShip.pos.distanceTo(landable.landingPos);
+            const nearMoon = distLand < 65;
+            if (worldState.nearMoonLanding !== nearMoon) {
+                worldState.nearMoonLanding = nearMoon;
+                updateSpaceHUD();
+            }
+            if (distLand < 21) {
+                swapToPlanetSurface(landable.landablePlanetId, _activeSectorId);
+                return;
+            }
+        }
     }
 
     // 3. Update Laser Bolts & Asteroid Defense
@@ -1522,6 +1860,8 @@ export function updateSpace(dt: number, now: number) {
 
 export function getSpaceMapData() {
     return {
+        sectorId: _activeSectorId,
+        sectorMoons: _sectorMoons,
         bounds: SPACE_BOUNDS,
         ship: sigmaShip,
         moonPos: SPACE_MOON_POS,
@@ -1545,6 +1885,8 @@ if (typeof window !== 'undefined') {
         sigmaShip,
         startSpaceTransition,
         swapToSpace,
+        landOnActiveSectorMoon,
+        openSolarSystemHub,
         fireSigmaCannons,
         triggerSpaceBoost,
         setSpaceTouchControl,

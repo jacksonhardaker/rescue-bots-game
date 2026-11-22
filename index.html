@@ -1241,7 +1241,7 @@
                         <span>RELICS: <span id="moon-stat-relics">0 / 5</span></span>
                     </span>
                     <span class="text-white/30">|</span>
-                    <span class="text-cyan-300 mono-font">0.35G</span>
+                    <span id="moon-stat-gravity" class="text-cyan-300 mono-font">0.35G</span>
                 </div>
             </div>
 
@@ -1796,14 +1796,22 @@
             <span id="space-moon-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
             <span>LAND ON MOON</span>
         </button>
+        <button id="space-solar-map-btn" class="tactile-btn px-4 py-2.5 rounded-2xl border-2 border-amber-300 flex items-center gap-2 text-white font-black text-xs sm:text-sm cursor-pointer" style="background: linear-gradient(180deg, #6366f1 0%, #3730a3 100%) !important;">
+            <span id="space-solar-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
+            <span>SOLAR MAP</span>
+        </button>
         <button id="space-return-earth-btn" class="tactile-btn px-4 py-2.5 rounded-2xl border-2 border-emerald-300 flex items-center gap-2 text-white font-black text-xs sm:text-sm cursor-pointer" style="background: linear-gradient(180deg, #10b981 0%, #047857 100%) !important;">
             <span id="space-earth-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
             <span>RETURN TO EARTH</span>
         </button>
     </div>
 
-    <!-- Moon Base Quick Orbital Controls (Visible only on the Moon) -->
+    <!-- Moon & Planet Surface Quick Orbital Controls -->
     <div class="flex flex-col gap-2 pointer-events-auto" style="position: fixed; top: 72px; right: 16px; z-index: 30;">
+        <button id="planet-solar-btn" class="hidden tactile-btn px-4 py-2.5 rounded-2xl border-2 border-amber-300 flex items-center gap-2 text-white font-black text-xs sm:text-sm cursor-pointer" style="background: linear-gradient(90deg, #6366f1 0%, #3730a3 100%) !important;">
+            <span id="planet-solar-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
+            <span>SOLAR SYSTEM MAP</span>
+        </button>
         <button id="moon-orbit-btn" class="hidden tactile-btn px-4 py-2.5 rounded-2xl border-2 border-cyan-300 flex items-center gap-2 text-white font-black text-xs sm:text-sm cursor-pointer" style="background: linear-gradient(90deg, #0284c7 0%, #1d4ed8 100%) !important;">
             <span id="moon-orbit-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
             <span>LAUNCH TO ORBIT</span>
@@ -1812,6 +1820,75 @@
             <span id="moon-earth-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
             <span>RETURN TO EARTH</span>
         </button>
+    </div>
+
+    <!-- Animated 3D Solar System Destination Picker Overlay (Visible in SOLAR_HUB) -->
+    <div id="solar-hub-ui" class="hidden flex flex-col justify-between pointer-events-none" style="position: fixed; inset: 0; z-index: 32; padding: 68px 16px 18px 16px;">
+        <!-- Top-Right Selected Destination Preview Card -->
+        <div class="pointer-events-auto hud-glass rounded-3xl border-2 border-cyan-400/85 shadow-2xl" style="align-self: flex-end; max-width: 340px; width: 100%; padding: 16px; background: rgba(15, 23, 42, 0.88);">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                <span id="solar-card-icon" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"></span>
+                <div style="flex: 1; min-width: 0;">
+                    <div id="solar-card-name" class="text-lg font-black tracking-wider text-white uppercase" style="line-height: 1.15;">THE MOON</div>
+                    <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+                        <span id="solar-card-badge" class="text-[10px] font-black tracking-wider uppercase" style="padding: 2px 8px; border-radius: 999px; background: #38bdf8; color: #0f172a;">ORBIT + LANDABLE</span>
+                        <span id="solar-card-gravity" class="mono-font text-[10px] font-bold text-cyan-200">0.35G</span>
+                    </div>
+                </div>
+            </div>
+            <p id="solar-card-desc" class="text-xs text-slate-200" style="line-height: 1.45; margin-bottom: 14px;">Tap any planet in 3D space or select below to plot your course!</p>
+            <button id="btn-solar-warp" type="button" class="tactile-btn w-full rounded-2xl border-2 border-amber-300 font-black text-sm tracking-wider uppercase cursor-pointer" style="padding: 12px 16px; background: linear-gradient(90deg, #0284c7 0%, #2563eb 55%, #f59e0b 100%) !important; color: #ffffff !important; box-shadow: 0 6px 22px rgba(14, 165, 233, 0.5);">
+                <span id="solar-warp-label">WARP TO THE MOON</span>
+            </button>
+        </div>
+
+        <!-- Bottom 10-Destination Selector Dock -->
+        <div class="pointer-events-auto" style="width: 100%; max-width: 980px; margin: 0 auto;">
+            <div class="text-center text-[11px] font-extrabold uppercase tracking-widest text-cyan-200" style="margin-bottom: 8px; text-shadow: 0 2px 6px rgba(0,0,0,0.85);">
+                TAP ANY PLANET IN 3D SPACE OR PICK A DESTINATION BELOW
+            </div>
+            <div id="solar-dest-dock" class="hud-glass rounded-2xl border border-cyan-400/50" style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; overflow-x: auto; background: rgba(15, 23, 42, 0.85);">
+                <!-- Populated dynamically with custom SVG planet buttons -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Saturn Ring Race HUD (Visible only in SATURN_RING_RACE) -->
+    <div id="saturn-race-hud" class="hidden flex flex-col justify-between pointer-events-none" style="position: fixed; inset: 0; z-index: 32; padding: 68px 16px 20px 16px;">
+        <!-- Top Telemetry Bar (Top-Center/Right so it never overlaps Minimap) -->
+        <div style="display: flex; align-items: flex-start; justify-content: flex-end; gap: 10px; flex-wrap: wrap;">
+            <div class="pointer-events-auto hud-glass rounded-2xl border-2 border-amber-400/80 shadow-xl" style="display: flex; align-items: center; gap: 12px; padding: 8px 14px; background: rgba(15, 23, 42, 0.92);">
+                <span id="saturn-race-icon" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;"></span>
+                <div>
+                    <div id="saturn-lap-text" class="text-sm font-black text-amber-300 tracking-wider uppercase">LAP 1 / 3</div>
+                    <div style="display: flex; gap: 12px; align-items: center; margin-top: 2px;">
+                        <span id="saturn-time-text" class="mono-font text-xs font-bold text-white">0.0s</span>
+                        <span id="saturn-best-text" class="mono-font text-xs font-bold text-cyan-300">BEST --.-s</span>
+                        <span id="saturn-speed-text" class="mono-font text-xs font-bold text-lime-300">200 KM/H</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pointer-events-auto" style="display: flex; gap: 8px;">
+                <button id="saturn-restart-btn" type="button" class="tactile-btn rounded-2xl border-2 border-slate-400 text-white font-black text-xs cursor-pointer" style="padding: 10px 14px; background: linear-gradient(180deg, #334155 0%, #1e293b 100%) !important;">RESTART</button>
+                <button id="saturn-solar-btn" type="button" class="tactile-btn rounded-2xl border-2 border-amber-300 text-white font-black text-xs cursor-pointer flex items-center gap-2" style="padding: 10px 14px; background: linear-gradient(180deg, #6366f1 0%, #3730a3 100%) !important;">
+                    <span id="saturn-solar-icon" style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;"></span>
+                    <span>SOLAR MAP</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Touch & Boost Controls -->
+        <div class="pointer-events-auto" style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 720px; margin: 0 auto; gap: 12px;">
+            <div style="display: flex; gap: 10px;">
+                <button id="saturn-left-btn" type="button" class="tactile-btn rounded-2xl border-2 border-cyan-300 text-white font-black text-sm cursor-pointer" style="padding: 14px 22px; background: linear-gradient(180deg, #0284c7 0%, #1e3a8a 100%) !important;">INNER LANE (A)</button>
+                <button id="saturn-right-btn" type="button" class="tactile-btn rounded-2xl border-2 border-cyan-300 text-white font-black text-sm cursor-pointer" style="padding: 14px 22px; background: linear-gradient(180deg, #0284c7 0%, #1e3a8a 100%) !important;">OUTER LANE (D)</button>
+            </div>
+            <button id="saturn-boost-btn" type="button" class="tactile-btn rounded-2xl border-2 border-amber-300 text-white font-black text-sm cursor-pointer flex items-center gap-2" style="padding: 14px 24px; background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%) !important;">
+                <span id="saturn-boost-icon" style="width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;"></span>
+                <span>TURBO BOOST</span>
+            </button>
+        </div>
     </div>
 
     <!-- Full-Screen Subterranean Drill Transition Curtain -->

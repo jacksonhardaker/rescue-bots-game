@@ -561,17 +561,27 @@ export function updateMoonHUD() {
     const relicEl = document.getElementById('moon-stat-relics');
     const moonOrbitBtn = document.getElementById('moon-orbit-btn');
     const moonEarthBtn = document.getElementById('moon-earth-btn');
+    const planetSolarBtn = document.getElementById('planet-solar-btn');
 
-    if (moonPill) moonPill.classList.toggle('hidden', !isMoon);
-    if (relicEl) {
+    if (worldState.activeArea !== 'PLANET_SURFACE') {
+        if (moonPill) moonPill.classList.toggle('hidden', !isMoon);
+        if (moonOrbitBtn) {
+            moonOrbitBtn.classList.toggle('hidden', !(isMoon && !worldState.spaceLaunch?.active));
+            const span = moonOrbitBtn.querySelector('span:last-child');
+            if (isMoon && span) span.textContent = 'LAUNCH TO ORBIT';
+        }
+        if (moonEarthBtn) {
+            moonEarthBtn.classList.toggle('hidden', !(isMoon && !worldState.spaceLaunch?.active));
+        }
+        if (planetSolarBtn) {
+            planetSolarBtn.classList.toggle('hidden', !(isMoon && !worldState.spaceLaunch?.active));
+        }
+    }
+    if (relicEl && isMoon) {
         const count = Array.isArray(progression.moonRelicsFound) ? progression.moonRelicsFound.length : 0;
         relicEl.textContent = `${count} / ${MOON_RELIC_DEFS.length}`;
-    }
-    if (moonOrbitBtn) {
-        moonOrbitBtn.classList.toggle('hidden', !(isMoon && !worldState.spaceLaunch?.active));
-    }
-    if (moonEarthBtn) {
-        moonEarthBtn.classList.toggle('hidden', !(isMoon && !worldState.spaceLaunch?.active));
+        const gravEl = document.getElementById('moon-stat-gravity');
+        if (gravEl) gravEl.textContent = '0.35G';
     }
 }
 
@@ -611,6 +621,11 @@ export function swapToMoon() {
     }
 
     syncMoonBotRigs();
+    const wp = (window as any).waypointGroup;
+    if (wp) {
+        moonScene.add(wp);
+        wp.visible = false;
+    }
     setActiveParticleScene(moonScene);
 
     if (camera) {

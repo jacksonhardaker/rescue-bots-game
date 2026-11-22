@@ -48,7 +48,12 @@ export const progression: Record<string, any> = {
     spaceMoroccoDefeated: false,
     moonRelicsFound: [],
     moonFlagPlanted: false,
-    moonHoopsCleared: 0
+    moonHoopsCleared: 0,
+    visitedPlanets: [],
+    planetRelicsFound: [],
+    jupiterMoonsVisited: [],
+    saturnBestLapSec: null,
+    saturnRacesCompleted: 0
 };
 
 export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'];
@@ -104,7 +109,11 @@ export function getHeroPoints(prog = progression) {
     const sigmaPts = (prog.sigmaRepaired ? 12 : 0) + (Array.isArray(prog.sigmaInstalledParts) ? prog.sigmaInstalledParts.length * 3 : 0);
     const spacePts = (prog.spaceAsteroidsCleared || 0) + (prog.spaceRescuesDone || 0) * 5 + (prog.spaceRingsCompleted || 0) * 8 + (prog.spaceMoroccoDefeated ? 20 : 0);
     const moonPts = (Array.isArray(prog.moonRelicsFound) ? prog.moonRelicsFound.length * 5 : 0) + (prog.moonFlagPlanted ? 6 : 0) + (prog.moonHoopsCleared || 0) * 2;
-    return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts + cavernLandmarkPts + cavernGemPts + sigmaPts + spacePts + moonPts;
+    const solarPts = (Array.isArray(prog.visitedPlanets) ? prog.visitedPlanets.length * 3 : 0)
+        + (Array.isArray(prog.planetRelicsFound) ? prog.planetRelicsFound.length * 5 : 0)
+        + (Array.isArray(prog.jupiterMoonsVisited) ? prog.jupiterMoonsVisited.length * 3 : 0)
+        + (prog.saturnRacesCompleted || 0) * 10;
+    return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts + cavernLandmarkPts + cavernGemPts + sigmaPts + spacePts + moonPts + solarPts;
 }
 
 export function getRescueStarRank(prog = progression) {

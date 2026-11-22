@@ -11,8 +11,10 @@ import { SVG_ICONS } from './icons.js';
 import { triggerBoulderDrillTransition, exitUndergroundViaShaft, swapToSurface, triggerSigmaCavernAction } from '../world/underground.js';
 import {
     startSpaceTransition, fireSigmaCannons, triggerSpaceBoost,
-    setSpaceTouchControl
+    setSpaceTouchControl, landOnActiveSectorMoon, openSolarSystemHub, swapToSpace
 } from '../world/space.js';
+import { launchWarpToSelected, swapToSolarHub } from '../world/solarSystem.js';
+import { setSaturnRaceTouch, triggerSaturnRaceBoost, resetSaturnRace } from '../world/saturnRace.js';
 
 import { HQ_SWAP_PAD } from '../world/buildings.js';
 import { waypointGroup } from '../physics/movement.js';
@@ -69,25 +71,57 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         injectIcon('space-earth-icon', SVG_ICONS.PLANET);
         injectIcon('moon-orbit-icon', SVG_ICONS.ROCKET);
         injectIcon('moon-earth-icon', SVG_ICONS.PLANET);
+        injectIcon('space-solar-icon', SVG_ICONS.SOLAR_SYSTEM);
+        injectIcon('planet-solar-icon', SVG_ICONS.SOLAR_SYSTEM);
+        injectIcon('saturn-solar-icon', SVG_ICONS.SOLAR_SYSTEM);
+        injectIcon('saturn-race-icon', SVG_ICONS.RING_RACE);
+        injectIcon('saturn-boost-icon', SVG_ICONS.BOLT);
 
-        bindButton('btn-sigma-action', triggerSigmaCavernAction);
+        bindButton('btn-sigma-action', () => {
+            if (worldState.activeArea === 'PLANET_SURFACE') {
+                if (worldState.planetReturnSector) {
+                    swapToSpace(true, worldState.planetReturnSector);
+                } else {
+                    swapToSolarHub();
+                }
+                return;
+            }
+            triggerSigmaCavernAction();
+        });
         bindButton('space-fire-btn', fireSigmaCannons);
         bindButton('space-boost-btn', triggerSpaceBoost);
-        bindButton('space-land-moon-btn', () => startSpaceTransition('TO_MOON'));
+        bindButton('space-land-moon-btn', () => landOnActiveSectorMoon());
+        bindButton('space-solar-map-btn', () => openSolarSystemHub());
         bindButton('space-return-earth-btn', () => startSpaceTransition('TO_EARTH'));
-        bindButton('moon-orbit-btn', () => startSpaceTransition('MOON_TO_SPACE'));
+        bindButton('moon-orbit-btn', () => {
+            if (worldState.activeArea === 'PLANET_SURFACE' && worldState.planetReturnSector) {
+                swapToSpace(true, worldState.planetReturnSector);
+            } else {
+                startSpaceTransition('MOON_TO_SPACE');
+            }
+        });
+        bindButton('planet-solar-btn', () => openSolarSystemHub());
         bindButton('moon-earth-btn', () => startSpaceTransition('TO_EARTH'));
+        bindButton('btn-solar-warp', () => launchWarpToSelected());
+        bindButton('saturn-solar-btn', () => openSolarSystemHub());
+        bindButton('saturn-restart-btn', () => resetSaturnRace());
+        bindButton('saturn-boost-btn', () => triggerSaturnRaceBoost());
 
         const bindHold = (id: string, onDown: () => void, onUp: () => void) => {
             const el = document.getElementById(id);
             if (!el) return;
-            el.addEventListener('pointerdown', (e) => { e.preventDefault(); onDown(); });
-            el.addEventListener('pointerup', onUp);
-            el.addEventListener('pointerleave', onUp);
-            el.addEventListener('pointercancel', onUp);
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); el.classList.add('active-press'); onDown(); }, { passive: false });
+            el.addEventListener('touchend', (e) => { e.preventDefault(); el.classList.remove('active-press'); onUp(); }, { passive: false });
+            el.addEventListener('touchcancel', () => { el.classList.remove('active-press'); onUp(); });
+            el.addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch') return; e.preventDefault(); onDown(); });
+            el.addEventListener('pointerup', (e) => { if (e.pointerType === 'touch') return; onUp(); });
+            el.addEventListener('pointerleave', (e) => { if (e.pointerType === 'touch') return; onUp(); });
+            el.addEventListener('pointercancel', (e) => { if (e.pointerType === 'touch') return; onUp(); });
         };
         bindHold('space-climb-up-btn', () => setSpaceTouchControl('climb', 1), () => setSpaceTouchControl('climb', 0));
         bindHold('space-climb-dn-btn', () => setSpaceTouchControl('climb', -1), () => setSpaceTouchControl('climb', 0));
+        bindHold('saturn-left-btn', () => setSaturnRaceTouch('LEFT', true), () => setSaturnRaceTouch('LEFT', false));
+        bindHold('saturn-right-btn', () => setSaturnRaceTouch('RIGHT', true), () => setSaturnRaceTouch('RIGHT', false));
         bindButton('btn-dock', () => {
             dockActiveBotMegabot();
         });
@@ -128,7 +162,13 @@ import { buildEnergonCubes } from '../world/collectibles.js';
 
         // Warp to Rescue Bots Headquarters Button
         bindButton('btn-hq-warp', () => {
-            if (worldState.activeArea === 'SPACE' || worldState.activeArea === 'MOON') {
+            if (
+                worldState.activeArea === 'SPACE' ||
+                worldState.activeArea === 'MOON' ||
+                worldState.activeArea === 'SOLAR_HUB' ||
+                worldState.activeArea === 'PLANET_SURFACE' ||
+                worldState.activeArea === 'SATURN_RING_RACE'
+            ) {
                 closeUtilityMenu();
                 startSpaceTransition('TO_EARTH');
                 return;

@@ -997,6 +997,8 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 resolveUndergroundPointCollision(buddyBot.pos, 2.3);
             } else if (worldState.activeArea === 'MOON') {
                 resolveMoonCollisions(buddyBot.pos, 2.3);
+            } else if (worldState.activeArea === 'PLANET_SURFACE') {
+                // Planetary surface collisions handled in planetSurface.ts
             } else if (worldColliders && worldColliders.length > 0) {
                 const buddyRadius = 2.4;
                 const nearbyColliders = queryNearbyColliders(buddyBot.pos.x, buddyBot.pos.z, buddyRadius + 16, _buddyNearbyColliders);

@@ -9,6 +9,9 @@ import {
 } from '../world/underground.js';
 import { resolveMoonCollisions, checkMoonBoulderStrike } from '../world/moon.js';
 import { setSpaceDestinationFromScreenPoint } from '../world/space.js';
+import { getActivePlanetGravity } from '../world/planetSurface.js';
+import { handleSolarHubClick } from '../world/solarSystem.js';
+import { setSaturnRaceTouch } from '../world/saturnRace.js';
 import { sfx } from '../audio/soundFX.js';
 import { isActionActive } from '../settings/settings.js';
 import { progression, saveProgression, isBotDocked } from '../progression/progression.js';
@@ -239,6 +242,15 @@ export let wpArrowCone = null;
         }
 
         export function setDestinationFromScreenPoint(clientX, clientY, playChime = false) {
+            if (worldState.activeArea === 'SOLAR_HUB') {
+                if (playChime) handleSolarHubClick(clientX, clientY);
+                return;
+            }
+            if (worldState.activeArea === 'SATURN_RING_RACE') {
+                const isLeft = clientX < window.innerWidth * 0.5;
+                setSaturnRaceTouch(isLeft ? 'LEFT' : 'RIGHT', true);
+                return;
+            }
             if (worldState.activeArea === 'SPACE') {
                 setSpaceDestinationFromScreenPoint(clientX, clientY, playChime);
                 return;
@@ -251,6 +263,7 @@ export let wpArrowCone = null;
             if (!hitPoint) return;
 
             const isUndergroundTap = worldState.activeArea === 'UNDERGROUND';
+            const isPlanetTap = worldState.activeArea === 'PLANET_SURFACE' || worldState.activeArea === 'MOON';
             const r = Math.hypot(hitPoint.x, hitPoint.z);
 
             if (isUndergroundTap) {
@@ -258,6 +271,12 @@ export let wpArrowCone = null;
                 hitPoint.z = Math.max(-228, Math.min(228, hitPoint.z));
                 if (playChime) {
                     triggerNearbyDinoReaction(hitPoint.x, hitPoint.z);
+                }
+            } else if (isPlanetTap) {
+                const maxPlanetR = worldState.activeArea === 'MOON' ? 175 : 165;
+                if (r > maxPlanetR) {
+                    hitPoint.x = (hitPoint.x / r) * maxPlanetR;
+                    hitPoint.z = (hitPoint.z / r) * maxPlanetR;
                 }
             } else {
                 // Clamp within playable 10x island & Wayward Island boundary
@@ -378,6 +397,9 @@ export let wpArrowCone = null;
                 target.closest('#tactical-map-modal') ||
                 target.closest('#cavern-exit-prompt') ||
                 target.closest('#space-controls-bar') ||
+                target.closest('#solar-hub-ui') ||
+                target.closest('#saturn-race-hud') ||
+                target.closest('#planet-solar-btn') ||
                 target.closest('#sigma-action-btn') ||
                 target.closest('#minimap-container')
             );
@@ -423,17 +445,28 @@ export let wpArrowCone = null;
                 pointerScreenY = t.clientY;
                 if (worldState.activeArea === 'SPACE') {
                     setSpaceDestinationFromScreenPoint(pointerScreenX, pointerScreenY, false);
+                } else if (worldState.activeArea === 'SATURN_RING_RACE') {
+                    const isLeft = pointerScreenX < window.innerWidth * 0.5;
+                    setSaturnRaceTouch(isLeft ? 'LEFT' : 'RIGHT', true);
                 }
             }
         }, { passive: false });
 
         window.addEventListener('touchend', () => {
             activePointerDown = false;
+            if (worldState.activeArea === 'SATURN_RING_RACE') {
+                setSaturnRaceTouch('LEFT', false);
+                setSaturnRaceTouch('RIGHT', false);
+            }
             sfx.init();
         }, { passive: false });
 
         window.addEventListener('touchcancel', () => {
             activePointerDown = false;
+            if (worldState.activeArea === 'SATURN_RING_RACE') {
+                setSaturnRaceTouch('LEFT', false);
+                setSaturnRaceTouch('RIGHT', false);
+            }
         }, { passive: false });
 
         // Mouse Click or Hold-Drag Anywhere to Move (Desktop & iPad Trackpad)
@@ -456,11 +489,18 @@ export let wpArrowCone = null;
             pointerScreenY = e.clientY;
             if (worldState.activeArea === 'SPACE') {
                 setSpaceDestinationFromScreenPoint(pointerScreenX, pointerScreenY, false);
+            } else if (worldState.activeArea === 'SATURN_RING_RACE') {
+                const isLeft = pointerScreenX < window.innerWidth * 0.5;
+                setSaturnRaceTouch(isLeft ? 'LEFT' : 'RIGHT', true);
             }
         });
 
         window.addEventListener('mouseup', () => {
             activePointerDown = false;
+            if (worldState.activeArea === 'SATURN_RING_RACE') {
+                setSaturnRaceTouch('LEFT', false);
+                setSaturnRaceTouch('RIGHT', false);
+            }
         });
         window.addEventListener('blur', () => {
             activePointerDown = false;
@@ -932,6 +972,8 @@ export let wpArrowCone = null;
                 resolveUndergroundCollisions(player, dt, now);
             } else if (worldState.activeArea === 'MOON') {
                 resolveMoonCollisions(player.pos, 2.3, true);
+            } else if (worldState.activeArea === 'PLANET_SURFACE') {
+                // Planetary surface collisions handled in planetSurface.ts
             } else if (!player.inCrane && currentClearance < 12) {
                 const playerRadius = 2.4;
                 const nearbyColliders = queryNearbyColliders(player.pos.x, player.pos.z, playerRadius + 16, _playerNearbyColliders);
@@ -1200,7 +1242,9 @@ export let wpArrowCone = null;
                 });
 
                 if (!player.grounded || player.pos.y > targetGroundY + 0.35) {
-                    const gravAccel = worldState.activeArea === 'MOON' ? 15.5 : 44;
+                    const gravAccel = worldState.activeArea === 'MOON'
+                        ? 15.5
+                        : (worldState.activeArea === 'PLANET_SURFACE' ? Math.max(8.5, 44 * getActivePlanetGravity()) : 44);
                     player.vy -= gravAccel * dt;
                     player.pos.y += player.vy * dt;
                     if (player.pos.y <= targetGroundY) {

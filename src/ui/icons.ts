@@ -488,6 +488,89 @@ export const SVG_ICONS = {
             RING: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="8" stroke="#22d3ee" stroke-width="2.6"/>
                 <circle cx="12" cy="12" r="5" stroke="#fbbf24" stroke-width="1.4" stroke-dasharray="3 2"/>
+            </svg>`,
+
+            // Solar System Hub, Planets & Saturn Ring Race Icons (32x32)
+            SOLAR_SYSTEM: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="13" stroke="#38bdf8" stroke-width="1.2" stroke-dasharray="3 2.5" stroke-opacity="0.75"/>
+                <circle cx="16" cy="16" r="8.5" stroke="#fbbf24" stroke-width="1.2" stroke-opacity="0.75"/>
+                <circle cx="16" cy="16" r="4.2" fill="#facc15" stroke="#ea580c" stroke-width="1.3"/>
+                <circle cx="24.5" cy="16" r="2.2" fill="#38bdf8" stroke="#0f172a" stroke-width="1"/>
+                <circle cx="8" cy="7.5" r="2.5" fill="#fb923c" stroke="#0f172a" stroke-width="1"/>
+                <circle cx="10.5" cy="27.2" r="2.1" fill="#c084fc" stroke="#0f172a" stroke-width="1"/>
+            </svg>`,
+            RING_RACE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="16" cy="18" rx="13.5" ry="5.5" transform="rotate(-14 16 18)" stroke="#fde047" stroke-width="3.2"/>
+                <ellipse cx="16" cy="18" rx="10.5" ry="4.1" transform="rotate(-14 16 18)" stroke="#38bdf8" stroke-width="1.6" stroke-dasharray="3 2"/>
+                <path d="M13 6h10l-2.2 4L23 14H13V6z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.4" stroke-linejoin="round"/>
+                <rect x="13" y="6" width="3.2" height="4" fill="#0f172a"/>
+                <rect x="16.2" y="10" width="3.2" height="4" fill="#0f172a"/>
+                <path d="M13 6v15" stroke="#fbbf24" stroke-width="2" stroke-linecap="round"/>
+            </svg>`,
+            PLANET_MERCURY: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="11" fill="#a8a29e" stroke="#0f172a" stroke-width="1.8"/>
+                <path d="M10 8c4-2.5 9-2 12 1.5" stroke="#e7e5e4" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="12" cy="14" r="2.4" fill="#78716c"/>
+                <circle cx="19.5" cy="19" r="3" fill="#78716c"/>
+                <circle cx="18.5" cy="11.5" r="1.4" fill="#57534e"/>
+            </svg>`,
+            PLANET_VENUS: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="11" fill="#f59e0b" stroke="#0f172a" stroke-width="1.8"/>
+                <path d="M6.5 13c4-1.8 14-1.8 19 0" stroke="#fde68a" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M6.5 19c4.5 1.8 14 1.8 19 0" stroke="#d97706" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M9.5 16c4 0.8 9 0.8 13 0" stroke="#fef3c7" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>`,
+            PLANET_EARTH: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="11" fill="#0284c7" stroke="#0f172a" stroke-width="1.8"/>
+                <path d="M10 10c2.5-1.5 5.5-.5 6.5 1.5s-1.5 3.5-.5 5.5c.8 1.5 3 2 4.5 1" fill="#22c55e" stroke="#15803d" stroke-width="1.2"/>
+                <path d="M8.5 18.5c1.8-1 3.8 0 4.5 2s-1 4-2.8 4.2" fill="#22c55e" stroke="#15803d" stroke-width="1.2"/>
+                <path d="M19 8.5c2 0 4 1.5 4.5 3.5-1.5 1-3.5 1-5 0" fill="#4ade80"/>
+            </svg>`,
+            PLANET_MOON: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="11" fill="#cbd5e1" stroke="#0f172a" stroke-width="1.8"/>
+                <circle cx="12" cy="12.5" r="2.7" fill="#94a3b8" stroke="#64748b" stroke-width="1"/>
+                <circle cx="20" cy="18.5" r="3.2" fill="#94a3b8" stroke="#64748b" stroke-width="1"/>
+                <circle cx="19" cy="10.5" r="1.5" fill="#94a3b8"/>
+                <circle cx="11.5" cy="20.5" r="1.4" fill="#94a3b8"/>
+            </svg>`,
+            PLANET_MARS: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="11" fill="#dc2626" stroke="#0f172a" stroke-width="1.8"/>
+                <path d="M11 6.2c3-.8 7-.8 10 0" stroke="#f8fafc" stroke-width="2.2" stroke-linecap="round"/>
+                <circle cx="12.5" cy="15" r="2.6" fill="#991b1b"/>
+                <circle cx="20" cy="18.5" r="2.2" fill="#b91c1c"/>
+                <path d="M10 21c4 1.2 8 1.2 12 0" stroke="#f97316" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>`,
+            PLANET_JUPITER: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="11.5" fill="#f59e0b" stroke="#0f172a" stroke-width="1.8"/>
+                <path d="M5.5 12.5h21" stroke="#fef3c7" stroke-width="2.6"/>
+                <path d="M5 16.5h22" stroke="#b45309" stroke-width="2.4"/>
+                <path d="M6.5 20.5h19" stroke="#fde68a" stroke-width="2.2"/>
+                <ellipse cx="20" cy="18.5" rx="3" ry="1.9" fill="#dc2626" stroke="#7f1d1d" stroke-width="0.9"/>
+                <circle cx="28" cy="9" r="1.6" fill="#fde047"/>
+                <circle cx="4" cy="23" r="1.5" fill="#bae6fd"/>
+            </svg>`,
+            PLANET_SATURN: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="16" cy="16" rx="14.2" ry="4.6" transform="rotate(-18 16 16)" stroke="#fde047" stroke-width="3"/>
+                <circle cx="16" cy="16" r="8.2" fill="#eab308" stroke="#0f172a" stroke-width="1.7"/>
+                <path d="M8.5 14.5h15" stroke="#fef08a" stroke-width="1.8"/>
+                <path d="M9 18h14" stroke="#ca8a04" stroke-width="1.6"/>
+                <path d="M3.2 20.5c5.5 1.8 18.5-2.2 25.6-9" stroke="#facc15" stroke-width="2.6" stroke-linecap="round"/>
+            </svg>`,
+            PLANET_URANUS: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="16" cy="16" rx="4.2" ry="13.5" transform="rotate(14 16 16)" stroke="#a5f3fc" stroke-width="2.2"/>
+                <circle cx="16" cy="16" r="8.5" fill="#22d3ee" stroke="#0f172a" stroke-width="1.7"/>
+                <path d="M12 10c2 4 2 8 0 12" stroke="#cffafe" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>`,
+            PLANET_NEPTUNE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="11" fill="#2563eb" stroke="#0f172a" stroke-width="1.8"/>
+                <path d="M6.5 13c5-1.2 14-1.2 19 0" stroke="#60a5fa" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M7 19c4.5 1.2 13.5 1.2 18 0" stroke="#1d4ed8" stroke-width="2.4" stroke-linecap="round"/>
+                <ellipse cx="13.5" cy="16.5" rx="3" ry="1.8" fill="#1e3a8a"/>
+            </svg>`,
+            PLANET_PLUTO: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="15" cy="17" r="9.8" fill="#d6d3d1" stroke="#0f172a" stroke-width="1.7"/>
+                <path d="M15 19.5c-1.8-1.5-3.2-2.7-3.2-4.2a2.2 2.2 0 014.2-.8 2.2 2.2 0 014.2.8c0 1.5-1.4 2.7-3.2 4.2l-1 .8-1-.8z" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.9"/>
+                <circle cx="25.5" cy="8.5" r="3" fill="#94a3b8" stroke="#0f172a" stroke-width="1.3"/>
             </svg>`
         };
 

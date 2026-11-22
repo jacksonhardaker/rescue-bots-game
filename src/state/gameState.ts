@@ -57,7 +57,10 @@ export const player: Record<string, any> = {
 };
 
 export const worldState: Record<string, any> = {
-    activeArea: 'SURFACE', // 'SURFACE' | 'UNDERGROUND' | 'SPACE' | 'MOON'
+    activeArea: 'SURFACE', // 'SURFACE' | 'UNDERGROUND' | 'SOLAR_HUB' | 'SPACE' | 'MOON' | 'PLANET_SURFACE' | 'SATURN_RING_RACE'
+    activePlanetId: 'MOON', // 'MOON' | 'MERCURY' | 'VENUS' | 'EARTH' | 'MARS' | 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE' | 'PLUTO' | 'EUROPA' | 'MIRANDA' | 'TRITON'
+    activeSpaceSector: 'MOON_ORBIT', // 'MOON_ORBIT' | 'JUPITER' | 'URANUS' | 'NEPTUNE'
+    planetReturnSector: null as string | null, // If landed on Europa/Miranda/Triton, returns to that giant's orbit
     savedSurfacePos: new THREE.Vector3(0, 5, -15),
     savedSurfaceHeading: 0,
     savedUndergroundPos: new THREE.Vector3(0, 1.0, 6),
@@ -67,8 +70,10 @@ export const worldState: Record<string, any> = {
     nearSigmaShip: false,
     sigmaActionMode: '', // '' | 'NEED_PARTS' | 'INSTALL_PART' | 'LAUNCH'
     nearMoonLanding: false,
+    nearLandableMoonId: '' as string, // '' | 'MOON' | 'EUROPA' | 'MIRANDA' | 'TRITON'
     nearMoonSigma: false,
     nearMoonFlag: false,
+    nearPlanetSigma: false,
     drillAnim: {
         active: false,
         direction: 'DOWN', // 'DOWN' | 'UP'
