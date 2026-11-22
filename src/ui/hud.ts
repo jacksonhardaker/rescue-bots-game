@@ -15,6 +15,7 @@ import {
 } from '../world/space.js';
 import { launchWarpToSelected, swapToSolarHub } from '../world/solarSystem.js';
 import { setSaturnRaceTouch, triggerSaturnRaceBoost, resetSaturnRace } from '../world/saturnRace.js';
+import { openGalacticLogModal, closeGalacticLogModal } from './galacticLog.js';
 
 import { HQ_SWAP_PAD } from '../world/buildings.js';
 import { waypointGroup } from '../physics/movement.js';
@@ -76,6 +77,13 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         injectIcon('saturn-solar-icon', SVG_ICONS.SOLAR_SYSTEM);
         injectIcon('saturn-race-icon', SVG_ICONS.RING_RACE);
         injectIcon('saturn-boost-icon', SVG_ICONS.BOLT);
+        injectIcon('menu-galactic-icon', SVG_ICONS.SOLAR_SYSTEM);
+        injectIcon('galactic-modal-icon', SVG_ICONS.SOLAR_SYSTEM);
+
+        bindButton('btn-galactic-log', () => { closeUtilityMenu(); openGalacticLogModal(); });
+        bindButton('btn-solar-hub-log', () => openGalacticLogModal());
+        bindButton('btn-close-galactic-log', () => closeGalacticLogModal());
+        bindButton('btn-done-galactic-log', () => closeGalacticLogModal());
 
         bindButton('btn-sigma-action', () => {
             if (worldState.activeArea === 'PLANET_SURFACE') {

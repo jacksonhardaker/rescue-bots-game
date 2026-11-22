@@ -398,6 +398,7 @@ export let wpArrowCone = null;
                 target.closest('#cavern-exit-prompt') ||
                 target.closest('#space-controls-bar') ||
                 target.closest('#solar-hub-ui') ||
+                target.closest('#galactic-log-modal') ||
                 target.closest('#saturn-race-hud') ||
                 target.closest('#planet-solar-btn') ||
                 target.closest('#sigma-action-btn') ||
