@@ -96,11 +96,18 @@ export function handleTacticalMapTap(clientX, clientY) {
                                 wx = tx; wy = ty; wz = tz; snapLabel = label;
                             }
                         };
-                        checkSnap(sp.moonLandingPos?.x ?? 0, sp.moonLandingPos?.y ?? 45, sp.moonLandingPos?.z ?? -238, 'Lunar Landing Zone', 55);
-                        checkSnap(sp.stationPos.x, sp.stationPos.y, sp.stationPos.z, 'Autobot Orbital Station', 55);
-                        if (sp.moroccoStation && !sp.moroccoStation.defeated) {
-                            checkSnap(sp.moroccoStation.pos.x, sp.moroccoStation.pos.y, sp.moroccoStation.pos.z, "Dr. Morocco's Orbital Station", 55);
+                        if (sp.sectorId === 'MOON_ORBIT' || !sp.sectorId) {
+                            checkSnap(sp.moonLandingPos?.x ?? 0, sp.moonLandingPos?.y ?? 45, sp.moonLandingPos?.z ?? -238, 'Lunar Landing Zone', 55);
+                            if (sp.moroccoStation && !sp.moroccoStation.defeated) {
+                                checkSnap(sp.moroccoStation.pos.x, sp.moroccoStation.pos.y, sp.moroccoStation.pos.z, "Dr. Morocco's Orbital Station", 55);
+                            }
+                        } else {
+                            sp.sectorMoons?.forEach((m: any) => {
+                                const pt = m.beaconRing ? m.landingPos : m.pos;
+                                checkSnap(pt.x, pt.y, pt.z, m.name, 55);
+                            });
                         }
+                        checkSnap(sp.stationPos.x, sp.stationPos.y, sp.stationPos.z, 'Autobot Orbital Station', 55);
                         sp.satellites?.forEach((s: any) => { if (!s.repaired) checkSnap(s.pos.x, s.pos.y, s.pos.z, s.name, 42); });
                         sp.pods?.forEach((p: any) => { if (!p.rescued) checkSnap(p.pos.x, p.pos.y, p.pos.z, p.name, 42); });
                         const activeRing = sp.starRings?.[sp.ship.activeRingIdx];
@@ -115,6 +122,34 @@ export function handleTacticalMapTap(clientX, clientY) {
                         if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
                         showToast('ORBITAL COURSE LOCKED', `Starship Sigma flying to ${snapLabel}`);
                     }
+                    closeTacticalMap();
+                    return;
+                }
+
+                if (worldState.activeArea === 'PLANET_SURFACE') {
+                    const pd = (window as any).getPlanetSurfaceMapData?.();
+                    const pR = pd?.radius || 175;
+                    const pScale = (cx * 0.84) / pR;
+                    let wx = (canvasX - cx) / pScale;
+                    let wz = (canvasY - cy) / pScale;
+                    const d = Math.hypot(wx, wz);
+                    if (d > pR - 10) {
+                        wx *= (pR - 10) / d;
+                        wz *= (pR - 10) / d;
+                    }
+                    const ty = getSurfaceHeight(wx, wz);
+                    player.waypoint.set(wx, ty, wz);
+                    player.hasWaypoint = true;
+                    waypointGroup.position.set(wx, ty, wz);
+                    waypointGroup.visible = true;
+                    if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
+                    spawnBurstParticles(wx, ty + 0.5, wz, 0xfacc15, 6, 0.8);
+                    showToast(`${pd?.config?.name || 'PLANET'} WAYPOINT SET`, `Navigating to (${Math.round(wx)}, ${Math.round(wz)})`);
+                    closeTacticalMap();
+                    return;
+                }
+
+                if (worldState.activeArea === 'SATURN_RING_RACE' || worldState.activeArea === 'SOLAR_HUB') {
                     closeTacticalMap();
                     return;
                 }
@@ -582,9 +617,23 @@ function ensureMinimapBgCache(w: number, h: number) {
                     mCtx.beginPath();
                     mCtx.arc(cx + sp.moonPos.x * sc, cy + sp.moonPos.z * sc, 9, 0, Math.PI * 2);
                     mCtx.fill();
-                    mCtx.strokeStyle = '#22d3ee';
-                    mCtx.lineWidth = 1.5;
-                    mCtx.stroke();
+                    if (sp.sectorId === 'MOON_ORBIT' || !sp.sectorId) {
+                        mCtx.strokeStyle = '#22d3ee';
+                        mCtx.lineWidth = 1.5;
+                        mCtx.stroke();
+                    } else {
+                        sp.sectorMoons?.forEach((m: any) => {
+                            mCtx.fillStyle = m.landablePlanetId ? '#38bdf8' : '#cbd5e1';
+                            mCtx.beginPath();
+                            mCtx.arc(cx + m.pos.x * sc, cy + m.pos.z * sc, m.landablePlanetId ? 6.5 : 5, 0, Math.PI * 2);
+                            mCtx.fill();
+                            if (m.landablePlanetId) {
+                                mCtx.strokeStyle = '#fbbf24';
+                                mCtx.lineWidth = 1.6;
+                                mCtx.stroke();
+                            }
+                        });
+                    }
                     // Autobot Orbital Station
                     mCtx.fillStyle = '#4ade80';
                     mCtx.fillRect(cx + sp.stationPos.x * sc - 4, cy + sp.stationPos.z * sc - 4, 8, 8);
@@ -615,7 +664,119 @@ function ensureMinimapBgCache(w: number, h: number) {
                     drawMapChevron(mCtx, cx + sp.ship.pos.x * sc, cy + sp.ship.pos.z * sc, sp.ship.yaw + Math.PI, 5.5, '#38bdf8', '#ffffff');
                 }
                 mCtx.restore();
-                setNearestHintText('Orbit: Blast Asteroids • Repair Sats • Land on Moon!');
+                const hint = sp?.sectorId === 'JUPITER'
+                    ? 'Jupiter Orbit • Explore 4 Moons & Land on Europa!'
+                    : (sp?.sectorId === 'URANUS'
+                        ? 'Uranus Orbit • Fly Vertical Rings & Land on Miranda!'
+                        : (sp?.sectorId === 'NEPTUNE'
+                            ? 'Neptune Orbit • Land on Triton to Rescue Starspeed!'
+                            : 'Orbit: Blast Asteroids • Repair Sats • Land on Moon!'));
+                setNearestHintText(hint);
+                return;
+            }
+
+            if (worldState.activeArea === 'SOLAR_HUB') {
+                mCtx.clearRect(0, 0, w, h);
+                mCtx.save();
+                mCtx.beginPath();
+                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
+                mCtx.clip();
+                mCtx.fillStyle = '#030712';
+                mCtx.fillRect(0, 0, w, h);
+                [0.24, 0.42, 0.62, 0.82].forEach(f => {
+                    mCtx.strokeStyle = 'rgba(56, 189, 248, 0.38)';
+                    mCtx.lineWidth = 1;
+                    mCtx.beginPath();
+                    mCtx.arc(cx, cy, cx * f, 0, Math.PI * 2);
+                    mCtx.stroke();
+                });
+                mCtx.fillStyle = '#facc15';
+                mCtx.beginPath();
+                mCtx.arc(cx, cy, 7, 0, Math.PI * 2);
+                mCtx.fill();
+                mCtx.restore();
+                setNearestHintText('3D Solar System Hub • Tap any planet to warp!');
+                return;
+            }
+
+            if (worldState.activeArea === 'SATURN_RING_RACE') {
+                const sr = (window as any).getSaturnRaceMapData?.();
+                mCtx.clearRect(0, 0, w, h);
+                mCtx.save();
+                mCtx.beginPath();
+                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
+                mCtx.clip();
+                mCtx.fillStyle = '#040714';
+                mCtx.fillRect(0, 0, w, h);
+                mCtx.fillStyle = '#eab308';
+                mCtx.beginPath();
+                mCtx.arc(cx, cy, cx * 0.36, 0, Math.PI * 2);
+                mCtx.fill();
+                const rPx = cx * 0.72;
+                mCtx.strokeStyle = 'rgba(186, 230, 253, 0.65)';
+                mCtx.lineWidth = 7;
+                mCtx.beginPath();
+                mCtx.arc(cx, cy, rPx, 0, Math.PI * 2);
+                mCtx.stroke();
+                if (sr) {
+                    const nextG = sr.gates?.[sr.nextGateIdx];
+                    if (nextG) {
+                        mCtx.fillStyle = '#facc15';
+                        mCtx.beginPath();
+                        mCtx.arc(cx + Math.cos(nextG.angle) * rPx, cy + Math.sin(nextG.angle) * rPx, 4.5, 0, Math.PI * 2);
+                        mCtx.fill();
+                    }
+                    const px = cx + Math.cos(sr.angle) * rPx;
+                    const py = cy + Math.sin(sr.angle) * rPx;
+                    drawMapChevron(mCtx, px, py, player.heading, 5.2, '#22d3ee', '#ffffff');
+                }
+                mCtx.restore();
+                setNearestHintText('Saturn Ring Race • Sprint through all 12 Turbo Gates!');
+                return;
+            }
+
+            if (worldState.activeArea === 'PLANET_SURFACE') {
+                const pd = (window as any).getPlanetSurfaceMapData?.();
+                mCtx.clearRect(0, 0, w, h);
+                mCtx.save();
+                mCtx.beginPath();
+                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
+                mCtx.clip();
+                mCtx.fillStyle = pd?.config?.groundAccentHex || '#1e293b';
+                mCtx.fillRect(0, 0, w, h);
+                if (pd) {
+                    const sc = (cx * 0.85) / (pd.radius || 175);
+                    pd.craters?.forEach((c: any) => {
+                        mCtx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                        mCtx.lineWidth = 1.2;
+                        mCtx.beginPath();
+                        mCtx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                        mCtx.stroke();
+                    });
+                    mCtx.fillStyle = '#22d3ee';
+                    mCtx.beginPath();
+                    mCtx.arc(cx + pd.sigmaPos.x * sc, cy + pd.sigmaPos.z * sc, 5, 0, Math.PI * 2);
+                    mCtx.fill();
+                    pd.relics?.forEach((r: any) => {
+                        if (r.collected) return;
+                        mCtx.fillStyle = '#fbbf24';
+                        mCtx.beginPath();
+                        mCtx.arc(cx + r.x * sc, cy + r.z * sc, 3.5, 0, Math.PI * 2);
+                        mCtx.fill();
+                    });
+                    if (pd.frozenStarspeed) {
+                        mCtx.fillStyle = '#38bdf8';
+                        mCtx.strokeStyle = '#facc15';
+                        mCtx.lineWidth = 2;
+                        mCtx.beginPath();
+                        mCtx.arc(cx + pd.frozenStarspeed.x * sc, cy + pd.frozenStarspeed.z * sc, 5.2, 0, Math.PI * 2);
+                        mCtx.fill();
+                        mCtx.stroke();
+                    }
+                    drawMapChevron(mCtx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 5.2, '#facc15', '#ffffff');
+                }
+                mCtx.restore();
+                setNearestHintText(`${pd?.config?.name || 'Planet'} • ${pd?.config?.gravityLabel || ''}${pd?.frozenStarspeed ? ' • SOS Signal Detected!' : ''}`);
                 return;
             }
 
@@ -913,24 +1074,33 @@ function ensureMinimapBgCache(w: number, h: number) {
                         tCtx.fill();
                     });
 
-                    // Moon & Lunar Landing Ring
-                    drawPin(sp.moonPos.x, sp.moonPos.z, 26, '#94a3b8', 'THE MOON');
-                    drawPin(sp.moonLandingPos?.x ?? 0, sp.moonLandingPos?.z ?? -238, 8, '#22d3ee', 'LUNAR LANDING ZONE');
+                    // Moon & Lunar Landing Ring OR Gas/Ice Giant Sector Moons
+                    if (sp.sectorId === 'MOON_ORBIT' || !sp.sectorId) {
+                        drawPin(sp.moonPos.x, sp.moonPos.z, 26, '#94a3b8', 'THE MOON');
+                        drawPin(sp.moonLandingPos?.x ?? 0, sp.moonLandingPos?.z ?? -238, 8, '#22d3ee', 'LUNAR LANDING ZONE');
+                        if (sp.moroccoStation) {
+                            const ms = sp.moroccoStation;
+                            drawPin(
+                                ms.pos.x,
+                                ms.pos.z,
+                                11,
+                                ms.defeated ? '#64748b' : '#a855f7',
+                                ms.defeated ? "MOROCCO STATION (DISABLED)" : `MOROCCO LASER STATION (${ms.hp}/${ms.maxHp} HP)`
+                            );
+                        }
+                    } else {
+                        const titleEl = document.getElementById('tactical-map-title');
+                        if (titleEl) titleEl.textContent = `${sp.sectorId} ORBITAL SECTOR CHART`;
+                        sp.sectorMoons?.forEach((m: any) => {
+                            drawPin(m.pos.x, m.pos.z, m.landablePlanetId ? 15 : 11, m.landablePlanetId ? '#38bdf8' : '#cbd5e1', m.name.toUpperCase());
+                            if (m.beaconRing) {
+                                drawPin(m.landingPos.x, m.landingPos.z, 7, '#fbbf24', `LAND ON ${m.id}`);
+                            }
+                        });
+                    }
 
                     // Autobot Orbital Station
                     drawPin(sp.stationPos.x, sp.stationPos.z, 10, '#4ade80', 'AUTOBOT ORBITAL STATION');
-
-                    // Dr. Morocco's Orbital Laser Station
-                    if (sp.moroccoStation) {
-                        const ms = sp.moroccoStation;
-                        drawPin(
-                            ms.pos.x,
-                            ms.pos.z,
-                            11,
-                            ms.defeated ? '#64748b' : '#a855f7',
-                            ms.defeated ? "MOROCCO STATION (DISABLED)" : `MOROCCO LASER STATION (${ms.hp}/${ms.maxHp} HP)`
-                        );
-                    }
 
                     // Satellites & Pods
                     sp.satellites?.forEach((s: any) => {
@@ -942,6 +1112,112 @@ function ensureMinimapBgCache(w: number, h: number) {
 
                     // Starship Sigma Chevron
                     drawMapChevron(tCtx, cx + sp.ship.pos.x * sc, cy + sp.ship.pos.z * sc, sp.ship.yaw + Math.PI, 9.5, '#38bdf8', '#ffffff');
+                }
+                return;
+            }
+
+            if (worldState.activeArea === 'PLANET_SURFACE') {
+                const pd = (window as any).getPlanetSurfaceMapData?.();
+                const cfg = pd?.config;
+                const titleEl = document.getElementById('tactical-map-title');
+                const subEl = document.getElementById('tactical-map-subtitle');
+                const pillEl = document.getElementById('tactical-map-status-pill');
+                const gridEl = document.getElementById('tactical-map-grid-pill');
+                const countEl = document.getElementById('tactical-active-emergencies-count');
+                if (titleEl) titleEl.textContent = `${cfg?.name || 'PLANET'} TACTICAL SURVEY MAP`;
+                if (subEl) subEl.textContent = `${cfg?.zoneLabel || 'Planetary Surface'} • Tap anywhere to navigate`;
+                if (pillEl) pillEl.textContent = `${cfg?.gravityLabel || '0.38G'} SURFACE`;
+                if (gridEl) gridEl.textContent = `WORLD: ${cfg?.id || 'PLANET'}`;
+                const foundHere = (pd?.relics || []).filter((r: any) => r.collected).length;
+                if (countEl) countEl.textContent = `RELICS: ${foundHere} / ${(pd?.relics || []).length}`;
+
+                const bgGrad = tCtx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
+                bgGrad.addColorStop(0, cfg?.groundBaseHex || '#334155');
+                bgGrad.addColorStop(0.8, cfg?.groundAccentHex || '#1e293b');
+                bgGrad.addColorStop(1, '#0f172a');
+                tCtx.fillStyle = bgGrad;
+                tCtx.fillRect(0, 0, w, h);
+
+                const sc = (cx * 0.84) / (pd?.radius || 175);
+                if (pd) {
+                    pd.craters?.forEach((c: any) => {
+                        tCtx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+                        tCtx.strokeStyle = 'rgba(248, 250, 252, 0.45)';
+                        tCtx.lineWidth = 2;
+                        tCtx.beginPath();
+                        tCtx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                        tCtx.fill();
+                        tCtx.stroke();
+                    });
+
+                    const drawPlanetaryPin = (wx: number, wz: number, r: number, col: string, label: string) => {
+                        const px = cx + wx * sc;
+                        const pz = cy + wz * sc;
+                        tCtx.fillStyle = col;
+                        tCtx.beginPath();
+                        tCtx.arc(px, pz, r, 0, Math.PI * 2);
+                        tCtx.fill();
+                        tCtx.strokeStyle = '#ffffff';
+                        tCtx.lineWidth = 1.5;
+                        tCtx.stroke();
+                        tCtx.font = 'bold 9.5px Fredoka, sans-serif';
+                        const tw = tCtx.measureText(label).width;
+                        tCtx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+                        tCtx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
+                        tCtx.fillStyle = '#f8fafc';
+                        tCtx.textAlign = 'center';
+                        tCtx.fillText(label, px, pz + r + 14);
+                    };
+
+                    drawPlanetaryPin(pd.sigmaPos.x, pd.sigmaPos.z, 9, '#22d3ee', 'STARSHIP SIGMA PAD');
+                    pd.vents?.forEach((v: any) => {
+                        drawPlanetaryPin(v.x, v.z, 5.5, '#f97316', v.label.toUpperCase());
+                    });
+                    pd.relics?.forEach((r: any) => {
+                        if (!r.collected) drawPlanetaryPin(r.x, r.z, 6.5, '#fbbf24', r.name.toUpperCase());
+                    });
+                    if (pd.frozenStarspeed) {
+                        drawPlanetaryPin(pd.frozenStarspeed.x, pd.frozenStarspeed.z, 9, '#38bdf8', 'FROZEN SOS SIGNAL (STARSPEED)');
+                    }
+                    drawMapChevron(tCtx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 9.5, '#facc15', '#ffffff');
+                }
+                return;
+            }
+
+            if (worldState.activeArea === 'SATURN_RING_RACE') {
+                const sr = (window as any).getSaturnRaceMapData?.();
+                const titleEl = document.getElementById('tactical-map-title');
+                const subEl = document.getElementById('tactical-map-subtitle');
+                const pillEl = document.getElementById('tactical-map-status-pill');
+                const gridEl = document.getElementById('tactical-map-grid-pill');
+                if (titleEl) titleEl.textContent = 'SATURN ICY RING CIRCUIT RADAR';
+                if (subEl) subEl.textContent = '360° Bot-Mode Ring Highway • 12 Sequential Turbo Boost Gates';
+                if (pillEl) pillEl.textContent = 'RING RACE';
+                if (gridEl) gridEl.textContent = 'SECTOR: SATURN-R1';
+
+                tCtx.fillStyle = '#040714';
+                tCtx.fillRect(0, 0, w, h);
+                tCtx.fillStyle = '#eab308';
+                tCtx.beginPath();
+                tCtx.arc(cx, cy, cx * 0.34, 0, Math.PI * 2);
+                tCtx.fill();
+                const rPx = cx * 0.72;
+                tCtx.strokeStyle = 'rgba(186, 230, 253, 0.72)';
+                tCtx.lineWidth = 18;
+                tCtx.beginPath();
+                tCtx.arc(cx, cy, rPx, 0, Math.PI * 2);
+                tCtx.stroke();
+                if (sr) {
+                    sr.gates?.forEach((g: any, idx: number) => {
+                        const isNext = idx === sr.nextGateIdx;
+                        tCtx.fillStyle = isNext ? '#facc15' : (idx === 0 ? '#4ade80' : '#38bdf8');
+                        tCtx.beginPath();
+                        tCtx.arc(cx + Math.cos(g.angle) * rPx, cy + Math.sin(g.angle) * rPx, isNext ? 8 : 4.5, 0, Math.PI * 2);
+                        tCtx.fill();
+                    });
+                    const px = cx + Math.cos(sr.angle) * rPx;
+                    const py = cy + Math.sin(sr.angle) * rPx;
+                    drawMapChevron(tCtx, px, py, player.heading, 10, '#22d3ee', '#ffffff');
                 }
                 return;
             }

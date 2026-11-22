@@ -1032,8 +1032,12 @@ export function getPlanetSurfaceMapData() {
         config: _activeConfig,
         radius: PLANET_WORLD_RADIUS,
         sigmaPos: PLANET_SIGMA_POS,
+        craters: _activeConfig.craters,
         relics: _planetRelics,
-        vents: _activeConfig.vents
+        vents: _activeConfig.vents,
+        frozenStarspeed: _activeConfig.id === 'TRITON' && !_frozenStarspeedFreed
+            ? { x: TRITON_FROZEN_POS.x, z: TRITON_FROZEN_POS.z }
+            : null
     };
 }
 
