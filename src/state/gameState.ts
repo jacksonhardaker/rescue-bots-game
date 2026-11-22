@@ -209,7 +209,8 @@ export const botPhraseCounters = {
     BLURR: 0,
     SALVAGE: 0,
     HIGHTIDE: 0,
-    QUICKSHADOW: 0
+    QUICKSHADOW: 0,
+    STARSPEED: 0
 };
 
 if (typeof window !== 'undefined') {

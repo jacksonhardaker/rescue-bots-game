@@ -32,6 +32,7 @@ export const progression: Record<string, any> = {
     blurrDocked: false,
     salvageDocked: false,
     quickshadowDocked: false,
+    starspeedDocked: false,
     weatherMode: 'SUNNY',
     playerPosition: null,
     completedMissions: [],
@@ -56,7 +57,7 @@ export const progression: Record<string, any> = {
     saturnRacesCompleted: 0
 };
 
-export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'];
+export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED'];
 
 export function getBotDockedKey(botType: string): string {
     if (botType === 'HIGHTIDE') return 'highTideDocked';
@@ -245,7 +246,7 @@ export function loadProgression(options: Record<string, any> = {}) {
     if (typeof target.autoSpawnEmergencies === 'boolean') {
         progression.autoSpawnEmergencies = target.autoSpawnEmergencies;
     }
-    const VALID_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'];
+    const VALID_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED'];
     if (typeof target.playerBotType === 'string' && (BOT_METADATA[target.playerBotType] || VALID_BOTS.includes(target.playerBotType))) {
         progression.playerBotType = target.playerBotType;
     }

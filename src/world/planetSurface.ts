@@ -11,6 +11,8 @@ import { progression, saveProgression } from '../progression/progression.js';
 import { setPlanetTerrainHooks } from './terrain.js';
 import { setActiveParticleScene, spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
 import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
+import { buildRescueBotModel, applyBotRigMorph } from '../bots/botRigs.js';
+import { updateBotRosterUI } from '../physics/player.js';
 import { sfx } from '../audio/soundFX.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
 
@@ -304,7 +306,7 @@ export const PLANET_CONFIGS: Record<LandablePlanetId, PlanetConfig> = {
         relicColor: 0xf472b6,
         backdropKind: 'NEPTUNE',
         returnSector: 'NEPTUNE',
-        welcomeToast: '0.20G Cryo-Moon Gravity • Neptune fills the sky! Find 3 Triton Cryo Relics!',
+        welcomeToast: '0.20G Cryo-Moon Gravity • Investigate the Frozen Bot Signal on Triton & find 3 Relics!',
         craters: [
             { x: -64, z: -46, r: 26, depth: 3.0, rim: 2.2 },
             { x: 68, z: -48, r: 28, depth: 3.0, rim: 2.2 },
@@ -342,6 +344,10 @@ let _activeConfig: PlanetConfig = PLANET_CONFIGS.MARS;
 let _builtPlanetId: LandablePlanetId | null = null;
 let _worldGroup: THREE.Group | null = null;
 let _planetSigmaRoot: THREE.Group | null = null;
+let _frozenStarspeedGroup: THREE.Group | null = null;
+let _frozenStarspeedRing: THREE.Mesh | null = null;
+let _frozenStarspeedFreed = false;
+const TRITON_FROZEN_POS = { x: -34, z: -42 };
 const _planetRelics: PlanetRelicRuntime[] = [];
 const _planetRocks: PlanetRockRuntime[] = [];
 const _planetAnimated: Array<{ obj: THREE.Object3D; kind: string; baseY: number; phase: number }> = [];
@@ -534,6 +540,8 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
     _planetRocks.length = 0;
     _planetAnimated.length = 0;
     _planetSigmaRoot = null;
+    _frozenStarspeedGroup = null;
+    _frozenStarspeedRing = null;
 
     planetSurfaceScene.background = new THREE.Color(cfg.skyColor);
     planetSurfaceScene.fog = cfg.fogColor !== null
@@ -690,6 +698,62 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
         applyCartoonInkOutlines(mesh, 1.05, true);
         _worldGroup.add(mesh);
         _planetRocks.push({ mesh, x: rx, y: ry + rRad * 0.65, z: rz, r: rRad, destroyed: false });
+    }
+
+    // Special Discovery on Neptune's Moon TRITON: STARSPEED Frozen Solid in a Cryo-Ice Crystal Block!
+    if (cfg.id === 'TRITON') {
+        const allies: string[] = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies : [];
+        _frozenStarspeedFreed = allies.includes('STARSPEED');
+        if (!_frozenStarspeedFreed) {
+            const fx = TRITON_FROZEN_POS.x;
+            const fz = TRITON_FROZEN_POS.z;
+            const fy = getPlanetSurfaceHeight(fx, fz);
+
+            const tomb = new THREE.Group();
+            tomb.position.set(fx, fy, fz);
+
+            // Actual 3D Starspeed Bot frozen in a heroic upright pose inside the ice!
+            const frozenRig = buildRescueBotModel('STARSPEED');
+            applyBotRigMorph(frozenRig, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            frozenRig.root.position.set(0, 0.25, 0);
+            frozenRig.root.rotation.y = 0.55;
+            tomb.add(frozenRig.root);
+
+            // Faceted Translucent Cryo-Ice Block encasing Starspeed
+            const iceMat = new THREE.MeshToonMaterial({
+                color: 0x7dd3fc,
+                gradientMap: toonGrad3,
+                transparent: true,
+                opacity: 0.58
+            });
+            const iceBlock = new THREE.Mesh(new THREE.CylinderGeometry(3.8, 4.6, 8.6, 7), iceMat);
+            iceBlock.position.y = 4.2;
+            const iceCap = new THREE.Mesh(new THREE.ConeGeometry(3.8, 2.8, 7), iceMat);
+            iceCap.position.y = 9.9;
+            tomb.add(iceBlock, iceCap);
+
+            // Jagged Frost Crystal Spires around the Base
+            const spireMat = new THREE.MeshToonMaterial({ color: 0xbae6fd, gradientMap: toonGrad3, transparent: true, opacity: 0.8 });
+            for (let s = 0; s < 6; s++) {
+                const a = (s / 6) * Math.PI * 2;
+                const spire = new THREE.Mesh(new THREE.ConeGeometry(0.95, 3.8 + (s % 2) * 1.4, 5), spireMat);
+                spire.position.set(Math.cos(a) * 4.4, 1.8, Math.sin(a) * 4.4);
+                spire.rotation.z = -Math.cos(a) * 0.35;
+                spire.rotation.x = Math.sin(a) * 0.35;
+                tomb.add(spire);
+            }
+
+            // Pulsing Cyan-Gold Rescue Beacon Ring on the ground
+            _frozenStarspeedRing = new THREE.Mesh(
+                new THREE.TorusGeometry(6.8, 0.38, 8, 32).rotateX(Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0x22d3ee })
+            );
+            _frozenStarspeedRing.position.y = 0.25;
+            tomb.add(_frozenStarspeedRing);
+
+            _frozenStarspeedGroup = tomb;
+            _worldGroup.add(tomb);
+        }
     }
 }
 
@@ -907,6 +971,42 @@ export function updatePlanetSurface(dt: number, now: number) {
                 player.pos.z += dz * push;
                 player.speed *= 0.5;
             }
+        }
+    }
+
+    // Check Frozen STARSPEED Discovery & Thaw on Neptune's Moon Triton!
+    if (_activeConfig.id === 'TRITON' && _frozenStarspeedGroup && !_frozenStarspeedFreed) {
+        if (_frozenStarspeedRing) {
+            const p = 1.0 + Math.sin(nowSec * 4.5) * 0.1;
+            _frozenStarspeedRing.scale.setScalar(p);
+        }
+        const distFrozen = Math.hypot(player.pos.x - TRITON_FROZEN_POS.x, player.pos.z - TRITON_FROZEN_POS.z);
+        if (distFrozen < 11.5) {
+            _frozenStarspeedFreed = true;
+            _frozenStarspeedGroup.visible = false;
+            if (!Array.isArray(progression.discoveredAllies)) progression.discoveredAllies = [];
+            if (!progression.discoveredAllies.includes('STARSPEED')) {
+                progression.discoveredAllies.push('STARSPEED');
+                progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 10;
+                saveProgression({ immediate: true });
+            }
+            updateBotRosterUI();
+            sfx.playRockBreak();
+            sfx.playRankUp();
+            const fy = getPlanetSurfaceHeight(TRITON_FROZEN_POS.x, TRITON_FROZEN_POS.z);
+            spawnBurstParticles(TRITON_FROZEN_POS.x, fy + 3.5, TRITON_FROZEN_POS.z, 0x7dd3fc, 28, 1.8);
+            spawnSparkleGlints(TRITON_FROZEN_POS.x, fy + 4.5, TRITON_FROZEN_POS.z, 22);
+            showToast(
+                'NEW RESCUE BOT UNLOCKED: STARSPEED!',
+                'Thawed out on Triton! Dirt Bike, Cosmic Jet Ski & Spinosaurus modes now in your Bot Roster!'
+            );
+            triggerNPCSpeech(
+                'STARSPEED',
+                'Deep-Space Motocross Scout',
+                'Brrr! Thanks for thawing me out on Triton! Starspeed is unlocked — Dirt Bike, Jet Ski & Spinosaurus modes ready to roll!',
+                player,
+                true
+            );
         }
     }
 

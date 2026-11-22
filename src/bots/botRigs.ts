@@ -15,6 +15,7 @@ import { buildBlurr } from "./blurr.js";
 import { buildSalvage } from "./salvage.js";
 import { buildHighTide } from "./hightide.js";
 import { buildQuickshadow } from "./quickshadow.js";
+import { buildStarspeed } from "./starspeed.js";
 import { animateBotBoatMorph } from "./botBoats.js";
 
 export const BOT_SCALES = {
@@ -37,7 +38,8 @@ export const BOT_SCALES = {
     HIGHTIDE: 1.30,
     HIGHTIDE_MEGA: 3.85,
     QUICKSHADOW: 1.0,
-    QUICKSHADOW_MEGA: 1.65
+    QUICKSHADOW_MEGA: 1.65,
+    STARSPEED: 1.0
 };
 
 export function getBotScale(botType) {
@@ -184,6 +186,7 @@ export function buildRescueBotModel(botType) {
     else if (botType === "SALVAGE") buildSalvage(parts);
     else if (botType === "HIGHTIDE") buildHighTide(parts);
     else if (botType === "QUICKSHADOW") buildQuickshadow(parts);
+    else if (botType === "STARSPEED") buildStarspeed(parts);
 
     applyCartoonInkOutlines(root, 1.06, true);
     return parts;
@@ -243,8 +246,26 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 vehTorsoZ * m + (rig.botType === 'OPTIMUS' ? 0.22 : 0.05) * d
             );
             const vehTorsoRotX = (rig.botType === 'CHASE' || rig.botType === 'BLADES') ? (Math.PI / 2) * m : 0;
-            const dinoTorsoRotX = (rig.botType === 'OPTIMUS' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW') ? (Math.PI * 0.22) : (Math.PI * 0.48);
+            const dinoTorsoRotX = (rig.botType === 'OPTIMUS' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'STARSPEED') ? (Math.PI * 0.22) : (Math.PI * 0.48);
             rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + vehTorsoRotX + dinoTorsoRotX * d;
+
+            // Starspeed Dirt Bike Mode: cleanly swap narrow Dirt Bike shell in when transforming into Vehicle (and hide when in Boat/Jet Ski!)
+            if (rig.botType === 'STARSPEED' && rig.starspeedBikeShell) {
+                const bikeAlpha = Math.max(0, m - boatMorph);
+                const showBike = bikeAlpha > 0.06;
+                rig.starspeedBikeShell.visible = showBike;
+                if (showBike) {
+                    const s = THREE.MathUtils.lerp(0.15, 1.0, THREE.MathUtils.smoothstep(bikeAlpha, 0.05, 0.85));
+                    rig.starspeedBikeShell.scale.setScalar(s);
+                }
+                const hideLimbs = (m > 0.55 || boatMorph > 0.35);
+                rig.torso.visible = !hideLimbs;
+                rig.head.visible = !hideLimbs && d < 0.45;
+                rig.leftArm.visible = !hideLimbs && d < 0.45;
+                rig.rightArm.visible = !hideLimbs && d < 0.45;
+                rig.leftLeg.visible = !hideLimbs;
+                rig.rightLeg.visible = !hideLimbs;
+            }
 
             // For Chase, his police lightbar sits immediately behind his head in Bot mode, then shifts onto the cruiser roof in Vehicle mode!
             if (rig.botType === 'CHASE' && rig.lightbar) {
@@ -1157,7 +1178,8 @@ export function initBotRigs(scene) {
         BLURR: buildRescueBotModel("BLURR"),
         SALVAGE: buildRescueBotModel("SALVAGE"),
         HIGHTIDE: buildRescueBotModel("HIGHTIDE"),
-        QUICKSHADOW: buildRescueBotModel("QUICKSHADOW")
+        QUICKSHADOW: buildRescueBotModel("QUICKSHADOW"),
+        STARSPEED: buildRescueBotModel("STARSPEED")
     };
 
     if (scene) {

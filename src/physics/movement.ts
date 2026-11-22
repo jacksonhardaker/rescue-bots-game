@@ -629,6 +629,7 @@ export let wpArrowCone = null;
                 const inBoatMode = (player.boatMorph || 0) > 0.3 || (player.targetBoatMorph || 0) > 0.5 || isPointInWater(player.pos.x, player.pos.z);
                 if (inBoatMode) {
                     if (player.botType === 'BLURR') maxSpeed = hasBoost ? 92 : 76;
+                    else if (player.botType === 'STARSPEED') maxSpeed = hasBoost ? 90 : 74; // Cosmic Jet Ski!
                     else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 88 : 72;
                     else if (player.botType === 'BUMBLEBEE') maxSpeed = hasBoost ? 86 : 70;
                     else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 82 : 66;
@@ -639,6 +640,7 @@ export let wpArrowCone = null;
                     else maxSpeed = hasBoost ? 64 : 48; // Boulder
                 } else {
                     if (player.botType === 'BLURR') maxSpeed = hasBoost ? 88 : (onRoad ? 72 : 54);
+                    else if (player.botType === 'STARSPEED') maxSpeed = hasBoost ? 88 : (onRoad ? 68 : 64); // Dirt Bike shreds off-road!
                     else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 86 : (isFlyingCopter ? 74 : (onRoad ? 68 : 50));
                     else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 82 : 62; // Hydro-thruster submarine
                     else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 74 : (onRoad ? 58 : 44);
@@ -652,6 +654,7 @@ export let wpArrowCone = null;
             } else if (player.mode === 'DINO') {
                 // Dinobots excel off-road as well as on highways!
                 if (player.botType === 'BLURR') maxSpeed = hasBoost ? 86 : 68; // Gallimimus supersonic sprint!
+                else if (player.botType === 'STARSPEED') maxSpeed = hasBoost ? 84 : 66; // Spinosaurus cosmic sprint!
                 else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 82 : 64; // Dilophosaur stealth sprint
                 else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 80 : 62; // Plesiosaur marine glide
                 else if (player.botType === 'SALVAGE') maxSpeed = hasBoost ? 62 : 44; // Ankylosaur armored march

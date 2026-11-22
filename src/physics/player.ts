@@ -519,11 +519,41 @@ import { renderMinimap } from '../ui/tacticalMap.js';
                     "Aerodynamic excellence at high altitude!",
                     "High-flying elegance! Catch me if you can!"
                 ]
+            },
+            STARSPEED: {
+                DEPLOY: [
+                    "Starspeed reporting in! Ready to tear up the dirt, waves, and stars!",
+                    "From Triton's ice to Griffin Rock — Starspeed is thawed out and ready to roll!"
+                ],
+                TO_VEHICLE: [
+                    "Starspeed, transform! Cosmic Dirt Bike mode — let's shred!",
+                    "Revving up the motocross thrusters! Hold onto your handlebars!"
+                ],
+                TO_DINO: [
+                    "Starspeed, Spinosaurus Dinobot mode! Feel the dorsal sail power!",
+                    "Prehistoric cosmic predator! Spinosaurus ready to charge!"
+                ],
+                TO_BOT: [
+                    "Starspeed, robot mode! Fast, fearless, and unfrozen!",
+                    "Back on two feet — let's save the day at light speed!"
+                ],
+                RESCUE: [
+                    "Mission cleared in record time! That's the Starspeed way!",
+                    "Crisis cooled down and cleared out! Who's next?"
+                ],
+                WASH: [
+                    "Squeaky clean chrome and knobby tires! Feels way warmer than Triton!",
+                    "Starlight shine at 100 percent!"
+                ],
+                STUNT: [
+                    "Catching cosmic air on two wheels!",
+                    "WOOHOO! Now THAT'S a motocross launch!"
+                ]
             }
         };
 
         // botPhraseCounters exported in gameState.js
-const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0, QUICKSHADOW: 0 };
+const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0, QUICKSHADOW: 0, STARSPEED: 0 };
 
         export function speakBotCatchphrase(botType, eventKey) {
             const botLines = BOT_CATCHPHRASES[botType] && BOT_CATCHPHRASES[botType][eventKey];
@@ -709,7 +739,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         export function getUnlockedPlayableBots() {
             const base = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES'];
             const allies = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies : [];
-            const validAllies = ['OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW'].filter(id => allies.includes(id));
+            const validAllies = ['OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED'].filter(id => allies.includes(id));
             return [...base, ...validAllies];
         }
 
@@ -1843,6 +1873,51 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     isMega ? 32 : 18,
                     isMega ? 2.4 : 1.6
                 );
+                return;
+            }
+
+            if (player.botType === 'STARSPEED') {
+                const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+                if (isBoat) {
+                    player.boostTimer = 2.4;
+                    player.speed = Math.max(player.speed + 26, 86);
+                    sfx.playWarpWhoosh();
+                    checkHitMorBotWithSpecialAbility(36.0, "HYDRO JET SURGE");
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
+                                clearHazardNode(beacon, n, 'HEAVY');
+                            }
+                        });
+                    });
+                    spawnBurstParticles(player.pos.x, 0.2, player.pos.z, 0x06b6d4, 22, 1.8);
+                    spawnSparkleGlints(player.pos.x, 0.8, player.pos.z, 20);
+                    showToast("HYDRO JET SURGE!", "Starspeed tore across the waves on his Cosmic Jet Ski!");
+                    return;
+                }
+                if (player.mode === 'DINO') {
+                    player.boostTimer = 2.2;
+                    player.smashTimer = 0.55;
+                    player.speed = Math.max(player.speed, 56.0);
+                    sfx.playDinoRoar('OPTIMUS');
+                    sfx.playStuntChime();
+                    showToast("SPINO SAIL CHARGE!", "Starspeed charged forward with his glowing Spinosaurus sail!");
+                } else {
+                    player.boostTimer = 2.2;
+                    player.speed = Math.max(player.speed, 54.0);
+                    sfx.playEnergyCharge();
+                    sfx.playStuntChime();
+                    showToast(player.mode === 'VEHICLE' ? "MOTO WHEELIE BOOST!" : "STARLIGHT DASH!", "Starspeed surged forward with cosmic speed!");
+                }
+                checkHitMorBotWithSpecialAbility(36.0, "STARLIGHT CHARGE");
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
+                            clearHazardNode(beacon, n, 'HEAVY');
+                        }
+                    });
+                });
+                spawnBurstParticles(player.pos.x, player.pos.y + 1.4, player.pos.z, 0x06b6d4, 18, 1.4);
                 return;
             }
 

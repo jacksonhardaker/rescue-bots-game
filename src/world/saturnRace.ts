@@ -423,7 +423,7 @@ export function updateSaturnRace(dt: number, now: number) {
     if (saturnRaceState.boostTimer > 0) saturnRaceState.boostTimer = Math.max(0, saturnRaceState.boostTimer - dt);
 
     // Base cruise speed + throttle + turbo boost (Blurr gets a subtle extra kick!)
-    const botBonus = player.botType === 'BLURR' ? 8 : (player.botType === 'BUMBLEBEE' || player.botType === 'QUICKSHADOW' ? 4 : 0);
+    const botBonus = player.botType === 'BLURR' ? 8 : (player.botType === 'STARSPEED' ? 7 : (player.botType === 'BUMBLEBEE' || player.botType === 'QUICKSHADOW' ? 4 : 0));
     let targetSpeed = 52 + botBonus;
     if (accel) targetSpeed += 18;
     if (brake) targetSpeed -= 24;

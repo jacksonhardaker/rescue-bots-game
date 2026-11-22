@@ -1224,5 +1224,83 @@ export function animateBotBoatMorph(rig: any, boatMorph: number, now: number, dt
             }
             break;
         }
+
+        case 'STARSPEED': {
+            if (rig.starspeedJetSkiHull) {
+                rig.starspeedJetSkiHull.scale.setScalar(THREE.MathUtils.lerp(0.01, 1.0, tDeploy));
+            }
+            if (rig.starspeedJetSkiBars) {
+                rig.starspeedJetSkiBars.scale.setScalar(THREE.MathUtils.lerp(0.01, 1.0, THREE.MathUtils.smoothstep(b, 0.2, 0.9)));
+            }
+            break;
+        }
     }
+}
+
+// 9. STARSPEED: COSMIC HYDRO JET SKI
+export function buildStarspeedBoat(parts) {
+    const boatGroup = new THREE.Group();
+    boatGroup.visible = false;
+    parts.boatGroup = boatGroup;
+    parts.chassis.add(boatGroup);
+
+    const matTeal = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+    const matWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 });
+    const matCoral = new THREE.MeshToonMaterial({ color: 0xf43f5e, gradientMap: toonGrad3 });
+    const matGold = new THREE.MeshToonMaterial({ color: 0xfde047, gradientMap: toonGrad3 });
+    const matDark = new THREE.MeshToonMaterial({ color: 0x0f172a, gradientMap: toonGrad3 });
+    const matJetGlow = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+    // Sleek Personal Watercraft V-Hull
+    const hullGroup = new THREE.Group();
+    const mainHull = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.65, 3.8), matWhite);
+    mainHull.position.set(0, -0.35, 0);
+    mainHull.castShadow = true;
+
+    const bowNose = new THREE.Mesh(new THREE.ConeGeometry(1.1, 1.85, 4).rotateX(Math.PI / 2).rotateZ(Math.PI / 4), matTeal);
+    bowNose.scale.set(1.05, 0.55, 1.0);
+    bowNose.position.set(0, -0.25, 2.55);
+
+    const upperDeck = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.42, 3.2), matTeal);
+    upperDeck.position.set(0, 0.08, -0.1);
+
+    const sideStripeL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.22, 3.2), matCoral);
+    sideStripeL.position.set(-0.88, -0.05, 0.0);
+    const sideStripeR = sideStripeL.clone();
+    sideStripeR.position.x = 0.88;
+
+    const saddleSeat = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.48, 1.75), matDark);
+    saddleSeat.position.set(0, 0.48, -0.55);
+
+    const jetNozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.26, 0.75, 12).rotateX(Math.PI / 2), matDark);
+    jetNozzle.position.set(0, -0.3, -2.05);
+    const jetCore = new THREE.Mesh(new THREE.CircleGeometry(0.24, 12).rotateY(Math.PI), matJetGlow);
+    jetCore.position.set(0, -0.3, -2.44);
+    jetCore.userData.noOutline = true;
+
+    hullGroup.add(mainHull, bowNose, upperDeck, sideStripeL, sideStripeR, saddleSeat, jetNozzle, jetCore);
+    parts.starspeedJetSkiHull = hullGroup;
+    boatGroup.add(hullGroup);
+
+    // Raised Jet Ski Steering Column, Wind Deflector & Handlebars
+    const barsGroup = new THREE.Group();
+    const cowl = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.65, 1.05).rotateX(-0.35), matCoral);
+    cowl.position.set(0, 0.68, 0.95);
+    const windScreen = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.36, 0.14).rotateX(-0.55), matJetGlow);
+    windScreen.position.set(0, 1.02, 1.25);
+    windScreen.userData.noOutline = true;
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.72, 10), matDark);
+    stem.position.set(0, 0.92, 0.65);
+    const handlebar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.65, 10).rotateZ(Math.PI / 2), matGold);
+    handlebar.position.set(0, 1.24, 0.55);
+    [-0.78, 0.78].forEach(gx => {
+        const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.32, 10).rotateZ(Math.PI / 2), matDark);
+        grip.position.set(gx, 1.24, 0.55);
+        barsGroup.add(grip);
+    });
+    barsGroup.add(cowl, windScreen, stem, handlebar);
+    parts.starspeedJetSkiBars = barsGroup;
+    boatGroup.add(barsGroup);
+
+    applyCartoonInkOutlines(boatGroup, 1.04, true);
 }

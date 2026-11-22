@@ -371,6 +371,25 @@ export const BOT_METADATA = {
         boatActionLabel: 'COVERT HYDRO-GLIDE',
         dinoActionIcon: 'STEALTH_CLOAK',
         dinoActionLabel: 'SHADOW DELTA STRIKE'
+    },
+    STARSPEED: {
+        name: 'STARSPEED',
+        role: 'Deep-Space Motocross Scout',
+        voicePitch: 1.08,
+        vehName: 'DIRT BIKE',
+        boatName: 'COSMIC JET SKI',
+        dinoName: 'SPINOSAURUS',
+        colorClass: 'text-cyan-300',
+        dotClass: 'bg-cyan-400',
+        btnActionBg: 'from-cyan-500 via-teal-600 to-rose-600 border-cyan-300',
+        botActionIcon: 'TURBO_OVERDRIVE',
+        botActionLabel: 'STARLIGHT DASH',
+        vehActionIcon: 'TURBO_OVERDRIVE',
+        vehActionLabel: 'MOTO WHEELIE BOOST',
+        boatActionIcon: 'STEALTH_HYDRO_GLIDE',
+        boatActionLabel: 'HYDRO JET SURGE',
+        dinoActionIcon: 'TRICERA_CHARGE',
+        dinoActionLabel: 'SPINO SAIL CHARGE'
     }
 };
 
@@ -405,7 +424,8 @@ export const BOT_GROUND_OFFSETS = {
     HIGHTIDE:         { bot: 0.692, veh: 0.808, dino: 0.792 },
     HIGHTIDE_MEGA:    { bot: 0.00, veh: 1.226, dino: 1.405 },
     QUICKSHADOW:      { bot: 0.72, veh: 0.37, dino: 0.82, boat: 0.25 },
-    QUICKSHADOW_MEGA: { bot: 0.72, veh: 0.37, dino: 0.82, boat: 0.25 }
+    QUICKSHADOW_MEGA: { bot: 0.72, veh: 0.37, dino: 0.82, boat: 0.25 },
+    STARSPEED:        { bot: 0.72, veh: 1.55, dino: 0.82, boat: 0.28 }
 };
 
 if (typeof window !== 'undefined') {
