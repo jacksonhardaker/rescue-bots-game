@@ -18,6 +18,8 @@ export const SATURN_TRACK_RADIUS = 240;
 export const SATURN_TRACK_HALF_WIDTH = 17.5;
 const NUM_GATES = 12;
 const TOTAL_LAPS = 3;
+const MAX_ROCKS_PER_SEGMENT = 4;
+const SEGMENT_ARC = (Math.PI * 2) / NUM_GATES;
 
 interface RingGate {
     angle: number;
@@ -27,8 +29,11 @@ interface RingGate {
 }
 
 interface IceMoonlet {
+    segmentIdx: number;
+    active: boolean;
     angle: number;
     radialOffset: number;
+    baseRadius: number;
     radius: number;
     mesh: THREE.Mesh;
     rotSpeed: number;
@@ -73,6 +78,7 @@ let _saturnBuilt = false;
 let _saturnPlanetMesh: THREE.Mesh | null = null;
 const _gates: RingGate[] = [];
 const _moonlets: IceMoonlet[] = [];
+const _segmentMoonlets: IceMoonlet[][] = [];
 const _rivals: RivalRacer[] = [];
 const _camGoal = new THREE.Vector3();
 const _lookGoal = new THREE.Vector3();
@@ -247,27 +253,100 @@ function buildSaturnRaceScene() {
         _gates.push({ angle: ang, group: g, archMat, passed: false });
     }
 
-    // Tumbling Ice-Moonlets scattered across lanes
+    // Pooled Tumbling Ice-Moonlets organized by Track Segment (12 segments x up to 4 rocks each)
     const iceMat = new THREE.MeshToonMaterial({ color: 0xbae6fd, gradientMap: toonGrad3 });
-    for (let i = 0; i < 26; i++) {
-        const ang = ((i + 0.5) / 26) * Math.PI * 2;
-        // Keep start line clear
-        if (ang < 0.22 || ang > Math.PI * 2 - 0.22) continue;
-        const radialOffset = ((i % 3) - 1) * 10.5;
-        const rad = 2.0 + (i % 3) * 0.65;
-        const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(rad, 0), iceMat);
-        const r = SATURN_TRACK_RADIUS + radialOffset;
-        mesh.position.set(Math.cos(ang) * r, rad * 0.9, Math.sin(ang) * r);
-        applyCartoonInkOutlines(mesh, 1.05, true);
-        saturnRaceScene.add(mesh);
-        _moonlets.push({
-            angle: ang,
-            radialOffset,
-            radius: rad,
-            mesh,
-            rotSpeed: (i % 2 === 0 ? 1 : -1) * (1.2 + (i % 4) * 0.35),
-            hitCooldown: 0
-        });
+    _segmentMoonlets.length = 0;
+    _moonlets.length = 0;
+    for (let seg = 0; seg < NUM_GATES; seg++) {
+        const segPool: IceMoonlet[] = [];
+        for (let slot = 0; slot < MAX_ROCKS_PER_SEGMENT; slot++) {
+            const baseRadius = 2.35;
+            const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(baseRadius, 0), iceMat);
+            applyCartoonInkOutlines(mesh, 1.05, true);
+            mesh.visible = false;
+            saturnRaceScene.add(mesh);
+            const item: IceMoonlet = {
+                segmentIdx: seg,
+                active: false,
+                angle: 0,
+                radialOffset: 0,
+                baseRadius,
+                radius: baseRadius,
+                mesh,
+                rotSpeed: ((seg + slot) % 2 === 0 ? 1 : -1) * (1.2 + ((seg + slot) % 4) * 0.35),
+                hitCooldown: 0
+            };
+            segPool.push(item);
+            _moonlets.push(item);
+        }
+        _segmentMoonlets.push(segPool);
+    }
+    regenerateAllSaturnSegments();
+}
+
+export function regenerateSegmentObstacles(segIdx: number, forceCount?: number): number {
+    const normalizedSeg = ((segIdx % NUM_GATES) + NUM_GATES) % NUM_GATES;
+    const pool = _segmentMoonlets[normalizedSeg];
+    if (!pool) return 0;
+
+    const count = forceCount !== undefined
+        ? Math.max(0, Math.min(MAX_ROCKS_PER_SEGMENT, forceCount))
+        : Math.floor(Math.random() * (MAX_ROCKS_PER_SEGMENT + 1)); // 0..4 obstacles
+
+    const segStart = normalizedSeg * SEGMENT_ARC;
+    const maxOffset = SATURN_TRACK_HALF_WIDTH - 4.0;
+    const placed: Array<{ x: number; z: number }> = [];
+
+    for (let slot = 0; slot < pool.length; slot++) {
+        const m = pool[slot];
+        if (slot >= count) {
+            m.active = false;
+            m.hitCooldown = 0;
+            m.mesh.visible = false;
+            continue;
+        }
+
+        const scale = 0.82 + Math.random() * 0.44;
+        const rad = m.baseRadius * scale;
+        let ang = segStart + (0.2 + Math.random() * 0.6) * SEGMENT_ARC;
+        let radialOffset = (Math.random() * 2 - 1) * maxOffset;
+        let wx = Math.cos(ang) * (SATURN_TRACK_RADIUS + radialOffset);
+        let wz = Math.sin(ang) * (SATURN_TRACK_RADIUS + radialOffset);
+
+        // Ensure minimum clearance from other rocks in this segment so there's always a passable line
+        for (let attempt = 0; attempt < 10; attempt++) {
+            const candAng = segStart + (0.18 + Math.random() * 0.64) * SEGMENT_ARC;
+            const candOff = (Math.random() * 2 - 1) * maxOffset;
+            const candR = SATURN_TRACK_RADIUS + candOff;
+            const cx = Math.cos(candAng) * candR;
+            const cz = Math.sin(candAng) * candR;
+            const tooClose = placed.some(p => Math.hypot(cx - p.x, cz - p.z) < 9.5);
+            if (!tooClose) {
+                ang = candAng;
+                radialOffset = candOff;
+                wx = cx;
+                wz = cz;
+                break;
+            }
+        }
+        placed.push({ x: wx, z: wz });
+
+        m.active = true;
+        m.hitCooldown = 0;
+        m.angle = ang;
+        m.radialOffset = radialOffset;
+        m.radius = rad;
+        m.mesh.scale.setScalar(scale);
+        m.mesh.position.set(wx, rad * 0.9, wz);
+        m.mesh.visible = true;
+    }
+    return count;
+}
+
+function regenerateAllSaturnSegments() {
+    for (let seg = 0; seg < NUM_GATES; seg++) {
+        // Keep segment 0 (right after start line) clear for a clean launch
+        regenerateSegmentObstacles(seg, seg === 0 ? 0 : undefined);
     }
 }
 
@@ -347,6 +426,7 @@ export function resetSaturnRace() {
     saturnRaceState.touchSteer = 0;
     saturnRaceState.touchBoost = false;
     saturnRaceState.bestLapTime = typeof progression.saturnBestLapSec === 'number' ? progression.saturnBestLapSec : null;
+    regenerateAllSaturnSegments();
     spawnSaturnRivals();
     updateSaturnRaceHUD();
 }
@@ -602,6 +682,12 @@ export function updateSaturnRace(dt: number, now: number) {
                 spawnBurstParticles(wx, 3.2, wz, 0xfacc15, 10, 0.9);
                 saturnRaceState.nextGateIdx = (saturnRaceState.nextGateIdx + 1) % NUM_GATES;
 
+                // Passing Gate `i` completes segment `(i - 1 + NUM_GATES) % NUM_GATES`.
+                // Regenerate obstacles TWO (2) segments behind the completed segment (safely behind the camera)!
+                const completedSeg = (i - 1 + NUM_GATES) % NUM_GATES;
+                const regenSeg = (completedSeg - 2 + NUM_GATES) % NUM_GATES;
+                regenerateSegmentObstacles(regenSeg);
+
                 // Completed a full lap when passing Gate 0!
                 if (i === 0) {
                     const lapTime = saturnRaceState.currentLapTime;
@@ -635,11 +721,12 @@ export function updateSaturnRace(dt: number, now: number) {
     // Check Ice-Moonlets
     for (let i = 0; i < _moonlets.length; i++) {
         const m = _moonlets[i];
+        if (!m.active) continue;
         m.mesh.rotation.x += dt * m.rotSpeed;
         m.mesh.rotation.y += dt * m.rotSpeed * 0.7;
         if (m.hitCooldown > 0) {
             m.hitCooldown -= dt;
-            if (m.hitCooldown <= 0) m.mesh.visible = true;
+            if (m.hitCooldown <= 0 && m.active) m.mesh.visible = true;
             continue;
         }
         const dist = player.pos.distanceTo(m.mesh.position);
@@ -684,7 +771,8 @@ export function getSaturnRaceMapData() {
         radialOffset: saturnRaceState.radialOffset,
         nextGateIdx: saturnRaceState.nextGateIdx,
         gates: _gates,
-        rivals: _rivals.map(r => ({ angle: r.angle, colorHex: r.colorHex, botType: r.botType }))
+        rivals: _rivals.map(r => ({ angle: r.angle, colorHex: r.colorHex, botType: r.botType })),
+        segmentRockCounts: _segmentMoonlets.map(pool => pool.filter(m => m.active).length)
     };
 }
 
@@ -694,6 +782,7 @@ if (typeof window !== 'undefined') {
         saturnRaceState,
         swapToSaturnRace,
         resetSaturnRace,
+        regenerateSegmentObstacles,
         setSaturnRaceTouch,
         triggerSaturnRaceBoost,
         getSaturnRaceMapData
