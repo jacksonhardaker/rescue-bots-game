@@ -500,7 +500,7 @@ function buildMoonWorld() {
     const caveY = getMoonSurfaceHeight(MOON_CAVE_POS.x, MOON_CAVE_POS.z);
     const moonCaveMesh = buildSurfaceCaveEntranceMesh(0x64748b, 0x38bdf8, false);
     moonCaveMesh.position.set(MOON_CAVE_POS.x, caveY, MOON_CAVE_POS.z);
-    moonCaveMesh.rotation.y = Math.PI * 0.28;
+    moonCaveMesh.rotation.y = Math.atan2(-MOON_CAVE_POS.x, -MOON_CAVE_POS.z); // Faces directly toward central landing zone!
     moonScene.add(moonCaveMesh);
     _moonColliders.push({ x: MOON_CAVE_POS.x - 5.2, z: MOON_CAVE_POS.z - 3.2, r: 2.8 });
     _moonColliders.push({ x: MOON_CAVE_POS.x + 2.6, z: MOON_CAVE_POS.z - 5.2, r: 2.8 });

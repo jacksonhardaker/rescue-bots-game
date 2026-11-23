@@ -595,54 +595,54 @@ export function buildSurfaceCaveEntranceMesh(rockColor: number, accentColor: num
         transparent: isIce,
         opacity: isIce ? 0.92 : 1.0
     });
-    const matDarkTunnel = new THREE.MeshBasicMaterial({ color: 0x04060d });
+    const matDarkTunnel = new THREE.MeshBasicMaterial({ color: 0x010205 });
     const matLanternGlow = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
     const matCrystal = new THREE.MeshBasicMaterial({ color: accentColor });
 
-    // Rugged hillside mound behind the cave mouth
-    const hillMound = new THREE.Mesh(new THREE.DodecahedronGeometry(9.2, 1), matRock);
-    hillMound.scale.set(1.35, 0.92, 1.05);
-    hillMound.position.set(0, 3.4, -5.8);
+    // Rugged hillside mound behind the cave mouth (kept well behind z = -1.6 so the black mouth is never occluded!)
+    const hillMound = new THREE.Mesh(new THREE.DodecahedronGeometry(9.0, 1), matRock);
+    hillMound.scale.set(1.42, 0.96, 0.72);
+    hillMound.position.set(0, 3.8, -8.2);
     g.add(hillMound);
 
-    // Side rock/ice arch pillars
-    [-4.8, 4.8].forEach((px, idx) => {
-        const pillar = new THREE.Mesh(new THREE.DodecahedronGeometry(2.8, 0), matRock);
-        pillar.scale.set(0.9, 1.85, 1.25);
-        pillar.position.set(px, 2.5, 0.2);
+    // Side rock/ice arch pillars flanking the wide dark cave opening
+    [-5.3, 5.3].forEach((px, idx) => {
+        const pillar = new THREE.Mesh(new THREE.DodecahedronGeometry(2.7, 0), matRock);
+        pillar.scale.set(0.88, 1.95, 1.15);
+        pillar.position.set(px, 2.8, 0.4);
         pillar.rotation.y = idx === 0 ? 0.35 : -0.35;
         g.add(pillar);
     });
 
-    // Keystone boulders forming the cave arch lintel
+    // Keystone boulders forming the cave arch lintel above the dark mouth
     [
-        { x: -3.0, y: 5.5, r: 2.2 },
-        { x: 0, y: 6.4, r: 2.5 },
-        { x: 3.0, y: 5.5, r: 2.2 }
+        { x: -3.2, y: 6.3, r: 2.1 },
+        { x: 0, y: 7.2, r: 2.4 },
+        { x: 3.2, y: 6.3, r: 2.1 }
     ].forEach(b => {
         const cap = new THREE.Mesh(new THREE.DodecahedronGeometry(b.r, 0), matRock);
-        cap.scale.set(1.25, 0.85, 1.15);
-        cap.position.set(b.x, b.y, 0.4);
+        cap.scale.set(1.25, 0.85, 1.1);
+        cap.position.set(b.x, b.y, 0.5);
         g.add(cap);
     });
 
-    // Deep dark recessed tunnel mouth
-    const tunnelBox = new THREE.Mesh(new THREE.BoxGeometry(6.6, 5.2, 6.8), matDarkTunnel);
-    tunnelBox.position.set(0, 2.5, -2.1);
+    // Deep pitch-black cave mouth (tall, wide & unobscured from the front!)
+    const tunnelBox = new THREE.Mesh(new THREE.BoxGeometry(7.6, 5.8, 5.2), matDarkTunnel);
+    tunnelBox.position.set(0, 2.8, -1.35);
     tunnelBox.userData.noOutline = true;
     const tunnelArch = new THREE.Mesh(
-        new THREE.CylinderGeometry(3.3, 3.3, 6.8, 14, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2),
+        new THREE.CylinderGeometry(3.8, 3.8, 5.2, 16, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2),
         matDarkTunnel
     );
-    tunnelArch.position.set(0, 4.6, -2.1);
+    tunnelArch.position.set(0, 5.0, -1.35);
     tunnelArch.userData.noOutline = true;
     g.add(tunnelBox, tunnelArch);
 
     // Hanging stalactites along top cave lip
-    [-2.1, -0.7, 0.8, 2.2].forEach((sx, idx) => {
-        const len = 1.2 + (idx % 2) * 0.55;
+    [-2.4, -0.8, 0.8, 2.4].forEach((sx, idx) => {
+        const len = 1.25 + (idx % 2) * 0.55;
         const stal = new THREE.Mesh(new THREE.ConeGeometry(0.38, len, 5).rotateX(Math.PI), matRock);
-        stal.position.set(sx, 5.15 - len * 0.4, 1.15);
+        stal.position.set(sx, 5.75 - len * 0.4, 1.35);
         g.add(stal);
     });
 
@@ -1036,7 +1036,7 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
     const isIceCave = cfg.id === 'EUROPA' || cfg.id === 'TRITON' || cfg.id === 'MIRANDA' || cfg.id === 'TITANIA' || cfg.id === 'PLUTO';
     const caveMesh = buildSurfaceCaveEntranceMesh(cfg.rockColor, cfg.relicColor, isIceCave);
     caveMesh.position.set(PLANET_CAVE_POS.x, caveY, PLANET_CAVE_POS.z);
-    caveMesh.rotation.y = -Math.PI * 0.25; // Faces inward toward landing pad
+    caveMesh.rotation.y = Math.atan2(-PLANET_CAVE_POS.x, -PLANET_CAVE_POS.z); // Faces directly toward central landing zone!
     _worldGroup.add(caveMesh);
     // Solid rock flank colliders around cave pillars while leaving the tunnel mouth open!
     _planetColliders.push({ x: PLANET_CAVE_POS.x - 5.2, z: PLANET_CAVE_POS.z - 3.0, r: 2.8 });
