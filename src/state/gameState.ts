@@ -71,15 +71,19 @@ export const worldState: WorldState = {
     savedSurfaceHeading: 0,
     savedUndergroundPos: new THREE.Vector3(0, 1.0, 6),
     savedUndergroundHeading: 0,
+    savedPlanetPos: new THREE.Vector3(0, 6.5, 6),
+    savedPlanetHeading: 0,
     hasVisitedUnderground: false,
     nearExitShaft: false,
     nearSigmaShip: false,
     sigmaActionMode: '', // '' | 'NEED_PARTS' | 'INSTALL_PART' | 'LAUNCH'
     nearMoonLanding: false,
-    nearLandableMoonId: '' as string, // '' | 'MOON' | 'EUROPA' | 'MIRANDA' | 'TRITON'
+    nearLandableMoonId: '' as string, // '' | 'MOON' | 'EUROPA' | 'IO' | 'GANYMEDE' | 'TITAN' | 'MIRANDA' | 'TITANIA' | 'TRITON'
     nearMoonSigma: false,
     nearMoonFlag: false,
     nearPlanetSigma: false,
+    nearPlanetCaveEntrance: false,
+    nearPlanetCavernExit: false,
     drillAnim: {
         active: false,
         direction: 'DOWN', // 'DOWN' | 'UP'

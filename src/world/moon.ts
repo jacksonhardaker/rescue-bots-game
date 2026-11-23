@@ -11,14 +11,16 @@ import { progression, saveProgression } from '../progression/progression.js';
 import { setMoonTerrainHooks } from './terrain.js';
 import { setActiveParticleScene, spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
 import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
+import { buildSurfaceCaveEntranceMesh } from './planetSurface.js';
 import { sfx } from '../audio/soundFX.js';
 import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 import { SVG_ICONS } from '../ui/icons.js';
 
 export const moonScene = new THREE.Scene();
-export const MOON_WORLD_RADIUS = 185;
+export const MOON_WORLD_RADIUS = 360;
 export const MOON_SIGMA_POS = { x: 0, z: -28 };
 export const MOON_FLAG_POS = { x: 20, z: 6 };
+export const MOON_CAVE_POS = { x: -56, z: 22 };
 
 interface CraterDef {
     x: number;
@@ -29,13 +31,15 @@ interface CraterDef {
 }
 
 const MOON_CRATERS: CraterDef[] = [
-    { x: -68, z: -56, r: 28, depth: 3.4, rim: 2.1 },
-    { x: 76, z: -64, r: 32, depth: 3.8, rim: 2.4 },
-    { x: -82, z: 64, r: 34, depth: 4.0, rim: 2.5 },
-    { x: 64, z: 78, r: 26, depth: 3.2, rim: 2.0 },
-    { x: 0, z: 112, r: 30, depth: 3.6, rim: 2.2 },
-    { x: -124, z: -4, r: 22, depth: 2.6, rim: 1.7 },
-    { x: 126, z: 12, r: 24, depth: 2.8, rim: 1.8 }
+    { x: -108, z: -96, r: 36, depth: 3.8, rim: 2.3 },
+    { x: 126, z: -104, r: 42, depth: 4.2, rim: 2.6 },
+    { x: -134, z: 108, r: 44, depth: 4.4, rim: 2.8 },
+    { x: 118, z: 128, r: 36, depth: 3.6, rim: 2.2 },
+    { x: 0, z: 208, r: 46, depth: 4.5, rim: 2.8 },
+    { x: -210, z: -12, r: 34, depth: 3.2, rim: 2.0 },
+    { x: 214, z: 24, r: 38, depth: 3.6, rim: 2.2 },
+    { x: -22, z: -195, r: 38, depth: 3.6, rim: 2.2 },
+    { x: 220, z: -175, r: 32, depth: 3.2, rim: 2.0 }
 ];
 
 export interface MoonRelicDef {
@@ -46,18 +50,20 @@ export interface MoonRelicDef {
 }
 
 export const MOON_RELIC_DEFS: MoonRelicDef[] = [
-    { id: 'TYCHO_CRYSTAL', name: 'Tycho Energon Shard', x: -68, z: -56 },
-    { id: 'TRANQUILITY_CORE', name: 'Tranquility Star Core', x: 76, z: -64 },
-    { id: 'LUNAR_CREST', name: 'Cybertronian Lunar Crest', x: -82, z: 64 },
-    { id: 'ORBITAL_PRISM', name: 'Moonbeam Energon Prism', x: 64, z: 78 },
-    { id: 'POLAR_BEACON', name: 'South Rim Star Relic', x: 0, z: 112 }
+    { id: 'TYCHO_CRYSTAL', name: 'Tycho Energon Shard', x: -108, z: -96 },
+    { id: 'TRANQUILITY_CORE', name: 'Tranquility Star Core', x: 126, z: -104 },
+    { id: 'LUNAR_CREST', name: 'Cybertronian Lunar Crest', x: -134, z: 108 },
+    { id: 'ORBITAL_PRISM', name: 'Moonbeam Energon Prism', x: 118, z: 128 },
+    { id: 'POLAR_BEACON', name: 'South Rim Star Relic', x: 0, z: 208 }
 ];
 
 const MOON_JUMP_PADS = [
-    { x: -34, z: -18 },
-    { x: 42, z: -34 },
-    { x: -42, z: 42 },
-    { x: 36, z: 48 }
+    { x: -42, z: -22 },
+    { x: 58, z: -44 },
+    { x: -64, z: 72 },
+    { x: 54, z: 76 },
+    { x: -156, z: -20 },
+    { x: 160, z: 18 }
 ];
 
 interface MoonRelicRuntime extends MoonRelicDef {
@@ -86,18 +92,32 @@ interface MoonHoopRuntime {
 }
 
 const MOON_HOOP_COORDS = [
-    { x: -34, z: -18, h: 12 },
-    { x: 42, z: -34, h: 12 },
-    { x: -42, z: 42, h: 12 },
-    { x: 36, z: 48, h: 12 },
-    { x: -68, z: -38, h: 10 },
-    { x: 76, z: -46, h: 10 }
+    { x: -42, z: -22, h: 12 },
+    { x: 58, z: -44, h: 12 },
+    { x: -64, z: 72, h: 12 },
+    { x: 54, z: 76, h: 12 },
+    { x: -108, z: -64, h: 10 },
+    { x: 126, z: -68, h: 10 },
+    { x: -156, z: -20, h: 12 },
+    { x: 160, z: 18, h: 12 },
+    { x: -72, z: 160, h: 10 },
+    { x: 72, z: 165, h: 10 }
 ];
+
+interface MoonMonolith {
+    id: string;
+    name: string;
+    x: number;
+    z: number;
+    beaconMat: THREE.MeshBasicMaterial;
+    scanned: boolean;
+}
 
 const _moonAnimated: Array<{ obj: THREE.Object3D; kind: string; baseY: number; phase: number }> = [];
 const _moonRelics: MoonRelicRuntime[] = [];
 const _moonRocks: MoonRockRuntime[] = [];
 const _moonHoops: MoonHoopRuntime[] = [];
+const _moonMonoliths: MoonMonolith[] = [];
 const _moonColliders: Array<{ x: number; z: number; r: number }> = [];
 let _moonBuilt = false;
 let _moonSigmaRoot: THREE.Group | null = null;
@@ -109,6 +129,23 @@ const _moonRoverPos = new THREE.Vector3(18, 6, -16);
 let _inLunarRover = false;
 let _roverToggleCooldown = 0;
 let _moonJumpCooldown = 0;
+let _moonCaveCooldown = 0;
+let _moonCaveEnterHandler: (() => void) | null = null;
+
+export function setMoonCaveEnterHandler(fn: () => void) {
+    _moonCaveEnterHandler = fn;
+}
+
+export function setMoonCaveCooldown(sec = 2.0) {
+    _moonCaveCooldown = Math.max(_moonCaveCooldown, sec);
+}
+
+export function enterMoonCave() {
+    if (_moonCaveEnterHandler && _moonCaveCooldown <= 0) {
+        _moonCaveCooldown = 2.0;
+        _moonCaveEnterHandler();
+    }
+}
 
 export function buildLunarOutpostMesh() {
     const outpostGroup = new THREE.Group();
@@ -459,15 +496,51 @@ function buildMoonWorld() {
         _moonAnimated.push({ obj: chev, kind: 'SPIN_PULSE', baseY: 1.4, phase: idx * 1.1 });
     });
 
+    // Modeled 3D Lunar Cave Entrance (Basalt Arch Tunnel into Tranquility Caverns)
+    const caveY = getMoonSurfaceHeight(MOON_CAVE_POS.x, MOON_CAVE_POS.z);
+    const moonCaveMesh = buildSurfaceCaveEntranceMesh(0x64748b, 0x38bdf8, false);
+    moonCaveMesh.position.set(MOON_CAVE_POS.x, caveY, MOON_CAVE_POS.z);
+    moonCaveMesh.rotation.y = Math.PI * 0.28;
+    moonScene.add(moonCaveMesh);
+    _moonColliders.push({ x: MOON_CAVE_POS.x - 5.2, z: MOON_CAVE_POS.z - 3.2, r: 2.8 });
+    _moonColliders.push({ x: MOON_CAVE_POS.x + 2.6, z: MOON_CAVE_POS.z - 5.2, r: 2.8 });
+
+    // 2 Scanable Lunar Monoliths
+    _moonMonoliths.length = 0;
+    const scannedMono: string[] = Array.isArray(progression.planetMonolithsScanned) ? progression.planetMonolithsScanned : [];
+    [
+        { id: 'MOON_MONO_1', name: 'Apollo-Sigma Tranquility Plaque', x: -116, z: -26 },
+        { id: 'MOON_MONO_2', name: 'Cybertronian Lunar Obelisk', x: 124, z: 74 }
+    ].forEach(mc => {
+        const my = getMoonSurfaceHeight(mc.x, mc.z);
+        const mg = new THREE.Group();
+        mg.position.set(mc.x, my, mc.z);
+        const plinth = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.8, 0.8, 8), matDarkSteel);
+        plinth.position.y = 0.4;
+        const obelisk = new THREE.Mesh(new THREE.BoxGeometry(2.2, 10.5, 1.4), matDarkSteel);
+        obelisk.position.y = 5.6;
+        const already = scannedMono.includes(mc.id);
+        const beaconMat = new THREE.MeshBasicMaterial({ color: already ? 0x4ade80 : 0x38bdf8 });
+        const glyph = new THREE.Mesh(new THREE.BoxGeometry(0.45, 7.2, 1.56), beaconMat);
+        glyph.position.y = 5.4;
+        glyph.userData.noOutline = true;
+        mg.add(plinth, obelisk, glyph);
+        applyCartoonInkOutlines(obelisk, 1.03, true);
+        moonScene.add(mg);
+        _moonColliders.push({ x: mc.x, z: mc.z, r: 2.6 });
+        _moonMonoliths.push({ id: mc.id, name: mc.name, x: mc.x, z: mc.z, beaconMat, scanned: already });
+    });
+
     // Scattered Lunar Boulders & Glowing Crystal Clusters (solid colliders, destroyable by Boulder!)
     _moonRocks.length = 0;
     const matMoonRock = new THREE.MeshToonMaterial({ color: 0x64748b, gradientMap: toonGrad3 });
     const matMoonCrystal = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
-    for (let i = 0; i < 42; i++) {
-        const ang = (i / 42) * Math.PI * 2 + (i % 3) * 0.2;
-        const dist = 46 + ((i * 29) % 120);
+    for (let i = 0; i < 68; i++) {
+        const ang = (i / 68) * Math.PI * 2 + (i % 3) * 0.2;
+        const dist = 62 + ((i * 43) % 250);
         const rx = Math.cos(ang) * dist;
         const rz = Math.sin(ang) * dist;
+        if (Math.hypot(rx - MOON_CAVE_POS.x, rz - MOON_CAVE_POS.z) < 16) continue;
         const ry = getMoonSurfaceHeight(rx, rz);
         const rad = 1.4 + (i % 4) * 0.7;
         const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(rad, 0), matMoonRock);
@@ -848,6 +921,36 @@ export function updateMoon(dt: number, now: number) {
         }
     }
 
+    // Modeled 3D Lunar Cave Entrance Check
+    if (_moonCaveCooldown > 0) _moonCaveCooldown -= dt;
+    const distCave = Math.hypot(player.pos.x - MOON_CAVE_POS.x, player.pos.z - MOON_CAVE_POS.z);
+    worldState.nearPlanetCaveEntrance = distCave < 14.0;
+    if (_moonCaveCooldown <= 0 && distCave < 5.6 && _moonCaveEnterHandler) {
+        _moonCaveCooldown = 2.2;
+        _moonCaveEnterHandler();
+        return;
+    }
+
+    // Scanable Lunar Monoliths
+    for (let i = 0; i < _moonMonoliths.length; i++) {
+        const m = _moonMonoliths[i];
+        if (m.scanned) continue;
+        if (Math.hypot(player.pos.x - m.x, player.pos.z - m.z) < 9.5) {
+            m.scanned = true;
+            m.beaconMat.color.setHex(0x4ade80);
+            if (!Array.isArray(progression.planetMonolithsScanned)) progression.planetMonolithsScanned = [];
+            if (!progression.planetMonolithsScanned.includes(m.id)) {
+                progression.planetMonolithsScanned.push(m.id);
+                progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 4;
+                saveProgression({ immediate: true });
+            }
+            sfx.playCavernDiscovery();
+            spawnSparkleGlints(m.x, player.pos.y + 4, m.z, 20);
+            showToast('LUNAR MONOLITH SCANNED!', `${m.name} logged in Galactic Passport! +4 Energon!`);
+            triggerNPCSpeech('CHASE', 'Recon Specialist', `Lunar scan complete! ${m.name} archived in our Galactic Log!`, player as unknown as SpeechTarget, true);
+        }
+    }
+
     // Proximity to Parked Sigma for Launch-to-Orbit highlight
     const distSigma = Math.hypot(player.pos.x - MOON_SIGMA_POS.x, player.pos.z - MOON_SIGMA_POS.z);
     worldState.nearMoonSigma = distSigma < 28.0;
@@ -907,10 +1010,12 @@ export function getMoonMapData() {
         radius: MOON_WORLD_RADIUS,
         craters: MOON_CRATERS,
         sigmaPos: MOON_SIGMA_POS,
+        cavePos: MOON_CAVE_POS,
         flagPos: MOON_FLAG_POS,
         roverPos: _moonRoverPos,
         hoops: _moonHoops,
         relics: _moonRelics,
+        monoliths: _moonMonoliths,
         jumpPads: MOON_JUMP_PADS
     };
 }
@@ -932,6 +1037,7 @@ if (typeof window !== 'undefined') {
         getMoonSurfaceHeight,
         getMoonMapData,
         checkMoonBoulderStrike,
+        enterMoonCave,
         getMoonRocks: () => _moonRocks
     });
 }

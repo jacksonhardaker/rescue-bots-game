@@ -23,6 +23,7 @@ export type ActiveArea =
     | 'SPACE'
     | 'MOON'
     | 'PLANET_SURFACE'
+    | 'PLANET_CAVERN'
     | 'SATURN_RING_RACE';
 
 export interface HiddenVehicleModeConfig {
@@ -250,6 +251,8 @@ export interface WorldState {
     savedSurfaceHeading: number;
     savedUndergroundPos: THREE.Vector3;
     savedUndergroundHeading: number;
+    savedPlanetPos: THREE.Vector3;
+    savedPlanetHeading: number;
     hasVisitedUnderground: boolean;
     nearExitShaft: boolean;
     nearSigmaShip: boolean;
@@ -259,6 +262,8 @@ export interface WorldState {
     nearMoonSigma: boolean;
     nearMoonFlag: boolean;
     nearPlanetSigma: boolean;
+    nearPlanetCaveEntrance: boolean;
+    nearPlanetCavernExit: boolean;
     drillAnim: DrillAnimState;
     spaceLaunch: SpaceLaunchState;
 }

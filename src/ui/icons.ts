@@ -600,6 +600,37 @@ export const SVG_ICONS: Record<string, string> = {
                 <circle cx="15" cy="17" r="9.8" fill="#d6d3d1" stroke="#0f172a" stroke-width="1.7"/>
                 <path d="M15 19.5c-1.8-1.5-3.2-2.7-3.2-4.2a2.2 2.2 0 014.2-.8 2.2 2.2 0 014.2.8c0 1.5-1.4 2.7-3.2 4.2l-1 .8-1-.8z" fill="#f8fafc" stroke="#94a3b8" stroke-width="0.9"/>
                 <circle cx="25.5" cy="8.5" r="3" fill="#94a3b8" stroke="#0f172a" stroke-width="1.3"/>
+            </svg>`,
+            PLANET_TITAN: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="11" fill="#f59e0b" stroke="#0f172a" stroke-width="1.8"/>
+                <circle cx="16" cy="16" r="9" stroke="#fde68a" stroke-width="1.6" stroke-dasharray="4 3"/>
+                <path d="M8 14.5c4.5 1.2 11.5 1.2 16 0" stroke="#b45309" stroke-width="2" stroke-linecap="round"/>
+                <path d="M9.5 19c4 1 9 1 13 0" stroke="#fef08a" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>`,
+            CAVE_ENTRANCE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 26L8 12L16 6L24 12L28 26H4Z" fill="#475569" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M10 26V17C10 13.5 12.5 11.5 16 11.5C19.5 11.5 22 13.5 22 17V26H10Z" fill="#090d16" stroke="#1e293b" stroke-width="1.4"/>
+                <path d="M12.5 13L14 16.5L15.5 13" fill="#94a3b8"/>
+                <path d="M17.5 13L19 16L20.5 13" fill="#94a3b8"/>
+                <circle cx="8" cy="20" r="1.8" fill="#fbbf24"/>
+                <circle cx="24" cy="20" r="1.8" fill="#fbbf24"/>
+            </svg>`,
+            MONOLITH: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 27L13 5H19L21 27H11Z" fill="#334155" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M16 9V23" stroke="#22d3ee" stroke-width="2.2" stroke-linecap="round"/>
+                <circle cx="16" cy="13" r="2" fill="#fde047"/>
+                <path d="M6 27H26" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+            </svg>`,
+            WATER_BUOY: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 22L13 9H19L22 22H10Z" fill="#38bdf8" stroke="#0f172a" stroke-width="1.6" stroke-linejoin="round"/>
+                <circle cx="16" cy="7" r="2.2" fill="#fde047" stroke="#0f172a" stroke-width="1.2"/>
+                <path d="M4 24c3-2 6-2 9 0s6 2 9 0 5-2 6 0" stroke="#7dd3fc" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>`,
+            COMET: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 8L18 14L14 18L4 8Z" fill="#38bdf8" fill-opacity="0.7"/>
+                <path d="M7 5L20 12L17 15L7 5Z" fill="#fde047" fill-opacity="0.75"/>
+                <circle cx="21" cy="19" r="6" fill="#22d3ee" stroke="#0f172a" stroke-width="1.7"/>
+                <circle cx="22.5" cy="17.5" r="2" fill="#f8fafc"/>
             </svg>`
         };
 

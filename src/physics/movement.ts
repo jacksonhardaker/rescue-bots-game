@@ -1,7 +1,7 @@
 // Vehicle & Bot Physics, Collision, Helicopter Flight & Waypoint Autopilot
 import * as THREE from 'three';
 import { scene } from '../rendering/scene.js';
-import { getTerrainHeight, getSurfaceHeight, isPointInWater, isNearWater, isPointOnRoad, getZoneName } from '../world/terrain.js';
+import { getTerrainHeight, getSurfaceHeight, isPointInWater, isNearWater, isPointOnRoad, getZoneName, getWaterSurfaceY } from '../world/terrain.js';
 import { player, buddyBot, botRigs, input, ramps, stateHolder, worldColliders, queryNearbyColliders, worldState } from '../state/gameState.js';
 import {
     resolveUndergroundCollisions, getUndergroundCameraClamp,
@@ -10,6 +10,7 @@ import {
 import { resolveMoonCollisions, checkMoonBoulderStrike } from '../world/moon.js';
 import { setSpaceDestinationFromScreenPoint } from '../world/space.js';
 import { getActivePlanetGravity, resolvePlanetSurfaceCollisions } from '../world/planetSurface.js';
+import { resolvePlanetCavernCollisions } from '../world/planetCaverns.js';
 import { handleSolarHubClick } from '../world/solarSystem.js';
 import { setSaturnRaceTouch } from '../world/saturnRace.js';
 import { sfx } from '../audio/soundFX.js';
@@ -342,18 +343,19 @@ waypointGroup.add(wpArrowCone);
             const hitPoint = intersectRayWithTerrain(raycaster.ray, _rayHitPoint);
             if (!hitPoint) return;
 
-            const isUndergroundTap = worldState.activeArea === 'UNDERGROUND';
+            const isUndergroundTap = worldState.activeArea === 'UNDERGROUND' || worldState.activeArea === 'PLANET_CAVERN';
             const isPlanetTap = worldState.activeArea === 'PLANET_SURFACE' || worldState.activeArea === 'MOON';
             const r = Math.hypot(hitPoint.x, hitPoint.z);
 
             if (isUndergroundTap) {
-                hitPoint.x = Math.max(-228, Math.min(228, hitPoint.x));
-                hitPoint.z = Math.max(-228, Math.min(228, hitPoint.z));
-                if (playChime) {
+                const maxUg = worldState.activeArea === 'PLANET_CAVERN' ? 132 : 228;
+                hitPoint.x = Math.max(-maxUg, Math.min(maxUg, hitPoint.x));
+                hitPoint.z = Math.max(-maxUg, Math.min(maxUg, hitPoint.z));
+                if (playChime && worldState.activeArea === 'UNDERGROUND') {
                     triggerNearbyDinoReaction(hitPoint.x, hitPoint.z);
                 }
             } else if (isPlanetTap) {
-                const maxPlanetR = worldState.activeArea === 'MOON' ? 175 : 165;
+                const maxPlanetR = worldState.activeArea === 'MOON' ? 350 : 330;
                 if (r > maxPlanetR) {
                     hitPoint.x = (hitPoint.x / r) * maxPlanetR;
                     hitPoint.z = (hitPoint.z / r) * maxPlanetR;
@@ -477,6 +479,8 @@ waypointGroup.add(wpArrowCone);
                 target.closest('#morbot-victory-modal') ||
                 target.closest('#tactical-map-modal') ||
                 target.closest('#cavern-exit-prompt') ||
+                target.closest('#cavern-enter-prompt') ||
+                target.closest('#planet-cavern-exit-prompt') ||
                 target.closest('#space-controls-bar') ||
                 target.closest('#solar-hub-ui') ||
                 target.closest('#galactic-log-modal') ||
@@ -864,7 +868,8 @@ waypointGroup.add(wpArrowCone);
                 const nextX = player.pos.x + Math.sin(player.heading) * player.speed * dt;
                 const nextZ = player.pos.z + Math.cos(player.heading) * player.speed * dt;
                 const nextGroundY = getSurfaceHeight(nextX, nextZ);
-                const nextIsWater = isPointInWater(nextX, nextZ) || nextGroundY < 0.25;
+                const waterBaseY = getWaterSurfaceY();
+                const nextIsWater = isPointInWater(nextX, nextZ) || nextGroundY < waterBaseY + 0.7;
 
                 const isAmphibiousVehicle = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE');
 
@@ -888,7 +893,7 @@ waypointGroup.add(wpArrowCone);
                     player.pos.x = Math.max(-2380, Math.min(2380, nextX));
                     player.pos.z = Math.max(-2380, Math.min(2380, nextZ));
 
-                    const enteringWater = nextIsWater || isPointInWater(player.pos.x, player.pos.z) || nextGroundY < 0.25;
+                    const enteringWater = nextIsWater || isPointInWater(player.pos.x, player.pos.z) || nextGroundY < waterBaseY + 0.7;
                     const meta = BOT_METADATA[player.botType];
                     const boatName = meta?.boatName || 'BOAT';
                     const vehName = meta?.vehName || 'VEHICLE';
@@ -1007,16 +1012,17 @@ waypointGroup.add(wpArrowCone);
                     }
                 }
             }
+            const waterBaseY = getWaterSurfaceY();
             const isBotFloatingInWater = (
                 (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
                 (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE')
-            ) && (isPointInWater(player.pos.x, player.pos.z) || centerGroundY < 0.25);
+            ) && (isPointInWater(player.pos.x, player.pos.z) || centerGroundY < waterBaseY + 0.7);
             if (isBotFloatingInWater) {
                 // High Tide and all Rescue Boat Modes cruise on the water surface with gentle marine swell bobbing
                 const subSwell = Math.sin(now * 0.003) * 0.12;
                 const waterTargetY = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE')
-                    ? (-0.28 + subSwell)
-                    : (-0.45 - (player.mode === 'DINO' ? 0.35 : 0.22) + subSwell);
+                    ? (waterBaseY + 0.17 + subSwell)
+                    : (waterBaseY - (player.mode === 'DINO' ? 0.35 : 0.22) + subSwell);
                 targetGroundY = Math.max(targetGroundY, waterTargetY);
             } else if (isVehicleOrDino && player.speed > 1.0 && noseY > frontY) {
                 // Moving forward towards an uphill slope: gently elevate front suspension to prevent bumper clipping
@@ -1066,6 +1072,8 @@ waypointGroup.add(wpArrowCone);
                 player.pos.x = Math.max(-228, Math.min(228, player.pos.x));
                 player.pos.z = Math.max(-228, Math.min(228, player.pos.z));
                 resolveUndergroundCollisions(player, dt, now);
+            } else if (worldState.activeArea === 'PLANET_CAVERN') {
+                resolvePlanetCavernCollisions(player.pos, 2.3, true);
             } else if (worldState.activeArea === 'MOON') {
                 resolveMoonCollisions(player.pos, 2.3, true);
             } else if (worldState.activeArea === 'PLANET_SURFACE') {

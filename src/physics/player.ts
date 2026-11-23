@@ -25,7 +25,7 @@ import { SVG_ICONS } from '../ui/icons.js';
 import { waypointGroup } from './movement.js';
 import { visitingAutobots } from '../world/allies.js';
 import { beacons } from '../world/emergencies.js';
-import { isNearWater, isPointInWater, getSurfaceHeight } from '../world/terrain.js';
+import { isNearWater, isPointInWater, getSurfaceHeight, getWaterSurfaceY } from '../world/terrain.js';
 import { spawnEnergonLightningParticles, spawnSparkleGlints } from '../world/emergencies.js';
 import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
@@ -973,9 +973,10 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             if (player.targetBoatMorph === undefined) player.targetBoatMorph = 0;
 
             // All bots in vehicle mode (except High Tide who is already oceanic) automatically update targetBoatMorph based on whether they're in water
-            const canHaveBoat = player.botType !== 'HIGHTIDE';
-            if (canHaveBoat && player.mode === 'VEHICLE') {
-                const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < 0.25;
+            const canHaveBoat = player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE';
+            const waterThresh = getWaterSurfaceY() + 0.7;
+            if (canHaveBoat) {
+                const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < waterThresh;
                 if (inWater && player.targetBoatMorph !== 1.0) {
                     player.targetBoatMorph = 1.0;
                     sfx.playTransform(true);
@@ -1017,7 +1018,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 buddyBot.targetDinoMorph = 0.0;
                 buddyBot.targetHiddenMorph = (player.mode === 'HIDDEN_VEHICLE' && Boolean(getBotHiddenVehicleMode(buddyBot.botType))) ? 1.0 : 0.0;
                 if (buddyBot.botType !== 'HIGHTIDE') {
-                    const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.25;
+                    const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < waterThresh;
                     buddyBot.targetBoatMorph = (buddyBot.targetHiddenMorph > 0.5) ? 0.0 : (buddyInWater ? 1.0 : 0.0);
                 } else {
                     buddyBot.targetBoatMorph = 0.0;
@@ -1027,7 +1028,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 buddyBot.targetDinoMorph = player.targetDinoMorph;
                 buddyBot.targetHiddenMorph = 0.0;
                 if (buddyBot.botType !== 'HIGHTIDE' && bExt.mode === 'VEHICLE') {
-                    const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.25;
+                    const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < waterThresh;
                     buddyBot.targetBoatMorph = buddyInWater ? 1.0 : 0.0;
                 } else {
                     buddyBot.targetBoatMorph = 0.0;
@@ -1187,7 +1188,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     sfx.playSpeechPop();
                     return;
                 }
-                const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < 0.25;
+                const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < getWaterSurfaceY() + 0.7;
                 player.mode = 'VEHICLE';
                 player.targetMorph = 1.0;
                 player.targetBoatMorph = (player.botType !== 'HIGHTIDE' && inWater) ? 1.0 : 0.0;

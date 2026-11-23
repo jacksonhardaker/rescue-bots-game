@@ -239,6 +239,15 @@ import type { RampItem } from "../types/game.js";
             isActive: () => boolean;
             getSurfaceHeight: (x: number, z: number) => number;
             getZoneName: (x: number, z: number) => string;
+            isPointInWater?: (x: number, z: number) => boolean;
+            getWaterLevel?: () => number;
+        } | null = null;
+        let _planetCavernHooks: {
+            isActive: () => boolean;
+            getSurfaceHeight: (x: number, z: number) => number;
+            getZoneName: (x: number, z: number) => string;
+            isPointInWater?: (x: number, z: number) => boolean;
+            getWaterLevel?: () => number;
         } | null = null;
 
         export function setUndergroundTerrainHooks(hooks: {
@@ -262,13 +271,28 @@ import type { RampItem } from "../types/game.js";
             isActive: () => boolean;
             getSurfaceHeight: (x: number, z: number) => number;
             getZoneName: (x: number, z: number) => string;
+            isPointInWater?: (x: number, z: number) => boolean;
+            getWaterLevel?: () => number;
         } | null) {
             _planetHooks = hooks;
+        }
+
+        export function setPlanetCavernTerrainHooks(hooks: {
+            isActive: () => boolean;
+            getSurfaceHeight: (x: number, z: number) => number;
+            getZoneName: (x: number, z: number) => string;
+            isPointInWater?: (x: number, z: number) => boolean;
+            getWaterLevel?: () => number;
+        } | null) {
+            _planetCavernHooks = hooks;
         }
 
         export function getSurfaceHeight(x: number, z: number): number {
             if (_ugHooks && _ugHooks.isActive()) {
                 return _ugHooks.getSurfaceHeight(x, z);
+            }
+            if (_planetCavernHooks && _planetCavernHooks.isActive()) {
+                return _planetCavernHooks.getSurfaceHeight(x, z);
             }
             if (_moonHooks && _moonHooks.isActive()) {
                 return _moonHooks.getSurfaceHeight(x, z);
@@ -432,12 +456,30 @@ import type { RampItem } from "../types/game.js";
             return false;
         }
 
+        export function getWaterSurfaceY(): number {
+            if (_ugHooks && _ugHooks.isActive()) {
+                return -0.25;
+            }
+            if (_planetCavernHooks && _planetCavernHooks.isActive() && _planetCavernHooks.getWaterLevel) {
+                return _planetCavernHooks.getWaterLevel();
+            }
+            if (_planetHooks && _planetHooks.isActive() && _planetHooks.getWaterLevel) {
+                return _planetHooks.getWaterLevel();
+            }
+            return -0.45;
+        }
+
         export function isPointInWater(x: number, z: number): boolean {
             if (_ugHooks && _ugHooks.isActive()) {
                 return _ugHooks.isPointInWater(x, z);
             }
+            if (_planetCavernHooks && _planetCavernHooks.isActive()) {
+                return _planetCavernHooks.isPointInWater ? _planetCavernHooks.isPointInWater(x, z) : false;
+            }
             if (_moonHooks && _moonHooks.isActive()) return false;
-            if (_planetHooks && _planetHooks.isActive()) return false;
+            if (_planetHooks && _planetHooks.isActive()) {
+                return _planetHooks.isPointInWater ? _planetHooks.isPointInWater(x, z) : false;
+            }
             const sh = getSurfaceHeight(x, z);
             const th = getTerrainHeight(x, z);
             // Water plane is at y = -0.45.
@@ -447,9 +489,14 @@ import type { RampItem } from "../types/game.js";
 
         export function isNearWater(x: number, z: number, radius = 22.0): boolean {
             if (isPointInWater(x, z)) return true;
+            const isOffWorld = Boolean(
+                (_planetHooks && _planetHooks.isActive()) ||
+                (_planetCavernHooks && _planetCavernHooks.isActive()) ||
+                (_ugHooks && _ugHooks.isActive())
+            );
             const curH = getSurfaceHeight(x, z);
-            // If on a high suspension bridge (Wayward bridge surface ~7.5), don't allow diving unless near the shoreline/harbor piers
-            if (curH > 4.5) return false;
+            // If on a high suspension bridge on Earth (Wayward bridge surface ~7.5), don't allow diving unless near the shoreline/harbor piers
+            if (!isOffWorld && curH > 4.5) return false;
             const steps = 12;
             const radSteps = 5;
             for (let r = 4.0; r <= radius; r += (radius - 4.0) / (radSteps - 1)) {
@@ -468,6 +515,9 @@ import type { RampItem } from "../types/game.js";
         export function getZoneName(x: number, z: number): string {
             if (_ugHooks && _ugHooks.isActive()) {
                 return _ugHooks.getZoneName(x, z);
+            }
+            if (_planetCavernHooks && _planetCavernHooks.isActive()) {
+                return _planetCavernHooks.getZoneName(x, z);
             }
             if (_moonHooks && _moonHooks.isActive()) {
                 return _moonHooks.getZoneName(x, z);

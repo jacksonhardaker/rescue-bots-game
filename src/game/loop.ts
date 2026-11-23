@@ -39,6 +39,7 @@ import { spaceScene, updateSpace, updateSpaceLaunchTransition } from '../world/s
 import { moonScene, updateMoon } from '../world/moon.js';
 import { solarHubScene, updateSolarHub } from '../world/solarSystem.js';
 import { planetSurfaceScene, updatePlanetSurface } from '../world/planetSurface.js';
+import { planetCavernScene, updatePlanetCavern } from '../world/planetCaverns.js';
 import { saturnRaceScene, updateSaturnRace } from '../world/saturnRace.js';
 import { updatePhysics, waypointGroup, wpOuterRing, wpArrowCone } from '../physics/movement.js';
 import { updateAllBotTransforms, speakBotCatchphrase, syncHUDToActiveBot } from '../physics/player.js';
@@ -317,11 +318,23 @@ function updateSpeechBubbleProjection(dt: number) {
                 return;
             }
 
+            if (worldState.activeArea === 'PLANET_CAVERN') {
+                updatePhysics(dt, now);
+                updateBuddyBotAI(dt, now);
+                updateAllBotTransforms(dt, now);
+                updatePlanetCavern(dt, now);
+                updateSpeechBubbleProjection(dt);
+                if (renderer) renderer.render(planetCavernScene, camera);
+                return;
+            }
+
             if (worldState.activeArea === 'PLANET_SURFACE') {
                 updatePhysics(dt, now);
                 updateBuddyBotAI(dt, now);
                 updateAllBotTransforms(dt, now);
                 updatePlanetSurface(dt, now);
+                const cavePrompt = document.getElementById('cavern-enter-prompt');
+                if (cavePrompt) cavePrompt.classList.toggle('hidden', !worldState.nearPlanetCaveEntrance);
                 updateSpeechBubbleProjection(dt);
                 if (renderer) renderer.render(planetSurfaceScene, camera);
                 return;
@@ -332,6 +345,8 @@ function updateSpeechBubbleProjection(dt: number) {
                 updateBuddyBotAI(dt, now);
                 updateAllBotTransforms(dt, now);
                 updateMoon(dt, now);
+                const cavePrompt = document.getElementById('cavern-enter-prompt');
+                if (cavePrompt) cavePrompt.classList.toggle('hidden', !worldState.nearPlanetCaveEntrance);
                 updateSpeechBubbleProjection(dt);
                 if (renderer) renderer.render(moonScene, camera);
                 return;

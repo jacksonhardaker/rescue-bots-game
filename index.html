@@ -1810,6 +1810,25 @@
         </button>
     </div>
 
+    <!-- Planetary / Lunar Modeled 3D Cave Entrance Prompt -->
+    <div id="cavern-enter-prompt" class="hidden pointer-events-auto" style="position: fixed; bottom: 112px; left: 50%; transform: translateX(-50%); z-index: 30;">
+        <button id="btn-planet-cave-enter" class="tactile-btn px-5 py-3 sm:px-6 sm:py-3.5 rounded-2xl border-2 border-amber-300 shadow-2xl flex items-center gap-3 text-white font-extrabold tracking-wider select-none cursor-pointer" style="background: linear-gradient(90deg, #92400e 0%, #b45309 55%, #0284c7 100%) !important;">
+            <span id="planet-cave-enter-icon" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0 drop-shadow"></span>
+            <div class="flex flex-col text-left">
+                <span class="text-[10px] sm:text-xs uppercase text-amber-200 tracking-wider font-extrabold">CAVE ENTRANCE</span>
+                <span class="text-sm sm:text-base font-black drop-shadow tracking-wide text-white">ENTER UNDERGROUND CAVERNS</span>
+            </div>
+        </button>
+    </div>
+
+    <!-- Planetary / Lunar Underground Exit Prompt -->
+    <div id="planet-cavern-exit-prompt" class="hidden pointer-events-auto" style="position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: 30;">
+        <button id="btn-planet-cavern-exit" class="tactile-btn px-4 py-2.5 rounded-2xl border-2 border-amber-300 shadow-xl flex items-center gap-2.5 text-white font-extrabold tracking-wider select-none cursor-pointer" style="background: linear-gradient(90deg, #b45309 0%, #0369a1 100%) !important;">
+            <span id="planet-cavern-exit-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
+            <span class="text-xs sm:text-sm font-black uppercase text-white">EXIT TO SURFACE</span>
+        </button>
+    </div>
+
     <!-- Contextual Starship Sigma Repair / Launch Prompt (Underground Caverns) -->
     <div id="sigma-action-btn" class="hidden pointer-events-auto" style="position: fixed; bottom: 112px; left: 50%; transform: translateX(-50%); z-index: 30;">
         <button id="btn-sigma-action" class="tactile-btn px-5 py-3 sm:px-6 sm:py-3.5 rounded-2xl border-2 border-cyan-300 shadow-2xl flex items-center gap-3.5 text-white font-extrabold tracking-wider select-none cursor-pointer" style="background: linear-gradient(90deg, #0284c7 0%, #2563eb 55%, #dc2626 100%) !important; box-shadow: 0 8px 28px rgba(14, 165, 233, 0.55) !important;">

@@ -15,6 +15,10 @@ export function renderGalacticLogModal() {
     const planetRelics: string[] = Array.isArray(progression.planetRelicsFound) ? progression.planetRelicsFound : [];
     const moonRelics: string[] = Array.isArray(progression.moonRelicsFound) ? progression.moonRelicsFound : [];
     const jupMoons: string[] = Array.isArray(progression.jupiterMoonsVisited) ? progression.jupiterMoonsVisited : [];
+    const cavRelics: string[] = Array.isArray(progression.planetCavernRelicsFound) ? progression.planetCavernRelicsFound : [];
+    const monoliths: string[] = Array.isArray(progression.planetMonolithsScanned) ? progression.planetMonolithsScanned : [];
+    const coursesDone: string[] = Array.isArray(progression.planetCoursesCompleted) ? progression.planetCoursesCompleted : [];
+    const cometsCaught = progression.spaceCometsCaught || 0;
     const allies: string[] = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies : [];
     const starspeedUnlocked = allies.includes('STARSPEED');
     const bestLap = typeof progression.saturnBestLapSec === 'number' ? `${progression.saturnBestLapSec.toFixed(1)}s` : '--.-s';
@@ -31,12 +35,13 @@ export function renderGalacticLogModal() {
 
         let statLine = 'Orbit Explored';
         if (d.id === 'EARTH') statLine = 'Griffin Rock HQ';
-        else if (d.id === 'MOON') statLine = `Relics: ${moonRelics.length}/5`;
-        else if (d.id === 'JUPITER') statLine = `Moons: ${jupMoons.length}/4 • Europa ${countRelicsFor('EUROPA')}/3`;
+        else if (d.id === 'MOON') statLine = `Relics: ${moonRelics.length}/5 • Caverns: ${cavRelics.includes('CAV_MOON_1') ? '1/1' : '0/1'}`;
+        else if (d.id === 'JUPITER') statLine = `Moons: ${jupMoons.length}/4 • Europa Water: ${countRelicsFor('EUROPA')}/3`;
         else if (d.id === 'SATURN') statLine = `Best Lap: ${bestLap} • Wins: ${saturnWins}`;
-        else if (d.id === 'URANUS') statLine = `Miranda Relics: ${countRelicsFor('MIRANDA')}/3`;
+        else if (d.id === 'TITAN') statLine = `Relics: ${countRelicsFor('TITAN')}/3 • Caverns: ${cavRelics.includes('CAV_TITAN_1') ? '1/1' : '0/1'}`;
+        else if (d.id === 'URANUS') statLine = `Miranda: ${countRelicsFor('MIRANDA')}/3 • Titania: ${countRelicsFor('TITANIA')}/3`;
         else if (d.id === 'NEPTUNE') statLine = `Triton Relics: ${countRelicsFor('TRITON')}/3`;
-        else statLine = `Relics: ${countRelicsFor(d.id)}/3`;
+        else statLine = `Relics: ${countRelicsFor(d.id)}/3 • Caverns: ${cavRelics.includes(`CAV_${d.id}_1`) ? '1/1' : '0/1'}`;
 
         const card = document.createElement('div');
         card.style.cssText = `
@@ -86,6 +91,24 @@ export function renderGalacticLogModal() {
             done: saturnWins > 0
         },
         {
+            icon: SVG_ICONS.CAVE_ENTRANCE,
+            title: 'Planetary & Lunar Caverns',
+            status: `${cavRelics.length} / 12 Subterranean Relics Discovered`,
+            done: cavRelics.length >= 12
+        },
+        {
+            icon: SVG_ICONS.MONOLITH,
+            title: 'Ancient Monoliths & Surface Courses',
+            status: `${monoliths.length} Monoliths Scanned • ${coursesDone.length} Courses Cleared`,
+            done: monoliths.length >= 6
+        },
+        {
+            icon: SVG_ICONS.COMET,
+            title: 'Energon Comet Hunter',
+            status: `${cometsCaught} Orbiting Energon Comet${cometsCaught === 1 ? '' : 's'} Caught`,
+            done: cometsCaught >= 3
+        },
+        {
             icon: SVG_ICONS.LASER,
             title: "Dr. Morocco's Orbital Station",
             status: progression.spaceMoroccoDefeated ? 'ORBITAL LASER DISABLED!' : 'Active in Moon Orbit',
@@ -115,11 +138,12 @@ export function renderGalacticLogModal() {
         milestones.appendChild(row);
     });
 
-    const totalRelicsFound = moonRelics.length + planetRelics.length;
-    const totalRelicsMax = 5 + 7 * 3; // 5 Moon + 21 across Mercury/Venus/Mars/Pluto/Europa/Miranda/Triton
-    const pct = Math.min(100, Math.round(((visitedCount / 10) * 0.5 + (totalRelicsFound / totalRelicsMax) * 0.35 + (starspeedUnlocked ? 0.15 : 0)) * 100));
+    const totalRelicsFound = moonRelics.length + planetRelics.length + cavRelics.length;
+    const totalRelicsMax = 5 + 11 * 3 + 12; // 5 Moon + 33 across 11 Planet/Moon surfaces + 12 Cavern relics
+    const totalDests = SOLAR_DESTINATIONS.length;
+    const pct = Math.min(100, Math.round(((visitedCount / totalDests) * 0.45 + (totalRelicsFound / totalRelicsMax) * 0.40 + (starspeedUnlocked ? 0.15 : 0)) * 100));
     if (summaryEl) {
-        summaryEl.textContent = `${visitedCount}/10 Worlds Visited • ${totalRelicsFound}/${totalRelicsMax} Space Relics • ${pct}% Complete`;
+        summaryEl.textContent = `${visitedCount}/${totalDests} Worlds Visited • ${totalRelicsFound}/${totalRelicsMax} Relics • ${pct}% Complete`;
     }
     if (barEl) {
         barEl.style.width = `${pct}%`;

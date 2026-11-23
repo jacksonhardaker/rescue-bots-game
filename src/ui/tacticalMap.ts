@@ -2,6 +2,7 @@
 import { player, buddyBot, worldState } from '../state/gameState.js';
 import { progression } from '../progression/progression.js';
 import { getUndergroundMapData } from '../world/underground.js';
+import { getPlanetCavernMapData } from '../world/planetCaverns.js';
 import { beacons } from '../world/emergencies.js';
 import { DISCOVERY_LANDMARKS } from '../world/collectibles.js';
 import { sfx } from '../audio/soundFX.js';
@@ -217,6 +218,28 @@ export function handleTacticalMapTap(clientX: number, clientY: number) {
                         if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
                         showToast('ORBITAL COURSE LOCKED', `Starship Sigma flying to ${snapLabel}`);
                     }
+                    closeTacticalMap();
+                    return;
+                }
+
+                if (worldState.activeArea === 'PLANET_CAVERN') {
+                    const pc = getPlanetCavernMapData();
+                    const cR = pc.radius || 148;
+                    const cScale = (cx * 0.84) / cR;
+                    let wx = (canvasX - cx) / cScale;
+                    let wz = (canvasY - cy) / cScale;
+                    const d = Math.hypot(wx, wz);
+                    if (d > cR - 14) {
+                        wx *= (cR - 14) / d;
+                        wz *= (cR - 14) / d;
+                    }
+                    const ty = getSurfaceHeight(wx, wz);
+                    player.waypoint.set(wx, ty, wz);
+                    player.hasWaypoint = true;
+                    setWaypointMarkerPos(wx, ty, wz);
+                    if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
+                    spawnBurstParticles(wx, ty + 0.5, wz, 0xfacc15, 6, 0.8);
+                    showToast(`${pc.theme.name} CAVERN WAYPOINT`, `Navigating to (${Math.round(wx)}, ${Math.round(wz)})`);
                     closeTacticalMap();
                     return;
                 }
@@ -833,17 +856,67 @@ function ensureMinimapBgCache(w: number, h: number) {
                 return;
             }
 
-            if (worldState.activeArea === 'PLANET_SURFACE') {
-                const pd = window.getPlanetSurfaceMapData?.();
+            if (worldState.activeArea === 'PLANET_CAVERN') {
+                const pc = getPlanetCavernMapData();
                 ctx.clearRect(0, 0, w, h);
                 ctx.save();
                 ctx.beginPath();
                 ctx.arc(cx, cy, cx, 0, Math.PI * 2);
                 ctx.clip();
-                ctx.fillStyle = pd?.config?.groundAccentHex || '#1e293b';
+                ctx.fillStyle = pc.theme.floorHex || '#0f172a';
+                ctx.fillRect(0, 0, w, h);
+                const sc = (cx * 0.85) / pc.radius;
+                if (pc.theme.hasWaterLagoon) {
+                    ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
+                    ctx.beginPath();
+                    ctx.arc(cx + (-48) * sc, cy + 28 * sc, 54 * sc, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                pc.colliders.forEach(c => {
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
+                    ctx.beginPath();
+                    ctx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.fillStyle = '#facc15';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+                if (!pc.relicCollected) {
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.beginPath();
+                    ctx.arc(cx + pc.relicPos.x * sc, cy + pc.relicPos.z * sc, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                drawMapChevron(ctx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 5.2, '#22d3ee', '#ffffff');
+                ctx.restore();
+                setNearestHintText(`${pc.theme.name} Caverns • ${pc.theme.cavernTitle}`);
+                return;
+            }
+
+            if (worldState.activeArea === 'PLANET_SURFACE') {
+                const pd = window.getPlanetSurfaceMapData?.() as (ReturnType<NonNullable<typeof window.getPlanetSurfaceMapData>> & {
+                    cavePos?: { x: number; z: number };
+                    islands?: Array<{ x: number; z: number; r: number }>;
+                    isWaterWorld?: boolean;
+                }) | undefined;
+                ctx.clearRect(0, 0, w, h);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.fillStyle = pd?.isWaterWorld ? '#0369a1' : (pd?.config?.groundAccentHex || '#1e293b');
                 ctx.fillRect(0, 0, w, h);
                 if (pd) {
-                    const sc = (cx * 0.85) / (pd.radius || 175);
+                    const sc = (cx * 0.85) / (pd.radius || 340);
+                    if (pd.isWaterWorld && pd.islands) {
+                        pd.islands.forEach((isl) => {
+                            ctx.fillStyle = '#bae6fd';
+                            ctx.beginPath();
+                            ctx.arc(cx + isl.x * sc, cy + isl.z * sc, isl.r * sc, 0, Math.PI * 2);
+                            ctx.fill();
+                        });
+                    }
                     pd.craters?.forEach((c) => {
                         ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
                         ctx.lineWidth = 1.2;
@@ -855,6 +928,12 @@ function ensureMinimapBgCache(w: number, h: number) {
                     ctx.beginPath();
                     ctx.arc(cx + pd.sigmaPos.x * sc, cy + pd.sigmaPos.z * sc, 5, 0, Math.PI * 2);
                     ctx.fill();
+                    if (pd.cavePos) {
+                        ctx.fillStyle = '#d97706';
+                        ctx.beginPath();
+                        ctx.arc(cx + pd.cavePos.x * sc, cy + pd.cavePos.z * sc, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
                     pd.relics?.forEach((r) => {
                         if (r.collected) return;
                         ctx.fillStyle = '#fbbf24';
@@ -1218,8 +1297,68 @@ function ensureMinimapBgCache(w: number, h: number) {
                 return;
             }
 
+            if (worldState.activeArea === 'PLANET_CAVERN') {
+                const pc = getPlanetCavernMapData();
+                const titleEl = document.getElementById('tactical-map-title');
+                const subEl = document.getElementById('tactical-map-subtitle');
+                const pillEl = document.getElementById('tactical-map-status-pill');
+                const gridEl = document.getElementById('tactical-map-grid-pill');
+                const countEl = document.getElementById('tactical-active-emergencies-count');
+                if (titleEl) titleEl.textContent = `${pc.theme.name} — ${pc.theme.cavernTitle}`;
+                if (subEl) subEl.textContent = 'Subterranean Cavern Network • Tap anywhere to navigate';
+                if (pillEl) pillEl.textContent = 'UNDERGROUND';
+                if (gridEl) gridEl.textContent = `CAVERN: ${pc.theme.id}`;
+                if (countEl) countEl.textContent = pc.relicCollected ? 'RELIC: 1 / 1' : 'RELIC: 0 / 1';
+
+                ctx.fillStyle = pc.theme.floorHex || '#0f172a';
+                ctx.fillRect(0, 0, w, h);
+                const sc = (cx * 0.84) / pc.radius;
+                if (pc.theme.hasWaterLagoon) {
+                    ctx.fillStyle = 'rgba(6, 182, 212, 0.45)';
+                    ctx.beginPath();
+                    ctx.arc(cx + (-48) * sc, cy + 28 * sc, 54 * sc, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                pc.colliders.forEach(c => {
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+                    ctx.beginPath();
+                    ctx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                const drawCavPin = (wx: number, wz: number, r: number, col: string, label: string) => {
+                    const px = cx + wx * sc;
+                    const pz = cy + wz * sc;
+                    ctx.fillStyle = col;
+                    ctx.beginPath();
+                    ctx.arc(px, pz, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    ctx.font = 'bold 9.5px Fredoka, sans-serif';
+                    const tw = ctx.measureText(label).width;
+                    ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+                    ctx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
+                    ctx.fillStyle = '#f8fafc';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(label, px, pz + r + 14);
+                };
+                drawCavPin(0, 0, 8.5, '#facc15', 'SURFACE EXIT SHAFT');
+                if (!pc.relicCollected) drawCavPin(pc.relicPos.x, pc.relicPos.z, 7.5, '#fbbf24', pc.theme.relicName.toUpperCase());
+                pc.resonanceNodes.forEach((rn, idx) => {
+                    if (!rn.activated) drawCavPin(rn.x, rn.z, 6, '#f43f5e', `RESONANCE CRYSTAL ${idx + 1}`);
+                });
+                drawMapChevron(ctx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 9.5, '#22d3ee', '#ffffff');
+                return;
+            }
+
             if (worldState.activeArea === 'PLANET_SURFACE') {
-                const pd = window.getPlanetSurfaceMapData?.();
+                const pd = window.getPlanetSurfaceMapData?.() as (ReturnType<NonNullable<typeof window.getPlanetSurfaceMapData>> & {
+                    cavePos?: { x: number; z: number };
+                    islands?: Array<{ x: number; z: number; r: number }>;
+                    isWaterWorld?: boolean;
+                    monoliths?: Array<{ name: string; x: number; z: number; scanned: boolean }>;
+                }) | undefined;
                 const cfg = pd?.config;
                 const titleEl = document.getElementById('tactical-map-title');
                 const subEl = document.getElementById('tactical-map-subtitle');
@@ -1233,15 +1372,31 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const foundHere = (pd?.relics || []).filter((r) => r.collected).length;
                 if (countEl) countEl.textContent = `RELICS: ${foundHere} / ${(pd?.relics || []).length}`;
 
-                const bgGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
-                bgGrad.addColorStop(0, cfg?.groundBaseHex || '#334155');
-                bgGrad.addColorStop(0.8, cfg?.groundAccentHex || '#1e293b');
-                bgGrad.addColorStop(1, '#0f172a');
-                ctx.fillStyle = bgGrad;
-                ctx.fillRect(0, 0, w, h);
+                if (pd?.isWaterWorld) {
+                    ctx.fillStyle = '#0369a1';
+                    ctx.fillRect(0, 0, w, h);
+                } else {
+                    const bgGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
+                    bgGrad.addColorStop(0, cfg?.groundBaseHex || '#334155');
+                    bgGrad.addColorStop(0.8, cfg?.groundAccentHex || '#1e293b');
+                    bgGrad.addColorStop(1, '#0f172a');
+                    ctx.fillStyle = bgGrad;
+                    ctx.fillRect(0, 0, w, h);
+                }
 
-                const sc = (cx * 0.84) / (pd?.radius || 175);
+                const sc = (cx * 0.84) / (pd?.radius || 340);
                 if (pd) {
+                    if (pd.isWaterWorld && pd.islands) {
+                        pd.islands.forEach((isl) => {
+                            ctx.fillStyle = '#e0f2fe';
+                            ctx.strokeStyle = '#7dd3fc';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.arc(cx + isl.x * sc, cy + isl.z * sc, isl.r * sc, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.stroke();
+                        });
+                    }
                     pd.craters?.forEach((c) => {
                         ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
                         ctx.strokeStyle = 'rgba(248, 250, 252, 0.45)';
@@ -1272,6 +1427,10 @@ function ensureMinimapBgCache(w: number, h: number) {
                     };
 
                     drawPlanetaryPin(pd.sigmaPos.x, pd.sigmaPos.z, 9, '#22d3ee', 'STARSHIP SIGMA PAD');
+                    if (pd.cavePos) drawPlanetaryPin(pd.cavePos.x, pd.cavePos.z, 7.5, '#d97706', 'CAVE ENTRANCE');
+                    pd.monoliths?.forEach((m) => {
+                        if (!m.scanned) drawPlanetaryPin(m.x, m.z, 6, '#a855f7', m.name.toUpperCase());
+                    });
                     pd.vents?.forEach((v) => {
                         drawPlanetaryPin(v.x, v.z, 5.5, '#f97316', v.label.toUpperCase());
                     });

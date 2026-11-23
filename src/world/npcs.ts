@@ -1,7 +1,7 @@
 // Living World NPC Citizens, Civilian Traffic AI & Buddy Bot AI
 import * as THREE from 'three';
 import type { BuddyBotState, ColliderItem, HumanNPCEntry, VehicleNPCEntry } from '../types/game.js';
-import { getTerrainHeight, getSurfaceHeight, isPointInWater } from './terrain.js';
+import { getTerrainHeight, getSurfaceHeight, isPointInWater, getWaterSurfaceY } from './terrain.js';
 import {
     toonGrad3, toonGrad4, matDarkSteel, matChrome, matTire,
     matNPCHeadlightOn, matNPCHeadlightOff, matNPCTaillightOn, matNPCTaillightOff,
@@ -12,6 +12,7 @@ import { player, buddyBot, botRigs, humanNPCs, vehicleNPCs, worldColliders, quer
 import { resolveUndergroundPointCollision } from './underground.js';
 import { resolveMoonCollisions } from './moon.js';
 import { resolvePlanetSurfaceCollisions } from './planetSurface.js';
+import { resolvePlanetCavernCollisions } from './planetCaverns.js';
 const _buddyNearbyColliders: ColliderItem[] = [];
 import { sfx } from '../audio/soundFX.js';
 import { triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
@@ -1064,6 +1065,8 @@ export interface LocalVehicleNPC extends VehicleNPCEntry {
             // Buddy Bot Obstacle Collision against Cavern Maze, Moon Base OR Surface Rocks, Trees & Buildings
             if (worldState.activeArea === 'UNDERGROUND') {
                 resolveUndergroundPointCollision(buddyBot.pos, 2.3);
+            } else if (worldState.activeArea === 'PLANET_CAVERN') {
+                resolvePlanetCavernCollisions(buddyBot.pos, 2.3, false);
             } else if (worldState.activeArea === 'MOON') {
                 resolveMoonCollisions(buddyBot.pos, 2.3);
             } else if (worldState.activeArea === 'PLANET_SURFACE') {
@@ -1150,7 +1153,7 @@ export interface LocalVehicleNPC extends VehicleNPCEntry {
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, bCenterY + targetAlt, Math.min(1.0, dt * 4.5));
             } else if (isHighTideBuddyWaterMode && isPointInWater(buddyBot.pos.x, buddyBot.pos.z)) {
                 const subSwell = Math.sin(now * 0.003 + 1.2) * 0.12;
-                const waterTargetY = -0.45 - (buddyBot.targetDinoMorph > 0.5 ? 0.35 : 0.22) + subSwell;
+                const waterTargetY = getWaterSurfaceY() - (buddyBot.targetDinoMorph > 0.5 ? 0.35 : 0.22) + subSwell;
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, waterTargetY, Math.min(1.0, dt * 16.0));
             } else {
                 buddyBot.pos.y = THREE.MathUtils.lerp(buddyBot.pos.y, Math.max(0.5, bTargetGroundY), Math.min(1.0, dt * 20.0));
@@ -1183,7 +1186,7 @@ export interface LocalVehicleNPC extends VehicleNPCEntry {
                 }
             }
 
-            if (worldState.activeArea === 'UNDERGROUND') return;
+            if (worldState.activeArea === 'UNDERGROUND' || worldState.activeArea === 'PLANET_CAVERN') return;
 
             // Find nearest uncleared hazard node to the Buddy Bot (prioritizing bot specialty)
             const isWaterBuddy = (buddyBot.botType === 'HEATWAVE' || buddyBot.botType === 'HIGHTIDE' || (buddyExt.mode === 'VEHICLE' && (buddyBot.boatMorph || 0) > 0.3));

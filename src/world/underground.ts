@@ -15,6 +15,7 @@ import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js
 import { BOT_METADATA } from '../bots/botMeta.js';
 import { SVG_ICONS } from '../ui/icons.js';
 import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
+import { swapToPlanetCavern, exitPlanetCavernToSurface, type CavernWorldId } from './planetCaverns.js';
 import {
     DinoSpecies, DinoSphereOffset,
     buildEnergonCacheMesh, buildMagmaBridgeMesh, buildDinobotShrineMesh,
@@ -2578,6 +2579,29 @@ export function triggerBoulderDrillTransition() {
     if (player.botType !== 'BOULDER') {
         showToast('BOULDER REQUIRED', 'Switch to Boulder to use the rotary ground drill!');
         sfx.playSpeechPop();
+        return;
+    }
+
+    if (worldState.activeArea === 'MOON' || worldState.activeArea === 'PLANET_SURFACE') {
+        const isPlanetWater = typeof window.isPointInWater === 'function' ? (window.isPointInWater as (x: number, z: number) => boolean)(player.pos.x, player.pos.z) : false;
+        if (isPlanetWater || (player.targetBoatMorph ?? 0) > 0.3) {
+            showToast('SOLID GROUND REQUIRED', 'Drive onto an island or dry ground before drilling underground!');
+            sfx.playSpeechPop();
+            return;
+        }
+        sfx.playRockBreak();
+        swapToPlanetCavern((worldState.activePlanetId || 'MOON') as CavernWorldId);
+        return;
+    }
+    if (worldState.activeArea === 'PLANET_CAVERN') {
+        const isCavWater = typeof window.isPointInWater === 'function' ? (window.isPointInWater as (x: number, z: number) => boolean)(player.pos.x, player.pos.z) : false;
+        if (isCavWater) {
+            showToast('SOLID CAVERN FLOOR REQUIRED', 'Steer out of the lagoon before drilling back to the surface!');
+            sfx.playSpeechPop();
+            return;
+        }
+        sfx.playRockBreak();
+        exitPlanetCavernToSurface();
         return;
     }
 

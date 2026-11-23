@@ -10,6 +10,9 @@ import { player, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { SVG_ICONS } from './icons.js';
 import { triggerBoulderDrillTransition, exitUndergroundViaShaft, swapToSurface, triggerSigmaCavernAction } from '../world/underground.js';
+import { enterActivePlanetCave } from '../world/planetSurface.js';
+import { enterMoonCave } from '../world/moon.js';
+import { exitPlanetCavernToSurface } from '../world/planetCaverns.js';
 import {
     startSpaceTransition, fireSigmaCannons, triggerSpaceBoost,
     setSpaceTouchControl, landOnActiveSectorMoon, openSolarSystemHub, swapToSpace
@@ -52,12 +55,21 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('btn-siren', toggleSiren);
         bindButton('btn-drill', triggerBoulderDrillTransition);
         bindButton('btn-cavern-exit', exitUndergroundViaShaft);
+        bindButton('btn-planet-cave-enter', () => {
+            if (worldState.activeArea === 'MOON') enterMoonCave();
+            else if (worldState.activeArea === 'PLANET_SURFACE') enterActivePlanetCave();
+        });
+        bindButton('btn-planet-cavern-exit', exitPlanetCavernToSurface);
         const cComp = document.getElementById('cavern-compass-icon');
         if (cComp) cComp.innerHTML = SVG_ICONS.CAVERN_COMPASS;
         const cGem = document.getElementById('cavern-gem-icon');
         if (cGem) cGem.innerHTML = SVG_ICONS.CAVERN_GEM;
         const cExitIcon = document.getElementById('cavern-exit-icon');
         if (cExitIcon) cExitIcon.innerHTML = SVG_ICONS.DRILL_UP;
+        const pCaveEnterIcon = document.getElementById('planet-cave-enter-icon');
+        if (pCaveEnterIcon) pCaveEnterIcon.innerHTML = SVG_ICONS.CAVE_ENTRANCE;
+        const pCaveExitIcon = document.getElementById('planet-cavern-exit-icon');
+        if (pCaveExitIcon) pCaveExitIcon.innerHTML = SVG_ICONS.DRILL_UP;
 
         // Sigma Repair / Launch, Space Flight & Moon Base HUD Icons & Bindings
         const injectIcon = (id: string, svg: string | undefined) => {

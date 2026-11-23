@@ -53,7 +53,12 @@ export interface ProgressionData {
     moonHoopsCleared: number;
     visitedPlanets: string[];
     planetRelicsFound: string[];
+    planetCavernRelicsFound: string[];
+    planetMonolithsScanned: string[];
+    planetCoursesCompleted: string[];
     jupiterMoonsVisited: string[];
+    uranusMoonsVisited: string[];
+    spaceCometsCaught: number;
     saturnBestLapSec: number | null;
     saturnRacesCompleted: number;
     saturnWins: number;
@@ -119,7 +124,12 @@ export const progression: ProgressionData = {
     moonHoopsCleared: 0,
     visitedPlanets: [],
     planetRelicsFound: [],
+    planetCavernRelicsFound: [],
+    planetMonolithsScanned: [],
+    planetCoursesCompleted: [],
     jupiterMoonsVisited: [],
+    uranusMoonsVisited: [],
+    spaceCometsCaught: 0,
     saturnBestLapSec: null,
     saturnRacesCompleted: 0,
     saturnWins: 0

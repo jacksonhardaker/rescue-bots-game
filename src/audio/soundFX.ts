@@ -1820,6 +1820,133 @@ class RescueSoundFX {
                     console.warn("SFX playCavernDiscovery error:", e);
                 }
             }
+
+            playSigmaLaunchSequence() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                try {
+                    const ctx = this.ctx;
+                    const now = ctx.currentTime;
+                    const dest = this.getSfxDest();
+
+                    // 1. Sub-Bass Ignition Thump (0.0s -> 1.8s)
+                    const subOsc = ctx.createOscillator();
+                    const subGain = ctx.createGain();
+                    subOsc.type = 'sine';
+                    subOsc.frequency.setValueAtTime(68, now);
+                    subOsc.frequency.exponentialRampToValueAtTime(28, now + 1.8);
+                    subGain.gain.setValueAtTime(0.001, now);
+                    subGain.gain.linearRampToValueAtTime(0.36, now + 0.08);
+                    subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.9);
+                    subOsc.connect(subGain);
+                    subGain.connect(dest);
+                    subOsc.start(now);
+                    subOsc.stop(now + 1.95);
+
+                    // 2. Sustained Rocket Booster Crackle & Stratosphere Roar (0.0s -> 6.6s)
+                    const dur = 6.6;
+                    const bufLen = Math.floor(ctx.sampleRate * dur);
+                    const noiseBuf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+                    const ch = noiseBuf.getChannelData(0);
+                    let lastSample = 0;
+                    for (let i = 0; i < bufLen; i++) {
+                        // Slightly brown-weighted noise for rich heavy rocket rumble
+                        const white = Math.random() * 2 - 1;
+                        lastSample = (lastSample + 0.14 * white) / 1.14;
+                        ch[i] = Math.max(-1, Math.min(1, lastSample * 2.8));
+                    }
+                    const noiseSrc = ctx.createBufferSource();
+                    noiseSrc.buffer = noiseBuf;
+
+                    const roarFilter = ctx.createBiquadFilter();
+                    roarFilter.type = 'lowpass';
+                    roarFilter.Q.value = 1.6;
+                    roarFilter.frequency.setValueAtTime(220, now);
+                    roarFilter.frequency.exponentialRampToValueAtTime(1650, now + 2.8);
+                    roarFilter.frequency.exponentialRampToValueAtTime(640, now + 4.8);
+                    roarFilter.frequency.exponentialRampToValueAtTime(180, now + dur);
+
+                    const roarGain = ctx.createGain();
+                    roarGain.gain.setValueAtTime(0.001, now);
+                    roarGain.gain.linearRampToValueAtTime(0.28, now + 0.35);
+                    roarGain.gain.setValueAtTime(0.26, now + 2.8);
+                    roarGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+                    noiseSrc.connect(roarFilter);
+                    roarFilter.connect(roarGain);
+                    roarGain.connect(dest);
+                    noiseSrc.start(now);
+                    noiseSrc.stop(now + dur + 0.05);
+
+                    // 3. Rising Twin-Turbine Energon Climb (0.2s -> 5.8s)
+                    const turb1 = ctx.createOscillator();
+                    const turb2 = ctx.createOscillator();
+                    const turbFilter = ctx.createBiquadFilter();
+                    const turbGain = ctx.createGain();
+                    turb1.type = 'sawtooth';
+                    turb2.type = 'triangle';
+                    turb1.frequency.setValueAtTime(75, now + 0.15);
+                    turb1.frequency.exponentialRampToValueAtTime(340, now + 3.2);
+                    turb1.frequency.exponentialRampToValueAtTime(520, now + 5.6);
+                    turb2.frequency.setValueAtTime(112.5, now + 0.15);
+                    turb2.frequency.exponentialRampToValueAtTime(510, now + 3.2);
+                    turb2.frequency.exponentialRampToValueAtTime(780, now + 5.6);
+
+                    turbFilter.type = 'bandpass';
+                    turbFilter.Q.value = 2.2;
+                    turbFilter.frequency.setValueAtTime(180, now + 0.15);
+                    turbFilter.frequency.exponentialRampToValueAtTime(1100, now + 5.5);
+
+                    turbGain.gain.setValueAtTime(0.001, now + 0.15);
+                    turbGain.gain.linearRampToValueAtTime(0.11, now + 0.8);
+                    turbGain.gain.setValueAtTime(0.10, now + 4.4);
+                    turbGain.gain.exponentialRampToValueAtTime(0.001, now + 5.9);
+
+                    turb1.connect(turbFilter);
+                    turb2.connect(turbFilter);
+                    turbFilter.connect(turbGain);
+                    turbGain.connect(dest);
+                    turb1.start(now + 0.15);
+                    turb2.start(now + 0.15);
+                    turb1.stop(now + 6.0);
+                    turb2.stop(now + 6.0);
+
+                    // 4. Max-Q Supersonic Mach Shockwave Whoosh (at t = 2.75s)
+                    const machTime = now + 2.75;
+                    const machOsc = ctx.createOscillator();
+                    const machGain = ctx.createGain();
+                    machOsc.type = 'sine';
+                    machOsc.frequency.setValueAtTime(420, machTime);
+                    machOsc.frequency.exponentialRampToValueAtTime(68, machTime + 0.75);
+                    machGain.gain.setValueAtTime(0.001, machTime);
+                    machGain.gain.linearRampToValueAtTime(0.24, machTime + 0.06);
+                    machGain.gain.exponentialRampToValueAtTime(0.001, machTime + 0.8);
+                    machOsc.connect(machGain);
+                    machGain.connect(dest);
+                    machOsc.start(machTime);
+                    machOsc.stop(machTime + 0.85);
+
+                    // 5. Orbital Entry Chime (at t = 6.1s)
+                    const orbTime = now + 6.1;
+                    [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+                        const o = ctx.createOscillator();
+                        const g = ctx.createGain();
+                        o.type = 'triangle';
+                        const t0 = orbTime + idx * 0.08;
+                        o.frequency.setValueAtTime(freq, t0);
+                        g.gain.setValueAtTime(0.001, t0);
+                        g.gain.linearRampToValueAtTime(0.13, t0 + 0.02);
+                        g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.55);
+                        o.connect(g);
+                        g.connect(dest);
+                        o.start(t0);
+                        o.stop(t0 + 0.6);
+                    });
+                } catch (e) {
+                    console.warn("SFX playSigmaLaunchSequence error:", e);
+                }
+            }
         }
 
 export const sfx = new RescueSoundFX();

@@ -17,16 +17,35 @@ import { sfx } from '../audio/soundFX.js';
 import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 
 export const planetSurfaceScene = new THREE.Scene();
-export const PLANET_WORLD_RADIUS = 175;
+export const PLANET_WORLD_RADIUS = 340;
 export const PLANET_SIGMA_POS = { x: 0, z: -26 };
+export const PLANET_CAVE_POS = { x: 52, z: 24 };
 
-export type LandablePlanetId = 'MERCURY' | 'VENUS' | 'MARS' | 'PLUTO' | 'EUROPA' | 'MIRANDA' | 'TRITON';
+export type LandablePlanetId =
+    | 'MERCURY'
+    | 'VENUS'
+    | 'MARS'
+    | 'PLUTO'
+    | 'EUROPA'
+    | 'IO'
+    | 'GANYMEDE'
+    | 'TITAN'
+    | 'MIRANDA'
+    | 'TITANIA'
+    | 'TRITON';
 
 export interface PlanetRelicDef {
     id: string;
     name: string;
     x: number;
     z: number;
+}
+
+export interface PlanetIslandDef {
+    x: number;
+    z: number;
+    r: number;
+    height: number;
 }
 
 export interface PlanetConfig {
@@ -48,9 +67,11 @@ export interface PlanetConfig {
     rockColor: number;
     ventColor: number;
     relicColor: number;
-    backdropKind: 'HUGE_SUN' | 'VENUS_CLOUDS' | 'MARS_SUN' | 'CHARON' | 'JUPITER' | 'URANUS' | 'NEPTUNE';
+    backdropKind: 'HUGE_SUN' | 'VENUS_CLOUDS' | 'MARS_SUN' | 'CHARON' | 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE';
     returnSector: string | null; // Non-null for giant moons (returns to giant's orbit)
     welcomeToast: string;
+    waterLevel?: number;
+    islands?: PlanetIslandDef[];
     craters: Array<{ x: number; z: number; r: number; depth: number; rim: number }>;
     vents: Array<{ x: number; z: number; label: string }>;
     relics: PlanetRelicDef[];
@@ -212,16 +233,16 @@ export const PLANET_CONFIGS: Record<LandablePlanetId, PlanetConfig> = {
     EUROPA: {
         id: 'EUROPA',
         name: 'EUROPA',
-        zoneLabel: 'EUROPA — JUPITER ICE PLAINS',
+        zoneLabel: 'EUROPA — SUB-GLACIAL OCEAN ARCHIPELAGO',
         gravity: 0.22,
         gravityLabel: '0.22G',
-        skyColor: 0x040714,
+        skyColor: 0x04091a,
         fogColor: null,
         fogDensity: 0,
         hemiSky: 0xbae6fd,
-        hemiGround: 0x1e3a8a,
+        hemiGround: 0x0c4a6e,
         sunColor: 0xe0f2fe,
-        sunIntensity: 1.35,
+        sunIntensity: 1.4,
         groundBaseHex: '#e0f2fe',
         groundAccentHex: '#7dd3fc',
         groundCraterHex: '#0284c7',
@@ -230,21 +251,144 @@ export const PLANET_CONFIGS: Record<LandablePlanetId, PlanetConfig> = {
         relicColor: 0xfacc15,
         backdropKind: 'JUPITER',
         returnSector: 'JUPITER',
-        welcomeToast: '0.22G Ice-Moon Gravity • Jupiter looms overhead! Find 3 Europa Ocean Relics!',
+        welcomeToast: '0.22G Water-World Moon! Drive into the ocean for Boat Mode or High Tide Submarine!',
+        waterLevel: 5.6,
+        islands: [
+            { x: 0, z: -12, r: 58, height: 7.4 },       // Central Sigma Ice-Shelf Island (includes Sigma + Cave)
+            { x: 52, z: 24, r: 28, height: 7.4 },       // East Cave Peninsula
+            { x: -150, z: -115, r: 44, height: 8.8 },   // North-West Ice Floe
+            { x: 155, z: -110, r: 46, height: 9.0 },    // North-East Ice Floe
+            { x: -135, z: 145, r: 42, height: 8.4 },    // South-West Ice Floe
+            { x: 130, z: 155, r: 48, height: 9.2 }      // South-East Ice Floe
+        ],
         craters: [
-            { x: -66, z: -48, r: 26, depth: 2.8, rim: 1.8 },
-            { x: 68, z: -48, r: 28, depth: 3.0, rim: 2.0 },
-            { x: 0, z: 94, r: 32, depth: 3.2, rim: 2.1 }
+            { x: -150, z: -115, r: 22, depth: 1.4, rim: 2.0 },
+            { x: 155, z: -110, r: 24, depth: 1.4, rim: 2.1 },
+            { x: 130, z: 155, r: 24, depth: 1.4, rim: 2.2 }
         ],
         vents: [
-            { x: -34, z: 14, label: 'Ocean Ice Plume' },
-            { x: 36, z: 14, label: 'Ocean Ice Plume' },
-            { x: 0, z: 54, label: 'Europa Geyser' }
+            { x: -150, z: -115, label: 'Ice Floe Geyser' },
+            { x: 155, z: -110, label: 'Ocean Ice Plume' },
+            { x: -135, z: 145, label: 'Europa Thermal Vent' }
         ],
         relics: [
-            { id: 'EUROPA_1', name: 'Sub-Ice Energon Pearl', x: -66, z: -48 },
-            { id: 'EUROPA_2', name: 'Jovian Frost Core', x: 68, z: -48 },
-            { id: 'EUROPA_3', name: 'Galilean Ocean Shard', x: 0, z: 94 }
+            { id: 'EUROPA_1', name: 'Sub-Ice Energon Pearl', x: -150, z: -115 },
+            { id: 'EUROPA_2', name: 'Jovian Frost Core', x: 155, z: -110 },
+            { id: 'EUROPA_3', name: 'Galilean Ocean Shard', x: 0, z: 185 }
+        ]
+    },
+    IO: {
+        id: 'IO',
+        name: 'IO',
+        zoneLabel: 'IO — LOKI PATERA VOLCANIC PLAINS',
+        gravity: 0.25,
+        gravityLabel: '0.25G',
+        skyColor: 0x160a05,
+        fogColor: 0x2a1205,
+        fogDensity: 0.0014,
+        hemiSky: 0xfef08a,
+        hemiGround: 0x7c2d12,
+        sunColor: 0xfde047,
+        sunIntensity: 1.5,
+        groundBaseHex: '#eab308',
+        groundAccentHex: '#ea580c',
+        groundCraterHex: '#7c2d12',
+        rockColor: 0x78350f,
+        ventColor: 0xf97316,
+        relicColor: 0x38bdf8,
+        backdropKind: 'JUPITER',
+        returnSector: 'JUPITER',
+        welcomeToast: '0.25G Volcanic Moon • Ride Sulfur Geysers under Jupiter & collect 3 Io Magma Relics!',
+        craters: [
+            { x: -130, z: -110, r: 42, depth: 4.5, rim: 3.4 },
+            { x: 140, z: -95, r: 40, depth: 4.2, rim: 3.2 },
+            { x: 10, z: 185, r: 48, depth: 4.8, rim: 3.6 }
+        ],
+        vents: [
+            { x: -65, z: 28, label: 'Sulfur Plume' },
+            { x: 75, z: -32, label: 'Loki Magma Vent' },
+            { x: -15, z: 110, label: 'Volcanic Geyser' }
+        ],
+        relics: [
+            { id: 'IO_1', name: 'Loki Caldera Crystal', x: -130, z: -110 },
+            { id: 'IO_2', name: 'Sulfur Plasma Core', x: 140, z: -95 },
+            { id: 'IO_3', name: 'Jovian Spark Beacon', x: 10, z: 185 }
+        ]
+    },
+    GANYMEDE: {
+        id: 'GANYMEDE',
+        name: 'GANYMEDE',
+        zoneLabel: 'GANYMEDE — GALILEO MAGNETOSPHERE BASIN',
+        gravity: 0.24,
+        gravityLabel: '0.24G',
+        skyColor: 0x050918,
+        fogColor: null,
+        fogDensity: 0,
+        hemiSky: 0xc7d2fe,
+        hemiGround: 0x334155,
+        sunColor: 0xe0e7ff,
+        sunIntensity: 1.35,
+        groundBaseHex: '#94a3b8',
+        groundAccentHex: '#64748b',
+        groundCraterHex: '#334155',
+        rockColor: 0x475569,
+        ventColor: 0xa855f7,
+        relicColor: 0x22d3ee,
+        backdropKind: 'JUPITER',
+        returnSector: 'JUPITER',
+        welcomeToast: '0.24G Giant Moon • Explore the largest moon in the Solar System & find 3 Relics!',
+        craters: [
+            { x: -140, z: -105, r: 44, depth: 4.2, rim: 2.8 },
+            { x: 135, z: -115, r: 42, depth: 4.0, rim: 2.6 },
+            { x: 0, z: 190, r: 50, depth: 4.6, rim: 3.0 }
+        ],
+        vents: [
+            { x: -62, z: -24, label: 'Magnetic Pulse Vent' },
+            { x: 68, z: 24, label: 'Aurora Updraft' },
+            { x: 0, z: 105, label: 'Galileo Geyser' }
+        ],
+        relics: [
+            { id: 'GANYMEDE_1', name: 'Magnetosphere Prism', x: -140, z: -105 },
+            { id: 'GANYMEDE_2', name: 'Galileo Grooved Core', x: 135, z: -115 },
+            { id: 'GANYMEDE_3', name: 'Jovian Aurora Shard', x: 0, z: 190 }
+        ]
+    },
+    TITAN: {
+        id: 'TITAN',
+        name: 'TITAN',
+        zoneLabel: 'TITAN — SHANGRI-LA AMBER DUNES',
+        gravity: 0.20,
+        gravityLabel: '0.20G',
+        skyColor: 0x92400e,
+        fogColor: 0xb45309,
+        fogDensity: 0.0024,
+        hemiSky: 0xfde68a,
+        hemiGround: 0x78350f,
+        sunColor: 0xfef3c7,
+        sunIntensity: 1.4,
+        groundBaseHex: '#d97706',
+        groundAccentHex: '#b45309',
+        groundCraterHex: '#78350f',
+        rockColor: 0x92400e,
+        ventColor: 0xfde047,
+        relicColor: 0x22d3ee,
+        backdropKind: 'SATURN',
+        returnSector: null,
+        welcomeToast: '0.20G Golden Haze Moon • Cruise Saturn-lit dunes & collect 3 Titan Relics!',
+        craters: [
+            { x: -125, z: -100, r: 38, depth: 3.8, rim: 2.5 },
+            { x: 132, z: -98, r: 40, depth: 3.8, rim: 2.5 },
+            { x: -10, z: 180, r: 44, depth: 4.2, rim: 2.8 }
+        ],
+        vents: [
+            { x: -58, z: 22, label: 'Cryo-Methane Plume' },
+            { x: 64, z: -18, label: 'Dune Thermal Vent' },
+            { x: 0, z: 98, label: 'Kraken Mare Vent' }
+        ],
+        relics: [
+            { id: 'TITAN_1', name: 'Shangri-La Amber Gem', x: -125, z: -100 },
+            { id: 'TITAN_2', name: 'Huygens Beacon Core', x: 132, z: -98 },
+            { id: 'TITAN_3', name: 'Saturnian Ring Shard', x: -10, z: 180 }
         ]
     },
     MIRANDA: {
@@ -270,19 +414,57 @@ export const PLANET_CONFIGS: Record<LandablePlanetId, PlanetConfig> = {
         returnSector: 'URANUS',
         welcomeToast: '0.16G Ultra-Low Gravity • Uranus rises overhead! Collect 3 Miranda Rift Relics!',
         craters: [
-            { x: -62, z: -50, r: 28, depth: 3.4, rim: 2.6 },
-            { x: 66, z: -46, r: 28, depth: 3.2, rim: 2.6 },
-            { x: 0, z: 90, r: 32, depth: 3.6, rim: 2.8 }
+            { x: -122, z: -96, r: 38, depth: 4.0, rim: 3.0 },
+            { x: 130, z: -90, r: 38, depth: 3.8, rim: 3.0 },
+            { x: 0, z: 175, r: 44, depth: 4.2, rim: 3.2 }
         ],
         vents: [
-            { x: -32, z: 16, label: 'Rift Updraft' },
-            { x: 34, z: 16, label: 'Rift Updraft' },
-            { x: 0, z: 50, label: 'Verona Cliff Vent' }
+            { x: -56, z: 24, label: 'Rift Updraft' },
+            { x: 60, z: 20, label: 'Rift Updraft' },
+            { x: 0, z: 96, label: 'Verona Cliff Vent' }
         ],
         relics: [
-            { id: 'MIRANDA_1', name: 'Verona Cliff Crystal', x: -62, z: -50 },
-            { id: 'MIRANDA_2', name: 'Uranian Ring Shard', x: 66, z: -46 },
-            { id: 'MIRANDA_3', name: 'Ice-Giant Beacon', x: 0, z: 90 }
+            { id: 'MIRANDA_1', name: 'Verona Cliff Crystal', x: -122, z: -96 },
+            { id: 'MIRANDA_2', name: 'Uranian Ring Shard', x: 130, z: -90 },
+            { id: 'MIRANDA_3', name: 'Ice-Giant Beacon', x: 0, z: 175 }
+        ]
+    },
+    TITANIA: {
+        id: 'TITANIA',
+        name: 'TITANIA',
+        zoneLabel: 'TITANIA — GERTRUDE FROST CHASMS',
+        gravity: 0.19,
+        gravityLabel: '0.19G',
+        skyColor: 0x050a18,
+        fogColor: null,
+        fogDensity: 0,
+        hemiSky: 0xe0f2fe,
+        hemiGround: 0x1e293b,
+        sunColor: 0xf0f9ff,
+        sunIntensity: 1.3,
+        groundBaseHex: '#e2e8f0',
+        groundAccentHex: '#94a3b8',
+        groundCraterHex: '#475569',
+        rockColor: 0x64748b,
+        ventColor: 0x67e8f9,
+        relicColor: 0xfbbf24,
+        backdropKind: 'URANUS',
+        returnSector: 'URANUS',
+        welcomeToast: '0.19G Frost-Canyon Moon • Soar over Uranus ice chasms & find 3 Titania Relics!',
+        craters: [
+            { x: -128, z: -102, r: 40, depth: 4.0, rim: 2.8 },
+            { x: 126, z: -104, r: 40, depth: 4.0, rim: 2.8 },
+            { x: 8, z: 182, r: 46, depth: 4.4, rim: 3.0 }
+        ],
+        vents: [
+            { x: -60, z: -16, label: 'Frost Chasm Jet' },
+            { x: 64, z: 22, label: 'Uranian Cryo-Vent' },
+            { x: 0, z: 102, label: 'Gertrude Plume' }
+        ],
+        relics: [
+            { id: 'TITANIA_1', name: 'Gertrude Frost Core', x: -128, z: -102 },
+            { id: 'TITANIA_2', name: 'Messina Chasm Prism', x: 126, z: -104 },
+            { id: 'TITANIA_3', name: 'Crown Ice Beacon', x: 8, z: 182 }
         ]
     },
     TRITON: {
@@ -351,20 +533,153 @@ interface PlanetLandmarkNode {
     cooldown: number;
 }
 
+interface PlanetSlalomGate {
+    x: number;
+    y: number;
+    z: number;
+    mesh: THREE.Group;
+    ringMat: THREE.MeshBasicMaterial;
+    cleared: boolean;
+}
+
+interface PlanetMonolith {
+    id: string;
+    name: string;
+    x: number;
+    z: number;
+    group: THREE.Group;
+    beaconMat: THREE.MeshBasicMaterial;
+    scanned: boolean;
+}
+
 let _activeConfig: PlanetConfig = PLANET_CONFIGS.MARS;
 let _builtPlanetId: LandablePlanetId | null = null;
 let _worldGroup: THREE.Group | null = null;
 let _planetSigmaRoot: THREE.Group | null = null;
+let _planetWaterMesh: THREE.Mesh | null = null;
 let _frozenStarspeedGroup: THREE.Group | null = null;
 let _frozenStarspeedRing: THREE.Mesh | null = null;
 let _frozenStarspeedFreed = false;
-const TRITON_FROZEN_POS = { x: -34, z: -42 };
+const TRITON_FROZEN_POS = { x: -54, z: -62 };
 const _planetRelics: PlanetRelicRuntime[] = [];
 const _planetRocks: PlanetRockRuntime[] = [];
 const _planetColliders: SigmaColliderEntry[] = [];
 const _planetLandmarks: PlanetLandmarkNode[] = [];
+const _planetGates: PlanetSlalomGate[] = [];
+const _planetMonoliths: PlanetMonolith[] = [];
 const _planetAnimated: Array<{ obj: THREE.Object3D; kind: string; baseY: number; phase: number }> = [];
 let _ventCooldown = 0;
+let _caveEnterCooldown = 0;
+let _planetCavernEnterHandler: ((planetId: LandablePlanetId) => void) | null = null;
+
+export function setPlanetCavernEnterHandler(fn: (planetId: LandablePlanetId) => void) {
+    _planetCavernEnterHandler = fn;
+}
+
+export function enterActivePlanetCave() {
+    if (_planetCavernEnterHandler && _caveEnterCooldown <= 0) {
+        _caveEnterCooldown = 2.0;
+        _planetCavernEnterHandler(_activeConfig.id);
+    }
+}
+
+export function setPlanetCaveCooldown(sec = 2.0) {
+    _caveEnterCooldown = Math.max(_caveEnterCooldown, sec);
+}
+
+export function buildSurfaceCaveEntranceMesh(rockColor: number, accentColor: number, isIce = false): THREE.Group {
+    const g = new THREE.Group();
+    const matRock = new THREE.MeshToonMaterial({
+        color: rockColor,
+        gradientMap: toonGrad3,
+        transparent: isIce,
+        opacity: isIce ? 0.92 : 1.0
+    });
+    const matDarkTunnel = new THREE.MeshBasicMaterial({ color: 0x04060d });
+    const matLanternGlow = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
+    const matCrystal = new THREE.MeshBasicMaterial({ color: accentColor });
+
+    // Rugged hillside mound behind the cave mouth
+    const hillMound = new THREE.Mesh(new THREE.DodecahedronGeometry(9.2, 1), matRock);
+    hillMound.scale.set(1.35, 0.92, 1.05);
+    hillMound.position.set(0, 3.4, -5.8);
+    g.add(hillMound);
+
+    // Side rock/ice arch pillars
+    [-4.8, 4.8].forEach((px, idx) => {
+        const pillar = new THREE.Mesh(new THREE.DodecahedronGeometry(2.8, 0), matRock);
+        pillar.scale.set(0.9, 1.85, 1.25);
+        pillar.position.set(px, 2.5, 0.2);
+        pillar.rotation.y = idx === 0 ? 0.35 : -0.35;
+        g.add(pillar);
+    });
+
+    // Keystone boulders forming the cave arch lintel
+    [
+        { x: -3.0, y: 5.5, r: 2.2 },
+        { x: 0, y: 6.4, r: 2.5 },
+        { x: 3.0, y: 5.5, r: 2.2 }
+    ].forEach(b => {
+        const cap = new THREE.Mesh(new THREE.DodecahedronGeometry(b.r, 0), matRock);
+        cap.scale.set(1.25, 0.85, 1.15);
+        cap.position.set(b.x, b.y, 0.4);
+        g.add(cap);
+    });
+
+    // Deep dark recessed tunnel mouth
+    const tunnelBox = new THREE.Mesh(new THREE.BoxGeometry(6.6, 5.2, 6.8), matDarkTunnel);
+    tunnelBox.position.set(0, 2.5, -2.1);
+    tunnelBox.userData.noOutline = true;
+    const tunnelArch = new THREE.Mesh(
+        new THREE.CylinderGeometry(3.3, 3.3, 6.8, 14, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2),
+        matDarkTunnel
+    );
+    tunnelArch.position.set(0, 4.6, -2.1);
+    tunnelArch.userData.noOutline = true;
+    g.add(tunnelBox, tunnelArch);
+
+    // Hanging stalactites along top cave lip
+    [-2.1, -0.7, 0.8, 2.2].forEach((sx, idx) => {
+        const len = 1.2 + (idx % 2) * 0.55;
+        const stal = new THREE.Mesh(new THREE.ConeGeometry(0.38, len, 5).rotateX(Math.PI), matRock);
+        stal.position.set(sx, 5.15 - len * 0.4, 1.15);
+        g.add(stal);
+    });
+
+    // Rocky threshold apron leading into the cave
+    const apron = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 6.2, 0.35, 12), matDarkSteel);
+    apron.position.set(0, 0.16, 2.2);
+    g.add(apron);
+
+    // Two expedition lantern posts + subtle accent crystal cluster flanking the mouth
+    [-5.1, 5.1].forEach(lx => {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 3.2, 8), matDarkSteel);
+        post.position.set(lx, 1.6, 2.8);
+        const lantern = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), matLanternGlow);
+        lantern.position.set(lx, 3.35, 2.8);
+        lantern.userData.noOutline = true;
+        g.add(post, lantern);
+    });
+
+    const crystal = new THREE.Mesh(new THREE.ConeGeometry(0.45, 1.9, 5), matCrystal);
+    crystal.position.set(-6.2, 1.2, 1.6);
+    crystal.rotation.z = 0.28;
+    crystal.userData.noOutline = true;
+    g.add(crystal);
+
+    applyCartoonInkOutlines(g, 1.03, true);
+    return g;
+}
+
+export function getActivePlanetConfig(): PlanetConfig {
+    return _activeConfig;
+}
+
+export function isPlanetPointInWater(x: number, z: number): boolean {
+    if (worldState.activeArea !== 'PLANET_SURFACE') return false;
+    if (_activeConfig.waterLevel === undefined) return false;
+    return getPlanetSurfaceHeight(x, z) < _activeConfig.waterLevel - 0.15;
+}
 
 export function getActivePlanetGravity(): number {
     return _activeConfig ? _activeConfig.gravity : 0.38;
@@ -372,13 +687,52 @@ export function getActivePlanetGravity(): number {
 
 export function getPlanetSurfaceHeight(x: number, z: number): number {
     const cfg = _activeConfig;
+    const r = Math.hypot(x, z);
+
+    // Water-world island/ocean bathymetry (e.g. Europa)
+    if (cfg.waterLevel !== undefined && cfg.islands) {
+        let h = 3.1 + Math.sin(x * 0.028) * Math.cos(z * 0.028) * 0.45;
+        for (let i = 0; i < cfg.islands.length; i++) {
+            const isl = cfg.islands[i];
+            const d = Math.hypot(x - isl.x, z - isl.z);
+            if (d < isl.r + 22) {
+                const t = Math.max(0, Math.min(1, 1 - (d - isl.r * 0.55) / (isl.r * 0.45 + 22)));
+                const smooth = t * t * (3 - 2 * t);
+                h = Math.max(h, THREE.MathUtils.lerp(3.1, isl.height, smooth));
+            }
+        }
+        // Keep central Sigma landing pad and Cave Entrance island level
+        const dSigma = Math.hypot(x - PLANET_SIGMA_POS.x, z - PLANET_SIGMA_POS.z);
+        if (dSigma < 32) {
+            const t = Math.max(0, Math.min(1, (dSigma - 20) / 12));
+            h = THREE.MathUtils.lerp(7.2, h, t);
+        }
+        const dCave = Math.hypot(x - PLANET_CAVE_POS.x, z - PLANET_CAVE_POS.z);
+        if (dCave < 18) {
+            const t = Math.max(0, Math.min(1, (dCave - 10) / 8));
+            h = THREE.MathUtils.lerp(7.2, h, t);
+        }
+        if (r > PLANET_WORLD_RADIUS - 26) {
+            const edgeT = (r - (PLANET_WORLD_RADIUS - 26)) / 26;
+            h += edgeT * edgeT * 12.0;
+        }
+        return h;
+    }
+
     // Keep baseline well above y = 0 so Earth ocean water checks never trigger
-    let h = 6.0 + Math.sin(x * 0.024) * Math.cos(z * 0.022) * 1.65 + Math.sin(x * 0.065 + z * 0.05) * 0.48;
+    let h = 6.0 + Math.sin(x * 0.02) * Math.cos(z * 0.02) * 1.9 + Math.sin(x * 0.055 + z * 0.045) * 0.55;
 
     // Flatten central landing zone around Starship Sigma
     const dCenter = Math.hypot(x, z + 10);
-    if (dCenter < 42) {
-        const t = Math.max(0, Math.min(1, (dCenter - 22) / 20));
+    if (dCenter < 48) {
+        const t = Math.max(0, Math.min(1, (dCenter - 26) / 22));
+        h = THREE.MathUtils.lerp(6.0, h, t);
+    }
+
+    // Flatten Cave Entrance threshold
+    const dCave = Math.hypot(x - PLANET_CAVE_POS.x, z - PLANET_CAVE_POS.z);
+    if (dCave < 22) {
+        const t = Math.max(0, Math.min(1, (dCave - 12) / 10));
         h = THREE.MathUtils.lerp(6.0, h, t);
     }
 
@@ -398,10 +752,9 @@ export function getPlanetSurfaceHeight(x: number, z: number): number {
         }
     }
 
-    const r = Math.hypot(x, z);
-    if (r > PLANET_WORLD_RADIUS - 28) {
-        const edgeT = (r - (PLANET_WORLD_RADIUS - 28)) / 28;
-        h += edgeT * edgeT * 14.0;
+    if (r > PLANET_WORLD_RADIUS - 32) {
+        const edgeT = (r - (PLANET_WORLD_RADIUS - 32)) / 32;
+        h += edgeT * edgeT * 16.0;
     }
     return h;
 }
@@ -513,6 +866,18 @@ function createBackdropBody(kind: PlanetConfig['backdropKind']): THREE.Group {
         );
         g.add(jup);
         g.position.set(85, 130, -240);
+    } else if (kind === 'SATURN') {
+        const sat = new THREE.Mesh(
+            new THREE.SphereGeometry(72, 26, 20),
+            new THREE.MeshBasicMaterial({ color: 0xeab308 })
+        );
+        const ring = new THREE.Mesh(
+            new THREE.RingGeometry(94, 148, 48),
+            new THREE.MeshBasicMaterial({ color: 0xfef08a, side: THREE.DoubleSide, transparent: true, opacity: 0.58 })
+        );
+        ring.rotation.set(Math.PI * 0.36, 0.2, 0.14);
+        g.add(sat, ring);
+        g.position.set(85, 134, -245);
     } else if (kind === 'URANUS') {
         const ura = new THREE.Mesh(
             new THREE.SphereGeometry(74, 24, 20),
@@ -553,8 +918,11 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
     _planetRocks.length = 0;
     _planetColliders.length = 0;
     _planetLandmarks.length = 0;
+    _planetGates.length = 0;
+    _planetMonoliths.length = 0;
     _planetAnimated.length = 0;
     _planetSigmaRoot = null;
+    _planetWaterMesh = null;
     _frozenStarspeedGroup = null;
     _frozenStarspeedRing = null;
 
@@ -593,7 +961,7 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
     _worldGroup.add(createBackdropBody(cfg.backdropKind));
 
     // Sculpted Planetary Terrain
-    const segs = 76;
+    const segs = 96;
     const terrainGeo = new THREE.PlaneGeometry(PLANET_WORLD_RADIUS * 2.2, PLANET_WORLD_RADIUS * 2.2, segs, segs);
     terrainGeo.rotateX(-Math.PI / 2);
     const vPos = terrainGeo.attributes.position;
@@ -609,6 +977,32 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
     );
     terrainMesh.receiveShadow = true;
     _worldGroup.add(terrainMesh);
+
+    // Water-Planet Ocean Surface (e.g. Europa Sub-Glacial Ocean Archipelago!)
+    if (cfg.waterLevel !== undefined) {
+        const oceanGeo = new THREE.CircleGeometry(PLANET_WORLD_RADIUS + 40, 64).rotateX(-Math.PI / 2);
+        const oceanMat = new THREE.MeshToonMaterial({
+            color: 0x0284c7,
+            emissive: 0x0369a1,
+            emissiveIntensity: 0.25,
+            transparent: true,
+            opacity: 0.84,
+            gradientMap: toonGrad3
+        });
+        _planetWaterMesh = new THREE.Mesh(oceanGeo, oceanMat);
+        _planetWaterMesh.position.y = cfg.waterLevel;
+        _worldGroup.add(_planetWaterMesh);
+
+        // Shoreline ice-foam rings around each island
+        cfg.islands?.forEach((isl) => {
+            const foam = new THREE.Mesh(
+                new THREE.RingGeometry(isl.r * 0.72, isl.r * 0.86, 36).rotateX(-Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.45, side: THREE.DoubleSide })
+            );
+            foam.position.set(isl.x, cfg.waterLevel! + 0.08, isl.z);
+            _worldGroup!.add(foam);
+        });
+    }
 
     // Parked Starship Sigma on illuminated Landing Pad
     const sigmaY = getPlanetSurfaceHeight(PLANET_SIGMA_POS.x, PLANET_SIGMA_POS.z);
@@ -635,6 +1029,66 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
         if (_planetSigmaRoot.userData.sigmaControl.launchPadRing) {
             _planetSigmaRoot.userData.sigmaControl.launchPadRing.visible = false;
         }
+    }
+
+    // Modeled 3D Surface Cave Entrance (rock/ice/volcanic arch tunnel leading to PLANET_CAVERN)
+    const caveY = getPlanetSurfaceHeight(PLANET_CAVE_POS.x, PLANET_CAVE_POS.z);
+    const isIceCave = cfg.id === 'EUROPA' || cfg.id === 'TRITON' || cfg.id === 'MIRANDA' || cfg.id === 'TITANIA' || cfg.id === 'PLUTO';
+    const caveMesh = buildSurfaceCaveEntranceMesh(cfg.rockColor, cfg.relicColor, isIceCave);
+    caveMesh.position.set(PLANET_CAVE_POS.x, caveY, PLANET_CAVE_POS.z);
+    caveMesh.rotation.y = -Math.PI * 0.25; // Faces inward toward landing pad
+    _worldGroup.add(caveMesh);
+    // Solid rock flank colliders around cave pillars while leaving the tunnel mouth open!
+    _planetColliders.push({ x: PLANET_CAVE_POS.x - 5.2, z: PLANET_CAVE_POS.z - 3.0, r: 2.8 });
+    _planetColliders.push({ x: PLANET_CAVE_POS.x + 3.0, z: PLANET_CAVE_POS.z - 5.2, r: 2.8 });
+
+    // 2 Scanable Ancient Monoliths per World
+    const scannedMonoliths: string[] = Array.isArray(progression.planetMonolithsScanned) ? progression.planetMonolithsScanned : [];
+    const monoCoords = [
+        { id: `${cfg.id}_MONO_1`, name: `${cfg.name} Alpha Monolith`, x: -92, z: -26 },
+        { id: `${cfg.id}_MONO_2`, name: `${cfg.name} Ridge Obelisk`, x: 96, z: 78 }
+    ];
+    monoCoords.forEach((mc) => {
+        const my = getPlanetSurfaceHeight(mc.x, mc.z);
+        const mg = new THREE.Group();
+        mg.position.set(mc.x, my, mc.z);
+        const plinth = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.8, 0.8, 8), matDarkSteel);
+        plinth.position.y = 0.4;
+        const obelisk = new THREE.Mesh(new THREE.BoxGeometry(2.2, 10.5, 1.4), matDarkSteel);
+        obelisk.position.y = 5.6;
+        const already = scannedMonoliths.includes(mc.id);
+        const beaconMat = new THREE.MeshBasicMaterial({ color: already ? 0x4ade80 : cfg.relicColor });
+        const glyph = new THREE.Mesh(new THREE.BoxGeometry(0.45, 7.2, 1.56), beaconMat);
+        glyph.position.y = 5.4;
+        glyph.userData.noOutline = true;
+        mg.add(plinth, obelisk, glyph);
+        applyCartoonInkOutlines(obelisk, 1.03, true);
+        _worldGroup!.add(mg);
+        _planetColliders.push({ x: mc.x, z: mc.z, r: 2.6 });
+        _planetMonoliths.push({ id: mc.id, name: mc.name, x: mc.x, z: mc.z, group: mg, beaconMat, scanned: already });
+    });
+
+    // 8-Gate Surface Slalom / Ocean Buoy Mini-Game Course
+    const isWaterWorld = cfg.waterLevel !== undefined;
+    const gateRadius = isWaterWorld ? 115 : 108;
+    for (let gi = 0; gi < 8; gi++) {
+        const ang = (gi / 8) * Math.PI * 2 + 0.35;
+        const gx = Math.cos(ang) * gateRadius;
+        const gz = Math.sin(ang) * gateRadius + 24;
+        const gy = isWaterWorld ? (cfg.waterLevel! + 1.8) : (getPlanetSurfaceHeight(gx, gz) + 3.2);
+        const gateGrp = new THREE.Group();
+        gateGrp.position.set(gx, gy, gz);
+        gateGrp.lookAt(0, gy, 24);
+        const ringMat = new THREE.MeshBasicMaterial({ color: isWaterWorld ? 0x38bdf8 : 0xfbbf24 });
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(4.8, 0.42, 8, 24), ringMat);
+        gateGrp.add(ring);
+        if (isWaterWorld) {
+            const buoy = new THREE.Mesh(new THREE.ConeGeometry(1.1, 2.4, 8), matOptimusRed);
+            buoy.position.y = -4.6;
+            gateGrp.add(buoy);
+        }
+        _worldGroup.add(gateGrp);
+        _planetGates.push({ x: gx, y: gy, z: gz, mesh: gateGrp, ringMat, cleared: false });
     }
 
     // Outpost Beacon Tower near Landing Pad
@@ -702,12 +1156,14 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
 
     // Smashable Planetary Rocks (Boulder can smash them for Energon!)
     const rockMat = new THREE.MeshToonMaterial({ color: cfg.rockColor, gradientMap: toonGrad3 });
-    for (let i = 0; i < 24; i++) {
-        const ang = (i / 24) * Math.PI * 2 + 0.15;
-        const dist = 48 + (i % 5) * 23;
+    for (let i = 0; i < 38; i++) {
+        const ang = (i / 38) * Math.PI * 2 + 0.15;
+        const dist = 58 + (i % 6) * 44;
         const rx = Math.cos(ang) * dist;
         const rz = Math.sin(ang) * dist;
         const ry = getPlanetSurfaceHeight(rx, rz);
+        if (cfg.waterLevel !== undefined && ry < cfg.waterLevel + 0.3) continue; // Keep Europa ocean channels clear!
+        if (Math.hypot(rx - PLANET_CAVE_POS.x, rz - PLANET_CAVE_POS.z) < 16) continue;
         const rRad = 2.6 + (i % 3) * 1.1;
         const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(rRad, 0), rockMat);
         mesh.position.set(rx, ry + rRad * 0.65, rz);
@@ -1199,6 +1655,74 @@ export function updatePlanetSurface(dt: number, now: number) {
         }
     }
 
+    // Proximity to Modeled 3D Cave Entrance -> Enter Planetary Underground Caverns!
+    if (_caveEnterCooldown > 0) _caveEnterCooldown -= dt;
+    const distCave = Math.hypot(player.pos.x - PLANET_CAVE_POS.x, player.pos.z - PLANET_CAVE_POS.z);
+    const nearCave = distCave < 14.0;
+    worldState.nearPlanetCaveEntrance = nearCave;
+    if (_caveEnterCooldown <= 0 && distCave < 5.6 && _planetCavernEnterHandler) {
+        _caveEnterCooldown = 2.2;
+        _planetCavernEnterHandler(_activeConfig.id);
+        return;
+    }
+
+    // Scanable Ancient Monoliths
+    for (let i = 0; i < _planetMonoliths.length; i++) {
+        const m = _planetMonoliths[i];
+        if (m.scanned) continue;
+        if (Math.hypot(player.pos.x - m.x, player.pos.z - m.z) < 9.5) {
+            m.scanned = true;
+            m.beaconMat.color.setHex(0x4ade80);
+            if (!Array.isArray(progression.planetMonolithsScanned)) progression.planetMonolithsScanned = [];
+            if (!progression.planetMonolithsScanned.includes(m.id)) {
+                progression.planetMonolithsScanned.push(m.id);
+                progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 4;
+                saveProgression({ immediate: true });
+            }
+            sfx.playCavernDiscovery();
+            spawnSparkleGlints(m.x, player.pos.y + 4, m.z, 20);
+            showToast('ANCIENT MONOLITH SCANNED!', `${m.name} logged in Galactic Passport! +4 Energon!`);
+            triggerNPCSpeech('CHASE', 'Recon Specialist', `Data uplink complete! ${m.name} archived in our Galactic Log!`, player as unknown as SpeechTarget, true);
+        }
+    }
+
+    // 8-Gate Surface Slalom / Europa Ocean Buoy Course
+    let gatesClearedCount = 0;
+    for (let i = 0; i < _planetGates.length; i++) {
+        const gt = _planetGates[i];
+        if (gt.cleared) {
+            gatesClearedCount++;
+            continue;
+        }
+        if (Math.hypot(player.pos.x - gt.x, player.pos.z - gt.z) < 7.2) {
+            gt.cleared = true;
+            gatesClearedCount++;
+            gt.ringMat.color.setHex(0x4ade80);
+            sfx.playStuntChime();
+            spawnSparkleGlints(gt.x, gt.y, gt.z, 14);
+            progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 1;
+            if (gatesClearedCount === _planetGates.length) {
+                if (!Array.isArray(progression.planetCoursesCompleted)) progression.planetCoursesCompleted = [];
+                if (!progression.planetCoursesCompleted.includes(_activeConfig.id)) {
+                    progression.planetCoursesCompleted.push(_activeConfig.id);
+                }
+                progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 8;
+                saveProgression({ immediate: true });
+                sfx.playRankUp();
+                showToast(
+                    `${_activeConfig.name} COURSE COMPLETE!`,
+                    `All 8 ${_activeConfig.waterLevel !== undefined ? 'Ocean Buoys' : 'Slalom Gates'} cleared! +8 Energon Bonus!`
+                );
+            } else {
+                saveProgression();
+                showToast(
+                    `${_activeConfig.waterLevel !== undefined ? 'OCEAN BUOY' : 'SLALOM GATE'} ${gatesClearedCount}/8!`,
+                    '+1 Energon Cube!'
+                );
+            }
+        }
+    }
+
     // Proximity to Parked Starship Sigma
     const nearSigma = Math.hypot(player.pos.x - PLANET_SIGMA_POS.x, player.pos.z - PLANET_SIGMA_POS.z) < 26.0;
     worldState.nearPlanetSigma = nearSigma;
@@ -1221,8 +1745,13 @@ export function getPlanetSurfaceMapData() {
         config: _activeConfig,
         radius: PLANET_WORLD_RADIUS,
         sigmaPos: PLANET_SIGMA_POS,
+        cavePos: PLANET_CAVE_POS,
         craters: _activeConfig.craters,
+        islands: _activeConfig.islands,
+        isWaterWorld: _activeConfig.waterLevel !== undefined,
         relics: _planetRelics,
+        monoliths: _planetMonoliths,
+        gates: _planetGates,
         vents: _activeConfig.vents,
         frozenStarspeed: _activeConfig.id === 'TRITON' && !_frozenStarspeedFreed
             ? { x: TRITON_FROZEN_POS.x, z: TRITON_FROZEN_POS.z }
@@ -1230,11 +1759,13 @@ export function getPlanetSurfaceMapData() {
     };
 }
 
-// Register with terrain.ts so physics, Bot/Vehicle/Dino movement, and Buddy AI work seamlessly
+// Register with terrain.ts so physics, Bot/Vehicle/Dino movement, Europa Ocean, and Buddy AI work seamlessly
 setPlanetTerrainHooks({
     isActive: () => worldState.activeArea === 'PLANET_SURFACE',
     getSurfaceHeight: getPlanetSurfaceHeight,
-    getZoneName: getPlanetZoneName
+    getZoneName: getPlanetZoneName,
+    isPointInWater: isPlanetPointInWater,
+    getWaterLevel: () => _activeConfig.waterLevel ?? -0.45
 });
 
 if (typeof window !== 'undefined') {
@@ -1242,6 +1773,7 @@ if (typeof window !== 'undefined') {
         planetSurfaceScene,
         PLANET_CONFIGS,
         swapToPlanetSurface,
-        getPlanetSurfaceMapData
+        getPlanetSurfaceMapData,
+        enterActivePlanetCave
     });
 }

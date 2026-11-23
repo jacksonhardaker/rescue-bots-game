@@ -21,6 +21,7 @@ export type SolarDestinationId =
     | 'MARS'
     | 'JUPITER'
     | 'SATURN'
+    | 'TITAN'
     | 'URANUS'
     | 'NEPTUNE'
     | 'PLUTO';
@@ -116,10 +117,10 @@ export const SOLAR_DESTINATIONS: SolarDestinationDef[] = [
     {
         id: 'JUPITER',
         name: 'Jupiter',
-        badge: 'ORBIT + LANDABLE MOON',
+        badge: 'ORBIT + 3 LANDABLE MOONS',
         badgeColor: '#f59e0b',
         gravity: 'Gas Giant (No Landing)',
-        description: 'Massive gas giant surrounded by Io, Europa, Ganymede & Callisto! Complete orbital rescues or land on icy Europa!',
+        description: 'Explore Io, Europa (Water Planet!), Ganymede & Callisto! Catch Energon Comets or land on 3 moons!',
         iconKey: 'PLANET_JUPITER',
         orbitRadius: 104,
         orbitSpeed: 0.095,
@@ -142,12 +143,27 @@ export const SOLAR_DESTINATIONS: SolarDestinationDef[] = [
         color: 0xeab308
     },
     {
+        id: 'TITAN',
+        name: 'Titan',
+        badge: 'LANDABLE MOON',
+        badgeColor: '#f59e0b',
+        gravity: '0.20G Golden Dunes',
+        description: 'Saturn’s giant hazy amber moon! Surf cryo-methane vents, scan monoliths, and explore amber crystal caverns!',
+        iconKey: 'PLANET_TITAN',
+        orbitRadius: 15.0,
+        orbitSpeed: 0.65,
+        startAngle: 1.2,
+        radius: 2.5,
+        color: 0xf59e0b,
+        parentId: 'SATURN'
+    },
+    {
         id: 'URANUS',
         name: 'Uranus',
-        badge: 'ORBIT + LANDABLE MOON',
+        badge: 'ORBIT + 2 LANDABLE MOONS',
         badgeColor: '#06b6d4',
         gravity: 'Ice Giant (No Landing)',
-        description: 'Tilted cyan ice giant with vertical rings! Weave through orbital missions or descend onto jagged moon Miranda!',
+        description: 'Tilted cyan ice giant with vertical rings! Thread the Ring Slalom or land on Miranda & Titania!',
         iconKey: 'PLANET_URANUS',
         orbitRadius: 156,
         orbitSpeed: 0.06,
@@ -598,15 +614,15 @@ export function updateSolarHub(dt: number, now: number) {
         _hubSunMesh.scale.setScalar(pulse);
     }
 
-    // Orbit all planets (with Earth's Moon orbiting Earth!)
-    const earthNode = _planetNodes.get('EARTH');
+    // Orbit all planets (with moons orbiting their parent planets!)
     _planetNodes.forEach(node => {
         node.angle += dt * node.def.orbitSpeed;
-        if (node.def.parentId === 'EARTH' && earthNode) {
+        const parentNode = node.def.parentId ? _planetNodes.get(node.def.parentId) : undefined;
+        if (parentNode) {
             node.worldPos.set(
-                earthNode.worldPos.x + Math.cos(node.angle) * node.def.orbitRadius,
+                parentNode.worldPos.x + Math.cos(node.angle) * node.def.orbitRadius,
                 Math.sin(node.angle * 1.5) * 1.4,
-                earthNode.worldPos.z + Math.sin(node.angle) * node.def.orbitRadius
+                parentNode.worldPos.z + Math.sin(node.angle) * node.def.orbitRadius
             );
         } else {
             node.worldPos.set(
