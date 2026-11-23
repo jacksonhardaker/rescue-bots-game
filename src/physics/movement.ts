@@ -8,7 +8,7 @@ import {
     triggerNearbyDinoReaction, registerUndergroundFXCallbacks
 } from '../world/underground.js';
 import { resolveMoonCollisions, checkMoonBoulderStrike } from '../world/moon.js';
-import { setSpaceDestinationFromScreenPoint } from '../world/space.js';
+import { setSpaceDestinationFromScreenPoint, clearSpaceWaypoint } from '../world/space.js';
 import { getActivePlanetGravity, resolvePlanetSurfaceCollisions } from '../world/planetSurface.js';
 import { resolvePlanetCavernCollisions } from '../world/planetCaverns.js';
 import { handleSolarHubClick } from '../world/solarSystem.js';
@@ -482,6 +482,10 @@ waypointGroup.add(wpArrowCone);
                 target.closest('#cavern-enter-prompt') ||
                 target.closest('#planet-cavern-exit-prompt') ||
                 target.closest('#space-controls-bar') ||
+                target.closest('#space-hud-pill') ||
+                target.closest('#space-launch-banner') ||
+                target.closest('#cavern-hud-pill') ||
+                target.closest('#moon-hud-pill') ||
                 target.closest('#solar-hub-ui') ||
                 target.closest('#galactic-log-modal') ||
                 target.closest('#saturn-race-hud') ||
@@ -540,7 +544,9 @@ waypointGroup.add(wpArrowCone);
 
         window.addEventListener('touchend', () => {
             activePointerDown = false;
-            if (worldState.activeArea === 'SATURN_RING_RACE') {
+            if (worldState.activeArea === 'SPACE') {
+                clearSpaceWaypoint(true);
+            } else if (worldState.activeArea === 'SATURN_RING_RACE') {
                 setSaturnRaceTouch('LEFT', false);
                 setSaturnRaceTouch('RIGHT', false);
             }
@@ -549,7 +555,9 @@ waypointGroup.add(wpArrowCone);
 
         window.addEventListener('touchcancel', () => {
             activePointerDown = false;
-            if (worldState.activeArea === 'SATURN_RING_RACE') {
+            if (worldState.activeArea === 'SPACE') {
+                clearSpaceWaypoint(true);
+            } else if (worldState.activeArea === 'SATURN_RING_RACE') {
                 setSaturnRaceTouch('LEFT', false);
                 setSaturnRaceTouch('RIGHT', false);
             }
@@ -583,18 +591,22 @@ waypointGroup.add(wpArrowCone);
 
         window.addEventListener('mouseup', () => {
             activePointerDown = false;
-            if (worldState.activeArea === 'SATURN_RING_RACE') {
+            if (worldState.activeArea === 'SPACE') {
+                clearSpaceWaypoint(true);
+            } else if (worldState.activeArea === 'SATURN_RING_RACE') {
                 setSaturnRaceTouch('LEFT', false);
                 setSaturnRaceTouch('RIGHT', false);
             }
         });
         window.addEventListener('blur', () => {
             activePointerDown = false;
+            Object.keys(input.keys).forEach(k => { input.keys[k] = false; });
             sfx.stopContinuousLoops();
         });
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 activePointerDown = false;
+                Object.keys(input.keys).forEach(k => { input.keys[k] = false; });
                 sfx.stopContinuousLoops();
             }
         });

@@ -231,6 +231,7 @@ let _spaceMoonGroup: THREE.Group | null = null;
 let _spaceMoonBeaconRing: THREE.Mesh | null = null;
 let _tractorBeamMesh: THREE.Mesh | null = null;
 let _spaceWaypointGroup: THREE.Group | null = null;
+let _spaceWaypointLockedToTarget = false;
 let _solarHubHandler: (() => void) | null = null;
 
 export type SpaceSectorId = 'MOON_ORBIT' | 'JUPITER' | 'URANUS' | 'NEPTUNE';
@@ -1067,6 +1068,14 @@ export function swapToSpace(fromMoon = false, sectorId: SpaceSectorId = 'MOON_OR
     sigmaShip.boostTimer = 0;
     sigmaShip.towedPod = null;
     sigmaShip.hasWaypoint = false;
+    _spaceWaypointLockedToTarget = false;
+    _spaceTouch.fire = false;
+    _spaceTouch.boost = false;
+    _spaceTouch.climb = 0;
+    _spaceTouch.beam = false;
+    ['KeyW', 'KeyS', 'KeyA', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyE', 'KeyQ', 'KeyR', 'KeyC', 'ShiftLeft', 'ShiftRight', 'Space'].forEach(k => {
+        input.keys[k] = false;
+    });
     if (_spaceWaypointGroup) _spaceWaypointGroup.visible = false;
 
     // Hide standard bot controls & other area panels; show Space Flight HUD
@@ -1128,14 +1137,17 @@ export function swapToSpace(fromMoon = false, sectorId: SpaceSectorId = 'MOON_OR
 export function setSpaceWaypointWorld(wx: number, wy: number, wz: number) {
     sigmaShip.waypoint.set(wx, wy, wz);
     sigmaShip.hasWaypoint = true;
+    _spaceWaypointLockedToTarget = true;
     if (_spaceWaypointGroup) {
         _spaceWaypointGroup.position.set(wx, wy, wz);
         _spaceWaypointGroup.visible = true;
     }
 }
 
-export function clearSpaceWaypoint() {
+export function clearSpaceWaypoint(onlyIfUnlocked = false) {
+    if (onlyIfUnlocked && _spaceWaypointLockedToTarget) return;
     sigmaShip.hasWaypoint = false;
+    _spaceWaypointLockedToTarget = false;
     if (_spaceWaypointGroup) _spaceWaypointGroup.visible = false;
 }
 
@@ -1182,6 +1194,7 @@ export function setSpaceDestinationFromScreenPoint(clientX: number, clientY: num
     _pods.forEach(p => { if (!p.rescued && !p.towed) considerTarget(p.pos, 22); });
     _asteroids.forEach(a => { if (a.alive) considerTarget(a.pos, a.radius + 14, true); });
 
+    const lockedToTarget = Boolean(bestTarget);
     if (!bestTarget) {
         bestTarget = ray.origin.clone().addScaledVector(ray.direction, 155);
     }
@@ -1194,6 +1207,7 @@ export function setSpaceDestinationFromScreenPoint(clientX: number, clientY: num
 
     sigmaShip.waypoint.copy(bestTarget);
     sigmaShip.hasWaypoint = true;
+    _spaceWaypointLockedToTarget = lockedToTarget;
     if (_spaceWaypointGroup) {
         _spaceWaypointGroup.position.copy(bestTarget);
         _spaceWaypointGroup.visible = true;
