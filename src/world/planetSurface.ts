@@ -10,7 +10,7 @@ import { player, buddyBot, botRigs, worldState } from '../state/gameState.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { setPlanetTerrainHooks } from './terrain.js';
 import { setActiveParticleScene, spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
-import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
+import { buildCrashedSpaceshipSigma, type SigmaColliderEntry } from './spaceshipSigma.js';
 import { buildRescueBotModel, applyBotRigMorph } from '../bots/botRigs.js';
 import { updateBotRosterUI } from '../physics/player.js';
 import { sfx } from '../audio/soundFX.js';
@@ -361,6 +361,7 @@ let _frozenStarspeedFreed = false;
 const TRITON_FROZEN_POS = { x: -34, z: -42 };
 const _planetRelics: PlanetRelicRuntime[] = [];
 const _planetRocks: PlanetRockRuntime[] = [];
+const _planetColliders: SigmaColliderEntry[] = [];
 const _planetLandmarks: PlanetLandmarkNode[] = [];
 const _planetAnimated: Array<{ obj: THREE.Object3D; kind: string; baseY: number; phase: number }> = [];
 let _ventCooldown = 0;
@@ -550,6 +551,7 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
     }
     _planetRelics.length = 0;
     _planetRocks.length = 0;
+    _planetColliders.length = 0;
     _planetLandmarks.length = 0;
     _planetAnimated.length = 0;
     _planetSigmaRoot = null;
@@ -617,11 +619,12 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
     padRing.position.set(PLANET_SIGMA_POS.x, sigmaY + 0.14, PLANET_SIGMA_POS.z);
     _worldGroup.add(padRing);
 
-    _planetSigmaRoot = buildCrashedSpaceshipSigma(_worldGroup, _planetAnimated, null, {
+    _planetSigmaRoot = buildCrashedSpaceshipSigma(_worldGroup, _planetAnimated, _planetColliders, {
         originX: PLANET_SIGMA_POS.x,
         originZ: PLANET_SIGMA_POS.z,
         includeDiorama: false,
-        flatLevel: true
+        flatLevel: true,
+        rotationY: Math.PI
     });
     _planetSigmaRoot.position.set(PLANET_SIGMA_POS.x, sigmaY + 2.2, PLANET_SIGMA_POS.z);
     _planetSigmaRoot.rotation.set(0, Math.PI, 0);
@@ -636,6 +639,7 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
 
     // Outpost Beacon Tower near Landing Pad
     const beaconX = 22, beaconZ = -10;
+    _planetColliders.push({ x: beaconX, z: beaconZ, r: 4.4 });
     const beaconY = getPlanetSurfaceHeight(beaconX, beaconZ);
     const tower = new THREE.Group();
     tower.position.set(beaconX, beaconY, beaconZ);
@@ -976,6 +980,82 @@ export function restoreRigsFromPlanetSurface() {
     setActiveParticleScene(scene);
 }
 
+export function resolvePlanetSurfaceCollisions(pos: THREE.Vector3, radius = 2.3, isPlayer = false) {
+    if (worldState.activeArea !== 'PLANET_SURFACE') return;
+
+    // Clamp within planetary crater rim
+    const pDist = Math.hypot(pos.x, pos.z);
+    const maxR = PLANET_WORLD_RADIUS - 10;
+    if (pDist > maxR) {
+        const sc = maxR / pDist;
+        pos.x *= sc;
+        pos.z *= sc;
+    }
+
+    // 2-pass resolution against Starship Sigma (fuselage + swept wings) & Outpost Beacon Tower
+    for (let pass = 0; pass < 2; pass++) {
+        for (let i = 0; i < _planetColliders.length; i++) {
+            const c = _planetColliders[i];
+            const groundY = getPlanetSurfaceHeight(c.x, c.z);
+            if (pos.y > groundY + 12.5) continue;
+            const dx = pos.x - c.x;
+            const dz = pos.z - c.z;
+            const minDist = c.r + radius;
+            const dSq = dx * dx + dz * dz;
+            if (dSq < minDist * minDist) {
+                const d = dSq > 1e-4 ? Math.sqrt(dSq) : 0;
+                const nx = d > 0 ? dx / d : 0;
+                const nz = d > 0 ? dz / d : 1;
+                const push = minDist - d;
+                pos.x += nx * push;
+                pos.z += nz * push;
+                if (isPlayer && pass === 0) {
+                    if (player.hasWaypoint) {
+                        const wpDist = Math.hypot(player.waypoint.x - c.x, player.waypoint.z - c.z);
+                        if (wpDist <= c.r + radius) {
+                            player.hasWaypoint = false;
+                            if (window.waypointGroup) window.waypointGroup.visible = false;
+                            player.speed = 0;
+                        } else {
+                            pos.x += -nz * 0.14;
+                            pos.z += nx * 0.14;
+                        }
+                    } else if (player.speed > 4.0) {
+                        player.speed *= 0.65;
+                    }
+                }
+            }
+        }
+    }
+
+    // Planetary Rock Collision & Boulder Smash
+    const isBoulderSmashing = isPlayer && player.botType === 'BOULDER' && (player.smashTimer > 0 || player.scoopTimer > 0 || player.speed > 20);
+    for (let i = 0; i < _planetRocks.length; i++) {
+        const rock = _planetRocks[i];
+        if (rock.destroyed) continue;
+        if (pos.y > rock.y + rock.r * 1.9 + 0.6) continue;
+        const dx = pos.x - rock.x;
+        const dz = pos.z - rock.z;
+        const dist = Math.hypot(dx, dz);
+        const minDist = rock.r + radius;
+        if (dist < minDist + (isBoulderSmashing ? 3.0 : 0)) {
+            if (isBoulderSmashing) {
+                rock.destroyed = true;
+                rock.mesh.visible = false;
+                sfx.playRockBreak(rock.x, rock.z);
+                spawnBurstParticles(rock.x, rock.y, rock.z, _activeConfig.rockColor, 14, 1.0);
+                progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 1;
+                saveProgression();
+            } else if (dist > 0.01) {
+                const push = (minDist - dist) / dist;
+                pos.x += dx * push;
+                pos.z += dz * push;
+                if (isPlayer) player.speed *= 0.5;
+            }
+        }
+    }
+}
+
 export function updatePlanetSurface(dt: number, now: number) {
     if (worldState.activeArea !== 'PLANET_SURFACE') return;
     const nowSec = now * 0.001;
@@ -986,13 +1066,7 @@ export function updatePlanetSurface(dt: number, now: number) {
     if (pRig && pRig.parent !== planetSurfaceScene) planetSurfaceScene.add(pRig);
     if (bRig && bRig.parent !== planetSurfaceScene) planetSurfaceScene.add(bRig);
 
-    // Clamp player within planetary crater rim
-    const pDist = Math.hypot(player.pos.x, player.pos.z);
-    if (pDist > PLANET_WORLD_RADIUS - 10) {
-        const sc = (PLANET_WORLD_RADIUS - 10) / pDist;
-        player.pos.x *= sc;
-        player.pos.z *= sc;
-    }
+    resolvePlanetSurfaceCollisions(player.pos, 2.3, true);
 
     // Animate vents & relics
     for (let i = 0; i < _planetAnimated.length; i++) {
@@ -1038,32 +1112,6 @@ export function updatePlanetSurface(dt: number, now: number) {
             spawnSparkleGlints(rel.x, player.pos.y + 3, rel.z, 18);
             showToast('PLANETARY RELIC FOUND!', `${rel.name} collected on ${_activeConfig.name}! +5 Hero Points!`);
             updatePlanetSurfaceHUD();
-        }
-    }
-
-    // Planetary Rock Collision & Boulder Smash
-    const isBoulderSmashing = player.botType === 'BOULDER' && (player.smashTimer > 0 || player.scoopTimer > 0 || player.speed > 20);
-    for (let i = 0; i < _planetRocks.length; i++) {
-        const rock = _planetRocks[i];
-        if (rock.destroyed) continue;
-        const dx = player.pos.x - rock.x;
-        const dz = player.pos.z - rock.z;
-        const dist = Math.hypot(dx, dz);
-        const minDist = rock.r + 2.4;
-        if (dist < minDist + (isBoulderSmashing ? 3.0 : 0)) {
-            if (isBoulderSmashing) {
-                rock.destroyed = true;
-                rock.mesh.visible = false;
-                sfx.playRockBreak(rock.x, rock.z);
-                spawnBurstParticles(rock.x, rock.y, rock.z, _activeConfig.rockColor, 14, 1.0);
-                progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 1;
-                saveProgression();
-            } else if (dist > 0.01) {
-                const push = (minDist - dist) / dist;
-                player.pos.x += dx * push;
-                player.pos.z += dz * push;
-                player.speed *= 0.5;
-            }
         }
     }
 
@@ -1152,7 +1200,7 @@ export function updatePlanetSurface(dt: number, now: number) {
     }
 
     // Proximity to Parked Starship Sigma
-    const nearSigma = Math.hypot(player.pos.x - PLANET_SIGMA_POS.x, player.pos.z - PLANET_SIGMA_POS.z) < 18.5;
+    const nearSigma = Math.hypot(player.pos.x - PLANET_SIGMA_POS.x, player.pos.z - PLANET_SIGMA_POS.z) < 26.0;
     worldState.nearPlanetSigma = nearSigma;
     const sigmaBtn = document.getElementById('sigma-action-btn');
     if (sigmaBtn && worldState.activeArea === 'PLANET_SURFACE') {

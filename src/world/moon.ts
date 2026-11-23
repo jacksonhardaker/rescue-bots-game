@@ -707,17 +707,39 @@ export function resolveMoonCollisions(pos: THREE.Vector3, radius: number, isPlay
         pos.x *= s;
         pos.z *= s;
     }
-    for (let i = 0; i < _moonColliders.length; i++) {
-        const c = _moonColliders[i];
-        const dx = pos.x - c.x;
-        const dz = pos.z - c.z;
-        const minDist = c.r + radius;
-        const dSq = dx * dx + dz * dz;
-        if (dSq < minDist * minDist && dSq > 1e-4) {
-            const d = Math.sqrt(dSq);
-            const push = minDist - d;
-            pos.x += (dx / d) * push;
-            pos.z += (dz / d) * push;
+    // 2-pass resolution against Starship Sigma (fuselage + swept wings) & Lunar Outpost Alpha
+    for (let pass = 0; pass < 2; pass++) {
+        for (let i = 0; i < _moonColliders.length; i++) {
+            const c = _moonColliders[i];
+            const groundY = getMoonSurfaceHeight(c.x, c.z);
+            if (pos.y > groundY + 11.5) continue;
+            const dx = pos.x - c.x;
+            const dz = pos.z - c.z;
+            const minDist = c.r + radius;
+            const dSq = dx * dx + dz * dz;
+            if (dSq < minDist * minDist) {
+                const d = dSq > 1e-4 ? Math.sqrt(dSq) : 0;
+                const nx = d > 0 ? dx / d : 0;
+                const nz = d > 0 ? dz / d : 1;
+                const push = minDist - d;
+                pos.x += nx * push;
+                pos.z += nz * push;
+                if (isPlayer && pass === 0) {
+                    if (player.hasWaypoint) {
+                        const wpDist = Math.hypot(player.waypoint.x - c.x, player.waypoint.z - c.z);
+                        if (wpDist <= c.r + radius) {
+                            player.hasWaypoint = false;
+                            if (window.waypointGroup) window.waypointGroup.visible = false;
+                            player.speed = 0;
+                        } else {
+                            pos.x += -nz * 0.14;
+                            pos.z += nx * 0.14;
+                        }
+                    } else if (player.speed > 4.0) {
+                        player.speed *= 0.65;
+                    }
+                }
+            }
         }
     }
     // Collide against lunar boulders (and shatter on Boulder Scoop/Smash impact!)
@@ -849,7 +871,7 @@ export function updateMoon(dt: number, now: number) {
             for (let w = 0; w < _moonRoverWheels.length; w++) {
                 _moonRoverWheels[w].rotation.x += player.speed * dt * 0.8;
             }
-            if (_roverToggleCooldown <= 0 && distSigma < 15.0) {
+            if (_roverToggleCooldown <= 0 && distSigma < 22.0) {
                 _inLunarRover = false;
                 _roverToggleCooldown = 2.5;
                 _moonRoverPos.set(18, getMoonSurfaceHeight(18, -18), -18);

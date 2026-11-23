@@ -11,6 +11,7 @@ import { texWindshieldCyan } from '../rendering/textures.js';
 import { player, buddyBot, botRigs, humanNPCs, vehicleNPCs, worldColliders, queryNearbyColliders, worldState } from '../state/gameState.js';
 import { resolveUndergroundPointCollision } from './underground.js';
 import { resolveMoonCollisions } from './moon.js';
+import { resolvePlanetSurfaceCollisions } from './planetSurface.js';
 const _buddyNearbyColliders: ColliderItem[] = [];
 import { sfx } from '../audio/soundFX.js';
 import { triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
@@ -1066,7 +1067,7 @@ export interface LocalVehicleNPC extends VehicleNPCEntry {
             } else if (worldState.activeArea === 'MOON') {
                 resolveMoonCollisions(buddyBot.pos, 2.3);
             } else if (worldState.activeArea === 'PLANET_SURFACE') {
-                // Planetary surface collisions handled in planetSurface.ts
+                resolvePlanetSurfaceCollisions(buddyBot.pos, 2.3, false);
             } else if (worldColliders && worldColliders.length > 0) {
                 const buddyRadius = 2.4;
                 const nearbyColliders = queryNearbyColliders(buddyBot.pos.x, buddyBot.pos.z, buddyRadius + 16, _buddyNearbyColliders);

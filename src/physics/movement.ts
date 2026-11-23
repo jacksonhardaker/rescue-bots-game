@@ -9,7 +9,7 @@ import {
 } from '../world/underground.js';
 import { resolveMoonCollisions, checkMoonBoulderStrike } from '../world/moon.js';
 import { setSpaceDestinationFromScreenPoint } from '../world/space.js';
-import { getActivePlanetGravity } from '../world/planetSurface.js';
+import { getActivePlanetGravity, resolvePlanetSurfaceCollisions } from '../world/planetSurface.js';
 import { handleSolarHubClick } from '../world/solarSystem.js';
 import { setSaturnRaceTouch } from '../world/saturnRace.js';
 import { sfx } from '../audio/soundFX.js';
@@ -1063,7 +1063,7 @@ waypointGroup.add(wpArrowCone);
             } else if (worldState.activeArea === 'MOON') {
                 resolveMoonCollisions(player.pos, 2.3, true);
             } else if (worldState.activeArea === 'PLANET_SURFACE') {
-                // Planetary surface collisions handled in planetSurface.ts
+                resolvePlanetSurfaceCollisions(player.pos, 2.3, true);
             } else if (!player.inCrane && currentClearance < 12) {
                 const playerRadius = 2.4;
                 const nearbyColliders = queryNearbyColliders(player.pos.x, player.pos.z, playerRadius + 16, _playerNearbyColliders);

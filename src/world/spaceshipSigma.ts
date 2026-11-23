@@ -24,6 +24,7 @@ export interface SigmaBuildOptions {
     originZ?: number;
     includeDiorama?: boolean;
     flatLevel?: boolean;
+    rotationY?: number;
 }
 
 /**
@@ -904,11 +905,32 @@ export function buildCrashedSpaceshipSigma(
     };
 
     cavernWorldGroup.add(sigmaRoot);
+    if (options.rotationY !== undefined) {
+        sigmaRoot.rotation.y = options.rotationY;
+    }
 
     if (staticColliders) {
-        staticColliders.push({ x: originX, z: originZ, r: 10.5 });
-        staticColliders.push({ x: originX + 8, z: originZ + 10, r: 8.5 });
-        staticColliders.push({ x: originX - 8, z: originZ - 10, r: 8.5 });
+        // Multi-circle hull & swept-wing collision footprint matching Sigma's actual 3D orientation
+        const rotY = flatLevel ? (options.rotationY ?? 0) : 0.62;
+        const cosR = Math.cos(rotY);
+        const sinR = Math.sin(rotY);
+        const localParts: Array<{ lx: number; lz: number; r: number }> = [
+            { lx: 0, lz: 0, r: 7.5 },        // Mid fuselage & armored side sponsons
+            { lx: 0, lz: 9.0, r: 6.6 },      // Forward bow prow & command bridge
+            { lx: 0, lz: -9.0, r: 6.6 },     // Aft engine nacelles & dorsal thruster bay
+            { lx: -9.5, lz: -2.8, r: 5.2 },  // Port inner swept wing
+            { lx: 9.5, lz: -2.8, r: 5.2 },   // Starboard inner swept wing
+            { lx: -15.2, lz: -4.6, r: 4.2 }, // Port outer wingtip & vertical stabilizer
+            { lx: 15.2, lz: -4.6, r: 4.2 }   // Starboard outer wingtip & vertical stabilizer
+        ];
+        for (let i = 0; i < localParts.length; i++) {
+            const p = localParts[i];
+            staticColliders.push({
+                x: originX + p.lx * cosR + p.lz * sinR,
+                z: originZ - p.lx * sinR + p.lz * cosR,
+                r: p.r
+            });
+        }
         if (includeDiorama) {
             staticColliders.push({ x: originX + 18, z: originZ - 4, r: 3.2 });
         }
