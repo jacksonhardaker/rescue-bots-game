@@ -130,11 +130,18 @@ export function triggerNPCSpeech(
         pitch = targetOrPitch;
     } else if (targetOrPitch && typeof targetOrPitch.voicePitch === 'number') {
         pitch = targetOrPitch.voicePitch;
+    } else if (speakerName) {
+        const upperSpeaker = speakerName.toUpperCase();
+        for (const key in BOT_METADATA) {
+            if (upperSpeaker.includes(key) || BOT_METADATA[key].name.toUpperCase() === upperSpeaker) {
+                pitch = BOT_METADATA[key].voicePitch || 1.0;
+                break;
+            }
+        }
     }
-    void pitch;
 
     if (sfx && typeof sfx.playSpeechPop === 'function') {
-        sfx.playSpeechPop();
+        sfx.playSpeechPop(pitch);
     }
 
     bubble.classList.remove('hidden');

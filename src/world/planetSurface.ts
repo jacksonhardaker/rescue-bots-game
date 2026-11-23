@@ -1054,7 +1054,7 @@ export function updatePlanetSurface(dt: number, now: number) {
             if (isBoulderSmashing) {
                 rock.destroyed = true;
                 rock.mesh.visible = false;
-                sfx.playRockBreak();
+                sfx.playRockBreak(rock.x, rock.z);
                 spawnBurstParticles(rock.x, rock.y, rock.z, _activeConfig.rockColor, 14, 1.0);
                 progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 1;
                 saveProgression();

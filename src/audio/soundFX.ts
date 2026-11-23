@@ -6,10 +6,15 @@ class RescueSoundFX {
     enabled: boolean;
     loopsReady: boolean;
     masterBus: GainNode | null;
+    compressor: DynamicsCompressorNode | null;
     sfxBus: GainNode | null;
     engineBus: GainNode | null;
+    reverbConvolver: ConvolverNode | null;
+    reverbWetGain: GainNode | null;
     noiseBuf: AudioBuffer | null;
     steamNoiseBuf: AudioBuffer | null;
+    _lastTriggerTimes: Record<string, number>;
+    _lastReverbArea: string;
 
     engineFilter!: BiquadFilterNode;
     engineOsc1!: OscillatorNode;
@@ -39,10 +44,52 @@ class RescueSoundFX {
                 this.enabled = true;
                 this.loopsReady = false;
                 this.masterBus = null;
+                this.compressor = null;
                 this.sfxBus = null;
                 this.engineBus = null;
+                this.reverbConvolver = null;
+                this.reverbWetGain = null;
                 this.noiseBuf = null;
                 this.steamNoiseBuf = null;
+                this._lastTriggerTimes = {};
+                this._lastReverbArea = '';
+            }
+            canTrigger(key: string, minGapMs = 35): boolean {
+                const now = performance.now();
+                const prev = this._lastTriggerTimes[key] || 0;
+                if (now - prev < minGapMs) return false;
+                this._lastTriggerTimes[key] = now;
+                return true;
+            }
+            jitter(val: number, pct = 0.042): number {
+                return val * (1 + (Math.random() * 2 - 1) * pct);
+            }
+            ensureReverbBuffer(): AudioBuffer | null {
+                if (!this.ctx) return null;
+                const sr = this.ctx.sampleRate;
+                const len = Math.floor(sr * 1.15);
+                const buf = this.ctx.createBuffer(2, len, sr);
+                for (let ch = 0; ch < 2; ch++) {
+                    const d = buf.getChannelData(ch);
+                    for (let i = 0; i < len; i++) {
+                        const t = i / sr;
+                        const env = Math.exp(-t * 3.6) * (1 - 0.25 * Math.cos(t * 28));
+                        d[i] = (Math.random() * 2 - 1) * env * 0.45;
+                    }
+                }
+                return buf;
+            }
+            syncEnvironmentAcoustics() {
+                if (!this.ctx || !this.reverbWetGain) return;
+                const area = (typeof window !== 'undefined' && window.worldState?.activeArea) || 'SURFACE';
+                if (area === this._lastReverbArea) return;
+                this._lastReverbArea = area;
+                const wet = area === 'UNDERGROUND'
+                    ? 0.28
+                    : (area === 'SPACE' || area === 'SOLAR_HUB' || area === 'SATURN_RING_RACE' || area === 'MOON' || area === 'PLANET_SURFACE'
+                        ? 0.19
+                        : 0.045);
+                this.reverbWetGain.gain.setTargetAtTime(wet, this.ctx.currentTime, 0.08);
             }
             ensureNoiseBuffer() {
                 if (!this.ctx) return null;
@@ -79,9 +126,30 @@ class RescueSoundFX {
                         this.sfxBus = this.ctx.createGain();
                         this.engineBus = this.ctx.createGain();
 
+                        // 1. Master Dynamics Compressor / Limiter (prevents multi-SFX clipping on iPad speakers)
+                        this.compressor = this.ctx.createDynamicsCompressor();
+                        this.compressor.threshold.value = -14;
+                        this.compressor.knee.value = 18;
+                        this.compressor.ratio.value = 4.0;
+                        this.compressor.attack.value = 0.003;
+                        this.compressor.release.value = 0.18;
+
+                        // 2. Procedural Environment Reverb Send (Cavern Echo & Space Shimmer)
+                        const revBuf = this.ensureReverbBuffer();
+                        if (revBuf) {
+                            this.reverbConvolver = this.ctx.createConvolver();
+                            this.reverbConvolver.buffer = revBuf;
+                            this.reverbWetGain = this.ctx.createGain();
+                            this.reverbWetGain.gain.value = 0.045;
+                            this.sfxBus.connect(this.reverbConvolver);
+                            this.reverbConvolver.connect(this.reverbWetGain);
+                            this.reverbWetGain.connect(this.masterBus);
+                        }
+
                         this.sfxBus.connect(this.masterBus);
                         this.engineBus.connect(this.masterBus);
-                        this.masterBus.connect(this.ctx.destination);
+                        this.masterBus.connect(this.compressor);
+                        this.compressor.connect(this.ctx.destination);
                         this.applySettingsVolumes();
                     } catch (e) {
                         console.warn("Audio bus creation failed:", e);
@@ -111,28 +179,71 @@ class RescueSoundFX {
             }
             getSfxDest(): AudioNode {
                 this.init();
+                this.syncEnvironmentAcoustics();
                 return this.sfxBus || this.ctx!.destination;
+            }
+            getSpatialSfxDest(worldX?: number, worldZ?: number, maxDist = 260): AudioNode {
+                const baseDest = this.getSfxDest();
+                if (!this.ctx || worldX === undefined || worldZ === undefined || typeof window === 'undefined' || !window.player) {
+                    return baseDest;
+                }
+                const px = window.player.pos.x;
+                const pz = window.player.pos.z;
+                const dx = worldX - px;
+                const dz = worldZ - pz;
+                const dist = Math.hypot(dx, dz);
+                if (dist > maxDist) {
+                    const muteGain = this.ctx.createGain();
+                    muteGain.gain.value = 0.01;
+                    muteGain.connect(baseDest);
+                    return muteGain;
+                }
+                const atten = Math.max(0.08, 1 - (dist / maxDist) * 0.88);
+                const heading = window.player.heading || 0;
+                const rightX = Math.cos(heading);
+                const rightZ = -Math.sin(heading);
+                const pan = dist > 1 ? Math.max(-0.85, Math.min(0.85, ((dx * rightX + dz * rightZ) / dist) * 0.85)) : 0;
+
+                const distGain = this.ctx.createGain();
+                distGain.gain.value = atten;
+                if (typeof this.ctx.createStereoPanner === 'function') {
+                    const panner = this.ctx.createStereoPanner();
+                    panner.pan.value = pan;
+                    distGain.connect(panner);
+                    panner.connect(baseDest);
+                } else {
+                    distGain.connect(baseDest);
+                }
+                return distGain;
             }
             getEngineDest(): AudioNode {
                 this.init();
                 return this.engineBus || this.ctx!.destination;
             }
-            playSpeechPop() {
-                if (!this.enabled) return;
+            playSpeechPop(voicePitch = 1.0) {
+                if (!this.enabled || !this.canTrigger('speechPop', 40)) return;
                 this.init();
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(540, now);
-                osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
-                gain.gain.setValueAtTime(0.14, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-                osc.connect(gain);
-                gain.connect(this.getSfxDest());
-                osc.start(now);
-                osc.stop(now + 0.13);
+                const p = Math.max(0.6, Math.min(1.5, voicePitch || 1.0));
+                const dest = this.getSfxDest();
+                // 3-note expressive Cybertronian syllable cadence scaled by each character's voicePitch!
+                const pattern = [this.jitter(510 * p, 0.03), this.jitter(740 * p, 0.03), this.jitter(630 * p, 0.03)];
+                pattern.forEach((f, idx) => {
+                    const t0 = now + idx * 0.048;
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
+                    osc.type = idx === 1 ? 'triangle' : 'sine';
+                    osc.frequency.setValueAtTime(f * 0.92, t0);
+                    osc.frequency.exponentialRampToValueAtTime(f * 1.12, t0 + 0.044);
+                    gain.gain.setValueAtTime(0.001, t0);
+                    gain.gain.linearRampToValueAtTime(0.11, t0 + 0.01);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.056);
+                    osc.connect(gain);
+                    gain.connect(dest);
+                    osc.start(t0);
+                    osc.stop(t0 + 0.06);
+                });
             }
             playTransform(toVehicle: boolean) {
                 if (!this.enabled) return;
@@ -248,15 +359,17 @@ class RescueSoundFX {
                 const isDilophosaur = botType === 'QUICKSHADOW';
                 const isPlesiosaur = botType === 'HIGHTIDE';
                 const isAnkylosaur = botType === 'SALVAGE';
-                const baseFreq = isPterosaur ? 720 : (isGallimimus ? 560 : (isRaptor ? 420 : (isDilophosaur ? 380 : (isPlesiosaur ? 210 : (isAnkylosaur ? 125 : (isTRex ? 82 : (botType === 'CHASE' ? 165 : 115)))))));
-                const roarDuration = isTRex ? 0.65 : (isPlesiosaur ? 0.58 : 0.48);
+                const isSpinosaurus = botType === 'STARSPEED';
+                const baseFreq = isPterosaur ? 720 : (isGallimimus ? 560 : (isRaptor ? 420 : (isDilophosaur ? 380 : (isPlesiosaur ? 210 : (isSpinosaurus ? 152 : (isAnkylosaur ? 125 : (isTRex ? 82 : (botType === 'CHASE' ? 165 : 115))))))));
+                const roarDuration = isTRex ? 0.65 : (isSpinosaurus ? 0.60 : (isPlesiosaur ? 0.58 : 0.48));
                 [1.0, 1.35].forEach((mult, idx) => {
                     const osc = this.ctx!.createOscillator();
                     const gain = this.ctx!.createGain();
                     osc.type = (isPterosaur || isRaptor || isGallimimus || isDilophosaur) ? 'triangle' : 'sawtooth';
-                    osc.frequency.setValueAtTime(baseFreq * mult, now + idx * 0.04);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 1.45 : (isGallimimus ? 1.75 : (isRaptor ? 1.65 : (isDilophosaur ? 1.55 : (isTRex ? 1.55 : (isPlesiosaur ? 1.35 : 0.68)))))), now + 0.22);
-                    osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 0.55 : (isGallimimus ? 0.85 : (isRaptor ? 0.72 : (isTRex ? 0.42 : 0.42)))), now + roarDuration - 0.04);
+                    const f0 = this.jitter(baseFreq * mult, 0.035);
+                    osc.frequency.setValueAtTime(f0, now + idx * 0.04);
+                    osc.frequency.exponentialRampToValueAtTime(f0 * (isPterosaur ? 1.45 : (isGallimimus ? 1.75 : (isRaptor ? 1.65 : (isDilophosaur ? 1.55 : (isSpinosaurus ? 1.48 : (isTRex ? 1.55 : (isPlesiosaur ? 1.35 : 0.68))))))), now + 0.22);
+                    osc.frequency.exponentialRampToValueAtTime(f0 * (isPterosaur ? 0.55 : (isGallimimus ? 0.85 : (isRaptor ? 0.72 : (isSpinosaurus ? 0.48 : (isTRex ? 0.42 : 0.42))))), now + roarDuration - 0.04);
                     gain.gain.setValueAtTime(isTRex ? 0.18 : 0.13, now + idx * 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + roarDuration);
                     osc.connect(gain);
@@ -335,21 +448,22 @@ class RescueSoundFX {
                 osc.start(now);
                 osc.stop(now + 0.4);
             }
-            playRockBreak() {
-                if (!this.enabled) return;
+            playRockBreak(worldX?: number, worldZ?: number) {
+                if (!this.enabled || !this.canTrigger('rockBreak', 35)) return;
                 this.init();
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
+                const dest = this.getSpatialSfxDest(worldX, worldZ);
                 [210, 145, 95].forEach((f, i) => {
                     const osc = this.ctx!.createOscillator();
                     const gain = this.ctx!.createGain();
                     osc.type = 'square';
-                    osc.frequency.setValueAtTime(f, now + i * 0.04);
-                    osc.frequency.exponentialRampToValueAtTime(40, now + i * 0.04 + 0.18);
+                    osc.frequency.setValueAtTime(this.jitter(f, 0.055), now + i * 0.04);
+                    osc.frequency.exponentialRampToValueAtTime(this.jitter(40, 0.05), now + i * 0.04 + 0.18);
                     gain.gain.setValueAtTime(0.12, now + i * 0.04);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.2);
                     osc.connect(gain);
-                    gain.connect(this.getSfxDest());
+                    gain.connect(dest);
                     osc.start(now + i * 0.04);
                     osc.stop(now + i * 0.04 + 0.21);
                 });
@@ -373,7 +487,7 @@ class RescueSoundFX {
                 });
             }
             playWaypointTap() {
-                if (!this.enabled) return;
+                if (!this.enabled || !this.canTrigger('waypointTap', 40)) return;
                 this.init();
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
@@ -381,7 +495,7 @@ class RescueSoundFX {
                     const osc = this.ctx!.createOscillator();
                     const gain = this.ctx!.createGain();
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(n, now + i * 0.055);
+                    osc.frequency.setValueAtTime(this.jitter(n, 0.025), now + i * 0.055);
                     gain.gain.setValueAtTime(0.11, now + i * 0.055);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.16);
                     osc.connect(gain);
@@ -1166,8 +1280,26 @@ class RescueSoundFX {
                 if (!this.loopsReady) return;
 
                 const t = this.ctx.currentTime;
+                this.syncEnvironmentAcoustics();
                 const absSpeed = Math.abs(speed);
                 const speedNorm = Math.min(1.0, absSpeed / 65.0);
+
+                // 0. Starship Sigma Zero-G Space Ion Thruster Hum
+                if (mode === 'SPACE') {
+                    this.rotorGain.gain.setTargetAtTime(0.0001, t, 0.08);
+                    this.sirenGain.gain.setTargetAtTime(0.0001, t, 0.06);
+                    const isBoost = boostTimer > 0;
+                    const thrusterVol = 0.012 + speedNorm * 0.026 + (isBoost ? 0.018 : 0);
+                    this.engineGain.gain.setTargetAtTime(thrusterVol, t, 0.08);
+                    const baseFreq = 58 + speedNorm * 68 + (isBoost ? 42 : 0);
+                    this.engineOsc1.frequency.setTargetAtTime(baseFreq, t, 0.07);
+                    this.engineOsc2.frequency.setTargetAtTime(baseFreq * 1.5, t, 0.07);
+                    this.engineFilter.frequency.setTargetAtTime(220 + speedNorm * 380 + (isBoost ? 240 : 0), t, 0.07);
+                    this.engineLfo.frequency.setTargetAtTime(6.0 + speedNorm * 14.0, t, 0.07);
+                    this.engineLfoFilterGain.gain.setTargetAtTime(48 + speedNorm * 40, t, 0.07);
+                    this.engineLfoPitchGain.gain.setTargetAtTime(1.8 + speedNorm * 1.8, t, 0.07);
+                    return;
+                }
 
                 // A. Ground Vehicle Engine vs Aircraft Flight vs Helicopter Rotor Chop
                 const isBladesAir = botType === 'BLADES' && (mode === 'VEHICLE' || mode === 'DINO');
@@ -1176,19 +1308,28 @@ class RescueSoundFX {
 
                 if (isGroundVehicle) {
                     // Gentle speed-reactive engine volume (soft idle purr when parked in Vehicle mode, richer purr when driving)
-                    const targetEngineVol = 0.015 + speedNorm * 0.032;
+                    const targetEngineVol = 0.015 + speedNorm * 0.032 + (boostTimer > 0 ? 0.012 : 0);
                     this.engineGain.gain.setTargetAtTime(targetEngineVol, t, 0.08);
                     this.rotorGain.gain.setTargetAtTime(0.0001, t, 0.08);
 
-                    if (botType === 'BOULDER') {
-                        // Heavy Bulldozer Diesel Rumble (Low fundamental + pronounced cylinder chug)
-                        const baseFreq = 42 + speedNorm * 40;
+                    if (botType === 'BOULDER' || botType === 'SALVAGE' || botType === 'OPTIMUS') {
+                        // Heavy Bulldozer / Compactor / Semi Cab Turbo-Diesel Rumble
+                        const baseFreq = (botType === 'OPTIMUS' ? 46 : 42) + speedNorm * 44;
                         this.engineOsc1.frequency.setTargetAtTime(baseFreq, t, 0.07);
                         this.engineOsc2.frequency.setTargetAtTime(baseFreq * 0.5, t, 0.07);
-                        this.engineFilter.frequency.setTargetAtTime(135 + speedNorm * 210, t, 0.07);
+                        this.engineFilter.frequency.setTargetAtTime(135 + speedNorm * 225, t, 0.07);
                         this.engineLfo.frequency.setTargetAtTime(9.5 + speedNorm * 15.5, t, 0.07);
                         this.engineLfoFilterGain.gain.setTargetAtTime(55 + speedNorm * 45, t, 0.07);
                         this.engineLfoPitchGain.gain.setTargetAtTime(3.8 + speedNorm * 2.5, t, 0.07);
+                    } else if (botType === 'STARSPEED') {
+                        // Starspeed Motocross Dirt Bike: Punchy High-Revving 2-Stroke Braaap!
+                        const baseFreq = 84 + speedNorm * 118 + (boostTimer > 0 ? 35 : 0);
+                        this.engineOsc1.frequency.setTargetAtTime(baseFreq, t, 0.06);
+                        this.engineOsc2.frequency.setTargetAtTime(baseFreq * 2.0, t, 0.06);
+                        this.engineFilter.frequency.setTargetAtTime(310 + speedNorm * 540, t, 0.06);
+                        this.engineLfo.frequency.setTargetAtTime(22.0 + speedNorm * 32.0, t, 0.06);
+                        this.engineLfoFilterGain.gain.setTargetAtTime(65 + speedNorm * 55, t, 0.06);
+                        this.engineLfoPitchGain.gain.setTargetAtTime(4.2 + speedNorm * 3.2, t, 0.06);
                     } else if (botType === 'HEATWAVE') {
                         // Fire Engine V8 Purr (Warm mid-bass purr)
                         const baseFreq = 52 + speedNorm * 56;
@@ -1199,12 +1340,12 @@ class RescueSoundFX {
                         this.engineLfoFilterGain.gain.setTargetAtTime(42 + speedNorm * 38, t, 0.07);
                         this.engineLfoPitchGain.gain.setTargetAtTime(2.4 + speedNorm * 2.0, t, 0.07);
                     } else {
-                        // CHASE: Police Cruiser Turbine / Interceptor Hum
-                        const baseFreq = 64 + speedNorm * 82;
+                        // CHASE / BUMBLEBEE / BLURR / QUICKSHADOW: High-Revving Cruiser & Supercar Turbine Hum
+                        const baseFreq = (botType === 'BLURR' ? 76 : 64) + speedNorm * 92;
                         this.engineOsc1.frequency.setTargetAtTime(baseFreq, t, 0.07);
                         this.engineOsc2.frequency.setTargetAtTime(baseFreq * 1.5, t, 0.07);
-                        this.engineFilter.frequency.setTargetAtTime(210 + speedNorm * 360, t, 0.07);
-                        this.engineLfo.frequency.setTargetAtTime(18.0 + speedNorm * 24.0, t, 0.07);
+                        this.engineFilter.frequency.setTargetAtTime(210 + speedNorm * 380, t, 0.07);
+                        this.engineLfo.frequency.setTargetAtTime(18.0 + speedNorm * 26.0, t, 0.07);
                         this.engineLfoFilterGain.gain.setTargetAtTime(32 + speedNorm * 30, t, 0.07);
                         this.engineLfoPitchGain.gain.setTargetAtTime(1.6 + speedNorm * 1.5, t, 0.07);
                     }

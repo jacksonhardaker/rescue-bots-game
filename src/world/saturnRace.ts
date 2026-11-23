@@ -662,6 +662,7 @@ export function updateSaturnRace(dt: number, now: number) {
         pRig.rotation.z = -steerVisual * 0.16;
     }
     updateAllBotTransforms(dt, now);
+    sfx.updateContinuousLoops(player.botType, player.mode, saturnRaceState.speed, false, saturnRaceState.boostTimer, now);
 
     if (saturnRaceState.boostTimer > 0 && Math.random() < 0.55) {
         spawnSparkleGlints(wx, 2.2, wz, 2);
@@ -733,7 +734,7 @@ export function updateSaturnRace(dt: number, now: number) {
         if (dist < m.radius + 2.5) {
             m.hitCooldown = 6.0;
             m.mesh.visible = false;
-            sfx.playRockBreak();
+            sfx.playRockBreak(m.mesh.position.x, m.mesh.position.z);
             spawnBurstParticles(m.mesh.position.x, 2.0, m.mesh.position.z, 0xbae6fd, 18, 1.2);
             // Substantial rock impact slowdown! (Cancels boost and imposes heavy drag recovery)
             saturnRaceState.boostTimer = 0;

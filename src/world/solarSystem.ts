@@ -529,6 +529,7 @@ export function swapToSolarHub() {
     restoreRigsFromSaturnRace();
 
     worldState.activeArea = 'SOLAR_HUB';
+    sfx.stopContinuousLoops();
     _warpState.active = false;
     _warpState.timer = 0;
 

@@ -1540,6 +1540,7 @@ export function updateSpace(dt: number, now: number) {
     }
 
     // Apply Sigma Mesh Transform & Thruster Plumes
+    sfx.updateContinuousLoops('SIGMA', 'SPACE', sigmaShip.speed, false, sigmaShip.boostTimer, now);
     if (_spaceSigmaRoot) {
         _spaceSigmaRoot.position.copy(sigmaShip.pos);
         // Model nose faces +Z in local space, while flight forward is -Z -> rotate Y by yaw + PI
@@ -1644,7 +1645,7 @@ export function updateSpace(dt: number, now: number) {
                     progression.spaceAsteroidsCleared = (progression.spaceAsteroidsCleared || 0) + 1;
                     progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 1;
                     saveProgression();
-                    sfx.playRockBreak();
+                    sfx.playRockBreak(ast.pos.x, ast.pos.z);
                     updateSpaceHUD();
                 }
                 break;
