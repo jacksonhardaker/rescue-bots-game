@@ -6,7 +6,7 @@ import {
     triggerNearbyDinoReaction, updateCavernHUD
 } from '../world/underground.js';
 import { syncMoonBotRigs, checkMoonBoulderStrike } from '../world/moon.js';
-import { BOT_METADATA, HQ_PARKING_SLOTS } from '../bots/botMeta.js';
+import { BOT_METADATA, HQ_PARKING_SLOTS, getBotHiddenVehicleMode, isBotFlyingHiddenVehicle } from '../bots/botMeta.js';
 import { applyBotRigMorph, getBotScale, setHighTideRigMega, setOptimusRigMega, setBotRigMega } from '../bots/botRigs.js';
 import { sfx } from '../audio/soundFX.js';
 import { triggerNPCSpeech, showToast } from '../ui/dialogs.js';
@@ -537,6 +537,10 @@ import { renderMinimap } from '../ui/tacticalMap.js';
                     "Starspeed, Spinosaurus Dinobot mode! Feel the dorsal sail power!",
                     "Prehistoric cosmic predator! Spinosaurus ready to charge!"
                 ],
+                TO_HIDDEN_VEHICLE: [
+                    "Wheels out, lift-fans engaged! Starspeed Hover Fighter Jet online!",
+                    "VTOL Hover Jet mode! Taking to the skies at starlight speed!"
+                ],
                 TO_BOT: [
                     "Starspeed, robot mode! Fast, fearless, and unfrozen!",
                     "Back on two feet — let's save the day at light speed!"
@@ -585,10 +589,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             } else if (isBotDocked(player.botType)) {
                 meta = BOT_METADATA[`${player.botType}_MEGA`] || meta;
             }
+            const hiddenCfg = getBotHiddenVehicleMode(player.botType);
+            const isHiddenVeh = player.mode === 'HIDDEN_VEHICLE' && Boolean(hiddenCfg);
             const isBoat = player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && (player.targetBoatMorph ?? 0) > 0.5;
             const isVeh = player.mode === 'VEHICLE';
             const isDino = player.mode === 'DINO';
-            const modeLabel = isDino
+            const modeLabel = isHiddenVeh && hiddenCfg
+                ? `${hiddenCfg.name} MODE`
+                : isDino
                 ? `${meta.dinoName} MODE`
                 : (isBoat ? `${meta.boatName || 'BOAT'} MODE` : (isVeh ? `${meta.vehName} MODE` : `BOT MODE`));
 
@@ -627,10 +635,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             const transformSubEl = document.getElementById('transform-sub');
             if (transformSubEl) transformSubEl.textContent = nextTransformLabel;
 
-            let actionKey = isDino
+            let actionKey = isHiddenVeh && hiddenCfg
+                ? hiddenCfg.actionIcon
+                : isDino
                 ? meta.dinoActionIcon
                 : (isBoat ? (meta.boatActionIcon || 'TWIN_DELUGE') : (isVeh ? meta.vehActionIcon : meta.botActionIcon));
-            let actionLabel = isDino
+            let actionLabel = isHiddenVeh && hiddenCfg
+                ? hiddenCfg.actionLabel
+                : isDino
                 ? meta.dinoActionLabel
                 : (isBoat ? (meta.boatActionLabel || 'TWIN DELUGE CANNON') : (isVeh ? meta.vehActionLabel : meta.botActionLabel));
 
@@ -682,7 +694,23 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 }
             }
 
-            // Helicopter, Pterosaur & Stealth Bomber Flight UI vs Ground Bot UI
+            // Hidden Special Vehicle Mode Button (automatically shown for any bot with hiddenVehicleMode configured)
+            const btnHiddenVeh = document.getElementById('btn-hidden-veh');
+            const hiddenVehIcon = document.getElementById('hidden-veh-icon');
+            const hiddenVehLabel = document.getElementById('hidden-veh-label');
+            if (btnHiddenVeh) {
+                if (hiddenCfg) {
+                    btnHiddenVeh.classList.remove('hidden');
+                    btnHiddenVeh.classList.toggle('hidden-veh-active', isHiddenVeh);
+                    if (hiddenVehIcon) hiddenVehIcon.innerHTML = SVG_ICONS[hiddenCfg.buttonIcon] || '';
+                    if (hiddenVehLabel) hiddenVehLabel.textContent = hiddenCfg.buttonLabel;
+                } else {
+                    btnHiddenVeh.classList.add('hidden');
+                    btnHiddenVeh.classList.remove('hidden-veh-active');
+                }
+            }
+
+            // Helicopter, Pterosaur, Stealth Bomber & Flying Hidden Vehicle UI vs Ground Bot UI
             const btnDrill = document.getElementById('btn-drill');
             const drillIcon = document.getElementById('drill-icon');
             const drillLabel = document.getElementById('drill-label');
@@ -700,7 +728,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             updateCavernHUD();
 
             const isFlyingCopter = ((player.botType === 'BLADES' && (isVeh || isDino)) ||
-                                   (player.botType === 'QUICKSHADOW' && isVeh && isBotDocked('QUICKSHADOW'))) && !isBoat;
+                                   (player.botType === 'QUICKSHADOW' && isVeh && isBotDocked('QUICKSHADOW')) ||
+                                   isBotFlyingHiddenVehicle(player.botType, player.mode)) && !isBoat;
             const btnDescend = document.getElementById('btn-descend');
             const altSep = document.getElementById('altitude-sep');
             const altReadout = document.getElementById('altitude-readout');
@@ -852,9 +881,19 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 saveProgression();
             }
 
-            // If switching to Blades or docked Quickshadow while already in flight mode, lift into flight
+            // If switching away from a bot while in HIDDEN_VEHICLE to a bot that doesn't define one, fall back to VEHICLE
+            if (player.mode === 'HIDDEN_VEHICLE' && !getBotHiddenVehicleMode(newBotType)) {
+                player.mode = 'VEHICLE';
+                player.hiddenMorph = 0;
+                player.targetHiddenMorph = 0;
+                player.targetMorph = 1.0;
+                player.morph = 1.0;
+            }
+
+            // If switching to Blades, docked Quickshadow, or a flying hidden vehicle while already in flight mode, lift into flight
             const isNewBotFlying = (newBotType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                                   (newBotType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+                                   (newBotType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW')) ||
+                                   isBotFlyingHiddenVehicle(newBotType, player.mode);
             if (isNewBotFlying) {
                 player.flightAlt = Math.max(player.flightAlt, 14);
                 player.grounded = false;
@@ -962,21 +1001,31 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.dinoMorph = Math.max(player.targetDinoMorph, player.dinoMorph - dt * morphSpeed);
             }
 
+            if (player.hiddenMorph === undefined) player.hiddenMorph = 0;
+            if (player.targetHiddenMorph === undefined) player.targetHiddenMorph = 0;
+            if (player.hiddenMorph < player.targetHiddenMorph) {
+                player.hiddenMorph = Math.min(player.targetHiddenMorph, player.hiddenMorph + dt * morphSpeed);
+            } else if (player.hiddenMorph > player.targetHiddenMorph) {
+                player.hiddenMorph = Math.max(player.targetHiddenMorph, player.hiddenMorph - dt * morphSpeed);
+            }
+
             // Buddy Bot mirrors player mode & morphs
-            const isPlayerVehOrBoat = (player.mode === 'VEHICLE');
+            const isPlayerVehOrBoat = (player.mode === 'VEHICLE' || player.mode === 'HIDDEN_VEHICLE');
             if (isPlayerVehOrBoat) {
                 bExt.mode = 'VEHICLE';
                 buddyBot.targetMorph = 1.0;
                 buddyBot.targetDinoMorph = 0.0;
+                buddyBot.targetHiddenMorph = (player.mode === 'HIDDEN_VEHICLE' && Boolean(getBotHiddenVehicleMode(buddyBot.botType))) ? 1.0 : 0.0;
                 if (buddyBot.botType !== 'HIGHTIDE') {
                     const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.25;
-                    buddyBot.targetBoatMorph = buddyInWater ? 1.0 : 0.0;
+                    buddyBot.targetBoatMorph = (buddyBot.targetHiddenMorph > 0.5) ? 0.0 : (buddyInWater ? 1.0 : 0.0);
                 } else {
                     buddyBot.targetBoatMorph = 0.0;
                 }
             } else {
                 buddyBot.targetMorph = player.targetMorph;
                 buddyBot.targetDinoMorph = player.targetDinoMorph;
+                buddyBot.targetHiddenMorph = 0.0;
                 if (buddyBot.botType !== 'HIGHTIDE' && bExt.mode === 'VEHICLE') {
                     const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.25;
                     buddyBot.targetBoatMorph = buddyInWater ? 1.0 : 0.0;
@@ -1001,6 +1050,13 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             } else if (buddyBot.dinoMorph > buddyBot.targetDinoMorph) {
                 buddyBot.dinoMorph = Math.max(buddyBot.targetDinoMorph, buddyBot.dinoMorph - dt * morphSpeed);
             }
+            if (buddyBot.hiddenMorph === undefined) buddyBot.hiddenMorph = 0;
+            if (buddyBot.targetHiddenMorph === undefined) buddyBot.targetHiddenMorph = 0;
+            if (buddyBot.hiddenMorph < buddyBot.targetHiddenMorph) {
+                buddyBot.hiddenMorph = Math.min(buddyBot.targetHiddenMorph, buddyBot.hiddenMorph + dt * morphSpeed);
+            } else if (buddyBot.hiddenMorph > buddyBot.targetHiddenMorph) {
+                buddyBot.hiddenMorph = Math.max(buddyBot.targetHiddenMorph, buddyBot.hiddenMorph - dt * morphSpeed);
+            }
 
             const parkingSlots: Record<string, { x: number; y: number; z: number; rotY: number; morph: number }> = HQ_PARKING_SLOTS;
             const rigs = botRigs;
@@ -1018,11 +1074,11 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     rig.root.visible = true;
                     rig.root.position.copy(player.pos);
                     rig.root.rotation.y = player.heading;
-                    // Forward pitch tilt for Blades when flying; Terrain pitch & roll slope adaptation for Ground Vehicles
-                    if (botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
-                        rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (player.speed / 65) * 0.28, dt * 6);
-                        rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, 0, dt * 6);
-                    } else if (player.mode === 'VEHICLE' || player.mode === 'DINO') {
+                    // Forward pitch tilt for Blades & flying hidden vehicles; Terrain pitch & roll slope adaptation for Ground Vehicles
+                    if ((botKey === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) || isBotFlyingHiddenVehicle(botKey, player.mode)) {
+                        rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (player.speed / 65) * 0.22, dt * 6);
+                        rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, pExt.roll || 0, dt * 6);
+                    } else if (player.mode === 'VEHICLE' || player.mode === 'DINO' || player.mode === 'HIDDEN_VEHICLE') {
                         rig.chassis.rotation.x = -(pExt.pitch || 0);
                         rig.chassis.rotation.z = pExt.roll || 0;
                     } else {
@@ -1032,7 +1088,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer, player.boatMorph || 0,
                         botKey === 'BOULDER' && ((player.drillEquipTimer || 0) > 0 || worldState.drillAnim?.active)
                             ? (worldState.drillAnim?.active ? 1.0 : Math.min(1.0, (player.drillEquipTimer || 0) / 0.25))
-                            : 0
+                            : 0,
+                        player.hiddenMorph || 0
                     );
                     if (botKey === 'BOULDER' && worldState.drillAnim?.active) {
                         const dAnim = worldState.drillAnim;
@@ -1059,7 +1116,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                         rig.chassis.rotation.x = -(bExt.pitch || 0) * 0.35;
                         rig.chassis.rotation.z = (bExt.roll || 0) * 0.35;
                     }
-                    applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer, buddyBot.boatMorph || 0, 0);
+                    applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer, buddyBot.boatMorph || 0, 0, buddyBot.hiddenMorph || 0);
                 } else if (worldState.activeArea === 'UNDERGROUND') {
                     rig.root.visible = false;
                 } else {
@@ -1098,6 +1155,32 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
 
         export function setPlayerMode(nextMode: string) {
+            if (nextMode === 'HIDDEN_VEHICLE') {
+                const hiddenCfg = getBotHiddenVehicleMode(player.botType);
+                if (!hiddenCfg) return;
+                player.mode = 'HIDDEN_VEHICLE';
+                player.targetMorph = 1.0;
+                player.targetBoatMorph = 0.0;
+                player.targetDinoMorph = 0.0;
+                player.targetHiddenMorph = 1.0;
+                sfx.playTransform(true);
+                if (hiddenCfg.canFly) {
+                    player.flightAlt = Math.max(player.flightAlt, hiddenCfg.defaultFlightAlt ?? 16);
+                    player.grounded = false;
+                    sfx.playFlightAscend();
+                } else {
+                    player.flightAlt = 0;
+                }
+                showToast(
+                    hiddenCfg.toastTitle || `${hiddenCfg.name} MODE!`,
+                    hiddenCfg.toastSubtitle || `${BOT_METADATA[player.botType].name} transformed into ${hiddenCfg.name}!`
+                );
+                speakBotCatchphrase(player.botType, 'TO_HIDDEN_VEHICLE');
+                syncHUDToActiveBot();
+                progression.playerMode = player.mode;
+                saveProgression();
+                return;
+            }
             if (nextMode === 'VEHICLE') {
                 if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
                     showToast("🌊 WATER REQUIRED TO SUBMERGE", "High Tide's submarine mode requires water! Head to the harbor or shoreline!");
@@ -1109,10 +1192,13 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.targetMorph = 1.0;
                 player.targetBoatMorph = (player.botType !== 'HIGHTIDE' && inWater) ? 1.0 : 0.0;
                 player.targetDinoMorph = 0.0;
+                player.targetHiddenMorph = 0.0;
                 sfx.playTransform(true);
                 if (player.botType === 'BLADES' || (player.botType === 'QUICKSHADOW' && isBotDocked('QUICKSHADOW'))) {
                     player.flightAlt = Math.max(player.flightAlt, 16);
                     player.grounded = false;
+                } else {
+                    player.flightAlt = 0;
                 }
                 speakBotCatchphrase(player.botType, 'TO_VEHICLE');
                 if (player.botType !== 'HIGHTIDE' && inWater) {
@@ -1131,6 +1217,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.targetMorph = 0.0;
                 player.targetBoatMorph = 0.0;
                 player.targetDinoMorph = 1.0;
+                player.targetHiddenMorph = 0.0;
                 sfx.playTransform(true);
                 sfx.playDinoRoar(player.botType);
                 if (player.botType === 'BLADES') {
@@ -1156,6 +1243,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.targetMorph = 0.0;
                 player.targetBoatMorph = 0.0;
                 player.targetDinoMorph = 0.0;
+                player.targetHiddenMorph = 0.0;
                 player.flightAlt = 0;
                 sfx.playTransform(false);
                 speakBotCatchphrase(player.botType, 'TO_BOT');
@@ -1163,6 +1251,16 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             syncHUDToActiveBot();
             progression.playerMode = player.mode;
             saveProgression();
+        }
+
+        export function toggleHiddenVehicleMode() {
+            const hiddenCfg = getBotHiddenVehicleMode(player.botType);
+            if (!hiddenCfg) return;
+            if (player.mode === 'HIDDEN_VEHICLE') {
+                setPlayerMode('VEHICLE');
+            } else {
+                setPlayerMode('HIDDEN_VEHICLE');
+            }
         }
 
         export function dockHighTideMegabot() {
@@ -1894,6 +1992,27 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
 
             if (player.botType === 'STARSPEED') {
+                const isHiddenJet = player.mode === 'HIDDEN_VEHICLE';
+                if (isHiddenJet) {
+                    const hiddenCfg = getBotHiddenVehicleMode('STARSPEED');
+                    player.boostTimer = 2.6;
+                    player.speed = Math.max(player.speed + 28, hiddenCfg?.boostSpeed ?? 112);
+                    sfx.playWarpWhoosh();
+                    sfx.playFlightAscend();
+                    checkHitMorBotWithSpecialAbility(42.0, "VTOL AFTERBURNER");
+                    beacons.forEach(beacon => {
+                        beacon.nodes.forEach(n => {
+                            if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 28.0) {
+                                clearHazardNode(beacon, n, 'HEAVY');
+                            }
+                        });
+                    });
+                    spawnBurstParticles(player.pos.x - Math.sin(player.heading) * 3.5, player.pos.y + 1.2, player.pos.z - Math.cos(player.heading) * 3.5, 0x38bdf8, 22, 1.8);
+                    spawnBurstParticles(player.pos.x - Math.sin(player.heading) * 3.5, player.pos.y + 1.0, player.pos.z - Math.cos(player.heading) * 3.5, 0xf43f5e, 14, 1.4);
+                    spawnSparkleGlints(player.pos.x, player.pos.y + 1.4, player.pos.z, 18);
+                    showToast("VTOL AFTERBURNER!", "Starspeed's Hover Fighter Jet blasted into supersonic flight!");
+                    return;
+                }
                 const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
                 if (isBoat) {
                     player.boostTimer = 2.4;
@@ -2048,11 +2167,12 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         export function triggerSecondaryAction() {
             const isBoat = player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
             const isFlying = !isBoat && ((player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW')));
+                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW')) ||
+                             isBotFlyingHiddenVehicle(player.botType, player.mode));
             if (isFlying) {
                 player.flightAlt = Math.min(95, player.flightAlt + 12);
                 sfx.playFlightAscend();
-                checkHitMorBotWithSpecialAbility(48.0, player.botType === 'QUICKSHADOW' ? "STEALTH BOMBER STRIKE" : "ROTOR GALE");
+                checkHitMorBotWithSpecialAbility(48.0, player.botType === 'QUICKSHADOW' ? "STEALTH BOMBER STRIKE" : (isBotFlyingHiddenVehicle(player.botType, player.mode) ? "VTOL SONIC PULSE" : "ROTOR GALE"));
                 return;
             }
             if ((player.mode === 'BOT' || player.mode === 'DINO') && player.grounded) {
@@ -2070,7 +2190,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         export function triggerDescendAction() {
             const isBoat = player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
             const isFlying = !isBoat && ((player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW')));
+                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW')) ||
+                             isBotFlyingHiddenVehicle(player.botType, player.mode));
             if (isFlying) {
                 player.flightAlt = Math.max(2, player.flightAlt - 12);
                 sfx.playFlightDescend();
@@ -2121,7 +2242,25 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             // 4. Restore Player Mode & Morph Values
             const savedMode = progression.playerMode || 'BOT';
             const bExtRestore = buddyBot as BuddyStateExt;
-            if (savedMode === 'VEHICLE') {
+            const restoredHiddenCfg = getBotHiddenVehicleMode(player.botType);
+            if (savedMode === 'HIDDEN_VEHICLE' && restoredHiddenCfg) {
+                player.mode = 'HIDDEN_VEHICLE';
+                player.morph = 1.0;
+                player.targetMorph = 1.0;
+                player.dinoMorph = 0.0;
+                player.targetDinoMorph = 0.0;
+                player.hiddenMorph = 1.0;
+                player.targetHiddenMorph = 1.0;
+                bExtRestore.mode = 'VEHICLE';
+                buddyBot.morph = 1.0;
+                buddyBot.targetMorph = 1.0;
+                buddyBot.dinoMorph = 0.0;
+                buddyBot.targetDinoMorph = 0.0;
+                if (restoredHiddenCfg.canFly) {
+                    player.flightAlt = restoredHiddenCfg.defaultFlightAlt ?? 16;
+                    player.grounded = false;
+                }
+            } else if (savedMode === 'VEHICLE') {
                 player.mode = 'VEHICLE';
                 player.morph = 1.0;
                 player.targetMorph = 1.0;
@@ -2198,7 +2337,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             const now = performance.now();
             const rig = botRigs?.[player.botType];
             if (rig) {
-                applyBotRigMorph(rig, player.morph, player.dinoMorph, 0, 0, 0, now, 0);
+                applyBotRigMorph(rig, player.morph, player.dinoMorph, 0, 0, 0, now, 0, player.boatMorph || 0, 0, player.hiddenMorph || 0);
             }
             const bRig = botRigs?.[buddyBot.botType];
             if (bRig) {
@@ -2231,6 +2370,7 @@ if (typeof window !== 'undefined') {
     window.dockActiveBotMegabot = dockActiveBotMegabot;
     window.undockActiveBotMegabot = undockActiveBotMegabot;
     window.triggerTransform = triggerTransform;
+    window.toggleHiddenVehicleMode = toggleHiddenVehicleMode;
     window.triggerPrimaryAction = triggerPrimaryAction;
     window.triggerSecondaryAction = triggerSecondaryAction;
     window.triggerDescendAction = triggerDescendAction;

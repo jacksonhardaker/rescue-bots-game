@@ -108,6 +108,7 @@ import { getPlayerOBB, testOBBOverlap2D } from '../world/npcs.js';
 import { humanNPCs, vehicleNPCs } from '../state/gameState.js';
 import { beacons, activeParticles } from '../world/emergencies.js';
 import { getBotScale } from '../bots/botRigs.js';
+import { getBotHiddenVehicleMode, isBotFlyingHiddenVehicle } from '../bots/botMeta.js';
 import { islandTrain } from '../world/railway.js';
 import { sunLight } from '../rendering/scene.js';
 import { speakClosestDisasterForNPC } from '../world/npcs.js';
@@ -698,21 +699,26 @@ waypointGroup.add(wpArrowCone);
                 }
             }
 
+            const hiddenVehCfg = getBotHiddenVehicleMode(player.botType);
+            const isHiddenVehicle = player.mode === 'HIDDEN_VEHICLE' && Boolean(hiddenVehCfg);
             const isAmphibiousVehicle = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE');
             const isWaterBoat = isAmphibiousVehicle && ((player.boatMorph || 0) > 0.05 || (player.targetBoatMorph || 0) > 0.05 || isPointInWater(player.pos.x, player.pos.z));
             const isFlyingCopter = (
                 (player.botType === 'BLADES' && player.mode === 'DINO') ||
                 (player.botType === 'BLADES' && player.mode === 'VEHICLE' && !isWaterBoat) ||
-                (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW') && !isWaterBoat)
+                (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW') && !isWaterBoat) ||
+                isBotFlyingHiddenVehicle(player.botType, player.mode)
             );
             const isHighTideWaterVeh = (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE');
             const isHighTideAmphibiousDino = (player.botType === 'HIGHTIDE' && player.mode === 'DINO');
             const onRoad = isPointOnRoad(player.pos.x, player.pos.z);
 
-            // Top Speed per Rescue Bot & Mode (Bot, Vehicle, and Dinobot!)
+            // Top Speed per Rescue Bot & Mode (Bot, Vehicle, Dinobot, and Hidden Special Vehicle!)
             let maxSpeed = 26; // Bot walking speed
             const hasBoost = (player.boostTimer > 0 || player.energonBoostTimer > 0);
-            if (player.mode === 'VEHICLE') {
+            if (isHiddenVehicle && hiddenVehCfg) {
+                maxSpeed = hasBoost ? hiddenVehCfg.boostSpeed : hiddenVehCfg.maxSpeed;
+            } else if (player.mode === 'VEHICLE') {
                 const inBoatMode = (player.boatMorph || 0) > 0.3 || (player.targetBoatMorph || 0) > 0.5 || isPointInWater(player.pos.x, player.pos.z);
                 if (inBoatMode) {
                     if (player.botType === 'BLURR') maxSpeed = hasBoost ? 92 : 76;
@@ -796,7 +802,7 @@ waypointGroup.add(wpArrowCone);
             const accel = player.mode === 'VEHICLE' ? 8.5 : (player.mode === 'DINO' ? 10.5 : 13.0);
             player.speed = THREE.MathUtils.lerp(player.speed, targetSpeed, Math.min(1, dt * accel));
 
-            if (player.boostTimer > 0 && (player.mode === 'VEHICLE' || player.mode === 'DINO')) {
+            if (player.boostTimer > 0 && (player.mode === 'VEHICLE' || player.mode === 'DINO' || player.mode === 'HIDDEN_VEHICLE')) {
                 player.speed = maxSpeed;
             }
 

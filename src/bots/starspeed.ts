@@ -10,26 +10,41 @@ function createKnobbyBikeWheel(radius = 0.92, width = 0.42): THREE.Group {
     const matTire = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
     const matRim = new THREE.MeshToonMaterial({ color: 0xfde047, gradientMap: toonGrad3 });
     const matHub = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
+    const matFanBlade = new THREE.MeshToonMaterial({ color: 0xe2e8f0, gradientMap: toonGrad3 });
 
+    // Outer tire ring (torus so the interior stays open for VTOL turbine fan blades!)
     const tire = new THREE.Mesh(
-        new THREE.CylinderGeometry(radius, radius, width, 16).rotateZ(Math.PI / 2),
+        new THREE.TorusGeometry(radius * 0.84, radius * 0.2, 10, 20).rotateY(Math.PI / 2),
         matTire
     );
     const rim = new THREE.Mesh(
-        new THREE.CylinderGeometry(radius * 0.62, radius * 0.62, width + 0.04, 14).rotateZ(Math.PI / 2),
+        new THREE.TorusGeometry(radius * 0.64, radius * 0.08, 8, 18).rotateY(Math.PI / 2),
         matRim
     );
     const hub = new THREE.Mesh(
-        new THREE.CylinderGeometry(radius * 0.24, radius * 0.24, width + 0.1, 10).rotateZ(Math.PI / 2),
+        new THREE.CylinderGeometry(radius * 0.24, radius * 0.24, width + 0.08, 10).rotateZ(Math.PI / 2),
         matHub
     );
     wg.add(tire, rim, hub);
 
+    // 8 Angled Turbine Spokes / VTOL Downward-Lift Fan Blades inside the wheel rim
+    for (let b = 0; b < 8; b++) {
+        const a = (b / 8) * Math.PI * 2;
+        const blade = new THREE.Mesh(
+            new THREE.BoxGeometry(width * 0.56, radius * 0.48, 0.14),
+            matFanBlade
+        );
+        blade.position.set(0, Math.cos(a) * (radius * 0.42), Math.sin(a) * (radius * 0.42));
+        blade.rotation.x = a;
+        blade.rotation.y = 0.36; // Pitched aerofoil angle for downward VTOL thrust!
+        wg.add(blade);
+    }
+
     // Knobby motocross tread lugs around circumference
     for (let i = 0; i < 10; i++) {
         const a = (i / 10) * Math.PI * 2;
-        const lug = new THREE.Mesh(new THREE.BoxGeometry(width * 0.85, 0.16, 0.18), matTire);
-        lug.position.set(0, Math.cos(a) * (radius + 0.04), Math.sin(a) * (radius + 0.04));
+        const lug = new THREE.Mesh(new THREE.BoxGeometry(width * 0.82, 0.14, 0.16), matTire);
+        lug.position.set(0, Math.cos(a) * (radius + 0.02), Math.sin(a) * (radius + 0.02));
         lug.rotation.x = a;
         wg.add(lug);
     }
@@ -175,17 +190,201 @@ export function buildStarspeed(parts: BotRig) {
         bikeShell.add(handguard);
     });
 
-    // Front & Rear Knobby Motocross Wheels!
+    // Front & Rear Knobby Motocross Wheels (Mounted on articulated pivots so they rotate out into VTOL Wing Lift Fans!)
+    const frontWheelPivot = new THREE.Group();
+    frontWheelPivot.position.set(0, -0.58, 2.02);
+    frontWheelPivot.visible = false;
     const frontWheel = createKnobbyBikeWheel(0.95, 0.42);
-    frontWheel.position.set(0, -0.58, 2.02);
+    frontWheelPivot.add(frontWheel);
+
+    const rearWheelPivot = new THREE.Group();
+    rearWheelPivot.position.set(0, -0.58, -1.78);
+    rearWheelPivot.visible = false;
     const rearWheel = createKnobbyBikeWheel(0.95, 0.48);
-    rearWheel.position.set(0, -0.58, -1.78);
+    rearWheelPivot.add(rearWheel);
+
+    parts.chassis.add(frontWheelPivot, rearWheelPivot);
+    parts.starspeedFrontWheelPivot = frontWheelPivot;
+    parts.starspeedRearWheelPivot = rearWheelPivot;
     parts.wheels.push(frontWheel, rearWheel);
 
     bikeShell.add(
         engineBlock, frameSpine, fuelTank, seat, tailFender,
-        frontFender, numberPlate, headlight, handlebar, frontWheel, rearWheel
+        frontFender, numberPlate, headlight, handlebar
     );
+
+    // 5B. HIDDEN VEHICLE MODE: VTOL HOVER FIGHTER JET (Quinjet-inspired Stealth Delta with Wing Lift-Fan Bays!)
+    const jetShell = new THREE.Group();
+    jetShell.visible = false;
+    parts.hiddenVehicleShell = jetShell;
+    parts.chassis.add(jetShell);
+
+    const matStealthDark = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
+    const matCanopyGlass = new THREE.MeshToonMaterial({ color: 0x0f172a, emissive: 0x0284c7, emissiveIntensity: 0.35, gradientMap: toonGrad3 });
+    const matCanopyGlint = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    const matAfterburner = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const matThrustRing = new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.78, side: THREE.DoubleSide });
+
+    // Central Chined Stealth Fuselage Deck
+    const mainFuselage = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.88, 3.65), matTeal);
+    mainFuselage.position.set(0, 0.42, -0.35);
+    const dorsalSpine = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.34, 3.15), matDeepTeal);
+    dorsalSpine.position.set(0, 0.92, -0.55);
+    const bellyArmor = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.35, 3.45), matStealthDark);
+    bellyArmor.position.set(0, -0.05, -0.25);
+
+    // Subtle White Dorsal Rescue Stripe & Hatch Markings (homage to reference silhouette)
+    const dorsalHatchStripe = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.08, 0.56), matWhite);
+    dorsalHatchStripe.position.set(0, 1.11, 0.15);
+    dorsalHatchStripe.userData.noOutline = true;
+
+    // Forward Pointed Nose Cone + Pitot Sensor Probe
+    const noseMid = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.76, 1.65), matTeal);
+    noseMid.position.set(0, 0.34, 1.85);
+    const noseTip = new THREE.Mesh(
+        new THREE.ConeGeometry(0.74, 1.85, 6).rotateY(Math.PI / 6).rotateX(Math.PI / 2),
+        matDeepTeal
+    );
+    noseTip.scale.set(1.0, 0.58, 1.0);
+    noseTip.position.set(0, 0.24, 3.25);
+    const pitotProbe = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.65, 6).rotateX(Math.PI / 2), matChrome);
+    pitotProbe.position.set(0, 0.22, 4.35);
+
+    // Tandem Glazed Fighter Cockpit (Forward Bubble Canopy + Raised Upper Skylight Glass with Dark Armored Frame)
+    const lowerCanopy = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.56, 1.38).rotateX(0.24), matCanopyGlass);
+    lowerCanopy.position.set(0, 0.74, 2.15);
+    const lowerGlint = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.14, 0.42).rotateX(0.24), matCanopyGlint);
+    lowerGlint.position.set(0, 0.94, 2.32);
+    lowerGlint.userData.noOutline = true;
+    const canopyDivider = new THREE.Mesh(new THREE.BoxGeometry(1.16, 0.18, 0.24), matStealthDark);
+    canopyDivider.position.set(0, 0.92, 1.56);
+    const upperSkylight = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.44, 1.12).rotateX(0.1), matCanopyGlass);
+    upperSkylight.position.set(0, 0.98, 1.04);
+    const upperGlint = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.12, 0.34).rotateX(0.1), matCanopyGlint);
+    upperGlint.position.set(0, 1.16, 1.16);
+    upperGlint.userData.noOutline = true;
+    const noseAccent = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.12, 1.15), matCoral);
+    noseAccent.position.set(0, 0.56, 2.92);
+
+    jetShell.add(
+        mainFuselage, dorsalSpine, bellyArmor, dorsalHatchStripe,
+        noseMid, noseTip, pitotProbe,
+        lowerCanopy, lowerGlint, canopyDivider, upperSkylight, upperGlint, noseAccent
+    );
+
+    // Swept Delta Wings Framing Two Open Circular VTOL Lift-Fan Bays + Angled Wingtip Winglets
+    const jetThrustRings: THREE.Mesh[] = [];
+    const jetFlames: THREE.Mesh[] = [];
+
+    [-1, 1].forEach(side => {
+        // Backward-Swept Delta Leading-Edge Wing Strake (from cockpit cheek out to angled wingtip!)
+        const leadStrake = new THREE.Mesh(new THREE.BoxGeometry(2.75, 0.28, 0.78), matTeal);
+        leadStrake.position.set(side * 2.12, 0.36, 0.62);
+        leadStrake.rotation.y = side * 0.46;
+        jetShell.add(leadStrake);
+
+        const leadTrim = new THREE.Mesh(new THREE.BoxGeometry(2.65, 0.14, 0.18), matCoral);
+        leadTrim.position.set(side * 2.18, 0.42, 0.96);
+        leadTrim.rotation.y = side * 0.46;
+        jetShell.add(leadTrim);
+
+        // Rear Swept Trailing-Edge Wing Spar
+        const rearSpar = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.26, 0.62), matDeepTeal);
+        rearSpar.position.set(side * 2.15, 0.36, -1.08);
+        rearSpar.rotation.y = side * -0.18;
+        jetShell.add(rearSpar);
+
+        // Outer Wing Bridge Connecting Leading Strake & Rear Spar
+        const outerBridge = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.28, 1.75), matWhite);
+        outerBridge.position.set(side * 3.22, 0.36, -0.32);
+        jetShell.add(outerBridge);
+
+        // Circular Open VTOL Fan Shroud Ring (Wheels rotate horizontally right inside this ring!)
+        const fanShroud = new THREE.Mesh(
+            new THREE.TorusGeometry(1.06, 0.15, 10, 24).rotateX(Math.PI / 2),
+            matStealthDark
+        );
+        fanShroud.position.set(side * 2.05, 0.36, -0.18);
+        jetShell.add(fanShroud);
+
+        const fanGoldRing = new THREE.Mesh(
+            new THREE.TorusGeometry(1.12, 0.05, 8, 24).rotateX(Math.PI / 2),
+            matGold
+        );
+        fanGoldRing.position.set(side * 2.05, 0.47, -0.18);
+        fanGoldRing.userData.noOutline = true;
+        jetShell.add(fanGoldRing);
+
+        // Diagonal Aerodynamic Top Louver Strut across Fan Bay (iconic Quinjet wing detail)
+        const topVane = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.1, 0.16), matWhite);
+        topVane.position.set(side * 2.05, 0.58, -0.18);
+        topVane.rotation.y = side * -0.35;
+        jetShell.add(topVane);
+
+        // Glowing Cyan VTOL Downward-Thrust Ring Underneath Fan Bay
+        const thrustRing = new THREE.Mesh(
+            new THREE.RingGeometry(0.45, 0.96, 20).rotateX(Math.PI / 2),
+            matThrustRing
+        );
+        thrustRing.position.set(side * 2.05, 0.02, -0.18);
+        thrustRing.userData.noOutline = true;
+        jetShell.add(thrustRing);
+        jetThrustRings.push(thrustRing);
+
+        // Cantilevered Angled Wingtip Endplate Winglet
+        const winglet = new THREE.Mesh(new THREE.BoxGeometry(0.22, 1.15, 2.05), matCoral);
+        winglet.position.set(side * 3.58, 0.46, -0.45);
+        winglet.rotation.z = side * -0.32;
+        winglet.rotation.y = side * -0.14;
+        const wingletStripe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.22, 1.85), matWhite);
+        wingletStripe.position.set(side * 3.58, 0.56, -0.45);
+        wingletStripe.rotation.z = side * -0.32;
+        wingletStripe.rotation.y = side * -0.14;
+        jetShell.add(winglet, wingletStripe);
+
+        // Twin Dorsal Jet Engine Nacelles + Intakes + Exhausts + Canted V-Tail Fins
+        const intakeBox = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.62, 0.85), matStealthDark);
+        intakeBox.position.set(side * 0.98, 0.82, -1.25);
+        const intakeVoid = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.42, 0.12), matDarkSteel);
+        intakeVoid.position.set(side * 0.98, 0.82, -0.82);
+        intakeVoid.userData.noOutline = true;
+
+        const enginePod = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.36, 0.44, 1.75, 12).rotateX(Math.PI / 2),
+            matDeepTeal
+        );
+        enginePod.position.set(side * 0.98, 0.78, -2.18);
+
+        const nozzleRing = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.3, 0.36, 0.38, 12).rotateX(Math.PI / 2),
+            matChrome
+        );
+        nozzleRing.position.set(side * 0.98, 0.78, -3.12);
+
+        const afterburner = new THREE.Mesh(
+            new THREE.ConeGeometry(0.28, 1.25, 10).rotateX(-Math.PI / 2),
+            matAfterburner
+        );
+        afterburner.position.set(side * 0.98, 0.78, -3.72);
+        afterburner.userData.noOutline = true;
+        jetFlames.push(afterburner);
+
+        // Outward-Canted V-Tail Vertical Stabilizer Fin
+        const vTail = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.38, 1.12), matTeal);
+        vTail.position.set(side * 1.18, 1.48, -2.32);
+        vTail.rotation.z = side * -0.34;
+        vTail.rotation.x = -0.22;
+
+        // Small Rear Horizontal Stabilizer
+        const hTail = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.14, 0.75), matWhite);
+        hTail.position.set(side * 1.62, 0.62, -2.62);
+        hTail.rotation.y = side * 0.25;
+
+        jetShell.add(intakeBox, intakeVoid, enginePod, nozzleRing, afterburner, vTail, hTail);
+    });
+
+    parts.starspeedJetThrustRings = jetThrustRings;
+    parts.starspeedJetFlames = jetFlames;
 
     // 6. DINO MODE: SPINOSAURUS (Iconic Massive Dorsal Sail Fin + Elongated Crocodilian Snout + Swimming Tail!)
     // Elongated Spinosaurus Neck & Crocodilian Snout on `parts.dinoHead`

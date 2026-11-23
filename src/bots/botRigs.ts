@@ -50,6 +50,10 @@ interface DetailedBotRig extends BotRig {
     vehDrillAssembly?: THREE.Object3D;
     vehDrillBit?: THREE.Object3D;
     starspeedBikeShell?: THREE.Object3D;
+    starspeedFrontWheelPivot?: THREE.Group;
+    starspeedRearWheelPivot?: THREE.Group;
+    starspeedJetThrustRings?: THREE.Mesh[];
+    starspeedJetFlames?: THREE.Mesh[];
 }
 
 export const BOT_SCALES: Record<string, number> = {
@@ -226,17 +230,22 @@ export function buildRescueBotModel(botType: string): BotRig {
     return parts;
 }
 
-export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCycle: number, speed: number, smashTimer: number, now: number, scoopTimer = 0, boatMorph = 0, drillAmount = 0) {
+export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCycle: number, speed: number, smashTimer: number, now: number, scoopTimer = 0, boatMorph = 0, drillAmount = 0, hiddenMorph = 0) {
             const rig = rigInput as DetailedBotRig;
-            // Boat Mode: folds limbs into vehicle aerodynamic layout under the boat shell
+            // Boat Mode or Hidden Vehicle Mode: folds limbs into vehicle aerodynamic layout
             if (rig.botType !== 'HIGHTIDE' && boatMorph > 0) {
                 m = Math.max(m, boatMorph);
+            }
+            if (hiddenMorph > 0) {
+                m = Math.max(m, hiddenMorph);
             }
             // Apply mode-dependent ground elevation so the bot's ground contact surface stays flush on terrain
             const bKey = rig.isMega ? `${rig.botType}_MEGA` : rig.botType;
             const gOffsets = BOT_GROUND_OFFSETS[bKey] || BOT_GROUND_OFFSETS[rig.botType] || { bot: 0, veh: 0, dino: 0, boat: 0 };
             const boatOffset = gOffsets.boat !== undefined ? gOffsets.boat : gOffsets.veh;
-            const groundLiftY = (gOffsets.bot * (1 - m - d) + gOffsets.veh * m + gOffsets.dino * d) * (1 - boatMorph) + boatOffset * boatMorph;
+            const hiddenOffset = gOffsets.hiddenVeh !== undefined ? gOffsets.hiddenVeh : gOffsets.veh;
+            const baseGroundLiftY = (gOffsets.bot * (1 - m - d) + gOffsets.veh * m + gOffsets.dino * d) * (1 - boatMorph) + boatOffset * boatMorph;
+            const groundLiftY = THREE.MathUtils.lerp(baseGroundLiftY, hiddenOffset, hiddenMorph);
             if (rig.chassis) {
                 rig.chassis.position.y = groundLiftY;
             }
@@ -284,16 +293,80 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
             const dinoTorsoRotX = (rig.botType === 'OPTIMUS' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'STARSPEED') ? (Math.PI * 0.22) : (Math.PI * 0.48);
             rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + vehTorsoRotX + dinoTorsoRotX * d;
 
-            // Starspeed Dirt Bike Mode: cleanly swap narrow Dirt Bike shell in when transforming into Vehicle (and hide when in Boat/Jet Ski!)
+            // Generic Hidden Vehicle Shell unfold (works for any bot that defines a hiddenVehicleShell)
+            if (rig.hiddenVehicleShell) {
+                const showHidden = hiddenMorph > 0.05;
+                rig.hiddenVehicleShell.visible = showHidden;
+                if (showHidden) {
+                    const hs = THREE.MathUtils.lerp(0.18, 1.0, THREE.MathUtils.smoothstep(hiddenMorph, 0.05, 0.85));
+                    rig.hiddenVehicleShell.scale.setScalar(hs);
+                }
+            }
+
+            // Starspeed Dirt Bike & VTOL Hover Fighter Jet: wheels rotate out horizontally into the wing lift-fan bays!
             if (rig.botType === 'STARSPEED' && rig.starspeedBikeShell) {
-                const bikeAlpha = Math.max(0, m - boatMorph);
+                const bikeAlpha = Math.max(0, m - boatMorph - hiddenMorph);
                 const showBike = bikeAlpha > 0.06;
                 rig.starspeedBikeShell.visible = showBike;
                 if (showBike) {
                     const s = THREE.MathUtils.lerp(0.15, 1.0, THREE.MathUtils.smoothstep(bikeAlpha, 0.05, 0.85));
                     rig.starspeedBikeShell.scale.setScalar(s);
                 }
-                const hideLimbs = (m > 0.55 || boatMorph > 0.35);
+
+                // Articulated Wheel-to-VTOL-Lift-Fan pivots (visible in both Dirt Bike and Hover Jet modes!)
+                const wheelAlpha = Math.max(bikeAlpha, hiddenMorph);
+                const showWheels = wheelAlpha > 0.06 && boatMorph < 0.75;
+                const tFan = THREE.MathUtils.smoothstep(hiddenMorph, 0.05, 0.92);
+                const wScale = THREE.MathUtils.lerp(0.15, 1.0, THREE.MathUtils.smoothstep(wheelAlpha, 0.05, 0.85)) * THREE.MathUtils.lerp(1.0, 1.06, tFan);
+
+                if (rig.starspeedFrontWheelPivot) {
+                    rig.starspeedFrontWheelPivot.visible = showWheels;
+                    if (showWheels) {
+                        // Arc outward from front bike fork (0, -0.58, 2.02) into Left Wing VTOL Bay (-2.05, 0.36, -0.18)
+                        rig.starspeedFrontWheelPivot.position.set(
+                            THREE.MathUtils.lerp(0, -2.05, tFan),
+                            THREE.MathUtils.lerp(-0.58, 0.36, tFan) + Math.sin(tFan * Math.PI) * 0.38,
+                            THREE.MathUtils.lerp(2.02, -0.18, tFan)
+                        );
+                        rig.starspeedFrontWheelPivot.rotation.set(0, 0, THREE.MathUtils.lerp(0, Math.PI / 2, tFan));
+                        rig.starspeedFrontWheelPivot.scale.setScalar(wScale);
+                    }
+                }
+                if (rig.starspeedRearWheelPivot) {
+                    rig.starspeedRearWheelPivot.visible = showWheels;
+                    if (showWheels) {
+                        // Arc outward from rear swingarm (0, -0.58, -1.78) into Right Wing VTOL Bay (+2.05, 0.36, -0.18)
+                        rig.starspeedRearWheelPivot.position.set(
+                            THREE.MathUtils.lerp(0, 2.05, tFan),
+                            THREE.MathUtils.lerp(-0.58, 0.36, tFan) + Math.sin(tFan * Math.PI) * 0.38,
+                            THREE.MathUtils.lerp(-1.78, -0.18, tFan)
+                        );
+                        rig.starspeedRearWheelPivot.rotation.set(0, 0, THREE.MathUtils.lerp(0, -Math.PI / 2, tFan));
+                        rig.starspeedRearWheelPivot.scale.setScalar(wScale);
+                    }
+                }
+
+                // High-RPM VTOL Lift Fan spin + pulsing downward thrust rings & twin dorsal afterburners!
+                if (hiddenMorph > 0.25 && rig.wheels && rig.wheels.length >= 2) {
+                    const fanSpin = now * 0.036;
+                    rig.wheels[0].rotation.x = fanSpin;
+                    rig.wheels[1].rotation.x = -fanSpin; // Counter-rotating VTOL torque balance!
+                }
+                if (rig.starspeedJetThrustRings) {
+                    const pulse = 0.88 + Math.sin(now * 0.018) * 0.14;
+                    rig.starspeedJetThrustRings.forEach((tr) => {
+                        tr.scale.setScalar(pulse * Math.min(1, hiddenMorph * 1.4));
+                    });
+                }
+                if (rig.starspeedJetFlames) {
+                    const speedRatio = Math.min(1.6, 0.55 + Math.abs(speed) / 60);
+                    const flicker = 0.86 + Math.sin(now * 0.032) * 0.18;
+                    rig.starspeedJetFlames.forEach((fl) => {
+                        fl.scale.set(0.95, 0.95, speedRatio * flicker * hiddenMorph);
+                    });
+                }
+
+                const hideLimbs = (m > 0.55 || boatMorph > 0.35 || hiddenMorph > 0.25);
                 rig.torso.visible = !hideLimbs;
                 rig.head.visible = !hideLimbs && d < 0.45;
                 rig.leftArm.visible = !hideLimbs && d < 0.45;
@@ -858,9 +931,11 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
             }
 
             // Spin Wheels & Propellers & Flash Emergency Lightbars
-            rig.wheels.forEach((w: THREE.Object3D) => {
-                w.rotation.x += speed * 0.016;
-            });
+            if (!(rig.botType === 'STARSPEED' && hiddenMorph > 0.25)) {
+                rig.wheels.forEach((w: THREE.Object3D) => {
+                    w.rotation.x += speed * 0.016;
+                });
+            }
             if (rig.rotors) {
                 if (rig.botType === 'BLADES') {
                     const spinRate = m > 0.3 ? 0.032 : 0.004;

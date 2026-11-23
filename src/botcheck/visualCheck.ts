@@ -1,6 +1,7 @@
 // Standalone Visual Check Studio for Ground Clearance, Morph Inspection & Boat Mode Verification
 import * as THREE from 'three';
 import { buildRescueBotModel, applyBotRigMorph, setBotRigMega } from '../bots/botRigs.js';
+import { getBotHiddenVehicleMode } from '../bots/botMeta.js';
 import { toonGrad3, OUTLINE_LAYER } from '../rendering/materials.js';
 import { SVG_ICONS } from '../ui/icons.js';
 import type { BotRig } from '../types/game.js';
@@ -20,7 +21,7 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         'QUICKSHADOW', 'QUICKSHADOW_MEGA',
         'STARSPEED'
     ];
-    const MODES = ['bot', 'vehicle', 'boat', 'dino'];
+    const MODES = ['bot', 'vehicle', 'boat', 'dino', 'hidden'];
 
     // Standalone lightweight WebGLRenderer (completely decoupled from world scene)
     const isMobile = typeof navigator !== 'undefined' && (
@@ -150,7 +151,9 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         const rowGap = isHighTideMega ? 62 : (isMega ? 28 : 16);
         rowZ += rowGap / 2;
         const hasBoat = !id.startsWith('HIGHTIDE');
+        const hasHidden = Boolean(getBotHiddenVehicleMode(id));
         const botModes = hasBoat ? ['bot', 'vehicle', 'boat', 'dino'] : ['bot', 'vehicle', 'dino'];
+        if (hasHidden) botModes.push('hidden');
         botModes.forEach((mode, ci) => {
             const offsetIndex = ci - (botModes.length - 1) / 2;
             cells.push({
@@ -219,7 +222,7 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
                 </select></label>
             <label style="display:block;margin-bottom:6px;">Target mode
                 <select data-k="mode" style="width:100%;color:#0f172a;border-radius:6px;padding:3px;">
-                    <option value="bot">Bot</option><option value="vehicle">Vehicle</option><option value="boat">Boat</option><option value="dino">Dino</option>
+                    <option value="bot">Bot</option><option value="vehicle">Vehicle</option><option value="boat">Boat</option><option value="dino">Dino</option><option value="hidden">Hidden Vehicle</option>
                 </select></label>
             <label style="display:block;margin-bottom:6px;"><span data-morphlabel>Morph from Bot → target:</span> <span data-morphval></span>
                 <input data-k="morph" type="range" min="0" max="1" step="0.01" style="width:100%;"></label>
@@ -342,13 +345,14 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         for (let i = 0; i < cells.length; i++) {
             const c = cells[i];
             let show = false;
-            let m = 0, d = 0, bm = 0, walk = 0, speed = 0, smash = 0;
+            let m = 0, d = 0, bm = 0, hm = 0, walk = 0, speed = 0, smash = 0;
 
             if (!isFocus) {
                 show = true;
                 if (c.mode === 'vehicle') m = 1;
                 if (c.mode === 'boat') { m = 1; bm = 1; }
                 if (c.mode === 'dino') d = 1;
+                if (c.mode === 'hidden') { m = 1; hm = 1; }
             } else {
                 // Focus view uses the "bot" cell of the chosen bot and morphs it toward the target mode
                 show = c.id === state.bot && c.mode === 'bot';
@@ -362,6 +366,10 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
                     }
                 }
                 if (state.mode === 'dino') d = state.morph;
+                if (state.mode === 'hidden') {
+                    m = 1;
+                    hm = state.morph;
+                }
                 walk = walkCycle;
                 speed = state.walk ? 12 : 0;
                 smash = smashT;
@@ -390,14 +398,14 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
                 focusCell = c;
             }
 
-            if (c.rig) applyBotRigMorph(c.rig, m, d, walk, speed, smash, t, 0, bm);
+            if (c.rig) applyBotRigMorph(c.rig, m, d, walk, speed, smash, t, 0, bm, 0, hm);
 
             const refreshFullBounds = needsBoundsRefresh || !c._boundsReady;
             if (refreshFullBounds || emitReport) {
                 const b = visibleBounds(holder);
                 const minY = b.isEmpty() ? 0 : b.min.y;
                 const activeMode = isFocus ? state.mode : c.mode;
-                const isFlightVehicle = (c.id === 'BLADES' || c.id === 'BLADES_MEGA' || c.id === 'QUICKSHADOW_MEGA') && activeMode === 'vehicle';
+                const isFlightVehicle = ((c.id === 'BLADES' || c.id === 'BLADES_MEGA' || c.id === 'QUICKSHADOW_MEGA') && activeMode === 'vehicle') || (activeMode === 'hidden' && Boolean(getBotHiddenVehicleMode(c.id)?.canFly));
                 const flag = minY < -0.15 ? '[SINK]' : (minY > 0.6 && !isFlightVehicle ? '[FLOAT]' : '');
                 c._minY = minY;
                 c._flag = flag;

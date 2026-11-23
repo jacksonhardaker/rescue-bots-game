@@ -14,7 +14,7 @@ export type BotType =
     | 'QUICKSHADOW'
     | 'STARSPEED';
 
-export type BotMode = 'BOT' | 'VEHICLE' | 'DINO';
+export type BotMode = 'BOT' | 'VEHICLE' | 'DINO' | 'HIDDEN_VEHICLE';
 
 export type ActiveArea =
     | 'SURFACE'
@@ -24,6 +24,21 @@ export type ActiveArea =
     | 'MOON'
     | 'PLANET_SURFACE'
     | 'SATURN_RING_RACE';
+
+export interface HiddenVehicleModeConfig {
+    name: string;
+    buttonLabel: string;
+    buttonIcon: string;
+    actionIcon: string;
+    actionLabel: string;
+    canFly: boolean;
+    defaultFlightAlt?: number;
+    maxSpeed: number;
+    boostSpeed: number;
+    groundOffset?: number;
+    toastTitle?: string;
+    toastSubtitle?: string;
+}
 
 export interface BotMetaEntry {
     name: string;
@@ -44,6 +59,7 @@ export interface BotMetaEntry {
     boatActionLabel: string;
     dinoActionIcon: string;
     dinoActionLabel: string;
+    hiddenVehicleMode?: HiddenVehicleModeConfig | null;
 }
 
 export interface GroundOffsetEntry {
@@ -51,6 +67,7 @@ export interface GroundOffsetEntry {
     veh: number;
     dino: number;
     boat?: number;
+    hiddenVeh?: number;
 }
 
 export interface LightbarAssembly {
@@ -105,6 +122,7 @@ export interface BotRig {
     nozzleTip: THREE.Object3D;
     dinoNozzleTip: THREE.Object3D;
     boatGroup?: THREE.Group;
+    hiddenVehicleShell?: THREE.Group;
     // Bot-specific optional sub-assemblies
     [key: string]: unknown;
 }
@@ -118,6 +136,8 @@ export interface PlayerState {
     targetDinoMorph: number;
     boatMorph?: number;
     targetBoatMorph?: number;
+    hiddenMorph?: number;
+    targetHiddenMorph?: number;
     pos: THREE.Vector3;
     heading: number;
     speed: number;
@@ -184,6 +204,8 @@ export interface BuddyBotState {
     targetDinoMorph: number;
     boatMorph?: number;
     targetBoatMorph?: number;
+    hiddenMorph?: number;
+    targetHiddenMorph?: number;
     walkCycle: number;
     smashTimer: number;
     scoopTimer: number;

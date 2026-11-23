@@ -1,10 +1,11 @@
 // HUD Event Listeners, Button Touch Handlers & Bot Tray UI
 import {
-    triggerTransform, triggerPrimaryAction, triggerSecondaryAction,
+    triggerTransform, toggleHiddenVehicleMode, triggerPrimaryAction, triggerSecondaryAction,
     triggerDescendAction, toggleSiren, dockHighTideMegabot, undockHighTideMegabot,
     dockOptimusMegabot, undockOptimusMegabot, dockActiveBotMegabot, undockActiveBotMegabot,
     cycleBuddyBot, switchRescueBot
 } from '../physics/player.js';
+import { isBotFlyingHiddenVehicle } from '../bots/botMeta.js';
 import { player, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { SVG_ICONS } from './icons.js';
@@ -44,6 +45,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
 
         export function initHUDButtons() {
         bindButton('btn-transform', triggerTransform);
+        bindButton('btn-hidden-veh', toggleHiddenVehicleMode);
         bindButton('btn-action', triggerPrimaryAction);
         bindButton('btn-jump-scan', triggerSecondaryAction);
         bindButton('btn-descend', triggerDescendAction);
@@ -192,7 +194,8 @@ import { buildEnergonCubes } from '../world/collectibles.js';
             const wg = waypointGroup as unknown as { visible: boolean } | null;
             if (wg) wg.visible = false;
             const isFlying = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
-                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
+                             (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW')) ||
+                             isBotFlyingHiddenVehicle(player.botType, player.mode);
             player.flightAlt = isFlying ? 16 : 0;
             input.camYaw = 0; // Greet player facing the bot heroically in front of HQ
             closeUtilityMenu();

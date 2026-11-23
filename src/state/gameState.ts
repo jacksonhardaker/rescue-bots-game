@@ -12,6 +12,8 @@ export const player: PlayerState = {
     targetMorph: 0,
     dinoMorph: 0,         // Dinobot morph (0 -> 1)
     targetDinoMorph: 0,
+    hiddenMorph: 0,       // Hidden special vehicle mode morph (0 -> 1)
+    targetHiddenMorph: 0,
     pos: new THREE.Vector3(0, 5, -15), // Starts on the Rescue HQ Swap Pad
     heading: 0,
     speed: 0,
@@ -109,6 +111,8 @@ export const buddyBot: BuddyBotState = {
     targetMorph: 0,
     dinoMorph: 0,
     targetDinoMorph: 0,
+    hiddenMorph: 0,
+    targetHiddenMorph: 0,
     walkCycle: 0,
     smashTimer: 0,
     scoopTimer: 0,

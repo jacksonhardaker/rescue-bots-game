@@ -608,6 +608,18 @@
         .hover\:border-amber-400:hover { border-color: #fbbf24; }
         .hover\:scale-105:hover { transform: scale(1.05); }
 
+        /* Hidden Vehicle Mode Button (Shown only for bots with a configured hiddenVehicleMode) */
+        #btn-hidden-veh {
+            background: linear-gradient(180deg, #0891b2 0%, #0e7490 55%, #164e63 100%) !important;
+            border-color: #67e8f9 !important;
+            box-shadow: 0 5px 0 #083344, 0 8px 18px rgba(6, 182, 212, 0.45) !important;
+            color: #ffffff !important;
+        }
+        #btn-hidden-veh.hidden-veh-active {
+            background: linear-gradient(180deg, #f43f5e 0%, #0891b2 55%, #0f172a 100%) !important;
+            border-color: #fde047 !important;
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.8), 0 5px 0 #083344 !important;
+        }
         /* Ensure every button has a solid default background & readable contrast */
         button {
             background-color: #1e293b;
@@ -1729,6 +1741,12 @@
                 </svg>
             </span>
             <span class="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase mt-0.5" id="siren-label">SIREN</span>
+        </button>
+
+        <!-- Hidden Special Vehicle Mode Button (Shown automatically for any bot with hiddenVehicleMode configured) -->
+        <button id="btn-hidden-veh" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 flex flex-col items-center justify-center text-white select-none" title="Toggle Special Hidden Vehicle Mode (Key: H)">
+            <span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center leading-none" id="hidden-veh-icon"></span>
+            <span class="text-[8px] sm:text-[9px] font-black tracking-wider uppercase mt-0.5 leading-none text-center px-0.5" id="hidden-veh-label">SPECIAL</span>
         </button>
 
         <!-- Boulder Rotary Drill Button (Enter Underground Caverns / Return to Surface) -->

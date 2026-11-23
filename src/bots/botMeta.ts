@@ -1,5 +1,5 @@
 // Metadata, Parking Slots & Ground Contact Offsets for all 11 Rescue Bots & Megabot
-import type { BotMetaEntry, GroundOffsetEntry } from '../types/game.js';
+import type { BotMetaEntry, GroundOffsetEntry, HiddenVehicleModeConfig } from '../types/game.js';
 
 export const HQ_POS = { x: -48, z: -45 }; // Rescue Bots Firehouse HQ base coordinates
 
@@ -393,9 +393,31 @@ export const BOT_METADATA: Record<string, BotMetaEntry> = {
         boatActionIcon: 'STEALTH_HYDRO_GLIDE',
         boatActionLabel: 'HYDRO JET SURGE',
         dinoActionIcon: 'TRICERA_CHARGE',
-        dinoActionLabel: 'SPINO SAIL CHARGE'
+        dinoActionLabel: 'SPINO SAIL CHARGE',
+        hiddenVehicleMode: {
+            name: 'HOVER JET',
+            buttonLabel: 'HOVER JET',
+            buttonIcon: 'HOVER_JET',
+            actionIcon: 'HOVER_JET_BOOST',
+            actionLabel: 'VTOL AFTERBURNER',
+            canFly: true,
+            defaultFlightAlt: 16,
+            maxSpeed: 84,
+            boostSpeed: 112,
+            groundOffset: 1.4,
+            toastTitle: 'HOVER FIGHTER JET ENGAGED!',
+            toastSubtitle: 'Wheels rotated into VTOL wing lift-fans — soar over Griffin Rock!'
+        }
     }
 };
+
+export function getBotHiddenVehicleMode(botType: string): HiddenVehicleModeConfig | null {
+    return BOT_METADATA[botType]?.hiddenVehicleMode ?? null;
+}
+
+export function isBotFlyingHiddenVehicle(botType: string, mode: string): boolean {
+    return mode === 'HIDDEN_VEHICLE' && Boolean(getBotHiddenVehicleMode(botType)?.canFly);
+}
 
 export const HQ_GROUND_Y = 4.68;
 export const HQ_ROOF_Y = 21.30;
@@ -429,7 +451,7 @@ export const BOT_GROUND_OFFSETS: Record<string, GroundOffsetEntry> = {
     HIGHTIDE_MEGA:    { bot: 0.00, veh: 1.226, dino: 1.405 },
     QUICKSHADOW:      { bot: 0.72, veh: 0.37, dino: 0.82, boat: 0.25 },
     QUICKSHADOW_MEGA: { bot: 0.72, veh: 0.37, dino: 0.82, boat: 0.25 },
-    STARSPEED:        { bot: 0.72, veh: 1.55, dino: 0.82, boat: 0.28 }
+    STARSPEED:        { bot: 0.72, veh: 1.55, dino: 0.82, boat: 0.28, hiddenVeh: 1.40 }
 };
 
 if (typeof window !== 'undefined') {

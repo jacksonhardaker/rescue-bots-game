@@ -1304,9 +1304,24 @@ class RescueSoundFX {
                 // A. Ground Vehicle Engine vs Aircraft Flight vs Helicopter Rotor Chop
                 const isBladesAir = botType === 'BLADES' && (mode === 'VEHICLE' || mode === 'DINO');
                 const isQuickshadowAir = botType === 'QUICKSHADOW' && mode === 'VEHICLE' && (typeof window !== 'undefined' && typeof window.isBotDocked === 'function' && window.isBotDocked('QUICKSHADOW'));
-                const isGroundVehicle = !isBladesAir && !isQuickshadowAir && mode === 'VEHICLE';
+                const isHiddenJetAir = mode === 'HIDDEN_VEHICLE';
+                const isGroundVehicle = !isBladesAir && !isQuickshadowAir && !isHiddenJetAir && mode === 'VEHICLE';
 
-                if (isGroundVehicle) {
+                if (isHiddenJetAir) {
+                    // VTOL Hover Fighter Jet: Sleek twin turbine hum + downward lift-fan whoosh!
+                    const isBoost = boostTimer > 0;
+                    const jetVol = 0.016 + speedNorm * 0.026 + (isBoost ? 0.016 : 0);
+                    this.engineGain.gain.setTargetAtTime(jetVol, t, 0.08);
+                    const baseFreq = 92 + speedNorm * 105 + (isBoost ? 55 : 0);
+                    this.engineOsc1.frequency.setTargetAtTime(baseFreq, t, 0.06);
+                    this.engineOsc2.frequency.setTargetAtTime(baseFreq * 1.5, t, 0.06);
+                    this.engineFilter.frequency.setTargetAtTime(360 + speedNorm * 520 + (isBoost ? 280 : 0), t, 0.06);
+                    this.engineLfo.frequency.setTargetAtTime(14.0 + speedNorm * 16.0, t, 0.06);
+                    this.engineLfoFilterGain.gain.setTargetAtTime(42 + speedNorm * 35, t, 0.06);
+                    this.engineLfoPitchGain.gain.setTargetAtTime(1.4 + speedNorm * 1.6, t, 0.06);
+                    this.rotorGain.gain.setTargetAtTime(0.014 + speedNorm * 0.01, t, 0.08);
+                    this.rotorLfo.frequency.setTargetAtTime(16.0 + speedNorm * 8.0, t, 0.08);
+                } else if (isGroundVehicle) {
                     // Gentle speed-reactive engine volume (soft idle purr when parked in Vehicle mode, richer purr when driving)
                     const targetEngineVol = 0.015 + speedNorm * 0.032 + (boostTimer > 0 ? 0.012 : 0);
                     this.engineGain.gain.setTargetAtTime(targetEngineVol, t, 0.08);
