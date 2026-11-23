@@ -12,7 +12,17 @@ import {
 } from '../rendering/materials.js';
 import { texWindshieldCyan } from '../rendering/textures.js';
 
-export function createHumanNPCMesh(cfg: Record<string, any> = {}) {
+export interface HumanNPCMeshConfig {
+    name?: string;
+    skinColor?: number;
+    shirtColor?: number;
+    pantsColor?: number;
+    hairColor?: number;
+    indicatorColor?: number;
+    hasVisorHat?: boolean;
+}
+
+export function createHumanNPCMesh(cfg: HumanNPCMeshConfig = {}) {
     const root = new THREE.Group();
 
     const matSkin = new THREE.MeshToonMaterial({ color: cfg.skinColor || 0xfde047, gradientMap: toonGrad3 });

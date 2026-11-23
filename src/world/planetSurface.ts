@@ -14,7 +14,7 @@ import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
 import { buildRescueBotModel, applyBotRigMorph } from '../bots/botRigs.js';
 import { updateBotRosterUI } from '../physics/player.js';
 import { sfx } from '../audio/soundFX.js';
-import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
+import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 
 export const planetSurfaceScene = new THREE.Scene();
 export const PLANET_WORLD_RADIUS = 175;
@@ -617,7 +617,7 @@ function buildPlanetSurfaceWorld(cfg: PlanetConfig) {
     padRing.position.set(PLANET_SIGMA_POS.x, sigmaY + 0.14, PLANET_SIGMA_POS.z);
     _worldGroup.add(padRing);
 
-    _planetSigmaRoot = buildCrashedSpaceshipSigma(_worldGroup as any, _planetAnimated, null, {
+    _planetSigmaRoot = buildCrashedSpaceshipSigma(_worldGroup, _planetAnimated, null, {
         originX: PLANET_SIGMA_POS.x,
         originZ: PLANET_SIGMA_POS.z,
         includeDiorama: false,
@@ -898,16 +898,19 @@ export function swapToPlanetSurface(planetId: LandablePlanetId, returnSector: st
     }
 
     // Move active player & buddy rigs into planetSurfaceScene
-    const pRig = botRigs[player.botType]?.root;
-    const bRig = botRigs[buddyBot.botType]?.root;
-    Object.values(botRigs).forEach((r: any) => {
-        if (r?.root && r.root.parent === planetSurfaceScene && r.root !== pRig && r.root !== bRig) {
-            scene.add(r.root);
-        }
-    });
-    if (pRig) planetSurfaceScene.add(pRig);
-    if (bRig) planetSurfaceScene.add(bRig);
-    const wp = (window as any).waypointGroup;
+    const rigs = botRigs;
+    if (rigs) {
+        const pRig = rigs[player.botType]?.root;
+        const bRig = rigs[buddyBot.botType]?.root;
+        Object.values(rigs).forEach((r) => {
+            if (r?.root && r.root.parent === planetSurfaceScene && r.root !== pRig && r.root !== bRig) {
+                scene.add(r.root);
+            }
+        });
+        if (pRig) planetSurfaceScene.add(pRig);
+        if (bRig) planetSurfaceScene.add(bRig);
+    }
+    const wp = window.waypointGroup;
     if (wp) {
         planetSurfaceScene.add(wp);
         wp.visible = false;
@@ -945,25 +948,27 @@ export function swapToPlanetSurface(planetId: LandablePlanetId, returnSector: st
     if (zEl) zEl.textContent = cfg.zoneLabel;
 
     updatePlanetSurfaceHUD();
-    if (typeof (window as any).renderMinimap === 'function') (window as any).renderMinimap();
+    if (typeof window.renderMinimap === 'function') window.renderMinimap();
 
     showToast(`LANDED ON ${cfg.name}!`, cfg.welcomeToast);
     triggerNPCSpeech(
         'CHIEF BURNS',
         'Mission Control',
         `Touchdown confirmed on ${cfg.name}! Watch the ${cfg.gravityLabel} gravity and scan for Energon Relics!`,
-        player,
+        player as unknown as SpeechTarget,
         true
     );
 }
 
 export function restoreRigsFromPlanetSurface() {
-    Object.values(botRigs).forEach((r: any) => {
-        if (r?.root && r.root.parent === planetSurfaceScene) {
-            scene.add(r.root);
-        }
-    });
-    const wp = (window as any).waypointGroup;
+    if (botRigs) {
+        Object.values(botRigs).forEach((r) => {
+            if (r?.root && r.root.parent === planetSurfaceScene) {
+                scene.add(r.root);
+            }
+        });
+    }
+    const wp = window.waypointGroup;
     if (wp && wp.parent === planetSurfaceScene) {
         scene.add(wp);
         wp.visible = false;
@@ -976,8 +981,8 @@ export function updatePlanetSurface(dt: number, now: number) {
     const nowSec = now * 0.001;
 
     // Keep active player & buddy rigs attached if user switched bots from roster
-    const pRig = botRigs[player.botType]?.root;
-    const bRig = botRigs[buddyBot.botType]?.root;
+    const pRig = botRigs?.[player.botType]?.root;
+    const bRig = botRigs?.[buddyBot.botType]?.root;
     if (pRig && pRig.parent !== planetSurfaceScene) planetSurfaceScene.add(pRig);
     if (bRig && bRig.parent !== planetSurfaceScene) planetSurfaceScene.add(bRig);
 
@@ -1092,7 +1097,7 @@ export function updatePlanetSurface(dt: number, now: number) {
                 'STARSPEED',
                 'Deep-Space Motocross Scout',
                 'Brrr! Thanks for thawing me out on Triton! Starspeed is unlocked — Dirt Bike, Jet Ski & Spinosaurus modes ready to roll!',
-                player,
+                player as unknown as SpeechTarget,
                 true
             );
         }

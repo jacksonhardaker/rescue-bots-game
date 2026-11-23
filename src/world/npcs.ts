@@ -1,5 +1,6 @@
 // Living World NPC Citizens, Civilian Traffic AI & Buddy Bot AI
 import * as THREE from 'three';
+import type { BuddyBotState, ColliderItem, HumanNPCEntry, VehicleNPCEntry } from '../types/game.js';
 import { getTerrainHeight, getSurfaceHeight, isPointInWater } from './terrain.js';
 import {
     toonGrad3, toonGrad4, matDarkSteel, matChrome, matTire,
@@ -10,15 +11,15 @@ import { texWindshieldCyan } from '../rendering/textures.js';
 import { player, buddyBot, botRigs, humanNPCs, vehicleNPCs, worldColliders, queryNearbyColliders, worldState } from '../state/gameState.js';
 import { resolveUndergroundPointCollision } from './underground.js';
 import { resolveMoonCollisions } from './moon.js';
-const _buddyNearbyColliders: any[] = [];
+const _buddyNearbyColliders: ColliderItem[] = [];
 import { sfx } from '../audio/soundFX.js';
-import { triggerNPCSpeech } from '../ui/dialogs.js';
+import { triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 import { applyBotRigMorph, BOT_SCALES } from '../bots/botRigs.js';
 import { WEATHER_MODES, currentWeatherIdx } from './weather.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
 import { isBotDocked } from '../progression/progression.js';
 
-import { beacons } from './emergencies.js';
+import { beacons, clearHazardNode, type BeaconEntry } from './emergencies.js';
 import { railroadCrossings } from './railway.js';
 import { getBotScale } from '../bots/botRigs.js';
 import { getInnerRoadRadius, getOuterRoadRadius } from './terrain.js';
@@ -27,12 +28,67 @@ import { checkBoulderScoopAttack, checkWaterCannonFoliage } from './vegetation.j
 import { createHumanNPCMesh, createCivilianVehicleMesh } from './npcModels.js';
 export { createHumanNPCMesh, createCivilianVehicleMesh };
 
+export interface OBB2D {
+    x: number;
+    z: number;
+    heading: number;
+    halfWidth: number;
+    halfLength: number;
+    mass?: number;
+}
+
+export interface LocalHumanNPC extends HumanNPCEntry {
+    isHuman: boolean;
+    homeX: number;
+    homeZ: number;
+    patrolR: number;
+    phase: number;
+    speed: number;
+    waveTimer: number;
+    voicePitch: number;
+    lastSpokeTime: number;
+    rig: ReturnType<typeof createHumanNPCMesh>;
+}
+
+export interface LocalVehicleNPC extends VehicleNPCEntry {
+    isVehicle: boolean;
+    vType: string;
+    mass: number;
+    halfWidth: number;
+    halfLength: number;
+    routeType: string;
+    theta?: number;
+    progress?: number;
+    dir: number;
+    laneOffset: number;
+    baseLaneOffset: number;
+    speed: number;
+    cruiseSpeed: number;
+    currentSpeed: number;
+    targetSpeed: number;
+    isBraking: boolean;
+    stoppedTimer: number;
+    honkCooldown: number;
+    voicePitch: number;
+    lastSpokeTime: number;
+    root: THREE.Group;
+    wheels: THREE.Object3D[];
+    headlights: THREE.Mesh[];
+    taillights: THREE.Mesh[];
+    beamGroup: THREE.Group;
+    knockbackVx?: number;
+    knockbackVz?: number;
+    prevX?: number;
+    prevZ?: number;
+    pitch?: number;
+}
+
         // Dynamic Civilian Vehicle Headlight Materials & Projection Beams imported from materials.js
 
-        export function setCivilianVehicleHeadlights(active) {
+        export function setCivilianVehicleHeadlights(active: boolean) {
             if (!vehicleNPCs || vehicleNPCs.length === 0) return;
             for (let i = 0; i < vehicleNPCs.length; i++) {
-                const v = vehicleNPCs[i];
+                const v = vehicleNPCs[i] as LocalVehicleNPC;
                 if (v.beamGroup) v.beamGroup.visible = active;
                 if (v.headlights) {
                     for (let j = 0; j < v.headlights.length; j++) {
@@ -48,7 +104,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
         }
 
         // Physical Dimensions & Weight Specifications for Civilian Vehicles
-        const CIVILIAN_VEHICLE_SPECS = {
+        const CIVILIAN_VEHICLE_SPECS: Record<string, { width: number; length: number; halfWidth: number; halfLength: number; mass: number }> = {
             SEDAN: {
                 width: 3.6,
                 length: 6.6,
@@ -144,7 +200,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
         };
 
         // 2D Oriented Bounding Box (OBB) Separating Axis Theorem (SAT) Overlap Test
-        export function testOBBOverlap2D(boxA, boxB) {
+        export function testOBBOverlap2D(boxA: OBB2D, boxB: OBB2D) {
             const dx = boxB.x - boxA.x;
             const dz = boxB.z - boxA.z;
 
@@ -168,7 +224,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             ];
 
             let minOverlap = Infinity;
-            let bestAxis = null;
+            let bestAxis: { x: number; z: number } | null = null;
 
             for (let i = 0; i < 4; i++) {
                 const ax = axes[i].x;
@@ -192,6 +248,8 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 }
             }
 
+            if (!bestAxis) return null;
+
             // Orient Minimum Translation Vector (MTV) pointing from Box A toward Box B
             if (dx * bestAxis.x + dz * bestAxis.z < 0) {
                 bestAxis.x = -bestAxis.x;
@@ -204,8 +262,8 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             };
         }
 
-        export function getPlayerOBB() {
-            const spec = BOT_PHYSICS_SPECS[player.botType] || {
+        export function getPlayerOBB(): OBB2D & { mass: number } {
+            const spec = (BOT_PHYSICS_SPECS as Record<string, { mass: number; vehicle: { halfWidth: number; halfLength: number }; dino: { halfWidth: number; halfLength: number }; bot: { halfWidth: number; halfLength: number } }>)[player.botType] || {
                 mass: 5000,
                 vehicle: { halfWidth: 1.8, halfLength: 3.5 },
                 dino: { halfWidth: 1.8, halfLength: 3.5 },
@@ -226,7 +284,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             };
         }
 
-        export function getCompassDirection(dx, dz) {
+        export function getCompassDirection(dx: number, dz: number) {
             // In world coords: -Z is North, +Z is South, +X is East, -X is West
             const angle = Math.atan2(dx, -dz); // 0 = North, PI/2 = East, PI = South, -PI/2 = West
             const deg = ((angle * 180 / Math.PI) + 360) % 360;
@@ -237,11 +295,12 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             return dirs[Math.round(deg / 45) % 8];
         }
 
-        export function getClosestDisasterReport(fromX, fromZ) {
-            let closestBeacon = null;
+        export function getClosestDisasterReport(fromX: number, fromZ: number) {
+            let closestBeacon: BeaconEntry | null = null;
             let closestDist = Infinity;
 
-            beacons.forEach(b => {
+            for (let i = 0; i < beacons.length; i++) {
+                const b = beacons[i];
                 if (!b.restored) {
                     const d = Math.hypot(b.x - fromX, b.z - fromZ);
                     if (d < closestDist) {
@@ -249,7 +308,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                         closestBeacon = b;
                     }
                 }
-            });
+            }
 
             if (!closestBeacon) {
                 return {
@@ -274,19 +333,17 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             };
         }
 
-        export function speakClosestDisasterForNPC(npc, forceSpeak = false) {
+        export function speakClosestDisasterForNPC(npc: LocalHumanNPC | LocalVehicleNPC, forceSpeak = false) {
             const nowSec = performance.now() * 0.001;
             if (!forceSpeak && nowSec - (npc.lastSpokeTime || -99) < 24.0) return;
 
             const report = getClosestDisasterReport(npc.x, npc.z);
-            const spoke = triggerNPCSpeech(npc.name, npc.role, report.speechText, npc, forceSpeak);
-            if (spoke) {
-                npc.lastSpokeTime = nowSec;
-                npc.waveTimer = 4.5;
-            }
+            triggerNPCSpeech(npc.name, npc.role, report.speechText, npc, forceSpeak);
+            npc.lastSpokeTime = nowSec;
+            if ('waveTimer' in npc) npc.waveTimer = 4.5;
         }
 
-        export function buildLivingWorldNPCs(scene) {
+        export function buildLivingWorldNPCs(scene?: THREE.Scene | null) {
             humanNPCs.length = 0;
             vehicleNPCs.length = 0;
             // 1. Spawn 24 Human NPCs across Griffin Rock (Named Show Characters + Citizens in all 4 Plazas)
@@ -326,12 +383,14 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 const rig = createHumanNPCMesh(cfg);
                 const gy = getTerrainHeight(cfg.x, cfg.z);
                 rig.root.position.set(cfg.x, gy, cfg.z);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(rig.root);
+                const targetScene = scene || (typeof window !== "undefined" ? window.scene : null);
+                if (targetScene) targetScene.add(rig.root);
 
                 humanNPCs.push({
                     isHuman: true,
                     name: cfg.name,
                     role: cfg.role,
+                    group: rig.root,
                     homeX: cfg.x,
                     homeZ: cfg.z,
                     x: cfg.x,
@@ -345,7 +404,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                     voicePitch: cfg.voicePitch,
                     lastSpokeTime: -99,
                     rig
-                });
+                } as LocalHumanNPC);
             });
 
             // 2. Spawn 28 Civilian Vehicle NPCs driving around Griffin Island's Highways
@@ -365,7 +424,8 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 const vType = vehicleTypes[i % vehicleTypes.length];
                 const color = vehiclePalette[i % vehiclePalette.length];
                 const meshData = createCivilianVehicleMesh(vType, color);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(meshData.root);
+                const targetScene = scene || (typeof window !== "undefined" ? window.scene : null);
+                if (targetScene) targetScene.add(meshData.root);
                 const dir = i % 2 === 0 ? 1 : -1;
                 const laneOffset = dir > 0 ? 6.0 : -6.0;
                 const spec = CIVILIAN_VEHICLE_SPECS[vType];
@@ -374,6 +434,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                     isVehicle: true,
                     name: driverNames[i % driverNames.length],
                     role: "Inner Highway Driver",
+                    group: meshData.root,
                     vType,
                     mass: spec.mass,
                     halfWidth: spec.halfWidth,
@@ -407,7 +468,8 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 const vType = vehicleTypes[(i + 1) % vehicleTypes.length];
                 const color = vehiclePalette[(i + 3) % vehiclePalette.length];
                 const meshData = createCivilianVehicleMesh(vType, color);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(meshData.root);
+                const targetScene = scene || (typeof window !== "undefined" ? window.scene : null);
+                if (targetScene) targetScene.add(meshData.root);
                 const dir = i % 2 === 0 ? 1 : -1;
                 const laneOffset = dir > 0 ? 6.5 : -6.5;
                 const spec = CIVILIAN_VEHICLE_SPECS[vType];
@@ -416,6 +478,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                     isVehicle: true,
                     name: driverNames[(i + 4) % driverNames.length],
                     role: "Coastal Highway Driver",
+                    group: meshData.root,
                     vType,
                     mass: spec.mass,
                     halfWidth: spec.halfWidth,
@@ -449,7 +512,8 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 const vType = vehicleTypes[(i + 2) % vehicleTypes.length];
                 const color = vehiclePalette[(i + 5) % vehiclePalette.length];
                 const meshData = createCivilianVehicleMesh(vType, color);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(meshData.root);
+                const targetScene = scene || (typeof window !== "undefined" ? window.scene : null);
+                if (targetScene) targetScene.add(meshData.root);
                 const isNS = i < 3;
                 const spec = CIVILIAN_VEHICLE_SPECS[vType];
                 const cruiseSpd = 28 + (i % 3) * 4.5;
@@ -457,6 +521,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                     isVehicle: true,
                     name: driverNames[(i + 7) % driverNames.length],
                     role: isNS ? "North-South Express" : "East-West Express",
+                    group: meshData.root,
                     vType,
                     mass: spec.mass,
                     halfWidth: spec.halfWidth,
@@ -492,13 +557,13 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
 
         let _npcUpdateTick = 0;
 
-        export function updateLivingWorldNPCs(dt, now) {
+        export function updateLivingWorldNPCs(dt: number, now: number) {
             const nowSec = now * 0.001;
             _npcUpdateTick = (_npcUpdateTick + 1) % 24;
 
             // 1. Update Human Citizens (Patrol sidewalks, wave at Rescue Bot, and speak when approached)
             for (let i = 0; i < humanNPCs.length; i++) {
-                const npc = humanNPCs[i];
+                const npc = humanNPCs[i] as LocalHumanNPC;
                 const distToPlayer = Math.hypot(player.pos.x - npc.x, player.pos.z - npc.z);
 
                 if (npc.waveTimer > 0) npc.waveTimer = Math.max(0, npc.waveTimer - dt);
@@ -588,9 +653,8 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
 
                         // Call out for help in English when the Rescue Bot approaches within 36m!
                         if (distToSite < 36.0 && cIdx === 0 && (nowSec - sc.lastCallTime > 20.0)) {
-                            if (triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc, false)) {
-                                sc.lastCallTime = nowSec;
-                            }
+                            triggerNPCSpeech(sc.name, sc.role, sc.helpCall, sc, false);
+                            sc.lastCallTime = nowSec;
                         }
                     } else {
                         // Rescued! Happy celebration wave & green gem!
@@ -607,7 +671,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
 
             // 2. Update Civilian Vehicles along Inner Ring, Outer Ring, N-S, and E-W Highways
             for (let i = 0; i < vehicleNPCs.length; i++) {
-                const v = vehicleNPCs[i];
+                const v = vehicleNPCs[i] as LocalVehicleNPC;
                 const distToPlayer = Math.hypot(player.pos.x - v.x, player.pos.z - v.z);
 
                 if (v.honkCooldown > 0) v.honkCooldown = Math.max(0, v.honkCooldown - dt);
@@ -633,7 +697,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 // Check against other civilian vehicles ahead in the lane corridor
                 for (let j = 0; j < vehicleNPCs.length; j++) {
                     if (i === j) continue;
-                    const o = vehicleNPCs[j];
+                    const o = vehicleNPCs[j] as LocalVehicleNPC;
                     const odx = o.x - v.x;
                     const odz = o.z - v.z;
                     if (odx * odx + odz * odz > 1024) continue; // > 32m away
@@ -757,17 +821,19 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                 const effSpeed = v.currentSpeed;
 
                 if (v.routeType === 'INNER_RING' || v.routeType === 'OUTER_RING') {
-                    const baseR = v.routeType === 'INNER_RING' ? getInnerRoadRadius(v.theta) : getOuterRoadRadius(v.theta);
+                    const curTheta = v.theta ?? 0;
+                    const baseR = v.routeType === 'INNER_RING' ? getInnerRoadRadius(curTheta) : getOuterRoadRadius(curTheta);
                     const laneR = baseR + v.laneOffset;
                     const dTheta = (effSpeed / Math.max(120, laneR)) * v.dir * dt;
-                    v.theta = (v.theta + dTheta) % (Math.PI * 2);
+                    const nextCurTheta = (curTheta + dTheta) % (Math.PI * 2);
+                    v.theta = nextCurTheta;
 
-                    const nextTheta = v.theta + 0.03 * v.dir;
+                    const nextTheta = nextCurTheta + 0.03 * v.dir;
                     const nextBaseR = v.routeType === 'INNER_RING' ? getInnerRoadRadius(nextTheta) : getOuterRoadRadius(nextTheta);
                     const nextR = nextBaseR + v.laneOffset;
 
-                    const curX = Math.cos(v.theta) * laneR;
-                    const curZ = Math.sin(v.theta) * laneR;
+                    const curX = Math.cos(nextCurTheta) * laneR;
+                    const curZ = Math.sin(nextCurTheta) * laneR;
                     const nxtX = Math.cos(nextTheta) * nextR;
                     const nxtZ = Math.sin(nextTheta) * nextR;
 
@@ -776,19 +842,21 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                     v.y = Math.max(0.5, getTerrainHeight(curX, curZ));
                     v.heading = Math.atan2(nxtX - curX, nxtZ - curZ);
                 } else if (v.routeType === 'NS_HIGHWAY') {
-                    v.progress += effSpeed * v.dir * dt;
-                    if (v.progress > 1060) { v.progress = 1060; v.dir = -1; }
-                    if (v.progress < -1060) { v.progress = -1060; v.dir = 1; }
+                    let prog = (v.progress ?? 0) + effSpeed * v.dir * dt;
+                    if (prog > 1060) { prog = 1060; v.dir = -1; }
+                    if (prog < -1060) { prog = -1060; v.dir = 1; }
+                    v.progress = prog;
                     v.x = v.dir > 0 ? -v.laneOffset : v.laneOffset;
-                    v.z = v.progress;
+                    v.z = prog;
                     v.y = Math.max(0.5, getTerrainHeight(v.x, v.z));
                     v.heading = v.dir > 0 ? 0 : Math.PI;
                 } else {
                     // EW_HIGHWAY (along z = 25)
-                    v.progress += effSpeed * v.dir * dt;
-                    if (v.progress > 1060) { v.progress = 1060; v.dir = -1; }
-                    if (v.progress < -1060) { v.progress = -1060; v.dir = 1; }
-                    v.x = v.progress;
+                    let prog = (v.progress ?? 0) + effSpeed * v.dir * dt;
+                    if (prog > 1060) { prog = 1060; v.dir = -1; }
+                    if (prog < -1060) { prog = -1060; v.dir = 1; }
+                    v.progress = prog;
+                    v.x = prog;
                     v.z = 25 + (v.dir > 0 ? v.laneOffset : -v.laneOffset);
                     v.y = Math.max(0.5, getTerrainHeight(v.x, v.z));
                     v.heading = v.dir > 0 ? Math.PI / 2 : -Math.PI / 2;
@@ -828,10 +896,10 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
 
             // 2B. Civilian Vehicle vs Civilian Vehicle OBB Physical Separation (only near player)
             for (let i = 0; i < vehicleNPCs.length; i++) {
-                const vA = vehicleNPCs[i];
+                const vA = vehicleNPCs[i] as LocalVehicleNPC;
                 if (!vA.root.visible) continue;
                 for (let j = i + 1; j < vehicleNPCs.length; j++) {
-                    const vB = vehicleNPCs[j];
+                    const vB = vehicleNPCs[j] as LocalVehicleNPC;
                     if (!vB.root.visible) continue;
                     const dx = vB.x - vA.x;
                     const dz = vB.z - vA.z;
@@ -862,9 +930,9 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             }
         }
 
-        export function updateBuddyBotAI(dt, now) {
+        export function updateBuddyBotAI(dt: number, now: number) {
             if (!buddyBot.botType || buddyBot.botType === player.botType) return;
-            const bRig = botRigs[buddyBot.botType];
+            const bRig = botRigs?.[buddyBot.botType];
             if (!bRig) return;
 
             const isBlades = buddyBot.botType === 'BLADES';
@@ -1038,9 +1106,10 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             }
 
             // Shore Watch Dialogue when player enters water
+            const buddyExt = buddyBot as BuddyBotState & { lastShoreWatchTime?: number; pitch?: number; roll?: number; mode?: string };
             if (isPlayerWaterNavigating) {
-                if (!buddyBot.lastShoreWatchTime || now - buddyBot.lastShoreWatchTime > 26000) {
-                    buddyBot.lastShoreWatchTime = now;
+                if (!buddyExt.lastShoreWatchTime || now - buddyExt.lastShoreWatchTime > 26000) {
+                    buddyExt.lastShoreWatchTime = now;
                     const bMeta = BOT_METADATA[buddyBot.botType];
                     const leaderName = BOT_METADATA[player.botType]?.name || player.botType;
                     const shoreQuotes = [
@@ -1049,7 +1118,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
                         `Standing by on the beach! Griffin Rock coastline is secure!`
                     ];
                     const quote = shoreQuotes[Math.floor(Math.random() * shoreQuotes.length)];
-                    triggerNPCSpeech(bMeta.name, "Shore Watch", quote, buddyBot, false);
+                    triggerNPCSpeech(bMeta.name, "Shore Watch", quote, buddyBot as unknown as SpeechTarget, false);
                 }
             }
 
@@ -1070,8 +1139,8 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
 
             const bTargetPitch = Math.max(-0.7, Math.min(0.7, Math.atan2(bFrontY - bRearY, 4.4 * buddyScale)));
             const bTargetRoll = Math.max(-0.45, Math.min(0.45, Math.atan2(bRightY - bLeftY, 2.6 * buddyScale)));
-            buddyBot.pitch = THREE.MathUtils.lerp(buddyBot.pitch || 0, bTargetPitch, Math.min(1.0, dt * 14.0));
-            buddyBot.roll = THREE.MathUtils.lerp(buddyBot.roll || 0, bTargetRoll, Math.min(1.0, dt * 14.0));
+            buddyExt.pitch = THREE.MathUtils.lerp(buddyExt.pitch || 0, bTargetPitch, Math.min(1.0, dt * 14.0));
+            buddyExt.roll = THREE.MathUtils.lerp(buddyExt.roll || 0, bTargetRoll, Math.min(1.0, dt * 14.0));
 
             const isHighTideBuddyWaterMode = (buddyBot.botType === 'HIGHTIDE' && (buddyBot.targetMorph > 0.5 || buddyBot.targetDinoMorph > 0.5));
             if (isFlying && !isPlayerWaterNavigating) {
@@ -1116,7 +1185,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             if (worldState.activeArea === 'UNDERGROUND') return;
 
             // Find nearest uncleared hazard node to the Buddy Bot (prioritizing bot specialty)
-            const isWaterBuddy = (buddyBot.botType === 'HEATWAVE' || buddyBot.botType === 'HIGHTIDE' || (buddyBot.mode === 'VEHICLE' && (buddyBot.boatMorph || 0) > 0.3));
+            const isWaterBuddy = (buddyBot.botType === 'HEATWAVE' || buddyBot.botType === 'HIGHTIDE' || (buddyExt.mode === 'VEHICLE' && (buddyBot.boatMorph || 0) > 0.3));
             let nearestHazard = null;
             let nearestDist = 22.0;
             let targetBeacon = null;
@@ -1138,7 +1207,7 @@ export { createHumanNPCMesh, createCivilianVehicleMesh };
             }
 
             // Buddy uses their signature powers when near an emergency!
-            if (nearestHazard && buddyBot.actionCooldown <= 0) {
+            if (nearestHazard && targetBeacon && buddyBot.actionCooldown <= 0) {
                 buddyBot.actionCooldown = 1.6;
                 if (buddyBot.botType === 'HEATWAVE') {
                     buddyBot.waterTimer = 1.4;

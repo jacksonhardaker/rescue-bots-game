@@ -2,13 +2,9 @@
 import * as THREE from 'three';
 
 import { setHighTideRigMega } from './botRigs.js';
-export function buildHighTide(parts, materials = {}, textures = {}) {
-    const {
-        toonGrad3, toonGrad4, toonGradGlossy,
-        matChrome, matDarkSteel, matTire, matCabGlass,
-        matVisorCyan, matVisorGold, matSirenRed, matSirenBlue,
-        matEmblem, matHazardMat, matGrille, matInkOutline
-    } = ((typeof window !== 'undefined' ? window : {}) as any);
+import type { BotRig } from '../types/game.js';
+
+export function buildHighTide(parts: BotRig, _materials: Record<string, unknown> = {}, _textures: Record<string, unknown> = {}) {
 
     // TV Show High Tide: Maritime Search & Rescue Submersible Autobot!
                 // Primary Royal Blue (#1d4ed8), Warm Yellow/Gold (#f59e0b), Scuba Black (#0f172a), Marine White & Cyan Dome Canopy!
@@ -325,9 +321,11 @@ export function buildHighTide(parts, materials = {}, textures = {}) {
                 // Tag all standard sub-geometry as standard parts.
                 // Skip structural rig joints (e.g. dinoHead / dinoTail / forearms nested inside other groups):
                 // they host BOTH standard and Megabot geometry, so hiding them would hide the mega parts too.
-                const rigJointSet = new Set(Object.values(parts as Record<string, any>).filter(v => v && v.isObject3D));
+                const rigJointSet = new Set<THREE.Object3D>(
+                    Object.values(parts).filter((v): v is THREE.Object3D => v instanceof THREE.Object3D)
+                );
                 [parts.torso, parts.head, parts.frontAttachment, parts.backAttachment, parts.leftArm, parts.rightArm, parts.leftForearm, parts.rightForearm, parts.leftLeg, parts.rightLeg, parts.dinoHead, parts.dinoLeftWing, parts.dinoRightWing, parts.dinoGroup, parts.dinoTail].forEach(grp => {
-                    grp.children.forEach(child => {
+                    grp.children.forEach((child: THREE.Object3D) => {
                         if (rigJointSet.has(child)) return;
                         child.userData.isStandardPart = true;
                     });
@@ -526,7 +524,8 @@ export function buildHighTide(parts, materials = {}, textures = {}) {
                 megaBack.add(mBridgeDeck, mBridgeTower, mBridgeWindows);
 
                 // Twin Giant Articulated Yellow Deck Crane Arms (Images 1, 2, 3, 4)
-                parts.megaCranes = [];
+                const megaCranes: THREE.Object3D[] = [];
+                parts.megaCranes = megaCranes;
                 [-1.85, 1.85].forEach((cx, idx) => {
                     const craneTurret = new THREE.Group();
                     craneTurret.position.set(cx, 1.3, -0.65);
@@ -579,7 +578,7 @@ export function buildHighTide(parts, materials = {}, textures = {}) {
                     boomPivot.add(lowBoom, piston, elbow, upBoom, wrist, clawG);
                     craneTurret.add(boomPivot);
                     megaBack.add(craneTurret);
-                    parts.megaCranes.push(boomPivot);
+                    megaCranes.push(boomPivot);
                 });
 
                 // Dual Stern Hydro-Jet Ducted Thrusters

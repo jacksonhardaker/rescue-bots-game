@@ -25,10 +25,85 @@ import {
 
 export { makeTrainFlangedWheel, makeTrainBogie };
 
-export let railroadCrossings = [];
-export let centralStationGroup = null;
-export let islandTrain = null;
-export let railwayLoopMesh = null;
+export interface RailroadCrossingLamp {
+    mesh: THREE.Mesh;
+    phase: number;
+}
+
+export interface RailroadCrossingEntry {
+    x: number;
+    z: number;
+    gy: number;
+    isNSHighway: boolean;
+    lamps: RailroadCrossingLamp[];
+    isFlashing: boolean;
+    group?: THREE.Group;
+}
+
+export interface TrainCarEntry {
+    name: string;
+    root: THREE.Group;
+    length: number;
+    halfLength: number;
+    width: number;
+    halfWidth: number;
+    height: number;
+    mass: number;
+    offset: number;
+    wheelRadius: number;
+    wheels: THREE.Object3D[];
+    connectingRods?: THREE.Object3D[];
+    x: number;
+    y: number;
+    z: number;
+    heading: number;
+    pitch: number;
+}
+
+export interface IslandTrainState {
+    cars: TrainCarEntry[];
+    progress: number;
+    speed: number;
+    chugTimer: number;
+    bellTimer: number;
+    whistleCooldown: number;
+    steamTimer: number;
+}
+
+export interface RailwayPoint {
+    x: number;
+    z: number;
+    dist: number;
+    theta: number;
+}
+
+interface TrainSteamPuff {
+    mesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshToonMaterial>;
+    active: boolean;
+    life: number;
+    maxLife: number;
+    startScale: number;
+    endScale: number;
+    x: number;
+    y: number;
+    z: number;
+    vx: number;
+    vy: number;
+    vz: number;
+}
+
+export let railroadCrossings: RailroadCrossingEntry[] = [];
+export let centralStationGroup: THREE.Group | null = null;
+export let islandTrain: IslandTrainState = {
+    cars: [],
+    progress: 350.0,
+    speed: 18.5,
+    chugTimer: 0,
+    bellTimer: 0,
+    whistleCooldown: 0,
+    steamTimer: 0
+};
+export let railwayLoopMesh: THREE.Mesh | null = null;
 
         /***********************************************************************
          * 5C. GRIFFIN ROCK ISLAND RAILWAY CIRCUIT & CENTRAL STATION
@@ -37,7 +112,7 @@ export function makeProceduralRailTrackTexture() {
     const c = document.createElement('canvas');
     c.width = 512;
     c.height = 512;
-    const ctx = c.getContext('2d');
+    const ctx = c.getContext('2d')!;
 
     // 1. Granite/Gravel Ballast Roadbed Base (#334155 / #475569)
     ctx.fillStyle = '#334155';
@@ -102,27 +177,29 @@ export function makeProceduralRailTrackTexture() {
     return tex;
 }
 
-export let sharedRailTrackTexture = null;
-export let ptsRailway = [];
+export let sharedRailTrackTexture: THREE.Texture | null = null;
+export let ptsRailway: RailwayPoint[] = [];
 export let railwayTotalDist = 0;
-export let railwayMesh = null;
+export let railwayMesh: THREE.Mesh | null = null;
 
 const railwaySteps = 540;
-let prevRailPt = null;
+let prevRailPt: { x: number; z: number } | null = null;
 for (let i = 0; i < railwaySteps; i++) {
     const theta = (i / railwaySteps) * Math.PI * 2;
     const r = getRailwayRadius(theta);
     const rx = Math.cos(theta) * r;
     const rz = Math.sin(theta) * r;
-    if (i > 0) {
+    if (i > 0 && prevRailPt) {
         railwayTotalDist += Math.hypot(rx - prevRailPt.x, rz - prevRailPt.z);
     }
     ptsRailway.push({ x: rx, z: rz, dist: railwayTotalDist, theta });
     prevRailPt = { x: rx, z: rz };
 }
-railwayTotalDist += Math.hypot(ptsRailway[0].x - prevRailPt.x, ptsRailway[0].z - prevRailPt.z);
+if (prevRailPt) {
+    railwayTotalDist += Math.hypot(ptsRailway[0].x - prevRailPt.x, ptsRailway[0].z - prevRailPt.z);
+}
 
-export function getTrackPointAtDist(targetDist) {
+export function getTrackPointAtDist(targetDist: number) {
     const d = ((targetDist % railwayTotalDist) + railwayTotalDist) % railwayTotalDist;
     let low = 0, high = ptsRailway.length - 1;
     while (low <= high) {
@@ -144,7 +221,7 @@ export function getTrackPointAtDist(targetDist) {
         // 4 Grade Crossing Signals & Paved Rubber Flange Aprons (at NS & EW Highways)
         railroadCrossings = [];
 
-        export function createRailroadCrossing(cx, cz, isNSHighway) {
+        export function createRailroadCrossing(cx: number, cz: number, isNSHighway: boolean) {
             const gy = getSurfaceHeight(cx, cz);
             const { root: crossG, lamps } = buildRailroadCrossingMesh(isNSHighway);
             crossG.position.set(cx, gy, cz);
@@ -152,7 +229,7 @@ export function getTrackPointAtDist(targetDist) {
             scene.add(crossG);
             registerCullableObject(crossG, cx, gy + 2, cz, 32);
 
-            const crossingData = { x: cx, z: cz, gy, isNSHighway, lamps, isFlashing: false };
+            const crossingData: RailroadCrossingEntry = { x: cx, z: cz, gy, isNSHighway, lamps, isFlashing: false, group: crossG };
             railroadCrossings.push(crossingData);
             return crossingData;
         }
@@ -182,7 +259,7 @@ export function getTrackPointAtDist(targetDist) {
             steamTimer: 0
         };
 
-        const trainSteamPuffs = [];
+        const trainSteamPuffs: TrainSteamPuff[] = [];
         const trainSteamGeo = new THREE.SphereGeometry(1, 8, 8);
         const trainSteamMat = new THREE.MeshToonMaterial({
             color: 0xf1f5f9,
@@ -191,8 +268,8 @@ export function getTrackPointAtDist(targetDist) {
             opacity: 0.75
         });
 
-        export function spawnTrainSteamPuff(wx, wy, wz, heading, speed) {
-            let puff = null;
+        export function spawnTrainSteamPuff(wx: number, wy: number, wz: number, heading: number, speed: number) {
+            let puff: TrainSteamPuff | null = null;
             for (let i = 0; i < trainSteamPuffs.length; i++) {
                 if (!trainSteamPuffs[i].active) {
                     puff = trainSteamPuffs[i];
@@ -203,7 +280,7 @@ export function getTrackPointAtDist(targetDist) {
                 if (trainSteamPuffs.length >= 24) return;
                 const mesh = new THREE.Mesh(trainSteamGeo, trainSteamMat.clone());
                 scene.add(mesh);
-                puff = { mesh, active: false };
+                puff = { mesh, active: false, life: 0, maxLife: 1.5, startScale: 0.55, endScale: 2.6, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0 };
                 trainSteamPuffs.push(puff);
             }
             puff.active = true;
@@ -272,7 +349,7 @@ export function getTrackPointAtDist(targetDist) {
             });
         }
 
-        export function updateIslandTrain(dt, now) {
+        export function updateIslandTrain(dt: number, now: number) {
             islandTrain.progress = (islandTrain.progress + islandTrain.speed * dt) % railwayTotalDist;
 
             const locoCar = islandTrain.cars[0];
@@ -417,7 +494,7 @@ export function getTrackPointAtDist(targetDist) {
         }
 
 
-export function initRailway(scene) {
+export function initRailway(scene?: THREE.Scene | null) {
     const s = scene || (typeof window !== 'undefined' ? window.scene : null);
     if (!s) return;
 
@@ -442,9 +519,9 @@ export function initRailway(scene) {
     createRailroadCrossing(0, -730, true);      // North NS Highway Crossing
     createRailroadCrossing(765, 25, false);     // East EW Highway Crossing
     createRailroadCrossing(-765, 25, false);    // West EW Highway Crossing
-    railroadCrossings.forEach((cr: any) => {
+    railroadCrossings.forEach((cr) => {
         if (cr.group) {
-            mergeStaticMeshesInGroup(cr.group, (cr.lamps || []).map((l: any) => l.mesh));
+            mergeStaticMeshesInGroup(cr.group, (cr.lamps || []).map((l) => l.mesh));
         }
     });
 

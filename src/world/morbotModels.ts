@@ -56,7 +56,16 @@ export const MORBOT_FLEET_CONFIGS = [
     }
 ];
 
-export function buildMorBotModel(cfg: Record<string, any> = {}) {
+export interface MorBotModelConfig {
+    matMain?: THREE.Material;
+    matAccent?: THREE.Material;
+    matDarkAccent?: THREE.Material;
+    matCore?: THREE.Material;
+    matVisor?: THREE.Material;
+    scale?: number;
+}
+
+export function buildMorBotModel(cfg: MorBotModelConfig = {}) {
     const root = new THREE.Group();
 
     const mMain = cfg.matMain || matMorBotBlack;

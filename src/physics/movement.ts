@@ -16,7 +16,90 @@ import { sfx } from '../audio/soundFX.js';
 import { isActionActive } from '../settings/settings.js';
 import { progression, saveProgression, isBotDocked } from '../progression/progression.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
-import { spawnBurstParticles, spawnSoapSudsParticles, spawnSparkleGlints, spawnRocketExhaustParticles, spawnDinerFoodParticles, spawnEnergonLightningParticles, spawnWarpVortexParticles, spawnWaterWakeParticles, spawnMagnetSparkParticles, spawnPaintSplatParticles, releaseParticle } from '../world/emergencies.js';
+import { spawnBurstParticles, spawnSoapSudsParticles, spawnSparkleGlints, spawnRocketExhaustParticles, spawnDinerFoodParticles, spawnEnergonLightningParticles, spawnWarpVortexParticles, spawnWaterWakeParticles, spawnMagnetSparkParticles, spawnPaintSplatParticles, releaseParticle, clearHazardNode } from '../world/emergencies.js';
+import type { ColliderItem, PlayerState, BuddyBotState, InputState } from '../types/game.js';
+
+interface MovementBeaconNode {
+    x: number;
+    y: number;
+    z: number;
+    r: number;
+    type?: string;
+    cleared?: boolean;
+}
+
+interface MovementBeacon {
+    name: string;
+    x: number;
+    z: number;
+    restored?: boolean;
+    nodes: MovementBeaconNode[];
+    strandedCitizens?: Array<{ name: string; role: string; helpCall: string }>;
+}
+
+interface MovementParticle {
+    life: number;
+    vx: number;
+    vy: number;
+    vz: number;
+    gravity: number;
+    mesh: THREE.Object3D;
+    baseScaleX?: number;
+    baseScaleY?: number;
+    baseScaleZ?: number;
+    isWater?: boolean;
+}
+
+interface MovementTrainCar {
+    name?: string;
+    x: number;
+    y: number;
+    z: number;
+    heading: number;
+    halfWidth: number;
+    halfLength: number;
+    height: number;
+    mass: number;
+}
+
+interface MovementTrain {
+    speed: number;
+    cars: MovementTrainCar[];
+}
+
+type MovementPlayerState = PlayerState & {
+    lastDriftSound?: number;
+    lastShorelineToast?: number;
+    pitch?: number;
+    roll?: number;
+    trainImpactCooldown?: number;
+};
+
+type MovementBuddyState = BuddyBotState & {
+    pitch?: number;
+};
+
+type MovementInputState = InputState & {
+    left?: boolean;
+    right?: boolean;
+};
+
+interface MovementVehicleNPC {
+    x: number;
+    z: number;
+    heading: number;
+    halfWidth?: number;
+    halfLength?: number;
+    mass?: number;
+    root: THREE.Object3D;
+    routeType?: string;
+    theta?: number;
+    progress?: number;
+    voicePitch?: number;
+    currentSpeed?: number;
+    speed?: number;
+    isBraking?: boolean;
+}
 import { activeMorBot } from '../world/morbot.js';
 import { speakBotCatchphrase, syncHUDToActiveBot } from './player.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
@@ -35,35 +118,31 @@ import { explodeRock, explodeTree, explodeBush, checkBoulderScoopAttack, checkWa
 const _camIdealPos = new THREE.Vector3();
 const RAINBOW_TRAIL_COLORS = [0xef4444, 0xf97316, 0xfacc15, 0x4ade80, 0x38bdf8, 0xa855f7];
 let rainbowTrailIdx = 0;
-const _playerNearbyColliders: any[] = [];
+const _playerNearbyColliders: ColliderItem[] = [];
 import { morbotBattle } from '../world/morbot.js';
-export let waypointGroup = null;
-export let wpOuterRing = null;
-export let wpArrowCone = null;
+export let waypointGroup: THREE.Group = new THREE.Group();
+waypointGroup.visible = false;
 
-        waypointGroup = new THREE.Group();
-        waypointGroup.visible = false;
+export let wpOuterRing: THREE.Mesh = new THREE.Mesh(
+    new THREE.RingGeometry(2.2, 3.3, 32).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
+);
+wpOuterRing.position.y = 0.35;
+waypointGroup.add(wpOuterRing);
 
-        wpOuterRing = new THREE.Mesh(
-            new THREE.RingGeometry(2.2, 3.3, 32).rotateX(-Math.PI / 2),
-            new THREE.MeshBasicMaterial({ color: 0xfacc15, side: THREE.DoubleSide })
-        );
-        wpOuterRing.position.y = 0.35;
-        waypointGroup.add(wpOuterRing);
+const wpInnerDisk = new THREE.Mesh(
+    new THREE.CircleGeometry(1.5, 24).rotateX(-Math.PI / 2),
+    new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.65, side: THREE.DoubleSide })
+);
+wpInnerDisk.position.y = 0.32;
+waypointGroup.add(wpInnerDisk);
 
-        const wpInnerDisk = new THREE.Mesh(
-            new THREE.CircleGeometry(1.5, 24).rotateX(-Math.PI / 2),
-            new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.65, side: THREE.DoubleSide })
-        );
-        wpInnerDisk.position.y = 0.32;
-        waypointGroup.add(wpInnerDisk);
-
-        wpArrowCone = new THREE.Mesh(
-            new THREE.ConeGeometry(1.45, 3.2, 12).rotateX(Math.PI),
-            new THREE.MeshBasicMaterial({ color: 0xfacc15 })
-        );
-        wpArrowCone.position.y = 4.2;
-        waypointGroup.add(wpArrowCone);
+export let wpArrowCone: THREE.Mesh = new THREE.Mesh(
+    new THREE.ConeGeometry(1.45, 3.2, 12).rotateX(Math.PI),
+    new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+);
+wpArrowCone.position.y = 4.2;
+waypointGroup.add(wpArrowCone);
 
         const wpBeam = new THREE.Mesh(
             new THREE.CylinderGeometry(0.45, 1.3, 18, 12, 1, true),
@@ -170,7 +249,7 @@ export let wpArrowCone = null;
 
         document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
         document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
-        document.addEventListener('touchmove', e => {
+        document.addEventListener('touchmove', (e: TouchEvent & { scale?: number }) => {
             if (e.scale !== undefined && e.scale !== 1) e.preventDefault();
         }, { passive: false });
 
@@ -184,7 +263,7 @@ export let wpArrowCone = null;
         let lastHoldWaypointTime = 0;
 
         // Ultra-fast analytical ray-heightfield intersection (~25 math steps vs 131,072 triangle tests on terrainMesh!)
-        export function intersectRayWithTerrain(ray, outVec) {
+        export function intersectRayWithTerrain(ray: THREE.Ray, outVec: THREE.Vector3): THREE.Vector3 {
             const ox = ray.origin.x, oy = ray.origin.y, oz = ray.origin.z;
             const dx = ray.direction.x, dy = ray.direction.y, dz = ray.direction.z;
 
@@ -241,7 +320,7 @@ export let wpArrowCone = null;
             return outVec;
         }
 
-        export function setDestinationFromScreenPoint(clientX, clientY, playChime = false) {
+        export function setDestinationFromScreenPoint(clientX: number, clientY: number, playChime = false) {
             if (worldState.activeArea === 'SOLAR_HUB') {
                 if (playChime) handleSolarHubClick(clientX, clientY);
                 return;
@@ -301,10 +380,11 @@ export let wpArrowCone = null;
                         if (d < bestNPCDist) { bestNPCDist = d; tappedNPC = vehicleNPCs[i]; }
                     }
                     if (tappedNPC) {
-                        speakClosestDisasterForNPC(tappedNPC, true);
+                        speakClosestDisasterForNPC(tappedNPC as unknown as Parameters<typeof speakClosestDisasterForNPC>[0], true);
                     } else {
-                        for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
-                            const b = beacons[bIdx];
+                        const moveBeacons = beacons as unknown as MovementBeacon[];
+                        for (let bIdx = 0; bIdx < moveBeacons.length; bIdx++) {
+                            const b = moveBeacons[bIdx];
                             if (b.strandedCitizens && Math.hypot(hitPoint.x - b.x, hitPoint.z - b.z) < 24.0) {
                                 const sc = b.strandedCitizens[0];
                                 if (!b.restored) {
@@ -320,7 +400,7 @@ export let wpArrowCone = null;
                 }
 
                 // Snap to nearest active emergency beacon if child taps close to one (generous 28m magnet!)
-                beacons.forEach(b => {
+                (beacons as unknown as MovementBeacon[]).forEach(b => {
                     if (!b.restored && Math.hypot(hitPoint.x - b.x, hitPoint.z - b.z) < 28) {
                         hitPoint.x = b.x;
                         hitPoint.z = b.z;
@@ -384,8 +464,8 @@ export let wpArrowCone = null;
             }
         }
 
-        export function isUIElementTarget(target) {
-            if (!target) return false;
+        export function isUIElementTarget(target: EventTarget | null): boolean {
+            if (!(target instanceof Element)) return false;
             return Boolean(
                 target.closest('button') ||
                 target.closest('header') ||
@@ -421,7 +501,7 @@ export let wpArrowCone = null;
 
         // Touch Anywhere on Screen to Move (Supports Single Tap or Hold-and-Drag Steering)
         window.addEventListener('touchstart', e => {
-            if (!e.target.closest('#utility-menu-container')) {
+            if (!(e.target instanceof Element) || !e.target.closest('#utility-menu-container')) {
                 closeUtilityMenu();
             }
             if (isUIElementTarget(e.target)) return;
@@ -472,7 +552,7 @@ export let wpArrowCone = null;
 
         // Mouse Click or Hold-Drag Anywhere to Move (Desktop & iPad Trackpad)
         window.addEventListener('mousedown', e => {
-            if (!e.target.closest('#utility-menu-container')) {
+            if (!(e.target instanceof Element) || !e.target.closest('#utility-menu-container')) {
                 closeUtilityMenu();
             }
             if (e.button !== 0 || isUIElementTarget(e.target)) return;
@@ -515,7 +595,13 @@ export let wpArrowCone = null;
         });
 
 
-        export function updatePhysics(dt, now) {
+        export function updatePhysics(dt: number, now: number) {
+            const pState = player as MovementPlayerState;
+            const bState = buddyBot as MovementBuddyState;
+            const iState = input as MovementInputState;
+            const moveParticles = activeParticles as unknown as MovementParticle[];
+            const moveBeacons = beacons as unknown as MovementBeacon[];
+            const moveTrain = (typeof islandTrain !== 'undefined' ? islandTrain : null) as unknown as MovementTrain | null;
             const isUnderground = worldState.activeArea === 'UNDERGROUND';
             if (player.drillEquipTimer > 0) player.drillEquipTimer = Math.max(0, player.drillEquipTimer - dt);
 
@@ -525,12 +611,12 @@ export let wpArrowCone = null;
                 player.hasWaypoint = false;
                 if (waypointGroup) waypointGroup.visible = false;
                 activePointerDown = false;
-                for (let i = activeParticles.length - 1; i >= 0; i--) {
-                    const p = activeParticles[i];
+                for (let i = moveParticles.length - 1; i >= 0; i--) {
+                    const p = moveParticles[i];
                     p.life -= dt;
                     if (p.life <= 0) {
-                        releaseParticle(p);
-                        activeParticles.splice(i, 1);
+                        releaseParticle(p as never);
+                        moveParticles.splice(i, 1);
                     } else {
                         p.vy -= p.gravity * dt;
                         p.mesh.position.x += p.vx * dt;
@@ -761,10 +847,10 @@ export let wpArrowCone = null;
                 player.speed = 0;
             } else {
                 // Slick Road Drift Physics in Rainstorms
-                const isRainSlick = ((window as any).currentWeatherId === 'RAIN') && onRoad && player.mode === 'VEHICLE';
+                const isRainSlick = (window.currentWeatherId === 'RAIN') && onRoad && player.mode === 'VEHICLE';
                 if (isRainSlick && Math.abs(moveX) > 0.45 && Math.abs(player.speed) > 11.0) {
-                    if (!player.lastDriftSound || now - player.lastDriftSound > 850) {
-                        player.lastDriftSound = now;
+                    if (!pState.lastDriftSound || now - pState.lastDriftSound > 850) {
+                        pState.lastDriftSound = now;
                         sfx.playTireSqueal();
                     }
                 }
@@ -785,8 +871,8 @@ export let wpArrowCone = null;
                         player.speed *= -0.4;
                         player.hasWaypoint = false;
                         waypointGroup.visible = false;
-                        if (!player.lastShorelineToast || now - player.lastShorelineToast > 3500) {
-                            player.lastShorelineToast = now;
+                        if (!pState.lastShorelineToast || now - pState.lastShorelineToast > 3500) {
+                            pState.lastShorelineToast = now;
                             showToast(`⚓ SUBMARINE AT SHORELINE`, `High Tide's Submarine moves in water only! Transform to Amphibious Dino or Bot Mode to walk on land!`);
                             sfx.playSpeechPop();
                         }
@@ -834,8 +920,8 @@ export let wpArrowCone = null;
                     player.speed *= -0.35;
                     player.hasWaypoint = false;
                     waypointGroup.visible = false;
-                    if (!player.lastShorelineToast || now - player.lastShorelineToast > 3500) {
-                        player.lastShorelineToast = now;
+                    if (!pState.lastShorelineToast || now - pState.lastShorelineToast > 3500) {
+                        pState.lastShorelineToast = now;
                         const meta = BOT_METADATA[player.botType];
                         const bName = meta?.boatName || 'Boat Mode';
                         showToast(`🌊 WATER RESTRICTION`, `${meta?.name || 'Rescue Bot'} must be in Vehicle Mode to enter the water as a ${bName}!`);
@@ -891,10 +977,10 @@ export let wpArrowCone = null;
 
             // Griffin Rock Express Train Car Roof & Flatbed Riding Detection
             let onTrainRoof = false;
-            let ridingTrainCar = null;
-            if (!isUnderground && typeof islandTrain !== 'undefined' && islandTrain.cars.length > 0) {
-                for (let i = 0; i < islandTrain.cars.length; i++) {
-                    const car = islandTrain.cars[i];
+            let ridingTrainCar: MovementTrainCar | null = null;
+            if (!isUnderground && moveTrain && moveTrain.cars.length > 0) {
+                for (let i = 0; i < moveTrain.cars.length; i++) {
+                    const car = moveTrain.cars[i];
                     const cdx = player.pos.x - car.x;
                     const cdz = player.pos.z - car.z;
                     if (cdx * cdx + cdz * cdz > 144) continue;
@@ -937,7 +1023,7 @@ export let wpArrowCone = null;
             let targetRoll = 0;
             if (isFlyingCopter && player.pos.y > centerGroundY + 2.5) {
                 // In flight, roll banks with turn steering, pitch tilts slightly with forward/reverse
-                const turnSteer = input.left ? 0.32 : (input.right ? -0.32 : 0);
+                const turnSteer = iState.left ? 0.32 : (iState.right ? -0.32 : 0);
                 targetRoll = turnSteer;
                 targetPitch = Math.max(-0.25, Math.min(0.25, (frontY - rearY) * 0.12));
             } else if (isVehicleOrDino) {
@@ -956,13 +1042,13 @@ export let wpArrowCone = null;
 
             // Buttery-smooth suspension damping for pitch and roll
             const pitchDampSpeed = isVehicleOrDino ? 16.0 : 10.0;
-            player.pitch = THREE.MathUtils.lerp(player.pitch || 0, targetPitch, Math.min(1.0, dt * pitchDampSpeed));
-            player.roll = THREE.MathUtils.lerp(player.roll || 0, targetRoll, Math.min(1.0, dt * pitchDampSpeed));
+            pState.pitch = THREE.MathUtils.lerp(pState.pitch || 0, targetPitch, Math.min(1.0, dt * pitchDampSpeed));
+            pState.roll = THREE.MathUtils.lerp(pState.roll || 0, targetRoll, Math.min(1.0, dt * pitchDampSpeed));
 
             // If riding atop the train, impart train velocity to keep player stationary relative to car roof
-            if (onTrainRoof && ridingTrainCar) {
-                const trainVx = Math.sin(ridingTrainCar.heading) * islandTrain.speed;
-                const trainVz = Math.cos(ridingTrainCar.heading) * islandTrain.speed;
+            if (onTrainRoof && ridingTrainCar && moveTrain) {
+                const trainVx = Math.sin(ridingTrainCar.heading) * moveTrain.speed;
+                const trainVz = Math.cos(ridingTrainCar.heading) * moveTrain.speed;
                 player.pos.x += trainVx * dt;
                 player.pos.z += trainVz * dt;
             }
@@ -993,13 +1079,13 @@ export let wpArrowCone = null;
                         // When Boulder uses Dozer Scoop on a rock, tree or bush, explode it on impact!
                         if (player.botType === 'BOULDER' && (player.scoopTimer > 0 || player.smashTimer > 0)) {
                             if (c.type === 'ROCK' && c.target) {
-                                explodeRock(c.target);
+                                explodeRock(c.target as Parameters<typeof explodeRock>[0]);
                                 continue;
                             } else if (c.type === 'TREE' && c.target) {
-                                explodeTree(c.target);
+                                explodeTree(c.target as Parameters<typeof explodeTree>[0]);
                                 continue;
                             } else if (c.type === 'BUSH' && c.target) {
-                                explodeBush(c.target);
+                                explodeBush(c.target as Parameters<typeof explodeBush>[0]);
                                 continue;
                             }
                         }
@@ -1066,12 +1152,12 @@ export let wpArrowCone = null;
 
                 // Griffin Rock Express Heavy Train 2D OBB Collision
                 const playerOBB = getPlayerOBB();
-                if (typeof islandTrain !== 'undefined' && !onTrainRoof && islandTrain.cars.length > 0) {
-                    if (!player.trainImpactCooldown) player.trainImpactCooldown = 0;
-                    if (player.trainImpactCooldown > 0) player.trainImpactCooldown -= dt;
+                if (moveTrain && !onTrainRoof && moveTrain.cars.length > 0) {
+                    if (!pState.trainImpactCooldown) pState.trainImpactCooldown = 0;
+                    if (pState.trainImpactCooldown > 0) pState.trainImpactCooldown -= dt;
 
-                    for (let i = 0; i < islandTrain.cars.length; i++) {
-                        const car = islandTrain.cars[i];
+                    for (let i = 0; i < moveTrain.cars.length; i++) {
+                        const car = moveTrain.cars[i];
                         const cdx = player.pos.x - car.x;
                         const cdz = player.pos.z - car.z;
                         if (cdx * cdx + cdz * cdz > 144) continue;
@@ -1095,8 +1181,8 @@ export let wpArrowCone = null;
                             playerOBB.z = player.pos.z;
 
                             // Debounce impact FX: only play audio and spawn particles on initial strike
-                            if (player.trainImpactCooldown <= 0) {
-                                player.trainImpactCooldown = 0.45;
+                            if (pState.trainImpactCooldown <= 0) {
+                                pState.trainImpactCooldown = 0.45;
                                 sfx.playSmash();
                                 spawnBurstParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 0xfacc15, 8, 1.2);
                                 spawnMagnetSparkParticles(player.pos.x, player.pos.y + 0.9, player.pos.z, 6);
@@ -1118,8 +1204,9 @@ export let wpArrowCone = null;
                 }
 
                 // Dynamic 2D OBB Collision against Civilian Vehicle NPCs (Weight-based mass separation & impact physics)
-                for (let i = 0; i < vehicleNPCs.length; i++) {
-                    const v = vehicleNPCs[i];
+                const moveVehicles = vehicleNPCs as unknown as MovementVehicleNPC[];
+                for (let i = 0; i < moveVehicles.length; i++) {
+                    const v = moveVehicles[i];
                     const dx = player.pos.x - v.x;
                     const dz = player.pos.z - v.z;
                     if (dx * dx + dz * dz > 256) continue; // Broadphase squared distance > 16m
@@ -1229,7 +1316,8 @@ export let wpArrowCone = null;
                 player.pos.y = THREE.MathUtils.lerp(player.pos.y, targetHoverY, Math.min(1, dt * 5.5));
                 player.vy = 0;
                 player.grounded = false;
-                document.getElementById('altitude-readout').textContent = `ALT: ${String(Math.round(player.pos.y - centerGroundY)).padStart(2, '0')}m`;
+                const altEl = document.getElementById('altitude-readout');
+                if (altEl) altEl.textContent = `ALT: ${String(Math.round(player.pos.y - centerGroundY)).padStart(2, '0')}m`;
             } else {
                 // Standard Ground & Jump Gravity
                 ramps.forEach(r => {
@@ -1274,10 +1362,10 @@ export let wpArrowCone = null;
                 spawnWaterWakeParticles(wakeX, -0.45, wakeZ, 3);
             }
 
-            // KID-FRIENDLY SMART AUTO-RESCUE: Automatically trigger rescue powers when arriving near any emergency!
+            // KID-FRIENDLY SMART AUTO-RESCUE: Automatically trigger rescue powers when arriving near an emergency!
             let nearActiveHazard = false;
             if (!isUnderground) {
-                beacons.forEach(beacon => {
+                moveBeacons.forEach(beacon => {
                     if (beacon.restored) return;
                     beacon.nodes.forEach(n => {
                         if (n.cleared) return;
@@ -1308,13 +1396,13 @@ export let wpArrowCone = null;
                         checkHitMorBotWithSpecialAbility(48.0, "WATER CANNON");
                     }
 
-                    // Extinguish any hazard node within 30m of Heatwave or along his forward arc
+                    // Extinguish hazard nodes within 30m of Heatwave or along his forward arc
                     const aimX = player.pos.x + Math.sin(player.heading) * 14;
                     const aimZ = player.pos.z + Math.cos(player.heading) * 14;
-                    beacons.forEach(beacon => {
+                    moveBeacons.forEach(beacon => {
                         beacon.nodes.forEach(n => {
                             if (!n.cleared && (Math.hypot(aimX - n.x, aimZ - n.z) < 18.5 || Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 28.0)) {
-                                clearHazardNode(beacon, n, 'WATER');
+                                clearHazardNode(beacon as never, n as never, 'WATER');
                             }
                         });
                     });
@@ -1365,7 +1453,7 @@ export let wpArrowCone = null;
 
             // Direct Contact / Ramming Hazard Nodes (Cleared easily when driving or walking up to them!)
             if (!isUnderground) {
-                beacons.forEach(beacon => {
+                moveBeacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (n.cleared) return;
                         const dx = player.pos.x - n.x;
@@ -1373,7 +1461,7 @@ export let wpArrowCone = null;
                         const dy = Math.abs(player.pos.y - n.y);
                         const dist = Math.hypot(dx, dz);
                         if (dist < 3.4 + n.r && dy < 12.0) {
-                            clearHazardNode(beacon, n, 'RAM');
+                            clearHazardNode(beacon as never, n as never, 'RAM');
                         }
                     });
                 });
@@ -1389,7 +1477,7 @@ export let wpArrowCone = null;
             }
 
             // Dynamic Headlight Spotlights & Sonar Ring for Player & Buddy Bot
-            const targetHl = isUnderground ? 2.8 : ((window as any).targetHeadlightIntensity || 0);
+            const targetHl = isUnderground ? 2.8 : (Number(window.targetHeadlightIntensity) || 0);
             headlight.intensity = THREE.MathUtils.lerp(headlight.intensity, targetHl, Math.min(1, dt * 3.5));
             if (buddyHeadlight) {
                 buddyHeadlight.intensity = THREE.MathUtils.lerp(buddyHeadlight.intensity, isUnderground ? 1.8 : targetHl * 0.85, Math.min(1, dt * 3.5));
@@ -1398,7 +1486,7 @@ export let wpArrowCone = null;
             headlight.position.set(player.pos.x, player.pos.y + 3.5, player.pos.z);
             headlight.target.position.set(
                 player.pos.x + Math.sin(player.heading) * 22,
-                player.pos.y + 0.5 - Math.sin(player.pitch || 0) * 22,
+                player.pos.y + 0.5 - Math.sin(pState.pitch || 0) * 22,
                 player.pos.z + Math.cos(player.heading) * 22
             );
 
@@ -1406,7 +1494,7 @@ export let wpArrowCone = null;
                 buddyHeadlight.position.set(buddyBot.pos.x, buddyBot.pos.y + 3.2, buddyBot.pos.z);
                 buddyHeadlight.target.position.set(
                     buddyBot.pos.x + Math.sin(buddyBot.heading) * 20,
-                    buddyBot.pos.y + 0.5 - Math.sin(buddyBot.pitch || 0) * 20,
+                    buddyBot.pos.y + 0.5 - Math.sin(bState.pitch || 0) * 20,
                     buddyBot.pos.z + Math.cos(buddyBot.heading) * 20
                 );
             }
@@ -1422,12 +1510,12 @@ export let wpArrowCone = null;
             }
 
             // Update Active Particles (Debris & Water Stream)
-            for (let i = activeParticles.length - 1; i >= 0; i--) {
-                const p = activeParticles[i];
+            for (let i = moveParticles.length - 1; i >= 0; i--) {
+                const p = moveParticles[i];
                 p.life -= dt;
                 if (p.life <= 0) {
-                    releaseParticle(p);
-                    activeParticles.splice(i, 1);
+                    releaseParticle(p as never);
+                    moveParticles.splice(i, 1);
                 } else {
                     p.vy -= p.gravity * dt;
                     p.mesh.position.x += p.vx * dt;
@@ -1441,8 +1529,8 @@ export let wpArrowCone = null;
                         const px = p.mesh.position.x;
                         const py = p.mesh.position.y;
                         const pz = p.mesh.position.z;
-                        for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
-                            const b = beacons[bIdx];
+                        for (let bIdx = 0; bIdx < moveBeacons.length; bIdx++) {
+                            const b = moveBeacons[bIdx];
                             if (b.restored) continue;
                             for (let nIdx = 0; nIdx < b.nodes.length; nIdx++) {
                                 const n = b.nodes[nIdx];
@@ -1452,7 +1540,7 @@ export let wpArrowCone = null;
                                     const pdz = pz - n.z;
                                     const hitR = n.r + 2.2;
                                     if (pdx * pdx + pdy * pdy + pdz * pdz < hitR * hitR) {
-                                        clearHazardNode(b, n, 'WATER');
+                                        clearHazardNode(b as never, n as never, 'WATER');
                                     }
                                 }
                             }
@@ -1532,8 +1620,10 @@ export let wpArrowCone = null;
             camera.lookAt(lookAheadX, player.pos.y + (3.2 * botScaleFactor), lookAheadZ);
 
             const kmh = Math.round(Math.abs(player.speed) * 2.2);
-            document.getElementById('speed-readout').textContent = `${String(kmh).padStart(2, '0')} KM/H`;
-            document.getElementById('zone-label').textContent = getZoneName(player.pos.x, player.pos.z);
+            const speedEl = document.getElementById('speed-readout');
+            if (speedEl) speedEl.textContent = `${String(kmh).padStart(2, '0')} KM/H`;
+            const zoneEl = document.getElementById('zone-label');
+            if (zoneEl) zoneEl.textContent = getZoneName(player.pos.x, player.pos.z);
 
             // Update Continuous Speed-Reactive Engine, Helicopter Rotor Chop & Emergency Siren Loops
             sfx.updateContinuousLoops(player.botType, player.mode, player.speed, player.sirenActive, player.boostTimer, now);

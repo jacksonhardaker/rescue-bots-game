@@ -4,7 +4,7 @@ import { camera, renderer } from '../rendering/scene.js';
 import { toonGrad3 } from '../rendering/materials.js';
 import { worldState } from '../state/gameState.js';
 import { progression } from '../progression/progression.js';
-import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
+import { buildCrashedSpaceshipSigma, type SigmaAnimatedEntry } from './spaceshipSigma.js';
 import { swapToSpace, startSpaceTransition, setSolarHubHandler } from './space.js';
 import { swapToPlanetSurface, restoreRigsFromPlanetSurface, LandablePlanetId } from './planetSurface.js';
 import { swapToSaturnRace, restoreRigsFromSaturnRace } from './saturnRace.js';
@@ -130,10 +130,10 @@ export const SOLAR_DESTINATIONS: SolarDestinationDef[] = [
     {
         id: 'SATURN',
         name: 'Saturn',
-        badge: 'BOT-MODE RING RACE',
+        badge: 'RING GRAND PRIX',
         badgeColor: '#eab308',
         gravity: 'Ring Circuit Track',
-        description: 'Race around Saturn in Bot Mode on its shimmering icy rings! Sprint through 12 Turbo Gates and set a lap record!',
+        description: 'Race around Saturn in Vehicle Mode (or transform anytime!) on its shimmering icy rings! Dodge ice rocks and sprint through 12 Turbo Gates!',
         iconKey: 'PLANET_SATURN',
         orbitRadius: 132,
         orbitSpeed: 0.075,
@@ -200,7 +200,7 @@ let _selectionRing: THREE.Mesh | null = null;
 let _selectedDestId: SolarDestinationId = 'MOON';
 const _planetNodes = new Map<SolarDestinationId, PlanetNode>();
 const _hitMeshes: THREE.Mesh[] = [];
-const _hubAnimated: Array<any> = [];
+const _hubAnimated: SigmaAnimatedEntry[] = [];
 
 // Hyper-warp transition state
 const _warpState = {
@@ -524,7 +524,7 @@ export function handleSolarHubClick(clientX: number, clientY: number): boolean {
 export function swapToSolarHub() {
     buildSolarHubScene();
 
-    // Restore any Bot rigs that might have been attached to PlanetSurface or SaturnRace
+    // Restore all Bot rigs that might have been attached to PlanetSurface or SaturnRace
     restoreRigsFromPlanetSurface();
     restoreRigsFromSaturnRace();
 

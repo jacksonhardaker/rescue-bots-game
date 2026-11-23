@@ -1,11 +1,63 @@
 // Persistent Game Settings & Control Remapping
 // Stored in `rescue_bots_settings_v1` - persists independently across game releases
+import * as THREE from 'three';
 import { isMobileDevice } from '../rendering/scene.js';
 import { OUTLINE_LAYER } from '../rendering/materials.js';
 
 export const SETTINGS_STORAGE_KEY = 'rescue_bots_settings_v1';
 
-export const DEFAULT_SETTINGS = {
+export interface AudioSettings {
+    masterVolume: number;
+    sfxVolume: number;
+    engineVolume: number;
+    muted: boolean;
+}
+
+export interface GraphicsSettings {
+    preset: string;
+    shadows: string;
+    outlines: boolean;
+    drawDistance: string;
+    resolution: string;
+    autoFpsGovernor: boolean;
+}
+
+export interface ControlBindings {
+    forward: string[];
+    backward: string[];
+    left: string[];
+    right: string[];
+    transform: string[];
+    primaryAction: string[];
+    secondaryAction: string[];
+    descendAction: string[];
+    siren: string[];
+    drillAction: string[];
+    dock: string[];
+    buddyCycle: string[];
+    weatherCycle: string[];
+    map: string[];
+    [key: string]: string[];
+}
+
+export interface GameSettings {
+    version: number;
+    audio: AudioSettings;
+    graphics: GraphicsSettings;
+    controls: ControlBindings;
+}
+
+export interface ApplyGameSettingsOptions {
+    sfx?: { applySettingsVolumes?: () => void } | null;
+    renderer?: THREE.WebGLRenderer | null;
+    sunLight?: THREE.DirectionalLight | null;
+    camera?: THREE.PerspectiveCamera | null;
+    scene?: THREE.Scene | null;
+    matInkOutline?: THREE.Material | null;
+    matInkEdgeLine?: THREE.Material | null;
+}
+
+export const DEFAULT_SETTINGS: GameSettings = {
     version: 1,
     audio: {
         masterVolume: 1.0,
@@ -56,18 +108,18 @@ export const ACTION_LABELS = {
     map: 'Open Island Tactical Map'
 };
 
-export function loadGameSettings() {
-    let s = null;
+export function loadGameSettings(): GameSettings {
+    let s: Partial<GameSettings> | null = null;
     let raw: string | null = null;
     try {
         raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
-        if (raw) s = JSON.parse(raw);
+        if (raw) s = JSON.parse(raw) as Partial<GameSettings>;
     } catch (e) {
         console.warn('Could not read settings from localStorage', e);
     }
     if (!s || typeof s !== 'object') s = {};
-    const defaultGraphics = !raw && isMobileDevice
-        ? { preset: 'medium', shadows: 'low', outlines: true, drawDistance: 'medium', resolution: 'medium' }
+    const defaultGraphics: GraphicsSettings = !raw && isMobileDevice
+        ? { preset: 'medium', shadows: 'low', outlines: true, drawDistance: 'medium', resolution: 'medium', autoFpsGovernor: true }
         : DEFAULT_SETTINGS.graphics;
     return {
         version: 1,
@@ -77,10 +129,10 @@ export function loadGameSettings() {
     };
 }
 
-export let gameSettings = loadGameSettings();
-export let activeRebindAction = null;
+export let gameSettings: GameSettings = loadGameSettings();
+export let activeRebindAction: string | null = null;
 
-export function setActiveRebindAction(action) {
+export function setActiveRebindAction(action: string | null) {
     activeRebindAction = action;
 }
 
@@ -92,7 +144,7 @@ export function saveGameSettings() {
     }
 }
 
-export function formatKeyName(code) {
+export function formatKeyName(code: string | null | undefined): string {
     if (!code) return 'None';
     if (code.startsWith('Key')) return code.slice(3);
     if (code.startsWith('Digit')) return code.slice(5);
@@ -107,34 +159,35 @@ export function formatKeyName(code) {
     return code;
 }
 
-export function isActionActive(action: string, inputKeys?: any) {
+export function isActionActive(action: string, inputKeys?: Record<string, boolean>): boolean {
     if (!gameSettings || !gameSettings.controls) return false;
     const list = gameSettings.controls[action];
     if (!list) return false;
-    const keys = inputKeys || (window.input && window.input.keys) || {};
+    const keys: Record<string, boolean> = inputKeys || (window.input && window.input.keys) || {};
     for (let i = 0; i < list.length; i++) {
         if (keys[list[i]]) return true;
     }
     return false;
 }
 
-export function matchesAction(eventCode, action) {
+export function matchesAction(eventCode: string, action: string): boolean {
     if (!gameSettings || !gameSettings.controls) return false;
     const list = gameSettings.controls[action];
     return Boolean(list && list.includes(eventCode));
 }
 
-export function getSceneOutlineStats(scene?: any, matInkOutline?: any, matInkEdgeLine?: any) {
+export function getSceneOutlineStats(scene?: THREE.Scene | null, matInkOutline?: THREE.Material | null, matInkEdgeLine?: THREE.Material | null) {
     let totalMeshes = 0;
     let outlineMeshes = 0;
     const sc = scene || window.scene;
-    const mo = matInkOutline || window.matInkOutline;
-    const me = matInkEdgeLine || window.matInkEdgeLine;
+    const mo = matInkOutline || (window.matInkOutline as THREE.Material | undefined);
+    const me = matInkEdgeLine || (window.matInkEdgeLine as THREE.Material | undefined);
     if (sc) {
-        sc.traverse(node => {
-            if (node.isMesh || node.isInstancedMesh) {
+        sc.traverse((node: THREE.Object3D) => {
+            const mesh = node as THREE.Mesh & { isInstancedMesh?: boolean };
+            if (mesh.isMesh || mesh.isInstancedMesh) {
                 totalMeshes++;
-                if (node.material === mo || node.material === me || (node.userData && node.userData.isOutline)) {
+                if (mesh.material === mo || mesh.material === me || (node.userData && node.userData.isOutline)) {
                     outlineMeshes++;
                 }
             }
@@ -144,14 +197,14 @@ export function getSceneOutlineStats(scene?: any, matInkOutline?: any, matInkEdg
     return { totalMeshes, outlineMeshes, ratio };
 }
 
-export function applyGameSettings(options: Record<string, any> = {}) {
-    const sfx = options.sfx || window.sfx;
+export function applyGameSettings(options: ApplyGameSettingsOptions = {}) {
+    const sfx = options.sfx || (window.sfx as { applySettingsVolumes?: () => void } | undefined);
     const renderer = options.renderer || window.renderer;
-    const sunLight = options.sunLight || window.sunLight;
+    const sunLight = options.sunLight || (window.sunLight as THREE.DirectionalLight | undefined);
     const camera = options.camera || window.camera;
     const scene = options.scene || window.scene;
-    const matInkOutline = options.matInkOutline || window.matInkOutline;
-    const matInkEdgeLine = options.matInkEdgeLine || window.matInkEdgeLine;
+    const matInkOutline = options.matInkOutline || (window.matInkOutline as THREE.Material | undefined);
+    const matInkEdgeLine = options.matInkEdgeLine || (window.matInkEdgeLine as THREE.Material | undefined);
 
     // 1. Audio Volumes
     if (sfx && typeof sfx.applySettingsVolumes === 'function') {
@@ -193,9 +246,10 @@ export function applyGameSettings(options: Record<string, any> = {}) {
             }
             if (sunLight.shadow.mapSize.width !== mapSize || sunLight.shadow.mapSize.height !== mapSize) {
                 sunLight.shadow.mapSize.set(mapSize, mapSize);
-                if (sunLight.shadow.map) {
-                    sunLight.shadow.map.dispose();
-                    sunLight.shadow.map = null;
+                const shadowMap = sunLight.shadow.map as THREE.WebGLRenderTarget | null;
+                if (shadowMap) {
+                    shadowMap.dispose();
+                    (sunLight.shadow as unknown as { map: THREE.WebGLRenderTarget | null }).map = null;
                 }
                 renderer.shadowMap.needsUpdate = true;
             }
@@ -221,7 +275,7 @@ export function applyGameSettings(options: Record<string, any> = {}) {
         }
         camera.far = far;
         camera.updateProjectionMatrix();
-        if (scene.fog) {
+        if (scene.fog && 'density' in scene.fog) {
             scene.fog.density = fogD;
         }
     }

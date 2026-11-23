@@ -3,14 +3,9 @@ import * as THREE from 'three';
 import { texFaceChase } from '../rendering/textures.js';
 import { createLightbar, createWheelAssembly } from './botHelpers.js';
 import { buildChaseBoat } from './botBoats.js';
+import type { BotRig } from '../types/game.js';
 
-export function buildChase(parts, materials = {}, textures = {}) {
-    const {
-        toonGrad3, toonGrad4, toonGradGlossy,
-        matChrome, matDarkSteel, matTire, matCabGlass,
-        matVisorCyan, matVisorGold, matSirenRed, matSirenBlue,
-        matEmblem, matHazardMat, matGrille, matInkOutline
-    } = ((typeof window !== 'undefined' ? window : {}) as any);
+export function buildChase(parts: BotRig, _materials: Record<string, unknown> = {}, _textures: Record<string, unknown> = {}) {
 
     // TV Show & Legacy United Chase: Deep Police Cobalt Blue (#1648b8), Crisp White Doors, Gold Police Badge
                 const matBlue = new THREE.MeshToonMaterial({ color: 0x1648b8, gradientMap: toonGrad4 });
@@ -437,9 +432,9 @@ export function buildChase(parts, materials = {}, textures = {}) {
                 buildChaseBoat(parts);
 
                 // Initialize visibility matching current docked status
-                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.chaseDocked);
-                if (typeof (window as any).setBotRigMega === 'function') {
-                    (window as any).setBotRigMega(parts, isCurrentMega);
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && window.progression && window.progression.chaseDocked);
+                if (typeof setBotRigMega === 'function') {
+                    setBotRigMega(parts, isCurrentMega);
                 }
 }
 

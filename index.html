@@ -1913,16 +1913,19 @@
             </div>
         </div>
 
-        <!-- Bottom Touch & Boost Controls -->
-        <div class="pointer-events-auto" style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 720px; margin: 0 auto; gap: 12px;">
+        <!-- Bottom Touch, Transform & Boost Controls -->
+        <div class="pointer-events-auto" style="display: flex; align-items: center; justify-content: space-between; width: 100%; max-width: 820px; margin: 0 auto; gap: 10px; flex-wrap: wrap;">
             <div style="display: flex; gap: 10px;">
-                <button id="saturn-left-btn" type="button" class="tactile-btn rounded-2xl border-2 border-cyan-300 text-white font-black text-sm cursor-pointer" style="padding: 14px 22px; background: linear-gradient(180deg, #0284c7 0%, #1e3a8a 100%) !important;">INNER LANE (A)</button>
-                <button id="saturn-right-btn" type="button" class="tactile-btn rounded-2xl border-2 border-cyan-300 text-white font-black text-sm cursor-pointer" style="padding: 14px 22px; background: linear-gradient(180deg, #0284c7 0%, #1e3a8a 100%) !important;">OUTER LANE (D)</button>
+                <button id="saturn-left-btn" type="button" class="tactile-btn rounded-2xl border-2 border-cyan-300 text-white font-black text-xs sm:text-sm cursor-pointer" style="padding: 14px 20px; background: linear-gradient(180deg, #0284c7 0%, #1e3a8a 100%) !important;">OUTER LANE (A)</button>
+                <button id="saturn-right-btn" type="button" class="tactile-btn rounded-2xl border-2 border-cyan-300 text-white font-black text-xs sm:text-sm cursor-pointer" style="padding: 14px 20px; background: linear-gradient(180deg, #0284c7 0%, #1e3a8a 100%) !important;">INNER LANE (D)</button>
             </div>
-            <button id="saturn-boost-btn" type="button" class="tactile-btn rounded-2xl border-2 border-amber-300 text-white font-black text-sm cursor-pointer flex items-center gap-2" style="padding: 14px 24px; background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%) !important;">
-                <span id="saturn-boost-icon" style="width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;"></span>
-                <span>TURBO BOOST</span>
-            </button>
+            <div style="display: flex; gap: 10px;">
+                <button id="saturn-transform-btn" type="button" class="tactile-btn rounded-2xl border-2 border-lime-300 text-slate-950 font-black text-xs sm:text-sm cursor-pointer" style="padding: 14px 20px; background: linear-gradient(180deg, #a3e635 0%, #22c55e 100%) !important; color: #0f172a !important;">TRANSFORM (SPACE)</button>
+                <button id="saturn-boost-btn" type="button" class="tactile-btn rounded-2xl border-2 border-amber-300 text-white font-black text-xs sm:text-sm cursor-pointer flex items-center gap-2" style="padding: 14px 22px; background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%) !important;">
+                    <span id="saturn-boost-icon" style="width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;"></span>
+                    <span>TURBO BOOST</span>
+                </button>
+            </div>
         </div>
     </div>
 

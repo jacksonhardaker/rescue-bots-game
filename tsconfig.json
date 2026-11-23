@@ -13,8 +13,8 @@
     "isolatedModules": true,
     "noEmit": true,
 
-    /* Pragmatic typing for 26k-line port */
-    "strict": false,
+    /* Strict TypeScript checking */
+    "strict": true,
     "allowJs": true,
     "checkJs": false,
     "noUnusedLocals": false,

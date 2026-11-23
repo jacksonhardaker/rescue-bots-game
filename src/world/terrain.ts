@@ -1,5 +1,6 @@
 // Griffin Rock Island Terrain & Biome Elevation Math
 import * as THREE from "three";
+import type { RampItem } from "../types/game.js";
 
 // 10X Larger Living World: 4950x4950 units (~24.5M sq units -> 10x the previous 1560x1560 area!)
         export const WORLD_SIZE = 4950;
@@ -7,28 +8,28 @@ import * as THREE from "three";
         export const OUTER_LOOP_RADIUS = 1120;
         export const COAST_BASE_RADIUS = 1650;
 
-        export function getInnerRoadRadius(theta) {
+        export function getInnerRoadRadius(theta: number): number {
             return INNER_LOOP_RADIUS + Math.sin(theta * 2) * 32 + Math.cos(theta * 3) * 20;
         }
 
-        export function getOuterRoadRadius(theta) {
+        export function getOuterRoadRadius(theta: number): number {
             return OUTER_LOOP_RADIUS + Math.sin(theta * 2) * 85 + Math.cos(theta * 3) * 55;
         }
 
         export const RAILWAY_LOOP_RADIUS = 720;
-        export function getRailwayRadius(theta) {
+        export function getRailwayRadius(theta: number): number {
             return RAILWAY_LOOP_RADIUS + Math.sin(theta * 3) * 55 + Math.cos(theta * 2) * 45;
         }
 
-        export function getRoadLoopRadius(theta) {
+        export function getRoadLoopRadius(theta: number): number {
             return getInnerRoadRadius(theta);
         }
 
-        export function getCoastLimitRadius(theta) {
+        export function getCoastLimitRadius(theta: number): number {
             return COAST_BASE_RADIUS + Math.sin(theta * 4) * 95 + Math.cos(theta * 3) * 75;
         }
 
-        export function getTerrainHeight(x, z) {
+        export function getTerrainHeight(x: number, z: number): number {
             // 0. Wayward Island (Mysterious Offshore Jungle & Ruins Island at X: 1960, Z: 540)
             const distWayward = Math.hypot(x - 1960, z - 540);
             if (distWayward < 340) {
@@ -221,8 +222,8 @@ import * as THREE from "three";
             return h;
         }
 
-        const ramps = [];
-        let ferryController = null;
+        const ramps: RampItem[] = [];
+        let ferryController: { currentPos?: THREE.Vector3; currentRotY: number; state: string } | null = null;
         let _ugHooks: {
             isActive: () => boolean;
             getSurfaceHeight: (x: number, z: number) => number;
@@ -265,7 +266,7 @@ import * as THREE from "three";
             _planetHooks = hooks;
         }
 
-        export function getSurfaceHeight(x, z) {
+        export function getSurfaceHeight(x: number, z: number): number {
             if (_ugHooks && _ugHooks.isActive()) {
                 return _ugHooks.getSurfaceHeight(x, z);
             }
@@ -362,7 +363,7 @@ import * as THREE from "three";
             return getTerrainHeight(x, z);
         }
 
-        export function isPointOnRoad(x, z) {
+        export function isPointOnRoad(x: number, z: number): boolean {
             if (_ugHooks && _ugHooks.isActive()) return false;
             if (_moonHooks && _moonHooks.isActive()) return false;
             if (_planetHooks && _planetHooks.isActive()) return false;
@@ -431,7 +432,7 @@ import * as THREE from "three";
             return false;
         }
 
-        export function isPointInWater(x, z) {
+        export function isPointInWater(x: number, z: number): boolean {
             if (_ugHooks && _ugHooks.isActive()) {
                 return _ugHooks.isPointInWater(x, z);
             }
@@ -444,7 +445,7 @@ import * as THREE from "three";
             return (sh <= -0.35 || (th <= -0.8 && sh < 0.25));
         }
 
-        export function isNearWater(x, z, radius = 22.0) {
+        export function isNearWater(x: number, z: number, radius = 22.0): boolean {
             if (isPointInWater(x, z)) return true;
             const curH = getSurfaceHeight(x, z);
             // If on a high suspension bridge (Wayward bridge surface ~7.5), don't allow diving unless near the shoreline/harbor piers
@@ -464,7 +465,7 @@ import * as THREE from "three";
             return false;
         }
 
-        export function getZoneName(x, z) {
+        export function getZoneName(x: number, z: number): string {
             if (_ugHooks && _ugHooks.isActive()) {
                 return _ugHooks.getZoneName(x, z);
             }

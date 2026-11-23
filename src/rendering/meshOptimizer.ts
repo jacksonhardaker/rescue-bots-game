@@ -143,20 +143,22 @@ export function mergeStaticMeshesInGroup(
 
     function collect(node: THREE.Object3D) {
         if (dynamicSet.has(node)) return;
-        const anyNode = node as any;
-        if (anyNode.isInstancedMesh) return;
+        if ((node as THREE.InstancedMesh).isInstancedMesh) return;
 
-        if ((anyNode.isMesh || anyNode.isLineSegments) && anyNode.geometry && anyNode.material && !Array.isArray(anyNode.material)) {
-            if (anyNode.geometry.getAttribute('position')) {
+        const meshOrLine = node as THREE.Mesh | THREE.LineSegments;
+        const isMesh = Boolean((node as THREE.Mesh).isMesh);
+        const isLineSegs = Boolean((node as THREE.LineSegments).isLineSegments);
+        if ((isMesh || isLineSegs) && meshOrLine.geometry && meshOrLine.material && !Array.isArray(meshOrLine.material)) {
+            if (meshOrLine.geometry.getAttribute('position')) {
                 relMat.multiplyMatrices(invRoot, node.matrixWorld);
                 // Skip negative-determinant mirrored meshes to preserve triangle winding
                 if (relMat.determinant() > 0) {
                     const isOutline = Boolean(node.userData && node.userData.isOutline);
-                    const isLine = Boolean(anyNode.isLineSegments);
+                    const isLine = isLineSegs;
                     const layer = (isOutline || isLine) ? OUTLINE_LAYER : 0;
                     addEntry({
-                        obj: anyNode,
-                        mat: anyNode.material,
+                        obj: meshOrLine,
+                        mat: meshOrLine.material,
                         isOutline,
                         isLine,
                         castShadow: Boolean(node.castShadow),

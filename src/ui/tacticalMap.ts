@@ -20,6 +20,101 @@ import { visitingAutobots, WORLD_MEGA_LOCATIONS } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
 import { isBotDocked } from '../progression/progression.js';
 
+interface BeaconEntry {
+    id: number;
+    name: string;
+    x: number;
+    z: number;
+    type: string;
+    restored: boolean;
+}
+
+interface TrainCarEntry {
+    x: number;
+    z: number;
+    heading?: number;
+}
+
+interface TrainData {
+    cars: TrainCarEntry[];
+}
+
+interface VisitingAutobotEntry {
+    id: string;
+    name: string;
+    x: number;
+    z: number;
+    badgeColor?: string;
+}
+
+interface WaypointGroupRef {
+    visible: boolean;
+    position: { set(x: number, y: number, z: number): void };
+}
+
+interface MoonHoopEntry {
+    x: number;
+    z: number;
+    cleared?: boolean;
+}
+
+type MoonMapDataExtended = NonNullable<ReturnType<NonNullable<Window['getMoonMapData']>>> & {
+    hoops?: MoonHoopEntry[];
+};
+
+interface UndergroundEdge {
+    open?: boolean;
+    r1: number;
+    c1: number;
+    r2: number;
+    c2: number;
+    cracked?: boolean;
+    broken?: boolean;
+    x: number;
+    z: number;
+    horizontal?: boolean;
+}
+
+interface UndergroundShaft {
+    x: number;
+    z: number;
+}
+
+interface UndergroundGem {
+    x: number;
+    z: number;
+    collected?: boolean;
+}
+
+interface UndergroundDiscovery {
+    id: string;
+    name: string;
+    x: number;
+    z: number;
+    color: string;
+}
+
+interface UndergroundDino {
+    x: number;
+    z: number;
+    isBig?: boolean;
+}
+
+interface UndergroundSigmaPart {
+    name: string;
+    x: number;
+    z: number;
+    collected?: boolean;
+}
+
+function setWaypointMarkerPos(x: number, y: number, z: number) {
+    const wg = waypointGroup as unknown as WaypointGroupRef | null;
+    if (wg) {
+        wg.position.set(x, y, z);
+        wg.visible = true;
+    }
+}
+
 const MEGA_ATTACHMENT_META: Record<string, { name: string, color: string }> = {
     HEATWAVE:    { name: 'HEATWAVE LADDER',    color: '#ef4444' },
     OPTIMUS:     { name: 'OPTIMUS SUPER RIG',  color: '#dc2626' },
@@ -34,18 +129,18 @@ const MEGA_ATTACHMENT_META: Record<string, { name: string, color: string }> = {
 };
 window.lastTacticalMapToggleTime = 0;
 
-export let minimapCanvas = null;
-export let mCtx = null;
-export let tacticalMapCanvas = null;
-export let tCtx = null;
+export let minimapCanvas: HTMLCanvasElement | null = null;
+export let mCtx: CanvasRenderingContext2D | null = null;
+export let tacticalMapCanvas: HTMLCanvasElement | null = null;
+export let tCtx: CanvasRenderingContext2D | null = null;
 
 export function ensureMapCanvases() {
     if (!minimapCanvas && typeof document !== 'undefined') {
-        minimapCanvas = document.getElementById('minimap-canvas');
+        minimapCanvas = document.getElementById('minimap-canvas') as HTMLCanvasElement | null;
         if (minimapCanvas) mCtx = minimapCanvas.getContext('2d');
     }
     if (!tacticalMapCanvas && typeof document !== 'undefined') {
-        tacticalMapCanvas = document.getElementById('tactical-map-canvas');
+        tacticalMapCanvas = document.getElementById('tactical-map-canvas') as HTMLCanvasElement | null;
         if (tacticalMapCanvas) tCtx = tacticalMapCanvas.getContext('2d');
     }
 }
@@ -73,7 +168,7 @@ export function closeTacticalMap() {
     }
 }
 
-export function handleTacticalMapTap(clientX, clientY) {
+export function handleTacticalMapTap(clientX: number, clientY: number) {
     ensureMapCanvases();
     if (!tacticalMapCanvas || performance.now() - (window.lastTacticalMapToggleTime || 0) < 300) return;
                 const rect = tacticalMapCanvas.getBoundingClientRect();
@@ -83,7 +178,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                 const cy = tacticalMapCanvas.height / 2;
 
                 if (worldState.activeArea === 'SPACE') {
-                    const sp = (window as any).getSpaceMapData?.();
+                    const sp = window.getSpaceMapData?.();
                     if (sp) {
                         const spScale = (cx * 0.84) / (sp.bounds || 460);
                         let wx = Math.max(-sp.bounds + 20, Math.min(sp.bounds - 20, (canvasX - cx) / spScale));
@@ -102,19 +197,19 @@ export function handleTacticalMapTap(clientX, clientY) {
                                 checkSnap(sp.moroccoStation.pos.x, sp.moroccoStation.pos.y, sp.moroccoStation.pos.z, "Dr. Morocco's Orbital Station", 55);
                             }
                         } else {
-                            sp.sectorMoons?.forEach((m: any) => {
+                            sp.sectorMoons?.forEach(m => {
                                 const pt = m.beaconRing ? m.landingPos : m.pos;
                                 checkSnap(pt.x, pt.y, pt.z, m.name, 55);
                             });
                         }
                         checkSnap(sp.stationPos.x, sp.stationPos.y, sp.stationPos.z, 'Autobot Orbital Station', 55);
-                        sp.satellites?.forEach((s: any) => { if (!s.repaired) checkSnap(s.pos.x, s.pos.y, s.pos.z, s.name, 42); });
-                        sp.pods?.forEach((p: any) => { if (!p.rescued) checkSnap(p.pos.x, p.pos.y, p.pos.z, p.name, 42); });
+                        sp.satellites?.forEach(s => { if (!s.repaired) checkSnap(s.pos.x, s.pos.y, s.pos.z, s.name, 42); });
+                        sp.pods?.forEach(p => { if (!p.rescued) checkSnap(p.pos.x, p.pos.y, p.pos.z, p.name, 42); });
                         const activeRing = sp.starRings?.[sp.ship.activeRingIdx];
                         if (activeRing) checkSnap(activeRing.pos.x, activeRing.pos.y, activeRing.pos.z, 'Active Star-Ring Gate', 42);
 
-                        if (typeof (window as any).setSpaceWaypointWorld === 'function') {
-                            (window as any).setSpaceWaypointWorld(wx, wy, wz);
+                        if (typeof window.setSpaceWaypointWorld === 'function') {
+                            window.setSpaceWaypointWorld(wx, wy, wz);
                         } else {
                             sp.ship.waypoint.set(wx, wy, wz);
                             sp.ship.hasWaypoint = true;
@@ -127,7 +222,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                 }
 
                 if (worldState.activeArea === 'PLANET_SURFACE') {
-                    const pd = (window as any).getPlanetSurfaceMapData?.();
+                    const pd = window.getPlanetSurfaceMapData?.();
                     const pR = pd?.radius || 175;
                     const pScale = (cx * 0.84) / pR;
                     let wx = (canvasX - cx) / pScale;
@@ -140,8 +235,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                     const ty = getSurfaceHeight(wx, wz);
                     player.waypoint.set(wx, ty, wz);
                     player.hasWaypoint = true;
-                    waypointGroup.position.set(wx, ty, wz);
-                    waypointGroup.visible = true;
+                    setWaypointMarkerPos(wx, ty, wz);
                     if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
                     spawnBurstParticles(wx, ty + 0.5, wz, 0xfacc15, 6, 0.8);
                     showToast(`${pd?.config?.name || 'PLANET'} WAYPOINT SET`, `Navigating to (${Math.round(wx)}, ${Math.round(wz)})`);
@@ -155,7 +249,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                 }
 
                 if (worldState.activeArea === 'MOON') {
-                    const md = (window as any).getMoonMapData?.();
+                    const md = window.getMoonMapData?.() as MoonMapDataExtended | undefined;
                     const moonR = md?.radius || 185;
                     const moonScale = (cx * 0.84) / moonR;
                     let wx = (canvasX - cx) / moonScale;
@@ -168,8 +262,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                     const ty = getSurfaceHeight(wx, wz);
                     player.waypoint.set(wx, ty, wz);
                     player.hasWaypoint = true;
-                    waypointGroup.position.set(wx, ty, wz);
-                    waypointGroup.visible = true;
+                    setWaypointMarkerPos(wx, ty, wz);
                     if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
                     spawnBurstParticles(wx, ty + 0.5, wz, 0xfacc15, 6, 0.8);
                     showToast('LUNAR WAYPOINT SET', `Navigating across Moon to (${Math.round(wx)}, ${Math.round(wz)})`);
@@ -187,8 +280,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                     const markerY = isWaterPt ? -0.45 : Math.max(0.0, ty);
                     player.waypoint.set(worldX, markerY, worldZ);
                     player.hasWaypoint = true;
-                    waypointGroup.position.set(worldX, markerY, worldZ);
-                    waypointGroup.visible = true;
+                    setWaypointMarkerPos(worldX, markerY, worldZ);
                     if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
                     spawnBurstParticles(worldX, markerY + 0.5, worldZ, 0xfacc15, 6, 0.8);
                     showToast("CAVERN WAYPOINT SET", `Navigating tunnels to (${Math.round(worldX)}, ${Math.round(worldZ)})`);
@@ -201,7 +293,7 @@ export function handleTacticalMapTap(clientX, clientY) {
                 let worldZ = (canvasY - cy) / mapScale;
 
                 // Snap to nearest active beacon if tapped within 120m
-                beacons.forEach(b => {
+                (beacons as unknown as BeaconEntry[]).forEach(b => {
                     if (!b.restored && Math.hypot(worldX - b.x, worldZ - b.z) < 120) {
                         worldX = b.x;
                         worldZ = b.z;
@@ -232,8 +324,7 @@ export function handleTacticalMapTap(clientX, clientY) {
 
                 player.waypoint.set(worldX, markerY, worldZ);
                 player.hasWaypoint = true;
-                waypointGroup.position.set(worldX, markerY, worldZ);
-                waypointGroup.visible = true;
+                setWaypointMarkerPos(worldX, markerY, worldZ);
 
                 if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
                 spawnBurstParticles(worldX, markerY + 0.5, worldZ, 0xfacc15, 6, 0.8);
@@ -416,7 +507,7 @@ function ensureMinimapBgCache(w: number, h: number) {
 
             // Solid Maze Wall Edges (shown clearly around explored regions, subtle silhouette outside)
             ctx.lineCap = 'round';
-            ug.edges.forEach((e: any) => {
+            ug.edges.forEach(e => {
                 if (e.open) return;
                 const exploredNear = ug.exploredSet.has(e.r1 * ug.gridSize + e.c1) || ug.exploredSet.has(e.r2 * ug.gridSize + e.c2);
                 if (e.cracked) {
@@ -447,7 +538,7 @@ function ensureMinimapBgCache(w: number, h: number) {
             ctx.strokeRect(cx - boxSize * 0.5, cy - boxSize * 0.5, boxSize, boxSize);
 
             // Sunlit Exit Shafts (Gold Rings)
-            ug.exitShafts.forEach((sh: any) => {
+            (ug.exitShafts as UndergroundShaft[]).forEach(sh => {
                 const sx = cx + sh.x * mapScale;
                 const sz = cy + sh.z * mapScale;
                 ctx.strokeStyle = '#facc15';
@@ -465,7 +556,7 @@ function ensureMinimapBgCache(w: number, h: number) {
 
             // Collectible Gems inside explored corridors
             if (isFullMap) {
-                ug.gems.forEach((gem: any) => {
+                (ug.gems as UndergroundGem[]).forEach(gem => {
                     if (gem.collected) return;
                     const gCellR = Math.floor((gem.z + ug.halfWorld) / ug.cellSize);
                     const gCellC = Math.floor((gem.x + ug.halfWorld) / ug.cellSize);
@@ -478,7 +569,7 @@ function ensureMinimapBgCache(w: number, h: number) {
             }
 
             // 7 Hidden Discoveries
-            ug.discoveries.forEach((disc: any) => {
+            (ug.discoveries as UndergroundDiscovery[]).forEach(disc => {
                 const found = discIds.includes(disc.id);
                 const dx = cx + disc.x * mapScale;
                 const dz = cy + disc.z * mapScale;
@@ -504,7 +595,7 @@ function ensureMinimapBgCache(w: number, h: number) {
             });
 
             // Roaming Dinosaurs (sonar ping blips)
-            ug.dinos.forEach((d: any) => {
+            (ug.dinos as UndergroundDino[]).forEach(d => {
                 const dR = Math.floor((d.z + ug.halfWorld) / ug.cellSize);
                 const dC = Math.floor((d.x + ug.halfWorld) / ug.cellSize);
                 const nearPlayer = Math.hypot(d.x - player.pos.x, d.z - player.pos.z) < 95;
@@ -528,7 +619,7 @@ function ensureMinimapBgCache(w: number, h: number) {
 
             // Draw Uncollected Sigma Repair Parts (pulsing cyan/amber beacons!)
             if (Array.isArray(ug.sigmaParts)) {
-                ug.sigmaParts.forEach((part: any) => {
+                (ug.sigmaParts as UndergroundSigmaPart[]).forEach(part => {
                     if (part.collected) return;
                     const px = cx + part.x * mapScale;
                     const pz = cy + part.z * mapScale;
@@ -576,94 +667,95 @@ function ensureMinimapBgCache(w: number, h: number) {
         export function renderMinimap() {
             ensureMapCanvases();
             if (!mCtx || !minimapCanvas) return;
+            const ctx = mCtx;
             const w = minimapCanvas.width;
             const h = minimapCanvas.height;
             const cx = w / 2;
             const cy = h / 2;
 
             if (worldState.activeArea === 'UNDERGROUND') {
-                mCtx.clearRect(0, 0, w, h);
-                mCtx.save();
-                mCtx.beginPath();
-                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
-                mCtx.clip();
+                ctx.clearRect(0, 0, w, h);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx, 0, Math.PI * 2);
+                ctx.clip();
                 const ugMiniScale = (cx * 0.80) / 234;
-                renderUndergroundRadar(mCtx, w, h, ugMiniScale, false);
-                mCtx.restore();
+                renderUndergroundRadar(ctx, w, h, ugMiniScale, false);
+                ctx.restore();
                 return;
             }
 
             if (worldState.activeArea === 'SPACE') {
-                const sp = (window as any).getSpaceMapData?.();
-                mCtx.clearRect(0, 0, w, h);
-                mCtx.save();
-                mCtx.beginPath();
-                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
-                mCtx.clip();
-                mCtx.fillStyle = '#020617';
-                mCtx.fillRect(0, 0, w, h);
+                const sp = window.getSpaceMapData?.();
+                ctx.clearRect(0, 0, w, h);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.fillStyle = '#020617';
+                ctx.fillRect(0, 0, w, h);
                 // Radar grid rings
-                mCtx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
-                mCtx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+                ctx.lineWidth = 1;
                 [0.32, 0.62, 0.9].forEach(r => {
-                    mCtx.beginPath();
-                    mCtx.arc(cx, cy, cx * r, 0, Math.PI * 2);
-                    mCtx.stroke();
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, cx * r, 0, Math.PI * 2);
+                    ctx.stroke();
                 });
                 if (sp) {
                     const sc = (cx * 0.85) / (sp.bounds || 460);
                     // Moon
-                    mCtx.fillStyle = '#cbd5e1';
-                    mCtx.beginPath();
-                    mCtx.arc(cx + sp.moonPos.x * sc, cy + sp.moonPos.z * sc, 9, 0, Math.PI * 2);
-                    mCtx.fill();
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.beginPath();
+                    ctx.arc(cx + sp.moonPos.x * sc, cy + sp.moonPos.z * sc, 9, 0, Math.PI * 2);
+                    ctx.fill();
                     if (sp.sectorId === 'MOON_ORBIT' || !sp.sectorId) {
-                        mCtx.strokeStyle = '#22d3ee';
-                        mCtx.lineWidth = 1.5;
-                        mCtx.stroke();
+                        ctx.strokeStyle = '#22d3ee';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
                     } else {
-                        sp.sectorMoons?.forEach((m: any) => {
-                            mCtx.fillStyle = m.landablePlanetId ? '#38bdf8' : '#cbd5e1';
-                            mCtx.beginPath();
-                            mCtx.arc(cx + m.pos.x * sc, cy + m.pos.z * sc, m.landablePlanetId ? 6.5 : 5, 0, Math.PI * 2);
-                            mCtx.fill();
+                        sp.sectorMoons?.forEach((m) => {
+                            ctx.fillStyle = m.landablePlanetId ? '#38bdf8' : '#cbd5e1';
+                            ctx.beginPath();
+                            ctx.arc(cx + m.pos.x * sc, cy + m.pos.z * sc, m.landablePlanetId ? 6.5 : 5, 0, Math.PI * 2);
+                            ctx.fill();
                             if (m.landablePlanetId) {
-                                mCtx.strokeStyle = '#fbbf24';
-                                mCtx.lineWidth = 1.6;
-                                mCtx.stroke();
+                                ctx.strokeStyle = '#fbbf24';
+                                ctx.lineWidth = 1.6;
+                                ctx.stroke();
                             }
                         });
                     }
                     // Autobot Orbital Station
-                    mCtx.fillStyle = '#4ade80';
-                    mCtx.fillRect(cx + sp.stationPos.x * sc - 4, cy + sp.stationPos.z * sc - 4, 8, 8);
+                    ctx.fillStyle = '#4ade80';
+                    ctx.fillRect(cx + sp.stationPos.x * sc - 4, cy + sp.stationPos.z * sc - 4, 8, 8);
                     // Satellites & Stranded Pods
-                    sp.satellites?.forEach((s: any) => {
-                        mCtx.fillStyle = s.repaired ? '#22d3ee' : '#ef4444';
-                        mCtx.beginPath();
-                        mCtx.arc(cx + s.pos.x * sc, cy + s.pos.z * sc, 3, 0, Math.PI * 2);
-                        mCtx.fill();
+                    sp.satellites?.forEach((s) => {
+                        ctx.fillStyle = s.repaired ? '#22d3ee' : '#ef4444';
+                        ctx.beginPath();
+                        ctx.arc(cx + s.pos.x * sc, cy + s.pos.z * sc, 3, 0, Math.PI * 2);
+                        ctx.fill();
                     });
-                    sp.pods?.forEach((p: any) => {
+                    sp.pods?.forEach((p) => {
                         if (p.rescued) return;
-                        mCtx.fillStyle = '#fbbf24';
-                        mCtx.beginPath();
-                        mCtx.arc(cx + p.pos.x * sc, cy + p.pos.z * sc, 3.2, 0, Math.PI * 2);
-                        mCtx.fill();
+                        ctx.fillStyle = '#fbbf24';
+                        ctx.beginPath();
+                        ctx.arc(cx + p.pos.x * sc, cy + p.pos.z * sc, 3.2, 0, Math.PI * 2);
+                        ctx.fill();
                     });
                     // Active Star-Ring
                     const activeRing = sp.starRings?.[sp.ship.activeRingIdx];
                     if (activeRing) {
-                        mCtx.strokeStyle = '#fbbf24';
-                        mCtx.lineWidth = 2;
-                        mCtx.beginPath();
-                        mCtx.arc(cx + activeRing.pos.x * sc, cy + activeRing.pos.z * sc, 5, 0, Math.PI * 2);
-                        mCtx.stroke();
+                        ctx.strokeStyle = '#fbbf24';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(cx + activeRing.pos.x * sc, cy + activeRing.pos.z * sc, 5, 0, Math.PI * 2);
+                        ctx.stroke();
                     }
                     // Starship Sigma Chevron
-                    drawMapChevron(mCtx, cx + sp.ship.pos.x * sc, cy + sp.ship.pos.z * sc, sp.ship.yaw + Math.PI, 5.5, '#38bdf8', '#ffffff');
+                    drawMapChevron(ctx, cx + sp.ship.pos.x * sc, cy + sp.ship.pos.z * sc, sp.ship.yaw + Math.PI, 5.5, '#38bdf8', '#ffffff');
                 }
-                mCtx.restore();
+                ctx.restore();
                 const hint = sp?.sectorId === 'JUPITER'
                     ? 'Jupiter Orbit • Explore 4 Moons & Land on Europa!'
                     : (sp?.sectorId === 'URANUS'
@@ -676,150 +768,150 @@ function ensureMinimapBgCache(w: number, h: number) {
             }
 
             if (worldState.activeArea === 'SOLAR_HUB') {
-                mCtx.clearRect(0, 0, w, h);
-                mCtx.save();
-                mCtx.beginPath();
-                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
-                mCtx.clip();
-                mCtx.fillStyle = '#030712';
-                mCtx.fillRect(0, 0, w, h);
+                ctx.clearRect(0, 0, w, h);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.fillStyle = '#030712';
+                ctx.fillRect(0, 0, w, h);
                 [0.24, 0.42, 0.62, 0.82].forEach(f => {
-                    mCtx.strokeStyle = 'rgba(56, 189, 248, 0.38)';
-                    mCtx.lineWidth = 1;
-                    mCtx.beginPath();
-                    mCtx.arc(cx, cy, cx * f, 0, Math.PI * 2);
-                    mCtx.stroke();
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.38)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, cx * f, 0, Math.PI * 2);
+                    ctx.stroke();
                 });
-                mCtx.fillStyle = '#facc15';
-                mCtx.beginPath();
-                mCtx.arc(cx, cy, 7, 0, Math.PI * 2);
-                mCtx.fill();
-                mCtx.restore();
+                ctx.fillStyle = '#facc15';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
                 setNearestHintText('3D Solar System Hub • Tap any planet to warp!');
                 return;
             }
 
             if (worldState.activeArea === 'SATURN_RING_RACE') {
-                const sr = (window as any).getSaturnRaceMapData?.();
-                mCtx.clearRect(0, 0, w, h);
-                mCtx.save();
-                mCtx.beginPath();
-                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
-                mCtx.clip();
-                mCtx.fillStyle = '#040714';
-                mCtx.fillRect(0, 0, w, h);
-                mCtx.fillStyle = '#eab308';
-                mCtx.beginPath();
-                mCtx.arc(cx, cy, cx * 0.36, 0, Math.PI * 2);
-                mCtx.fill();
+                const sr = window.getSaturnRaceMapData?.();
+                ctx.clearRect(0, 0, w, h);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.fillStyle = '#040714';
+                ctx.fillRect(0, 0, w, h);
+                ctx.fillStyle = '#eab308';
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx * 0.36, 0, Math.PI * 2);
+                ctx.fill();
                 const rPx = cx * 0.72;
-                mCtx.strokeStyle = 'rgba(186, 230, 253, 0.65)';
-                mCtx.lineWidth = 7;
-                mCtx.beginPath();
-                mCtx.arc(cx, cy, rPx, 0, Math.PI * 2);
-                mCtx.stroke();
+                ctx.strokeStyle = 'rgba(186, 230, 253, 0.65)';
+                ctx.lineWidth = 7;
+                ctx.beginPath();
+                ctx.arc(cx, cy, rPx, 0, Math.PI * 2);
+                ctx.stroke();
                 if (sr) {
                     const nextG = sr.gates?.[sr.nextGateIdx];
                     if (nextG) {
-                        mCtx.fillStyle = '#facc15';
-                        mCtx.beginPath();
-                        mCtx.arc(cx + Math.cos(nextG.angle) * rPx, cy + Math.sin(nextG.angle) * rPx, 4.5, 0, Math.PI * 2);
-                        mCtx.fill();
+                        ctx.fillStyle = '#facc15';
+                        ctx.beginPath();
+                        ctx.arc(cx + Math.cos(nextG.angle) * rPx, cy + Math.sin(nextG.angle) * rPx, 4.5, 0, Math.PI * 2);
+                        ctx.fill();
                     }
-                    sr.rivals?.forEach((rv: any) => {
-                        mCtx.fillStyle = rv.colorHex || '#f472b6';
-                        mCtx.beginPath();
-                        mCtx.arc(cx + Math.cos(rv.angle) * rPx, cy + Math.sin(rv.angle) * rPx, 3.4, 0, Math.PI * 2);
-                        mCtx.fill();
+                    sr.rivals?.forEach((rv) => {
+                        ctx.fillStyle = rv.colorHex || '#f472b6';
+                        ctx.beginPath();
+                        ctx.arc(cx + Math.cos(rv.angle) * rPx, cy + Math.sin(rv.angle) * rPx, 3.4, 0, Math.PI * 2);
+                        ctx.fill();
                     });
                     const px = cx + Math.cos(sr.angle) * rPx;
                     const py = cy + Math.sin(sr.angle) * rPx;
-                    drawMapChevron(mCtx, px, py, player.heading, 5.2, '#22d3ee', '#ffffff');
+                    drawMapChevron(ctx, px, py, player.heading, 5.2, '#22d3ee', '#ffffff');
                 }
-                mCtx.restore();
+                ctx.restore();
                 setNearestHintText('Saturn Ring Race • Sprint through all 12 Turbo Gates!');
                 return;
             }
 
             if (worldState.activeArea === 'PLANET_SURFACE') {
-                const pd = (window as any).getPlanetSurfaceMapData?.();
-                mCtx.clearRect(0, 0, w, h);
-                mCtx.save();
-                mCtx.beginPath();
-                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
-                mCtx.clip();
-                mCtx.fillStyle = pd?.config?.groundAccentHex || '#1e293b';
-                mCtx.fillRect(0, 0, w, h);
+                const pd = window.getPlanetSurfaceMapData?.();
+                ctx.clearRect(0, 0, w, h);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.fillStyle = pd?.config?.groundAccentHex || '#1e293b';
+                ctx.fillRect(0, 0, w, h);
                 if (pd) {
                     const sc = (cx * 0.85) / (pd.radius || 175);
-                    pd.craters?.forEach((c: any) => {
-                        mCtx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-                        mCtx.lineWidth = 1.2;
-                        mCtx.beginPath();
-                        mCtx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
-                        mCtx.stroke();
+                    pd.craters?.forEach((c) => {
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                        ctx.stroke();
                     });
-                    mCtx.fillStyle = '#22d3ee';
-                    mCtx.beginPath();
-                    mCtx.arc(cx + pd.sigmaPos.x * sc, cy + pd.sigmaPos.z * sc, 5, 0, Math.PI * 2);
-                    mCtx.fill();
-                    pd.relics?.forEach((r: any) => {
+                    ctx.fillStyle = '#22d3ee';
+                    ctx.beginPath();
+                    ctx.arc(cx + pd.sigmaPos.x * sc, cy + pd.sigmaPos.z * sc, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    pd.relics?.forEach((r) => {
                         if (r.collected) return;
-                        mCtx.fillStyle = '#fbbf24';
-                        mCtx.beginPath();
-                        mCtx.arc(cx + r.x * sc, cy + r.z * sc, 3.5, 0, Math.PI * 2);
-                        mCtx.fill();
+                        ctx.fillStyle = '#fbbf24';
+                        ctx.beginPath();
+                        ctx.arc(cx + r.x * sc, cy + r.z * sc, 3.5, 0, Math.PI * 2);
+                        ctx.fill();
                     });
                     if (pd.frozenStarspeed) {
-                        mCtx.fillStyle = '#38bdf8';
-                        mCtx.strokeStyle = '#facc15';
-                        mCtx.lineWidth = 2;
-                        mCtx.beginPath();
-                        mCtx.arc(cx + pd.frozenStarspeed.x * sc, cy + pd.frozenStarspeed.z * sc, 5.2, 0, Math.PI * 2);
-                        mCtx.fill();
-                        mCtx.stroke();
+                        ctx.fillStyle = '#38bdf8';
+                        ctx.strokeStyle = '#facc15';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(cx + pd.frozenStarspeed.x * sc, cy + pd.frozenStarspeed.z * sc, 5.2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
                     }
-                    drawMapChevron(mCtx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 5.2, '#facc15', '#ffffff');
+                    drawMapChevron(ctx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 5.2, '#facc15', '#ffffff');
                 }
-                mCtx.restore();
+                ctx.restore();
                 setNearestHintText(`${pd?.config?.name || 'Planet'} • ${pd?.config?.gravityLabel || ''}${pd?.frozenStarspeed ? ' • SOS Signal Detected!' : ''}`);
                 return;
             }
 
             if (worldState.activeArea === 'MOON') {
-                const md = (window as any).getMoonMapData?.();
-                mCtx.clearRect(0, 0, w, h);
-                mCtx.save();
-                mCtx.beginPath();
-                mCtx.arc(cx, cy, cx, 0, Math.PI * 2);
-                mCtx.clip();
-                mCtx.fillStyle = '#1e293b';
-                mCtx.fillRect(0, 0, w, h);
+                const md = window.getMoonMapData?.();
+                ctx.clearRect(0, 0, w, h);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(0, 0, w, h);
                 if (md) {
                     const sc = (cx * 0.85) / (md.radius || 185);
-                    md.craters?.forEach((c: any) => {
-                        mCtx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
-                        mCtx.lineWidth = 1.2;
-                        mCtx.beginPath();
-                        mCtx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
-                        mCtx.stroke();
+                    md.craters?.forEach((c) => {
+                        ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+                        ctx.lineWidth = 1.2;
+                        ctx.beginPath();
+                        ctx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                        ctx.stroke();
                     });
                     // Sigma Pad
-                    mCtx.fillStyle = '#22d3ee';
-                    mCtx.beginPath();
-                    mCtx.arc(cx + md.sigmaPos.x * sc, cy + md.sigmaPos.z * sc, 5, 0, Math.PI * 2);
-                    mCtx.fill();
+                    ctx.fillStyle = '#22d3ee';
+                    ctx.beginPath();
+                    ctx.arc(cx + md.sigmaPos.x * sc, cy + md.sigmaPos.z * sc, 5, 0, Math.PI * 2);
+                    ctx.fill();
                     // Uncollected Lunar Relics
-                    md.relics?.forEach((r: any) => {
+                    md.relics?.forEach((r) => {
                         if (r.collected) return;
-                        mCtx.fillStyle = '#fbbf24';
-                        mCtx.beginPath();
-                        mCtx.arc(cx + r.x * sc, cy + r.z * sc, 3.5, 0, Math.PI * 2);
-                        mCtx.fill();
+                        ctx.fillStyle = '#fbbf24';
+                        ctx.beginPath();
+                        ctx.arc(cx + r.x * sc, cy + r.z * sc, 3.5, 0, Math.PI * 2);
+                        ctx.fill();
                     });
-                    drawMapChevron(mCtx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 5.2, '#facc15', '#ffffff');
+                    drawMapChevron(ctx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 5.2, '#facc15', '#ffffff');
                 }
-                mCtx.restore();
+                ctx.restore();
                 setNearestHintText(`Moon Base • Relics: ${(progression.moonRelicsFound || []).length}/5 • 0.35G`);
                 return;
             }
@@ -827,36 +919,37 @@ function ensureMinimapBgCache(w: number, h: number) {
             const mapScale = (cx * 0.70) / 1950;
 
             ensureMinimapBgCache(w, h);
-            mCtx.clearRect(0, 0, w, h);
+            ctx.clearRect(0, 0, w, h);
             if (minimapBgCanvas) {
-                mCtx.drawImage(minimapBgCanvas, 0, 0);
+                ctx.drawImage(minimapBgCanvas, 0, 0);
             }
 
             // Moving Griffin Rock Express Train
-            if (typeof islandTrain !== 'undefined' && islandTrain && islandTrain.cars.length > 0) {
-                mCtx.strokeStyle = '#38bdf8';
-                mCtx.lineWidth = 2.2;
-                mCtx.beginPath();
-                for (let i = 0; i < islandTrain.cars.length; i++) {
-                    const car = islandTrain.cars[i];
+            const miniTrain = islandTrain as unknown as TrainData | null | undefined;
+            if (miniTrain && miniTrain.cars.length > 0) {
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                for (let i = 0; i < miniTrain.cars.length; i++) {
+                    const car = miniTrain.cars[i];
                     const cmx = cx + car.x * mapScale;
                     const cmy = cy + car.z * mapScale;
-                    if (i === 0) mCtx.moveTo(cmx, cmy);
-                    else mCtx.lineTo(cmx, cmy);
+                    if (i === 0) ctx.moveTo(cmx, cmy);
+                    else ctx.lineTo(cmx, cmy);
                 }
-                mCtx.stroke();
+                ctx.stroke();
 
-                const loco = islandTrain.cars[0];
-                mCtx.fillStyle = '#facc15';
-                mCtx.beginPath();
-                mCtx.arc(cx + loco.x * mapScale, cy + loco.z * mapScale, 3.2, 0, Math.PI * 2);
-                mCtx.fill();
+                const loco = miniTrain.cars[0];
+                ctx.fillStyle = '#facc15';
+                ctx.beginPath();
+                ctx.arc(cx + loco.x * mapScale, cy + loco.z * mapScale, 3.2, 0, Math.PI * 2);
+                ctx.fill();
 
-                const caboose = islandTrain.cars[islandTrain.cars.length - 1];
-                mCtx.fillStyle = '#ef4444';
-                mCtx.beginPath();
-                mCtx.arc(cx + caboose.x * mapScale, cy + caboose.z * mapScale, 2.6, 0, Math.PI * 2);
-                mCtx.fill();
+                const caboose = miniTrain.cars[miniTrain.cars.length - 1];
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                ctx.arc(cx + caboose.x * mapScale, cy + caboose.z * mapScale, 2.6, 0, Math.PI * 2);
+                ctx.fill();
             }
 
             // Live MorBot Radar Blip when Boss Battle is Active
@@ -865,27 +958,28 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const mbz = cy + morbotBattle.pos.z * mapScale;
                 const pulseRing = 5.0 + Math.sin(performance.now() * 0.008) * 3.0;
 
-                mCtx.strokeStyle = '#ef4444';
-                mCtx.lineWidth = 1.4;
-                mCtx.beginPath();
-                mCtx.arc(mbx, mbz, pulseRing, 0, Math.PI * 2);
-                mCtx.stroke();
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 1.4;
+                ctx.beginPath();
+                ctx.arc(mbx, mbz, pulseRing, 0, Math.PI * 2);
+                ctx.stroke();
 
-                mCtx.fillStyle = '#dc2626';
-                mCtx.beginPath();
-                mCtx.arc(mbx, mbz, 4.0, 0, Math.PI * 2);
-                mCtx.fill();
-                mCtx.strokeStyle = '#ffffff';
-                mCtx.lineWidth = 1.0;
-                mCtx.stroke();
+                ctx.fillStyle = '#dc2626';
+                ctx.beginPath();
+                ctx.arc(mbx, mbz, 4.0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.0;
+                ctx.stroke();
             }
 
             // Draw 8 Emergency Beacons (High-Contrast, Clean Dots)
             let nearestDist = Infinity;
             let nearestName = "All Clear!";
+            const miniBeacons = beacons as unknown as BeaconEntry[];
 
-            for (let bIdx = 0; bIdx < beacons.length; bIdx++) {
-                const b = beacons[bIdx];
+            for (let bIdx = 0; bIdx < miniBeacons.length; bIdx++) {
+                const b = miniBeacons[bIdx];
                 const bx = cx + b.x * mapScale;
                 const bz = cy + b.z * mapScale;
 
@@ -897,13 +991,13 @@ function ensureMinimapBgCache(w: number, h: number) {
                     }
                 }
 
-                mCtx.fillStyle = b.restored ? '#4ade80' : (b.type === 'FIRE' ? '#fb923c' : (b.type === 'TEAMUP' ? '#38bdf8' : '#f43f5e'));
-                mCtx.beginPath();
-                mCtx.arc(bx, bz, b.restored ? 2.8 : 4.4, 0, Math.PI * 2);
-                mCtx.fill();
-                mCtx.strokeStyle = '#ffffff';
-                mCtx.lineWidth = 1.0;
-                mCtx.stroke();
+                ctx.fillStyle = b.restored ? '#4ade80' : (b.type === 'FIRE' ? '#fb923c' : (b.type === 'TEAMUP' ? '#38bdf8' : '#f43f5e'));
+                ctx.beginPath();
+                ctx.arc(bx, bz, b.restored ? 2.8 : 4.4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.0;
+                ctx.stroke();
             }
 
             if (!_nearestHintEl) _nearestHintEl = document.getElementById('nearest-hazard-hint');
@@ -917,19 +1011,20 @@ function ensureMinimapBgCache(w: number, h: number) {
 
             // Draw Undocked Mega Mode Attachments on Minimap
             if (typeof WORLD_MEGA_LOCATIONS !== 'undefined') {
-                for (const botKey in WORLD_MEGA_LOCATIONS) {
-                    const loc = WORLD_MEGA_LOCATIONS[botKey];
+                const megaLocations = WORLD_MEGA_LOCATIONS as Record<string, { x: number; z: number; rotY: number } | undefined>;
+                for (const botKey in megaLocations) {
+                    const loc = megaLocations[botKey];
                     if (!loc || isBotDocked(botKey)) continue;
                     const mx = cx + loc.x * mapScale;
                     const mz = cy + loc.z * mapScale;
                     const meta = MEGA_ATTACHMENT_META[botKey];
-                    mCtx.fillStyle = meta ? meta.color : '#f59e0b';
-                    mCtx.beginPath();
-                    mCtx.arc(mx, mz, 2.8, 0, Math.PI * 2);
-                    mCtx.fill();
-                    mCtx.strokeStyle = '#ffffff';
-                    mCtx.lineWidth = 0.9;
-                    mCtx.stroke();
+                    ctx.fillStyle = meta ? meta.color : '#f59e0b';
+                    ctx.beginPath();
+                    ctx.arc(mx, mz, 2.8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 0.9;
+                    ctx.stroke();
                 }
             }
 
@@ -937,35 +1032,35 @@ function ensureMinimapBgCache(w: number, h: number) {
             if (buddyBot && buddyBot.botType && buddyBot.botType !== player.botType) {
                 const bx = cx + buddyBot.pos.x * mapScale;
                 const bz = cy + buddyBot.pos.z * mapScale;
-                mCtx.save();
-                mCtx.translate(bx, bz);
-                mCtx.rotate(-buddyBot.heading + Math.PI);
-                mCtx.fillStyle = '#38bdf8';
-                mCtx.beginPath();
-                mCtx.moveTo(0, -5.5);
-                mCtx.lineTo(4.5, 5);
-                mCtx.lineTo(0, 2.5);
-                mCtx.lineTo(-4.5, 5);
-                mCtx.closePath();
-                mCtx.fill();
-                mCtx.restore();
+                ctx.save();
+                ctx.translate(bx, bz);
+                ctx.rotate(-buddyBot.heading + Math.PI);
+                ctx.fillStyle = '#38bdf8';
+                ctx.beginPath();
+                ctx.moveTo(0, -5.5);
+                ctx.lineTo(4.5, 5);
+                ctx.lineTo(0, 2.5);
+                ctx.lineTo(-4.5, 5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
             }
 
             // Draw Active Player Arrow (Bright Gold Chevron)
             const px = cx + player.pos.x * mapScale;
             const pz = cy + player.pos.z * mapScale;
-            mCtx.save();
-            mCtx.translate(px, pz);
-            mCtx.rotate(-player.heading + Math.PI);
-            mCtx.fillStyle = '#facc15';
-            mCtx.beginPath();
-            mCtx.moveTo(0, -7);
-            mCtx.lineTo(5.5, 6);
-            mCtx.lineTo(0, 3);
-            mCtx.lineTo(-5.5, 6);
-            mCtx.closePath();
-            mCtx.fill();
-            mCtx.restore();
+            ctx.save();
+            ctx.translate(px, pz);
+            ctx.rotate(-player.heading + Math.PI);
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.moveTo(0, -7);
+            ctx.lineTo(5.5, 6);
+            ctx.lineTo(0, 3);
+            ctx.lineTo(-5.5, 6);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
         }
 
         // =====================================================================
@@ -974,6 +1069,7 @@ function ensureMinimapBgCache(w: number, h: number) {
         export function renderTacticalMap() {
             ensureMapCanvases();
             if (!tCtx || !tacticalMapCanvas) return;
+            const ctx = tCtx;
             const w = tacticalMapCanvas.width;
             const h = tacticalMapCanvas.height;
             const cx = w / 2;
@@ -981,16 +1077,16 @@ function ensureMinimapBgCache(w: number, h: number) {
             const now = performance.now();
 
             // Clear Canvas
-            tCtx.clearRect(0, 0, w, h);
+            ctx.clearRect(0, 0, w, h);
 
             if (worldState.activeArea === 'UNDERGROUND') {
                 const ugFullScale = (cx * 0.84) / 234;
-                renderUndergroundRadar(tCtx, w, h, ugFullScale, true);
+                renderUndergroundRadar(ctx, w, h, ugFullScale, true);
                 return;
             }
 
             if (worldState.activeArea === 'SPACE') {
-                const sp = (window as any).getSpaceMapData?.();
+                const sp = window.getSpaceMapData?.();
                 const titleEl = document.getElementById('tactical-map-title');
                 const subEl = document.getElementById('tactical-map-subtitle');
                 const pillEl = document.getElementById('tactical-map-status-pill');
@@ -1002,82 +1098,82 @@ function ensureMinimapBgCache(w: number, h: number) {
                 if (gridEl) gridEl.textContent = 'SECTOR: SOL-3 // ORBIT';
                 if (countEl) countEl.textContent = `ASTEROIDS: ${progression.spaceAsteroidsCleared || 0} • RESCUES: ${progression.spaceRescuesDone || 0}`;
 
-                const bgGrad = tCtx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
+                const bgGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
                 bgGrad.addColorStop(0, '#07142b');
                 bgGrad.addColorStop(0.7, '#030917');
                 bgGrad.addColorStop(1, '#01040a');
-                tCtx.fillStyle = bgGrad;
-                tCtx.fillRect(0, 0, w, h);
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, w, h);
 
                 const sc = (cx * 0.84) / (sp?.bounds || 460);
                 // Radar range rings
                 [150, 300, 450].forEach(dist => {
-                    tCtx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
-                    tCtx.setLineDash([4, 6]);
-                    tCtx.beginPath();
-                    tCtx.arc(cx, cy, dist * sc, 0, Math.PI * 2);
-                    tCtx.stroke();
-                    tCtx.fillStyle = 'rgba(56, 189, 248, 0.5)';
-                    tCtx.font = 'bold 9px "JetBrains Mono", monospace';
-                    tCtx.textAlign = 'center';
-                    tCtx.fillText(`${dist}M`, cx, cy - dist * sc - 4);
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+                    ctx.setLineDash([4, 6]);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, dist * sc, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.fillStyle = 'rgba(56, 189, 248, 0.5)';
+                    ctx.font = 'bold 9px "JetBrains Mono", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${dist}M`, cx, cy - dist * sc - 4);
                 });
-                tCtx.setLineDash([]);
+                ctx.setLineDash([]);
 
                 if (sp) {
                     const drawPin = (wx: number, wz: number, r: number, col: string, label: string) => {
                         const px = cx + wx * sc;
                         const pz = cy + wz * sc;
-                        tCtx.fillStyle = col;
-                        tCtx.beginPath();
-                        tCtx.arc(px, pz, r, 0, Math.PI * 2);
-                        tCtx.fill();
-                        tCtx.strokeStyle = '#ffffff';
-                        tCtx.lineWidth = 1.5;
-                        tCtx.stroke();
-                        tCtx.font = 'bold 9.5px Fredoka, sans-serif';
-                        const tw = tCtx.measureText(label).width;
-                        tCtx.fillStyle = 'rgba(2, 6, 23, 0.88)';
-                        tCtx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
-                        tCtx.fillStyle = '#f8fafc';
-                        tCtx.textAlign = 'center';
-                        tCtx.fillText(label, px, pz + r + 14);
+                        ctx.fillStyle = col;
+                        ctx.beginPath();
+                        ctx.arc(px, pz, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.font = 'bold 9.5px Fredoka, sans-serif';
+                        const tw = ctx.measureText(label).width;
+                        ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+                        ctx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(label, px, pz + r + 14);
                     };
 
                     // Star-Ring Course Loop
                     if (Array.isArray(sp.starRings) && sp.starRings.length > 0) {
-                        tCtx.strokeStyle = 'rgba(34, 211, 238, 0.25)';
-                        tCtx.setLineDash([5, 5]);
-                        tCtx.beginPath();
-                        sp.starRings.forEach((r: any, idx: number) => {
+                        ctx.strokeStyle = 'rgba(34, 211, 238, 0.25)';
+                        ctx.setLineDash([5, 5]);
+                        ctx.beginPath();
+                        sp.starRings.forEach((r, idx: number) => {
                             const rx = cx + r.pos.x * sc;
                             const rz = cy + r.pos.z * sc;
-                            if (idx === 0) tCtx.moveTo(rx, rz);
-                            else tCtx.lineTo(rx, rz);
+                            if (idx === 0) ctx.moveTo(rx, rz);
+                            else ctx.lineTo(rx, rz);
                         });
-                        tCtx.closePath();
-                        tCtx.stroke();
-                        tCtx.setLineDash([]);
+                        ctx.closePath();
+                        ctx.stroke();
+                        ctx.setLineDash([]);
 
-                        sp.starRings.forEach((r: any, idx: number) => {
+                        sp.starRings.forEach((r, idx: number) => {
                             const isAct = idx === sp.ship.activeRingIdx;
                             const rx = cx + r.pos.x * sc;
                             const rz = cy + r.pos.z * sc;
-                            tCtx.strokeStyle = isAct ? '#fbbf24' : '#22d3ee';
-                            tCtx.lineWidth = isAct ? 2.5 : 1.3;
-                            tCtx.beginPath();
-                            tCtx.arc(rx, rz, isAct ? 8 : 5, 0, Math.PI * 2);
-                            tCtx.stroke();
+                            ctx.strokeStyle = isAct ? '#fbbf24' : '#22d3ee';
+                            ctx.lineWidth = isAct ? 2.5 : 1.3;
+                            ctx.beginPath();
+                            ctx.arc(rx, rz, isAct ? 8 : 5, 0, Math.PI * 2);
+                            ctx.stroke();
                         });
                     }
 
                     // Asteroids
-                    sp.asteroids?.forEach((a: any) => {
+                    sp.asteroids?.forEach((a) => {
                         if (!a.alive) return;
-                        tCtx.fillStyle = '#78716c';
-                        tCtx.beginPath();
-                        tCtx.arc(cx + a.pos.x * sc, cy + a.pos.z * sc, 3.2, 0, Math.PI * 2);
-                        tCtx.fill();
+                        ctx.fillStyle = '#78716c';
+                        ctx.beginPath();
+                        ctx.arc(cx + a.pos.x * sc, cy + a.pos.z * sc, 3.2, 0, Math.PI * 2);
+                        ctx.fill();
                     });
 
                     // Moon & Lunar Landing Ring OR Gas/Ice Giant Sector Moons
@@ -1097,7 +1193,7 @@ function ensureMinimapBgCache(w: number, h: number) {
                     } else {
                         const titleEl = document.getElementById('tactical-map-title');
                         if (titleEl) titleEl.textContent = `${sp.sectorId} ORBITAL SECTOR CHART`;
-                        sp.sectorMoons?.forEach((m: any) => {
+                        sp.sectorMoons?.forEach((m) => {
                             drawPin(m.pos.x, m.pos.z, m.landablePlanetId ? 15 : 11, m.landablePlanetId ? '#38bdf8' : '#cbd5e1', m.name.toUpperCase());
                             if (m.beaconRing) {
                                 drawPin(m.landingPos.x, m.landingPos.z, 7, '#fbbf24', `LAND ON ${m.id}`);
@@ -1109,21 +1205,21 @@ function ensureMinimapBgCache(w: number, h: number) {
                     drawPin(sp.stationPos.x, sp.stationPos.z, 10, '#4ade80', 'AUTOBOT ORBITAL STATION');
 
                     // Satellites & Pods
-                    sp.satellites?.forEach((s: any) => {
+                    sp.satellites?.forEach((s) => {
                         drawPin(s.pos.x, s.pos.z, 5.5, s.repaired ? '#38bdf8' : '#ef4444', s.name);
                     });
-                    sp.pods?.forEach((p: any) => {
+                    sp.pods?.forEach((p) => {
                         if (!p.rescued) drawPin(p.pos.x, p.pos.z, 5.5, '#fbbf24', p.name);
                     });
 
                     // Starship Sigma Chevron
-                    drawMapChevron(tCtx, cx + sp.ship.pos.x * sc, cy + sp.ship.pos.z * sc, sp.ship.yaw + Math.PI, 9.5, '#38bdf8', '#ffffff');
+                    drawMapChevron(ctx, cx + sp.ship.pos.x * sc, cy + sp.ship.pos.z * sc, sp.ship.yaw + Math.PI, 9.5, '#38bdf8', '#ffffff');
                 }
                 return;
             }
 
             if (worldState.activeArea === 'PLANET_SURFACE') {
-                const pd = (window as any).getPlanetSurfaceMapData?.();
+                const pd = window.getPlanetSurfaceMapData?.();
                 const cfg = pd?.config;
                 const titleEl = document.getElementById('tactical-map-title');
                 const subEl = document.getElementById('tactical-map-subtitle');
@@ -1134,64 +1230,64 @@ function ensureMinimapBgCache(w: number, h: number) {
                 if (subEl) subEl.textContent = `${cfg?.zoneLabel || 'Planetary Surface'} • Tap anywhere to navigate`;
                 if (pillEl) pillEl.textContent = `${cfg?.gravityLabel || '0.38G'} SURFACE`;
                 if (gridEl) gridEl.textContent = `WORLD: ${cfg?.id || 'PLANET'}`;
-                const foundHere = (pd?.relics || []).filter((r: any) => r.collected).length;
+                const foundHere = (pd?.relics || []).filter((r) => r.collected).length;
                 if (countEl) countEl.textContent = `RELICS: ${foundHere} / ${(pd?.relics || []).length}`;
 
-                const bgGrad = tCtx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
+                const bgGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
                 bgGrad.addColorStop(0, cfg?.groundBaseHex || '#334155');
                 bgGrad.addColorStop(0.8, cfg?.groundAccentHex || '#1e293b');
                 bgGrad.addColorStop(1, '#0f172a');
-                tCtx.fillStyle = bgGrad;
-                tCtx.fillRect(0, 0, w, h);
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, w, h);
 
                 const sc = (cx * 0.84) / (pd?.radius || 175);
                 if (pd) {
-                    pd.craters?.forEach((c: any) => {
-                        tCtx.fillStyle = 'rgba(15, 23, 42, 0.28)';
-                        tCtx.strokeStyle = 'rgba(248, 250, 252, 0.45)';
-                        tCtx.lineWidth = 2;
-                        tCtx.beginPath();
-                        tCtx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
-                        tCtx.fill();
-                        tCtx.stroke();
+                    pd.craters?.forEach((c) => {
+                        ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+                        ctx.strokeStyle = 'rgba(248, 250, 252, 0.45)';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
                     });
 
                     const drawPlanetaryPin = (wx: number, wz: number, r: number, col: string, label: string) => {
                         const px = cx + wx * sc;
                         const pz = cy + wz * sc;
-                        tCtx.fillStyle = col;
-                        tCtx.beginPath();
-                        tCtx.arc(px, pz, r, 0, Math.PI * 2);
-                        tCtx.fill();
-                        tCtx.strokeStyle = '#ffffff';
-                        tCtx.lineWidth = 1.5;
-                        tCtx.stroke();
-                        tCtx.font = 'bold 9.5px Fredoka, sans-serif';
-                        const tw = tCtx.measureText(label).width;
-                        tCtx.fillStyle = 'rgba(2, 6, 23, 0.88)';
-                        tCtx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
-                        tCtx.fillStyle = '#f8fafc';
-                        tCtx.textAlign = 'center';
-                        tCtx.fillText(label, px, pz + r + 14);
+                        ctx.fillStyle = col;
+                        ctx.beginPath();
+                        ctx.arc(px, pz, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.font = 'bold 9.5px Fredoka, sans-serif';
+                        const tw = ctx.measureText(label).width;
+                        ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+                        ctx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(label, px, pz + r + 14);
                     };
 
                     drawPlanetaryPin(pd.sigmaPos.x, pd.sigmaPos.z, 9, '#22d3ee', 'STARSHIP SIGMA PAD');
-                    pd.vents?.forEach((v: any) => {
+                    pd.vents?.forEach((v) => {
                         drawPlanetaryPin(v.x, v.z, 5.5, '#f97316', v.label.toUpperCase());
                     });
-                    pd.relics?.forEach((r: any) => {
+                    pd.relics?.forEach((r) => {
                         if (!r.collected) drawPlanetaryPin(r.x, r.z, 6.5, '#fbbf24', r.name.toUpperCase());
                     });
                     if (pd.frozenStarspeed) {
                         drawPlanetaryPin(pd.frozenStarspeed.x, pd.frozenStarspeed.z, 9, '#38bdf8', 'FROZEN SOS SIGNAL (STARSPEED)');
                     }
-                    drawMapChevron(tCtx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 9.5, '#facc15', '#ffffff');
+                    drawMapChevron(ctx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 9.5, '#facc15', '#ffffff');
                 }
                 return;
             }
 
             if (worldState.activeArea === 'SATURN_RING_RACE') {
-                const sr = (window as any).getSaturnRaceMapData?.();
+                const sr = window.getSaturnRaceMapData?.();
                 const titleEl = document.getElementById('tactical-map-title');
                 const subEl = document.getElementById('tactical-map-subtitle');
                 const pillEl = document.getElementById('tactical-map-status-pill');
@@ -1201,41 +1297,41 @@ function ensureMinimapBgCache(w: number, h: number) {
                 if (pillEl) pillEl.textContent = 'RING RACE';
                 if (gridEl) gridEl.textContent = 'SECTOR: SATURN-R1';
 
-                tCtx.fillStyle = '#040714';
-                tCtx.fillRect(0, 0, w, h);
-                tCtx.fillStyle = '#eab308';
-                tCtx.beginPath();
-                tCtx.arc(cx, cy, cx * 0.34, 0, Math.PI * 2);
-                tCtx.fill();
+                ctx.fillStyle = '#040714';
+                ctx.fillRect(0, 0, w, h);
+                ctx.fillStyle = '#eab308';
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx * 0.34, 0, Math.PI * 2);
+                ctx.fill();
                 const rPx = cx * 0.72;
-                tCtx.strokeStyle = 'rgba(186, 230, 253, 0.72)';
-                tCtx.lineWidth = 18;
-                tCtx.beginPath();
-                tCtx.arc(cx, cy, rPx, 0, Math.PI * 2);
-                tCtx.stroke();
+                ctx.strokeStyle = 'rgba(186, 230, 253, 0.72)';
+                ctx.lineWidth = 18;
+                ctx.beginPath();
+                ctx.arc(cx, cy, rPx, 0, Math.PI * 2);
+                ctx.stroke();
                 if (sr) {
-                    sr.gates?.forEach((g: any, idx: number) => {
+                    sr.gates?.forEach((g, idx: number) => {
                         const isNext = idx === sr.nextGateIdx;
-                        tCtx.fillStyle = isNext ? '#facc15' : (idx === 0 ? '#4ade80' : '#38bdf8');
-                        tCtx.beginPath();
-                        tCtx.arc(cx + Math.cos(g.angle) * rPx, cy + Math.sin(g.angle) * rPx, isNext ? 8 : 4.5, 0, Math.PI * 2);
-                        tCtx.fill();
+                        ctx.fillStyle = isNext ? '#facc15' : (idx === 0 ? '#4ade80' : '#38bdf8');
+                        ctx.beginPath();
+                        ctx.arc(cx + Math.cos(g.angle) * rPx, cy + Math.sin(g.angle) * rPx, isNext ? 8 : 4.5, 0, Math.PI * 2);
+                        ctx.fill();
                     });
-                    sr.rivals?.forEach((rv: any) => {
-                        tCtx.fillStyle = rv.colorHex || '#f472b6';
-                        tCtx.beginPath();
-                        tCtx.arc(cx + Math.cos(rv.angle) * rPx, cy + Math.sin(rv.angle) * rPx, 6.2, 0, Math.PI * 2);
-                        tCtx.fill();
+                    sr.rivals?.forEach((rv) => {
+                        ctx.fillStyle = rv.colorHex || '#f472b6';
+                        ctx.beginPath();
+                        ctx.arc(cx + Math.cos(rv.angle) * rPx, cy + Math.sin(rv.angle) * rPx, 6.2, 0, Math.PI * 2);
+                        ctx.fill();
                     });
                     const px = cx + Math.cos(sr.angle) * rPx;
                     const py = cy + Math.sin(sr.angle) * rPx;
-                    drawMapChevron(tCtx, px, py, player.heading, 10, '#22d3ee', '#ffffff');
+                    drawMapChevron(ctx, px, py, player.heading, 10, '#22d3ee', '#ffffff');
                 }
                 return;
             }
 
             if (worldState.activeArea === 'MOON') {
-                const md = (window as any).getMoonMapData?.();
+                const md = window.getMoonMapData?.() as MoonMapDataExtended | undefined;
                 const titleEl = document.getElementById('tactical-map-title');
                 const subEl = document.getElementById('tactical-map-subtitle');
                 const pillEl = document.getElementById('tactical-map-status-pill');
@@ -1247,42 +1343,42 @@ function ensureMinimapBgCache(w: number, h: number) {
                 if (gridEl) gridEl.textContent = 'SECTOR: LUNA-01';
                 if (countEl) countEl.textContent = `RELICS: ${(progression.moonRelicsFound || []).length} / 5`;
 
-                const bgGrad = tCtx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
+                const bgGrad = ctx.createRadialGradient(cx, cy, 40, cx, cy, cx * 1.05);
                 bgGrad.addColorStop(0, '#334155');
                 bgGrad.addColorStop(0.75, '#1e293b');
                 bgGrad.addColorStop(1, '#0f172a');
-                tCtx.fillStyle = bgGrad;
-                tCtx.fillRect(0, 0, w, h);
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, w, h);
 
                 const sc = (cx * 0.84) / (md?.radius || 185);
                 if (md) {
-                    md.craters?.forEach((c: any) => {
-                        tCtx.fillStyle = 'rgba(15, 23, 42, 0.35)';
-                        tCtx.strokeStyle = 'rgba(203, 213, 225, 0.45)';
-                        tCtx.lineWidth = 2;
-                        tCtx.beginPath();
-                        tCtx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
-                        tCtx.fill();
-                        tCtx.stroke();
+                    md.craters?.forEach((c) => {
+                        ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+                        ctx.strokeStyle = 'rgba(203, 213, 225, 0.45)';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
                     });
 
                     const drawLunarPin = (wx: number, wz: number, r: number, col: string, label: string) => {
                         const px = cx + wx * sc;
                         const pz = cy + wz * sc;
-                        tCtx.fillStyle = col;
-                        tCtx.beginPath();
-                        tCtx.arc(px, pz, r, 0, Math.PI * 2);
-                        tCtx.fill();
-                        tCtx.strokeStyle = '#ffffff';
-                        tCtx.lineWidth = 1.5;
-                        tCtx.stroke();
-                        tCtx.font = 'bold 9.5px Fredoka, sans-serif';
-                        const tw = tCtx.measureText(label).width;
-                        tCtx.fillStyle = 'rgba(2, 6, 23, 0.88)';
-                        tCtx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
-                        tCtx.fillStyle = '#f8fafc';
-                        tCtx.textAlign = 'center';
-                        tCtx.fillText(label, px, pz + r + 14);
+                        ctx.fillStyle = col;
+                        ctx.beginPath();
+                        ctx.arc(px, pz, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.font = 'bold 9.5px Fredoka, sans-serif';
+                        const tw = ctx.measureText(label).width;
+                        ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+                        ctx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(label, px, pz + r + 14);
                     };
 
                     drawLunarPin(md.sigmaPos.x, md.sigmaPos.z, 9, '#22d3ee', 'STARSHIP SIGMA PAD');
@@ -1290,28 +1386,28 @@ function ensureMinimapBgCache(w: number, h: number) {
                     if (md.roverPos) {
                         drawLunarPin(md.roverPos.x, md.roverPos.z, 6, '#facc15', 'LUNAR ROVER');
                     }
-                    md.jumpPads?.forEach((jp: any) => {
-                        tCtx.strokeStyle = '#22d3ee';
-                        tCtx.lineWidth = 2;
-                        tCtx.beginPath();
-                        tCtx.arc(cx + jp.x * sc, cy + jp.z * sc, 5, 0, Math.PI * 2);
-                        tCtx.stroke();
+                    md.jumpPads?.forEach((jp) => {
+                        ctx.strokeStyle = '#22d3ee';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(cx + jp.x * sc, cy + jp.z * sc, 5, 0, Math.PI * 2);
+                        ctx.stroke();
                     });
-                    md.hoops?.forEach((hp: any) => {
-                        tCtx.strokeStyle = hp.cleared ? '#4ade80' : '#f59e0b';
-                        tCtx.lineWidth = 2;
-                        tCtx.beginPath();
-                        tCtx.arc(cx + hp.x * sc, cy + hp.z * sc, 6, 0, Math.PI * 2);
-                        tCtx.stroke();
+                    md.hoops?.forEach((hp) => {
+                        ctx.strokeStyle = hp.cleared ? '#4ade80' : '#f59e0b';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(cx + hp.x * sc, cy + hp.z * sc, 6, 0, Math.PI * 2);
+                        ctx.stroke();
                     });
-                    md.relics?.forEach((rel: any) => {
+                    md.relics?.forEach((rel) => {
                         if (!rel.collected) drawLunarPin(rel.x, rel.z, 6, '#fbbf24', rel.name);
                     });
 
                     if (buddyBot && buddyBot.botType && buddyBot.botType !== player.botType) {
-                        drawMapChevron(tCtx, cx + buddyBot.pos.x * sc, cy + buddyBot.pos.z * sc, buddyBot.heading, 7.5, '#38bdf8', '#ffffff');
+                        drawMapChevron(ctx, cx + buddyBot.pos.x * sc, cy + buddyBot.pos.z * sc, buddyBot.heading, 7.5, '#38bdf8', '#ffffff');
                     }
-                    drawMapChevron(tCtx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 9.5, '#facc15', '#ffffff');
+                    drawMapChevron(ctx, cx + player.pos.x * sc, cy + player.pos.z * sc, player.heading, 9.5, '#facc15', '#ffffff');
                 }
                 return;
             }
@@ -1327,298 +1423,299 @@ function ensureMinimapBgCache(w: number, h: number) {
             if (gridEl && gridEl.textContent !== 'GRID: GR-01 // 1:4000') gridEl.textContent = 'GRID: GR-01 // 1:4000';
 
             // Layer 1: Oceanic Slate Radar Background
-            const oceanGrad = tCtx.createRadialGradient(cx, cy, 60, cx, cy, cx * 1.05);
+            const oceanGrad = ctx.createRadialGradient(cx, cy, 60, cx, cy, cx * 1.05);
             oceanGrad.addColorStop(0, '#09253c');
             oceanGrad.addColorStop(0.65, '#051827');
             oceanGrad.addColorStop(1, '#020b12');
-            tCtx.fillStyle = oceanGrad;
-            tCtx.fillRect(0, 0, w, h);
+            ctx.fillStyle = oceanGrad;
+            ctx.fillRect(0, 0, w, h);
 
             const mapScale = (cx * 0.82) / 2200;
 
             // Layer 2: Tactical Radar Range Rings & Crosshairs
             const rangeDistances = [500, 1000, 1500, 2000];
-            tCtx.lineWidth = 1.0;
+            ctx.lineWidth = 1.0;
             rangeDistances.forEach(dist => {
                 const r = dist * mapScale;
-                tCtx.strokeStyle = 'rgba(6, 182, 212, 0.16)';
-                tCtx.setLineDash([4, 6]);
-                tCtx.beginPath();
-                tCtx.arc(cx, cy, r, 0, Math.PI * 2);
-                tCtx.stroke();
+                ctx.strokeStyle = 'rgba(6, 182, 212, 0.16)';
+                ctx.setLineDash([4, 6]);
+                ctx.beginPath();
+                ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                ctx.stroke();
 
-                tCtx.fillStyle = 'rgba(6, 182, 212, 0.45)';
-                tCtx.font = 'bold 9px "JetBrains Mono", monospace';
-                tCtx.textAlign = 'center';
-                tCtx.fillText(`${dist}M`, cx, cy - r - 3);
+                ctx.fillStyle = 'rgba(6, 182, 212, 0.45)';
+                ctx.font = 'bold 9px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${dist}M`, cx, cy - r - 3);
             });
 
             // Crosshair Axes (N-S, E-W, 45-degree diagonals)
-            tCtx.strokeStyle = 'rgba(6, 182, 212, 0.10)';
-            tCtx.setLineDash([3, 8]);
-            tCtx.beginPath();
-            tCtx.moveTo(cx, 16); tCtx.lineTo(cx, h - 16);
-            tCtx.moveTo(16, cy); tCtx.lineTo(w - 16, cy);
-            tCtx.moveTo(cx - 240, cy - 240); tCtx.lineTo(cx + 240, cy + 240);
-            tCtx.moveTo(cx - 240, cy + 240); tCtx.lineTo(cx + 240, cy - 240);
-            tCtx.stroke();
-            tCtx.setLineDash([]);
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.10)';
+            ctx.setLineDash([3, 8]);
+            ctx.beginPath();
+            ctx.moveTo(cx, 16); ctx.lineTo(cx, h - 16);
+            ctx.moveTo(16, cy); ctx.lineTo(w - 16, cy);
+            ctx.moveTo(cx - 240, cy - 240); ctx.lineTo(cx + 240, cy + 240);
+            ctx.moveTo(cx - 240, cy + 240); ctx.lineTo(cx + 240, cy - 240);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
             // Rotating Radar Sweep Beam
             const sweepAngle = (now * 0.00065) % (Math.PI * 2);
-            tCtx.save();
-            tCtx.translate(cx, cy);
-            tCtx.rotate(sweepAngle);
-            const sweepGrad = tCtx.createRadialGradient(0, 0, 0, 0, 0, cx * 0.95);
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(sweepAngle);
+            const sweepGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, cx * 0.95);
             sweepGrad.addColorStop(0, 'rgba(6, 182, 212, 0.25)');
             sweepGrad.addColorStop(0.8, 'rgba(6, 182, 212, 0.04)');
             sweepGrad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
-            tCtx.fillStyle = sweepGrad;
-            tCtx.beginPath();
-            tCtx.moveTo(0, 0);
-            tCtx.arc(0, 0, cx * 0.95, -0.26, 0);
-            tCtx.closePath();
-            tCtx.fill();
-            tCtx.strokeStyle = 'rgba(34, 211, 238, 0.45)';
-            tCtx.lineWidth = 1.2;
-            tCtx.beginPath();
-            tCtx.moveTo(0, 0);
-            tCtx.lineTo(cx * 0.95, 0);
-            tCtx.stroke();
-            tCtx.restore();
+            ctx.fillStyle = sweepGrad;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, cx * 0.95, -0.26, 0);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.45)';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(cx * 0.95, 0);
+            ctx.stroke();
+            ctx.restore();
 
             // Layer 3: Island Landmasses & Shaded Relief Contours
             // Main Island Coastal Shelf
-            tCtx.fillStyle = '#0e4259';
-            tCtx.beginPath();
-            tCtx.arc(cx, cy, 1720 * mapScale, 0, Math.PI * 2);
-            tCtx.fill();
+            ctx.fillStyle = '#0e4259';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 1720 * mapScale, 0, Math.PI * 2);
+            ctx.fill();
 
             // Main Island Sandy Beach Rim
-            tCtx.fillStyle = '#ca8a04';
-            tCtx.beginPath();
-            tCtx.arc(cx, cy, 1670 * mapScale, 0, Math.PI * 2);
-            tCtx.fill();
+            ctx.fillStyle = '#ca8a04';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 1670 * mapScale, 0, Math.PI * 2);
+            ctx.fill();
 
             // Main Island Lush Interior
-            tCtx.fillStyle = '#15803d';
-            tCtx.beginPath();
-            tCtx.arc(cx, cy, 1630 * mapScale, 0, Math.PI * 2);
-            tCtx.fill();
+            ctx.fillStyle = '#15803d';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 1630 * mapScale, 0, Math.PI * 2);
+            ctx.fill();
 
             // Highlands & Mountain Plateau Contours
-            tCtx.fillStyle = '#166534';
-            tCtx.beginPath();
-            tCtx.arc(cx, cy, 1150 * mapScale, 0, Math.PI * 2);
-            tCtx.fill();
+            ctx.fillStyle = '#166534';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 1150 * mapScale, 0, Math.PI * 2);
+            ctx.fill();
 
-            tCtx.fillStyle = '#14532d';
-            tCtx.beginPath();
-            tCtx.arc(cx, cy, 750 * mapScale, 0, Math.PI * 2);
-            tCtx.fill();
+            ctx.fillStyle = '#14532d';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 750 * mapScale, 0, Math.PI * 2);
+            ctx.fill();
 
             // Volcano Ridge Shaded Massif (NW)
-            tCtx.fillStyle = '#052e16';
-            tCtx.beginPath();
-            tCtx.ellipse(cx - 680 * mapScale, cy - 650 * mapScale, 280 * mapScale, 220 * mapScale, Math.PI / 4, 0, Math.PI * 2);
-            tCtx.fill();
+            ctx.fillStyle = '#052e16';
+            ctx.beginPath();
+            ctx.ellipse(cx - 680 * mapScale, cy - 650 * mapScale, 280 * mapScale, 220 * mapScale, Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
 
             // Wayward Island (East Off-Coast)
             const wix = cx + 1960 * mapScale;
             const wiz = cy + 540 * mapScale;
-            tCtx.fillStyle = '#0e4259';
-            tCtx.beginPath();
-            tCtx.arc(wix, wiz, 380 * mapScale, 0, Math.PI * 2);
-            tCtx.fill();
+            ctx.fillStyle = '#0e4259';
+            ctx.beginPath();
+            ctx.arc(wix, wiz, 380 * mapScale, 0, Math.PI * 2);
+            ctx.fill();
 
-            tCtx.fillStyle = '#ca8a04';
-            tCtx.beginPath();
-            tCtx.arc(wix, wiz, 355 * mapScale, 0, Math.PI * 2);
-            tCtx.fill();
+            ctx.fillStyle = '#ca8a04';
+            ctx.beginPath();
+            ctx.arc(wix, wiz, 355 * mapScale, 0, Math.PI * 2);
+            ctx.fill();
 
-            tCtx.fillStyle = '#14532d';
-            tCtx.beginPath();
-            tCtx.arc(wix, wiz, 335 * mapScale, 0, Math.PI * 2);
-            tCtx.fill();
+            ctx.fillStyle = '#14532d';
+            ctx.beginPath();
+            ctx.arc(wix, wiz, 335 * mapScale, 0, Math.PI * 2);
+            ctx.fill();
 
             // Wayward Causeway Highway & Suspension Bridge
             const cbStartX = cx + 1120 * mapScale;
             const cbEndX = cx + 1780 * mapScale;
             const cbY = cy + 540 * mapScale;
             // Bridge deck
-            tCtx.strokeStyle = '#334155';
-            tCtx.lineWidth = 7.0;
-            tCtx.beginPath();
-            tCtx.moveTo(cbStartX, cbY);
-            tCtx.lineTo(cbEndX, cbY);
-            tCtx.stroke();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 7.0;
+            ctx.beginPath();
+            ctx.moveTo(cbStartX, cbY);
+            ctx.lineTo(cbEndX, cbY);
+            ctx.stroke();
 
             // Bridge center line
-            tCtx.strokeStyle = '#f59e0b';
-            tCtx.lineWidth = 1.8;
-            tCtx.beginPath();
-            tCtx.moveTo(cbStartX, cbY);
-            tCtx.lineTo(cbEndX, cbY);
-            tCtx.stroke();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.moveTo(cbStartX, cbY);
+            ctx.lineTo(cbEndX, cbY);
+            ctx.stroke();
 
             // Bridge Towers
             [cbStartX + (cbEndX - cbStartX) * 0.35, cbStartX + (cbEndX - cbStartX) * 0.65].forEach(tx => {
-                tCtx.fillStyle = '#f8fafc';
-                tCtx.fillRect(tx - 2, cbY - 7, 4, 14);
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(tx - 2, cbY - 7, 4, 14);
             });
 
             // Layer 4: Multi-Ring Highway Network
             // Outer Highway Ribbon
-            tCtx.strokeStyle = '#334155';
-            tCtx.lineWidth = 6.0;
-            tCtx.beginPath();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 6.0;
+            ctx.beginPath();
             for (let i = 0; i <= 96; i++) {
                 const theta = (i / 96) * Math.PI * 2;
                 const r = getOuterRoadRadius(theta) * mapScale;
                 const mx = cx + Math.cos(theta) * r;
                 const my = cy + Math.sin(theta) * r;
-                if (i === 0) tCtx.moveTo(mx, my);
-                else tCtx.lineTo(mx, my);
+                if (i === 0) ctx.moveTo(mx, my);
+                else ctx.lineTo(mx, my);
             }
-            tCtx.stroke();
+            ctx.stroke();
 
             // Outer Highway Centerline
-            tCtx.strokeStyle = '#fde047';
-            tCtx.lineWidth = 1.2;
-            tCtx.setLineDash([4, 4]);
-            tCtx.stroke();
-            tCtx.setLineDash([]);
+            ctx.strokeStyle = '#fde047';
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
             // Inner Highway Ribbon
-            tCtx.strokeStyle = '#334155';
-            tCtx.lineWidth = 5.0;
-            tCtx.beginPath();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 5.0;
+            ctx.beginPath();
             for (let i = 0; i <= 64; i++) {
                 const theta = (i / 64) * Math.PI * 2;
                 const r = getInnerRoadRadius(theta) * mapScale;
                 const mx = cx + Math.cos(theta) * r;
                 const my = cy + Math.sin(theta) * r;
-                if (i === 0) tCtx.moveTo(mx, my);
-                else tCtx.lineTo(mx, my);
+                if (i === 0) ctx.moveTo(mx, my);
+                else ctx.lineTo(mx, my);
             }
-            tCtx.stroke();
+            ctx.stroke();
 
-            tCtx.strokeStyle = '#fde047';
-            tCtx.lineWidth = 1.0;
-            tCtx.setLineDash([3, 4]);
-            tCtx.stroke();
-            tCtx.setLineDash([]);
+            ctx.strokeStyle = '#fde047';
+            ctx.lineWidth = 1.0;
+            ctx.setLineDash([3, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
             // Cross-Island Arterials
-            tCtx.strokeStyle = '#334155';
-            tCtx.lineWidth = 5.0;
-            tCtx.beginPath();
-            tCtx.moveTo(cx, cy - 1140 * mapScale);
-            tCtx.lineTo(cx, cy + 1140 * mapScale);
-            tCtx.moveTo(cx - 1120 * mapScale, cy + 25 * mapScale);
-            tCtx.lineTo(cx + 1180 * mapScale, cy + 25 * mapScale);
-            tCtx.moveTo(cx + 1180 * mapScale, cy + 60 * mapScale);
-            tCtx.lineTo(cx + 1320 * mapScale, cy + 60 * mapScale);
-            tCtx.stroke();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 5.0;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - 1140 * mapScale);
+            ctx.lineTo(cx, cy + 1140 * mapScale);
+            ctx.moveTo(cx - 1120 * mapScale, cy + 25 * mapScale);
+            ctx.lineTo(cx + 1180 * mapScale, cy + 25 * mapScale);
+            ctx.moveTo(cx + 1180 * mapScale, cy + 60 * mapScale);
+            ctx.lineTo(cx + 1320 * mapScale, cy + 60 * mapScale);
+            ctx.stroke();
 
-            tCtx.strokeStyle = '#fde047';
-            tCtx.lineWidth = 1.0;
-            tCtx.setLineDash([3, 4]);
-            tCtx.stroke();
-            tCtx.setLineDash([]);
+            ctx.strokeStyle = '#fde047';
+            ctx.lineWidth = 1.0;
+            ctx.setLineDash([3, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
             // Layer 5: Island Railway Circuit Track
             // Ballast bed
-            tCtx.strokeStyle = '#1e293b';
-            tCtx.lineWidth = 4.5;
-            tCtx.beginPath();
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 4.5;
+            ctx.beginPath();
             for (let i = 0; i <= 96; i++) {
                 const theta = (i / 96) * Math.PI * 2;
                 const r = getRailwayRadius(theta) * mapScale;
                 const mx = cx + Math.cos(theta) * r;
                 const my = cy + Math.sin(theta) * r;
-                if (i === 0) tCtx.moveTo(mx, my);
-                else tCtx.lineTo(mx, my);
+                if (i === 0) ctx.moveTo(mx, my);
+                else ctx.lineTo(mx, my);
             }
-            tCtx.stroke();
+            ctx.stroke();
 
             // Track rails
-            tCtx.strokeStyle = '#cbd5e1';
-            tCtx.lineWidth = 2.0;
-            tCtx.setLineDash([4, 3]);
-            tCtx.stroke();
-            tCtx.setLineDash([]);
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2.0;
+            ctx.setLineDash([4, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
 
             // The Griffin Rock Express Train (All 7 cars drawn with orientation)
-            if (typeof islandTrain !== 'undefined' && islandTrain && islandTrain.cars.length > 0) {
-                for (let i = 0; i < islandTrain.cars.length; i++) {
-                    const car = islandTrain.cars[i];
+            const tactTrain = islandTrain as unknown as TrainData | null | undefined;
+            if (tactTrain && tactTrain.cars.length > 0) {
+                for (let i = 0; i < tactTrain.cars.length; i++) {
+                    const car = tactTrain.cars[i];
                     const carX = cx + car.x * mapScale;
                     const carY = cy + car.z * mapScale;
                     const heading = car.heading || 0;
 
-                    tCtx.save();
-                    tCtx.translate(carX, carY);
-                    tCtx.rotate(-heading + Math.PI / 2);
+                    ctx.save();
+                    ctx.translate(carX, carY);
+                    ctx.rotate(-heading + Math.PI / 2);
 
                     const carW = i === 0 ? 5.5 : 4.5;
                     const carL = i === 0 ? 9.5 : (i === 1 ? 6.5 : 8.5);
 
                     if (i === 0) {
                         // Locomotive: Sky Blue with Gold Cab
-                        tCtx.fillStyle = '#0284c7';
-                        tCtx.fillRect(-carW / 2, -carL / 2, carW, carL);
-                        tCtx.fillStyle = '#facc15';
-                        tCtx.fillRect(-carW / 2, carL / 2 - 3.5, carW, 3.5);
-                        tCtx.strokeStyle = '#ffffff';
-                        tCtx.lineWidth = 1.0;
-                        tCtx.strokeRect(-carW / 2, -carL / 2, carW, carL);
+                        ctx.fillStyle = '#0284c7';
+                        ctx.fillRect(-carW / 2, -carL / 2, carW, carL);
+                        ctx.fillStyle = '#facc15';
+                        ctx.fillRect(-carW / 2, carL / 2 - 3.5, carW, 3.5);
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.0;
+                        ctx.strokeRect(-carW / 2, -carL / 2, carW, carL);
 
                         // Headlight Beam
-                        tCtx.fillStyle = 'rgba(250, 204, 21, 0.35)';
-                        tCtx.beginPath();
-                        tCtx.moveTo(0, -carL / 2);
-                        tCtx.lineTo(-12, -carL / 2 - 24);
-                        tCtx.lineTo(12, -carL / 2 - 24);
-                        tCtx.closePath();
-                        tCtx.fill();
-                    } else if (i === islandTrain.cars.length - 1) {
+                        ctx.fillStyle = 'rgba(250, 204, 21, 0.35)';
+                        ctx.beginPath();
+                        ctx.moveTo(0, -carL / 2);
+                        ctx.lineTo(-12, -carL / 2 - 24);
+                        ctx.lineTo(12, -carL / 2 - 24);
+                        ctx.closePath();
+                        ctx.fill();
+                    } else if (i === tactTrain.cars.length - 1) {
                         // Caboose: Bright Red
-                        tCtx.fillStyle = '#ef4444';
-                        tCtx.fillRect(-carW / 2, -carL / 2, carW, carL);
-                        tCtx.strokeStyle = '#fecaca';
-                        tCtx.lineWidth = 1.0;
-                        tCtx.strokeRect(-carW / 2, -carL / 2, carW, carL);
+                        ctx.fillStyle = '#ef4444';
+                        ctx.fillRect(-carW / 2, -carL / 2, carW, carL);
+                        ctx.strokeStyle = '#fecaca';
+                        ctx.lineWidth = 1.0;
+                        ctx.strokeRect(-carW / 2, -carL / 2, carW, carL);
                         // Flashing lantern
                         const flash = Math.sin(now * 0.01) > 0 ? '#facc15' : '#b91c1c';
-                        tCtx.fillStyle = flash;
-                        tCtx.beginPath();
-                        tCtx.arc(0, carL / 2, 2.0, 0, Math.PI * 2);
-                        tCtx.fill();
+                        ctx.fillStyle = flash;
+                        ctx.beginPath();
+                        ctx.arc(0, carL / 2, 2.0, 0, Math.PI * 2);
+                        ctx.fill();
                     } else {
                         // Passenger coaches & tender
-                        tCtx.fillStyle = '#0369a1';
-                        tCtx.fillRect(-carW / 2, -carL / 2, carW, carL);
-                        tCtx.strokeStyle = '#bae6fd';
-                        tCtx.lineWidth = 0.8;
-                        tCtx.strokeRect(-carW / 2, -carL / 2, carW, carL);
+                        ctx.fillStyle = '#0369a1';
+                        ctx.fillRect(-carW / 2, -carL / 2, carW, carL);
+                        ctx.strokeStyle = '#bae6fd';
+                        ctx.lineWidth = 0.8;
+                        ctx.strokeRect(-carW / 2, -carL / 2, carW, carL);
                     }
-                    tCtx.restore();
+                    ctx.restore();
                 }
 
                 // Train Name Banner
-                const loco = islandTrain.cars[0];
+                const loco = tactTrain.cars[0];
                 const lx = cx + loco.x * mapScale;
                 const ly = cy + loco.z * mapScale;
-                tCtx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-                tCtx.fillRect(lx - 55, ly - 22, 110, 15);
-                tCtx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
-                tCtx.lineWidth = 1;
-                tCtx.strokeRect(lx - 55, ly - 22, 110, 15);
-                tCtx.fillStyle = '#38bdf8';
-                tCtx.font = 'bold 8.5px "JetBrains Mono", monospace';
-                tCtx.textAlign = 'center';
-                tCtx.fillText('GRIFFIN ROCK EXPRESS', lx, ly - 11);
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.fillRect(lx - 55, ly - 22, 110, 15);
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(lx - 55, ly - 22, 110, 15);
+                ctx.fillStyle = '#38bdf8';
+                ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText('GRIFFIN ROCK EXPRESS', lx, ly - 11);
             }
 
             // Layer 6: Key Island Landmarks with Badges
@@ -1626,7 +1723,7 @@ function ensureMinimapBgCache(w: number, h: number) {
                 { name: "RESCUE BOTS HQ", x: HQ_SWAP_PAD.x, z: HQ_SWAP_PAD.z, color: '#06b6d4' },
                 { name: "DINO RIDGE", x: -750, z: -750, color: '#22c55e' },
                 { name: "BOARDWALK", x: bwX, z: bwZ, color: '#f59e0b' },
-                { name: "DR. GREENE'S LAB", x: testYard.baseX, z: testYard.baseZ, color: '#38bdf8' },
+                { name: "DR. GREENE'S LAB", x: testYard?.baseX ?? 0, z: testYard?.baseZ ?? 0, color: '#38bdf8' },
                 { name: "EAST LIGHTHOUSE", x: 1320, z: 60, color: '#f43f5e' },
                 { name: "WAYWARD RUINS", x: 1960, z: 540, color: '#c084fc' },
                 { name: "MOROCCO'S LAIR", x: -820, z: -1180, color: '#a855f7' }
@@ -1636,30 +1733,31 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const lx = cx + lm.x * mapScale;
                 const lz = cy + lm.z * mapScale;
 
-                tCtx.fillStyle = lm.color;
-                tCtx.beginPath();
-                tCtx.arc(lx, lz, 5.0, 0, Math.PI * 2);
-                tCtx.fill();
-                tCtx.strokeStyle = '#ffffff';
-                tCtx.lineWidth = 1.4;
-                tCtx.stroke();
+                ctx.fillStyle = lm.color;
+                ctx.beginPath();
+                ctx.arc(lx, lz, 5.0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.4;
+                ctx.stroke();
 
                 // Labeled Pill
-                tCtx.font = 'bold 9px Fredoka, sans-serif';
-                const textW = tCtx.measureText(lm.name).width;
-                tCtx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-                tCtx.fillRect(lx - textW / 2 - 4, lz + 7, textW + 8, 14);
-                tCtx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-                tCtx.lineWidth = 0.8;
-                tCtx.strokeRect(lx - textW / 2 - 4, lz + 7, textW + 8, 14);
-                tCtx.fillStyle = '#f8fafc';
-                tCtx.textAlign = 'center';
-                tCtx.fillText(lm.name, lx, lz + 17);
+                ctx.font = 'bold 9px Fredoka, sans-serif';
+                const textW = ctx.measureText(lm.name).width;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.fillRect(lx - textW / 2 - 4, lz + 7, textW + 8, 14);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.lineWidth = 0.8;
+                ctx.strokeRect(lx - textW / 2 - 4, lz + 7, textW + 8, 14);
+                ctx.fillStyle = '#f8fafc';
+                ctx.textAlign = 'center';
+                ctx.fillText(lm.name, lx, lz + 17);
             });
 
             // Layer 7: Discovered Visiting Autobots
-            if (typeof visitingAutobots !== 'undefined' && visitingAutobots.length > 0) {
-                visitingAutobots.forEach(ally => {
+            const alliesList = (typeof visitingAutobots !== 'undefined' ? visitingAutobots : []) as unknown as VisitingAutobotEntry[];
+            if (alliesList.length > 0) {
+                alliesList.forEach(ally => {
                     const isOccupied = (player.botType === ally.id) || (buddyBot && buddyBot.botType === ally.id);
                     if (isOccupied) return;
                     const isDiscovered = Array.isArray(progression.discoveredAllies) && progression.discoveredAllies.includes(ally.id);
@@ -1668,21 +1766,21 @@ function ensureMinimapBgCache(w: number, h: number) {
                     const ax = cx + ally.x * mapScale;
                     const az = cy + ally.z * mapScale;
 
-                    tCtx.fillStyle = ally.badgeColor || '#a855f7';
-                    tCtx.beginPath();
-                    tCtx.arc(ax, az, 5.5, 0, Math.PI * 2);
-                    tCtx.fill();
-                    tCtx.strokeStyle = '#ffffff';
-                    tCtx.lineWidth = 1.5;
-                    tCtx.stroke();
+                    ctx.fillStyle = ally.badgeColor || '#a855f7';
+                    ctx.beginPath();
+                    ctx.arc(ax, az, 5.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
 
-                    tCtx.font = 'bold 8.5px "JetBrains Mono", monospace';
-                    const nameW = tCtx.measureText(ally.name).width;
-                    tCtx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-                    tCtx.fillRect(ax - nameW / 2 - 3, az - 18, nameW + 6, 13);
-                    tCtx.fillStyle = ally.badgeColor || '#a855f7';
-                    tCtx.textAlign = 'center';
-                    tCtx.fillText(ally.name, ax, az - 8);
+                    ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+                    const nameW = ctx.measureText(ally.name).width;
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                    ctx.fillRect(ax - nameW / 2 - 3, az - 18, nameW + 6, 13);
+                    ctx.fillStyle = ally.badgeColor || '#a855f7';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(ally.name, ax, az - 8);
                 });
             }
 
@@ -1696,44 +1794,44 @@ function ensureMinimapBgCache(w: number, h: number) {
 
                     // Radar pulse halo
                     const aPulse = Math.sin(now * 0.005 + loc.x * 0.01) * 2.2;
-                    tCtx.strokeStyle = meta.color;
-                    tCtx.lineWidth = 1.2;
-                    tCtx.beginPath();
-                    tCtx.arc(ax, az, 7.5 + aPulse, 0, Math.PI * 2);
-                    tCtx.stroke();
+                    ctx.strokeStyle = meta.color;
+                    ctx.lineWidth = 1.2;
+                    ctx.beginPath();
+                    ctx.arc(ax, az, 7.5 + aPulse, 0, Math.PI * 2);
+                    ctx.stroke();
 
                     // Central diamond / circle badge
-                    tCtx.fillStyle = meta.color;
-                    tCtx.beginPath();
-                    tCtx.arc(ax, az, 5.2, 0, Math.PI * 2);
-                    tCtx.fill();
-                    tCtx.strokeStyle = '#ffffff';
-                    tCtx.lineWidth = 1.4;
-                    tCtx.stroke();
+                    ctx.fillStyle = meta.color;
+                    ctx.beginPath();
+                    ctx.arc(ax, az, 5.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.4;
+                    ctx.stroke();
 
                     // Label callout badge
                     const isCurrentBot = player.botType === botKey;
                     const labelText = meta.name;
-                    tCtx.font = isCurrentBot ? 'bold 9.2px "JetBrains Mono", monospace' : 'bold 8.2px "JetBrains Mono", monospace';
-                    const lw = tCtx.measureText(labelText).width;
-                    tCtx.fillStyle = isCurrentBot ? 'rgba(30, 41, 59, 0.96)' : 'rgba(15, 23, 42, 0.88)';
-                    tCtx.fillRect(ax - lw / 2 - 4, az + 8, lw + 8, 14);
-                    tCtx.strokeStyle = isCurrentBot ? '#facc15' : meta.color;
-                    tCtx.lineWidth = isCurrentBot ? 1.4 : 0.9;
-                    tCtx.strokeRect(ax - lw / 2 - 4, az + 8, lw + 8, 14);
+                    ctx.font = isCurrentBot ? 'bold 9.2px "JetBrains Mono", monospace' : 'bold 8.2px "JetBrains Mono", monospace';
+                    const lw = ctx.measureText(labelText).width;
+                    ctx.fillStyle = isCurrentBot ? 'rgba(30, 41, 59, 0.96)' : 'rgba(15, 23, 42, 0.88)';
+                    ctx.fillRect(ax - lw / 2 - 4, az + 8, lw + 8, 14);
+                    ctx.strokeStyle = isCurrentBot ? '#facc15' : meta.color;
+                    ctx.lineWidth = isCurrentBot ? 1.4 : 0.9;
+                    ctx.strokeRect(ax - lw / 2 - 4, az + 8, lw + 8, 14);
 
-                    tCtx.fillStyle = isCurrentBot ? '#facc15' : '#f8fafc';
-                    tCtx.textAlign = 'center';
-                    tCtx.fillText(labelText, ax, az + 18);
+                    ctx.fillStyle = isCurrentBot ? '#facc15' : '#f8fafc';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(labelText, ax, az + 18);
                 });
             }
 
             // Layer 8: 8 Emergency Beacons with Pulse Radar Rings & Callout Badges
             let activeEmergencyCount = 0;
             let nearestActiveDist = Infinity;
-            let nearestActiveBeacon = null;
+            let nearestActiveBeacon: BeaconEntry | null = null;
 
-            beacons.forEach(b => {
+            for (const b of beacons as unknown as BeaconEntry[]) {
                 const bx = cx + b.x * mapScale;
                 const bz = cy + b.z * mapScale;
                 const distFromPlayer = Math.round(Math.hypot(player.pos.x - b.x, player.pos.z - b.z));
@@ -1748,56 +1846,56 @@ function ensureMinimapBgCache(w: number, h: number) {
                     // Pulsing Radar Rings
                     const pulse = Math.sin(now * 0.006 + b.id) * 3.5;
                     const ringColor = b.type === 'FIRE' ? 'rgba(251, 146, 60, 0.45)' : (b.type === 'TEAMUP' ? 'rgba(56, 189, 248, 0.55)' : 'rgba(244, 63, 94, 0.45)');
-                    tCtx.strokeStyle = ringColor;
-                    tCtx.lineWidth = 1.8;
-                    tCtx.beginPath();
-                    tCtx.arc(bx, bz, 11 + pulse, 0, Math.PI * 2);
-                    tCtx.stroke();
+                    ctx.strokeStyle = ringColor;
+                    ctx.lineWidth = 1.8;
+                    ctx.beginPath();
+                    ctx.arc(bx, bz, 11 + pulse, 0, Math.PI * 2);
+                    ctx.stroke();
 
-                    tCtx.strokeStyle = ringColor;
-                    tCtx.lineWidth = 1.0;
-                    tCtx.beginPath();
-                    tCtx.arc(bx, bz, 18 + pulse * 1.5, 0, Math.PI * 2);
-                    tCtx.stroke();
+                    ctx.strokeStyle = ringColor;
+                    ctx.lineWidth = 1.0;
+                    ctx.beginPath();
+                    ctx.arc(bx, bz, 18 + pulse * 1.5, 0, Math.PI * 2);
+                    ctx.stroke();
 
                     // Beacon Core
-                    tCtx.fillStyle = b.type === 'FIRE' ? '#ea580c' : (b.type === 'TEAMUP' ? '#0284c7' : '#e11d48');
-                    tCtx.beginPath();
-                    tCtx.arc(bx, bz, 6.5, 0, Math.PI * 2);
-                    tCtx.fill();
-                    tCtx.strokeStyle = '#ffffff';
-                    tCtx.lineWidth = 1.8;
-                    tCtx.stroke();
+                    ctx.fillStyle = b.type === 'FIRE' ? '#ea580c' : (b.type === 'TEAMUP' ? '#0284c7' : '#e11d48');
+                    ctx.beginPath();
+                    ctx.arc(bx, bz, 6.5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.8;
+                    ctx.stroke();
 
                     // Emergency Badge Callout
                     const labelText = `${b.name} (${distFromPlayer}m)`;
-                    tCtx.font = 'bold 9.5px Fredoka, sans-serif';
-                    const lw = tCtx.measureText(labelText).width;
-                    tCtx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-                    tCtx.fillRect(bx - lw / 2 - 5, bz - 21, lw + 10, 16);
-                    tCtx.strokeStyle = b.type === 'FIRE' ? '#fb923c' : (b.type === 'TEAMUP' ? '#38bdf8' : '#f43f5e');
-                    tCtx.lineWidth = 1.2;
-                    tCtx.strokeRect(bx - lw / 2 - 5, bz - 21, lw + 10, 16);
+                    ctx.font = 'bold 9.5px Fredoka, sans-serif';
+                    const lw = ctx.measureText(labelText).width;
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+                    ctx.fillRect(bx - lw / 2 - 5, bz - 21, lw + 10, 16);
+                    ctx.strokeStyle = b.type === 'FIRE' ? '#fb923c' : (b.type === 'TEAMUP' ? '#38bdf8' : '#f43f5e');
+                    ctx.lineWidth = 1.2;
+                    ctx.strokeRect(bx - lw / 2 - 5, bz - 21, lw + 10, 16);
 
-                    tCtx.fillStyle = b.type === 'FIRE' ? '#fdba74' : (b.type === 'TEAMUP' ? '#7dd3fc' : '#fda4af');
-                    tCtx.textAlign = 'center';
-                    tCtx.fillText(labelText, bx, bz - 9);
+                    ctx.fillStyle = b.type === 'FIRE' ? '#fdba74' : (b.type === 'TEAMUP' ? '#7dd3fc' : '#fda4af');
+                    ctx.textAlign = 'center';
+                    ctx.fillText(labelText, bx, bz - 9);
                 } else {
                     // Cleared Beacon (Emerald Dot)
-                    tCtx.fillStyle = '#22c55e';
-                    tCtx.beginPath();
-                    tCtx.arc(bx, bz, 4.2, 0, Math.PI * 2);
-                    tCtx.fill();
-                    tCtx.strokeStyle = '#ffffff';
-                    tCtx.lineWidth = 1.2;
-                    tCtx.stroke();
+                    ctx.fillStyle = '#22c55e';
+                    ctx.beginPath();
+                    ctx.arc(bx, bz, 4.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.2;
+                    ctx.stroke();
 
-                    tCtx.font = 'bold 8px Fredoka, sans-serif';
-                    tCtx.fillStyle = '#86efac';
-                    tCtx.textAlign = 'center';
-                    tCtx.fillText(`${b.name} ✓`, bx, bz + 12);
+                    ctx.font = 'bold 8px Fredoka, sans-serif';
+                    ctx.fillStyle = '#86efac';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${b.name} ✓`, bx, bz + 12);
                 }
-            });
+            }
 
             // Update Tactical Emergencies Header Count
             const emergCountEl = document.getElementById('tactical-active-emergencies-count');
@@ -1813,28 +1911,28 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const nbx = cx + nearestActiveBeacon.x * mapScale;
                 const nbz = cy + nearestActiveBeacon.z * mapScale;
 
-                tCtx.save();
-                tCtx.strokeStyle = 'rgba(250, 204, 21, 0.65)';
-                tCtx.lineWidth = 1.6;
-                tCtx.setLineDash([5, 4]);
-                tCtx.beginPath();
-                tCtx.moveTo(px, pz);
-                tCtx.lineTo(nbx, nbz);
-                tCtx.stroke();
-                tCtx.restore();
+                ctx.save();
+                ctx.strokeStyle = 'rgba(250, 204, 21, 0.65)';
+                ctx.lineWidth = 1.6;
+                ctx.setLineDash([5, 4]);
+                ctx.beginPath();
+                ctx.moveTo(px, pz);
+                ctx.lineTo(nbx, nbz);
+                ctx.stroke();
+                ctx.restore();
 
                 // Distance readout along vector
                 const midX = (px + nbx) / 2;
                 const midY = (pz + nbz) / 2;
-                tCtx.fillStyle = 'rgba(15, 23, 42, 0.88)';
-                tCtx.fillRect(midX - 22, midY - 8, 44, 15);
-                tCtx.strokeStyle = '#facc15';
-                tCtx.lineWidth = 1.0;
-                tCtx.strokeRect(midX - 22, midY - 8, 44, 15);
-                tCtx.fillStyle = '#fde047';
-                tCtx.font = 'bold 8.5px "JetBrains Mono", monospace';
-                tCtx.textAlign = 'center';
-                tCtx.fillText(`${nearestActiveDist}m`, midX, midY + 3);
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+                ctx.fillRect(midX - 22, midY - 8, 44, 15);
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 1.0;
+                ctx.strokeRect(midX - 22, midY - 8, 44, 15);
+                ctx.fillStyle = '#fde047';
+                ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${nearestActiveDist}m`, midX, midY + 3);
             }
 
             // Layer 10: Buddy Bot (Cyan Wingman Chevron + Callout)
@@ -1842,137 +1940,137 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const bx = cx + buddyBot.pos.x * mapScale;
                 const bz = cy + buddyBot.pos.z * mapScale;
 
-                tCtx.save();
-                tCtx.translate(bx, bz);
-                tCtx.rotate(-buddyBot.heading + Math.PI);
-                tCtx.fillStyle = '#38bdf8';
-                tCtx.beginPath();
-                tCtx.moveTo(0, -9);
-                tCtx.lineTo(7.5, 8);
-                tCtx.lineTo(0, 3.5);
-                tCtx.lineTo(-7.5, 8);
-                tCtx.closePath();
-                tCtx.fill();
-                tCtx.strokeStyle = '#ffffff';
-                tCtx.lineWidth = 1.4;
-                tCtx.stroke();
-                tCtx.restore();
+                ctx.save();
+                ctx.translate(bx, bz);
+                ctx.rotate(-buddyBot.heading + Math.PI);
+                ctx.fillStyle = '#38bdf8';
+                ctx.beginPath();
+                ctx.moveTo(0, -9);
+                ctx.lineTo(7.5, 8);
+                ctx.lineTo(0, 3.5);
+                ctx.lineTo(-7.5, 8);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.4;
+                ctx.stroke();
+                ctx.restore();
 
                 // Buddy Label Pill
                 const bLabel = `${buddyBot.botType} (BUDDY)`;
-                tCtx.font = 'bold 9px "JetBrains Mono", monospace';
-                const bw = tCtx.measureText(bLabel).width;
-                tCtx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-                tCtx.fillRect(bx - bw / 2 - 4, bz + 11, bw + 8, 14);
-                tCtx.strokeStyle = '#38bdf8';
-                tCtx.lineWidth = 1.0;
-                tCtx.strokeRect(bx - bw / 2 - 4, bz + 11, bw + 8, 14);
-                tCtx.fillStyle = '#7dd3fc';
-                tCtx.textAlign = 'center';
-                tCtx.fillText(bLabel, bx, bz + 21);
+                ctx.font = 'bold 9px "JetBrains Mono", monospace';
+                const bw = ctx.measureText(bLabel).width;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.fillRect(bx - bw / 2 - 4, bz + 11, bw + 8, 14);
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 1.0;
+                ctx.strokeRect(bx - bw / 2 - 4, bz + 11, bw + 8, 14);
+                ctx.fillStyle = '#7dd3fc';
+                ctx.textAlign = 'center';
+                ctx.fillText(bLabel, bx, bz + 21);
             }
 
             // Layer 11: Active Player Bot (Golden Chevron + Pulsing Ring + HUD Label)
-            tCtx.save();
+            ctx.save();
             // Pulsing aura ring
             const pPulse = Math.sin(now * 0.008) * 3.5;
-            tCtx.strokeStyle = 'rgba(250, 204, 21, 0.55)';
-            tCtx.lineWidth = 2.0;
-            tCtx.beginPath();
-            tCtx.arc(px, pz, 13 + pPulse, 0, Math.PI * 2);
-            tCtx.stroke();
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.55)';
+            ctx.lineWidth = 2.0;
+            ctx.beginPath();
+            ctx.arc(px, pz, 13 + pPulse, 0, Math.PI * 2);
+            ctx.stroke();
 
             // Player Chevron
-            tCtx.translate(px, pz);
-            tCtx.rotate(-player.heading + Math.PI);
-            tCtx.fillStyle = '#facc15';
-            tCtx.beginPath();
-            tCtx.moveTo(0, -11);
-            tCtx.lineTo(9.0, 9.5);
-            tCtx.lineTo(0, 4.5);
-            tCtx.lineTo(-9.0, 9.5);
-            tCtx.closePath();
-            tCtx.fill();
-            tCtx.strokeStyle = '#ffffff';
-            tCtx.lineWidth = 1.6;
-            tCtx.stroke();
-            tCtx.restore();
+            ctx.translate(px, pz);
+            ctx.rotate(-player.heading + Math.PI);
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.moveTo(0, -11);
+            ctx.lineTo(9.0, 9.5);
+            ctx.lineTo(0, 4.5);
+            ctx.lineTo(-9.0, 9.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+            ctx.restore();
 
             // Player Label Pill with Speed
             const pSpeedKmH = Math.round(Math.abs(player.speed) * 3.6);
             const pLabel = `${player.botType} (YOU) • ${pSpeedKmH} km/h`;
-            tCtx.font = 'bold 9.5px "JetBrains Mono", monospace';
-            const pw = tCtx.measureText(pLabel).width;
-            tCtx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-            tCtx.fillRect(px - pw / 2 - 5, pz - 25, pw + 10, 15);
-            tCtx.strokeStyle = '#facc15';
-            tCtx.lineWidth = 1.2;
-            tCtx.strokeRect(px - pw / 2 - 5, pz - 25, pw + 10, 15);
-            tCtx.fillStyle = '#fef08a';
-            tCtx.textAlign = 'center';
-            tCtx.fillText(pLabel, px, pz - 14);
+            ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+            const pw = ctx.measureText(pLabel).width;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+            ctx.fillRect(px - pw / 2 - 5, pz - 25, pw + 10, 15);
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 1.2;
+            ctx.strokeRect(px - pw / 2 - 5, pz - 25, pw + 10, 15);
+            ctx.fillStyle = '#fef08a';
+            ctx.textAlign = 'center';
+            ctx.fillText(pLabel, px, pz - 14);
 
             // Layer 12: Tactical Compass Rose (Upper Right)
             const compassX = w - 52;
             const compassY = 52;
-            tCtx.save();
-            tCtx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
-            tCtx.lineWidth = 1.5;
-            tCtx.beginPath();
-            tCtx.arc(compassX, compassY, 26, 0, Math.PI * 2);
-            tCtx.stroke();
+            ctx.save();
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(compassX, compassY, 26, 0, Math.PI * 2);
+            ctx.stroke();
 
             // North Arrow Pointer
-            tCtx.fillStyle = '#facc15';
-            tCtx.beginPath();
-            tCtx.moveTo(compassX, compassY - 22);
-            tCtx.lineTo(compassX + 5, compassY - 5);
-            tCtx.lineTo(compassX, compassY);
-            tCtx.lineTo(compassX - 5, compassY - 5);
-            tCtx.closePath();
-            tCtx.fill();
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.moveTo(compassX, compassY - 22);
+            ctx.lineTo(compassX + 5, compassY - 5);
+            ctx.lineTo(compassX, compassY);
+            ctx.lineTo(compassX - 5, compassY - 5);
+            ctx.closePath();
+            ctx.fill();
 
             // South Pointer
-            tCtx.fillStyle = '#64748b';
-            tCtx.beginPath();
-            tCtx.moveTo(compassX, compassY + 22);
-            tCtx.lineTo(compassX + 4, compassY + 5);
-            tCtx.lineTo(compassX, compassY);
-            tCtx.lineTo(compassX - 4, compassY + 5);
-            tCtx.closePath();
-            tCtx.fill();
+            ctx.fillStyle = '#64748b';
+            ctx.beginPath();
+            ctx.moveTo(compassX, compassY + 22);
+            ctx.lineTo(compassX + 4, compassY + 5);
+            ctx.lineTo(compassX, compassY);
+            ctx.lineTo(compassX - 4, compassY + 5);
+            ctx.closePath();
+            ctx.fill();
 
-            tCtx.fillStyle = '#facc15';
-            tCtx.font = 'bold 10px "JetBrains Mono", monospace';
-            tCtx.textAlign = 'center';
-            tCtx.fillText('N', compassX, compassY - 28);
-            tCtx.fillStyle = '#94a3b8';
-            tCtx.fillText('S', compassX, compassY + 37);
-            tCtx.fillText('W', compassX - 35, compassY + 3.5);
-            tCtx.fillText('E', compassX + 35, compassY + 3.5);
-            tCtx.restore();
+            ctx.fillStyle = '#facc15';
+            ctx.font = 'bold 10px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('N', compassX, compassY - 28);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('S', compassX, compassY + 37);
+            ctx.fillText('W', compassX - 35, compassY + 3.5);
+            ctx.fillText('E', compassX + 35, compassY + 3.5);
+            ctx.restore();
 
             // Layer 13: Tactical Scale Bar (Lower Left)
             const sbX = 28;
             const sbY = h - 26;
             const barLength = 500 * mapScale;
-            tCtx.strokeStyle = '#38bdf8';
-            tCtx.lineWidth = 2.0;
-            tCtx.beginPath();
-            tCtx.moveTo(sbX, sbY);
-            tCtx.lineTo(sbX + barLength, sbY);
-            tCtx.moveTo(sbX, sbY - 4);
-            tCtx.lineTo(sbX, sbY + 4);
-            tCtx.moveTo(sbX + barLength, sbY - 4);
-            tCtx.lineTo(sbX + barLength, sbY + 4);
-            tCtx.stroke();
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 2.0;
+            ctx.beginPath();
+            ctx.moveTo(sbX, sbY);
+            ctx.lineTo(sbX + barLength, sbY);
+            ctx.moveTo(sbX, sbY - 4);
+            ctx.lineTo(sbX, sbY + 4);
+            ctx.moveTo(sbX + barLength, sbY - 4);
+            ctx.lineTo(sbX + barLength, sbY + 4);
+            ctx.stroke();
 
-            tCtx.fillStyle = '#38bdf8';
-            tCtx.font = 'bold 9px "JetBrains Mono", monospace';
-            tCtx.textAlign = 'left';
-            tCtx.fillText('0', sbX - 2, sbY - 6);
-            tCtx.textAlign = 'right';
-            tCtx.fillText('500M', sbX + barLength + 2, sbY - 6);
+            ctx.fillStyle = '#38bdf8';
+            ctx.font = 'bold 9px "JetBrains Mono", monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText('0', sbX - 2, sbY - 6);
+            ctx.textAlign = 'right';
+            ctx.fillText('500M', sbX + barLength + 2, sbY - 6);
         }
 
         /***********************************************************************

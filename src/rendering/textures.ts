@@ -4,7 +4,7 @@ import * as THREE from "three";
 export function makeHazardStripeTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 64;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
             ctx.fillStyle = '#ffcc00';
             ctx.fillRect(0, 0, 256, 64);
             ctx.fillStyle = '#0f172a';
@@ -28,7 +28,7 @@ export function makeHazardStripeTexture() {
         export function makeGrilleTexture() {
             const c = document.createElement('canvas');
             c.width = 128; c.height = 128;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
             ctx.fillStyle = '#f8fafc';
             ctx.fillRect(0, 0, 128, 128);
             ctx.fillStyle = '#0f172a';
@@ -55,7 +55,7 @@ export function makeHazardStripeTexture() {
         export function makeRescueEmblemTexture(bgHex = '#e81e25', accentHex = '#ffcc00') {
             const c = document.createElement('canvas');
             c.width = 128; c.height = 128;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
             ctx.fillStyle = bgHex;
             ctx.fillRect(0, 0, 128, 128);
 
@@ -93,7 +93,7 @@ export function makeHazardStripeTexture() {
         export function makeHelipadTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
             ctx.fillStyle = '#334155';
             ctx.fillRect(0, 0, 256, 256);
             ctx.strokeStyle = '#0f172a';
@@ -123,7 +123,7 @@ export function makeHazardStripeTexture() {
         export function makeBoulderFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Silver-gray metallic faceplate base
             ctx.fillStyle = '#cbd5e1';
@@ -198,7 +198,7 @@ export function makeHazardStripeTexture() {
         export function makeHeatwaveFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Silver metallic faceplate
             ctx.fillStyle = '#cbd5e1';
@@ -281,7 +281,7 @@ export function makeHazardStripeTexture() {
         export function makeChaseFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Crisp White-Silver Police Faceplate
             ctx.fillStyle = '#f8fafc';
@@ -343,7 +343,7 @@ export function makeHazardStripeTexture() {
         export function makeBladesFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Light Silver Metallic Faceplate
             ctx.fillStyle = '#e2e8f0';
@@ -419,7 +419,7 @@ export function makeHazardStripeTexture() {
         export function makeCartoonWindshieldTexture(tintHex = '#38bdf8') {
             const c = document.createElement('canvas');
             c.width = 128; c.height = 128;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
             ctx.fillStyle = '#0f172a';
             ctx.fillRect(0, 0, 128, 128);
             ctx.fillStyle = tintHex;
@@ -453,7 +453,7 @@ export function makeHazardStripeTexture() {
         export function makeOptimusFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Deep Metallic Blue Helmet Faceplate Backing
             ctx.fillStyle = '#1d4ed8';
@@ -536,7 +536,7 @@ export function makeHazardStripeTexture() {
         export function makeBumblebeeFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Vibrant Bumblebee Yellow Helmet Face Backing
             const bgGrad = ctx.createLinearGradient(0, 0, 0, 256);
@@ -657,7 +657,7 @@ export function makeHazardStripeTexture() {
         export function makeBumblebeeChestTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Bright Yellow Hood
             const hoodGrad = ctx.createLinearGradient(0, 0, 0, 256);
@@ -751,7 +751,7 @@ export function makeHazardStripeTexture() {
         export function makeBumblebeeWingTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Bright Yellow Car Door Body
             const bgGrad = ctx.createLinearGradient(0, 0, 0, 256);
@@ -802,7 +802,7 @@ export function makeHazardStripeTexture() {
         export function makeBumblebeeShinTexture() {
             const c = document.createElement('canvas');
             c.width = 128; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Bright Yellow Shin Armor
             ctx.fillStyle = '#facc15';
@@ -846,7 +846,7 @@ export function makeHazardStripeTexture() {
         export function makeBumblebeeWheelTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Dark Charcoal Tire Rubber
             ctx.fillStyle = '#0f172a';
@@ -899,7 +899,7 @@ export function makeHazardStripeTexture() {
         export function makeBlurrFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Royal Purple Speedster Helmet Frame
             const helmGrad = ctx.createLinearGradient(0, 0, 0, 256);
@@ -1062,7 +1062,7 @@ export function makeHazardStripeTexture() {
         export function makeBlurrChestTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Royal Purple Chest Panel
             ctx.fillStyle = '#7c3aed';
@@ -1145,7 +1145,7 @@ export function makeHazardStripeTexture() {
         export function makeBlurrShoulderTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Royal Purple Shoulder Background
             ctx.fillStyle = '#7c3aed';
@@ -1192,7 +1192,7 @@ export function makeHazardStripeTexture() {
         export function makeBlurrShinTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Royal Purple Shin Panel
             ctx.fillStyle = '#7c3aed';
@@ -1251,7 +1251,7 @@ export function makeHazardStripeTexture() {
         export function makeBlurrTurbineWheelTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Dark Charcoal Tire Recess
             ctx.fillStyle = '#0f172a';
@@ -1339,7 +1339,7 @@ export function makeHazardStripeTexture() {
         export function makeSalvageFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Helmet Crown & Frame: Vibrant Electric Lime-Green / Chartreuse (Matches TV Show)
             ctx.fillStyle = '#cbf827';
@@ -1435,7 +1435,7 @@ export function makeHazardStripeTexture() {
         export function makeSalvageChestTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Vibrant Electric Lime-Green Background
             ctx.fillStyle = '#cbf827';
@@ -1463,7 +1463,7 @@ export function makeHazardStripeTexture() {
         export function makeHighTideFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Royal Blue Maritime Autobot Helmet
             const helmGrad = ctx.createLinearGradient(0, 0, 0, 256);
@@ -1557,7 +1557,7 @@ export function makeHazardStripeTexture() {
         export function makeHighTideChestTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Royal Blue Torso Hull
             const hullGrad = ctx.createLinearGradient(0, 0, 0, 256);
@@ -1629,7 +1629,7 @@ export function makeHazardStripeTexture() {
         export function makeHighTideShoulderTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Royal Blue Shoulder Armor
             ctx.fillStyle = '#1d4ed8';
@@ -1696,7 +1696,7 @@ export function makeHazardStripeTexture() {
         export function makeMegaBotChestTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Naval White Armored Bezel Background
             ctx.fillStyle = '#f8fafc';
@@ -1764,7 +1764,7 @@ export function makeHazardStripeTexture() {
         export function makeMegaBotShoulderTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Pure Naval White Shoulder Armor
             ctx.fillStyle = '#ffffff';
@@ -1799,7 +1799,7 @@ export function makeHazardStripeTexture() {
         export function makeMegaShipHullTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Crisp White Hull Plate
             ctx.fillStyle = '#ffffff';
@@ -1862,7 +1862,7 @@ export function makeHazardStripeTexture() {
         export function makeQuickshadowFaceTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Sleek Glossy Charcoal-Black Helmet Frame
             const helmGrad = ctx.createLinearGradient(0, 0, 0, 256);
@@ -1989,7 +1989,7 @@ export function makeHazardStripeTexture() {
         export function makeQuickshadowChestTexture() {
             const c = document.createElement('canvas');
             c.width = 256; c.height = 256;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // Pearlescent White Sculpted Bust
             const hoodGrad = ctx.createLinearGradient(0, 0, 0, 256);

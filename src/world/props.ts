@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { getTerrainHeight, getSurfaceHeight } from './terrain.js';
 import { toonGrad3, matDarkSteel, matInkOutline, OUTLINE_LAYER } from '../rendering/materials.js';
 import { mergeStaticMeshesInGroup, freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
-import { player, worldColliders } from '../state/gameState.js';
+import { player, worldColliders, registerCullableObject } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import {
     streetlampGeos,
@@ -14,7 +14,26 @@ import {
 
 export { createTrafficConeMesh, createBarricadeMesh, matStreetlampBulb };
 
-export const interactiveRoadProps = [];
+export interface InteractiveRoadProp {
+    mesh: THREE.Group;
+    origX: number;
+    origY: number;
+    origZ: number;
+    x: number;
+    y: number;
+    z: number;
+    vx: number;
+    vy: number;
+    vz: number;
+    rxv: number;
+    ryv: number;
+    rzv: number;
+    isCone: boolean;
+    knocked: boolean;
+    radius: number;
+}
+
+export const interactiveRoadProps: InteractiveRoadProp[] = [];
 
         export const streetlampCoords = [
             // North-South Central Avenue (x = ±14, safely clear of EW Highway at z=25)
@@ -37,9 +56,9 @@ export const interactiveRoadProps = [];
             [-14, -1145], [14, -1145], [-14, -1095], [14, -1095]
         ];
 
-        if (typeof window !== 'undefined') (window as any).matStreetlampBulb = matStreetlampBulb;
+        if (typeof window !== 'undefined') window.matStreetlampBulb = matStreetlampBulb;
 
-        export function buildInstancedStreetlamps(scene) {
+        export function buildInstancedStreetlamps(scene?: THREE.Scene | null) {
             const count = streetlampCoords.length;
             const { postGeo, bulbGeo, capGeo } = streetlampGeos;
 
@@ -101,14 +120,15 @@ export const interactiveRoadProps = [];
             grp.add(iOutlines);
             grp.add(iCapOutlines);
             freezeStaticHierarchy(grp);
-            (scene || (typeof window !== "undefined" ? window.scene : null)).add(grp);
+            const targetScene = scene || (typeof window !== "undefined" ? window.scene : null);
+            if (targetScene) targetScene.add(grp);
         }
         // buildInstancedStreetlamps called via initProps
 
 
         // interactiveRoadProps exported above
 
-        export function initInteractiveRoadProps(scene) {
+        export function initInteractiveRoadProps(scene?: THREE.Scene | null) {
             const coneSpawns = [
                 { x: 1125, z: 536 }, { x: 1135, z: 536 }, { x: 1145, z: 536 },
                 { x: 1125, z: 544 }, { x: 1135, z: 544 }, { x: 1145, z: 544 },
@@ -124,7 +144,8 @@ export const interactiveRoadProps = [];
                 mesh.matrixAutoUpdate = true;
                 const groundY = getSurfaceHeight(p.x, p.z);
                 mesh.position.set(p.x, groundY, p.z);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
+                const targetScene = scene || (typeof window !== "undefined" ? window.scene : null);
+                if (targetScene) targetScene.add(mesh);
                 registerCullableObject(mesh, p.x, groundY, p.z, 14);
                 interactiveRoadProps.push({
                     mesh,
@@ -156,7 +177,8 @@ export const interactiveRoadProps = [];
                 const groundY = getSurfaceHeight(p.x, p.z);
                 mesh.position.set(p.x, groundY, p.z);
                 mesh.rotation.y = p.rotY || 0;
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
+                const targetScene = scene || (typeof window !== "undefined" ? window.scene : null);
+                if (targetScene) targetScene.add(mesh);
                 registerCullableObject(mesh, p.x, groundY, p.z, 18);
                 interactiveRoadProps.push({
                     mesh,
@@ -171,7 +193,7 @@ export const interactiveRoadProps = [];
             });
         }
 
-        export function updateInteractiveRoadProps(dt) {
+        export function updateInteractiveRoadProps(dt: number) {
             const playerSpeed = Math.abs(player.speed);
             const playerHeading = player.heading;
 
@@ -230,7 +252,7 @@ export const interactiveRoadProps = [];
         }
 
 
-export function initProps(scene) {
+export function initProps(scene?: THREE.Scene | null) {
     const s = scene || (typeof window !== 'undefined' ? window.scene : null);
     if (!s) return;
 

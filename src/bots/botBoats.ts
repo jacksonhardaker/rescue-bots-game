@@ -1,6 +1,45 @@
 // 3D Cel-Shaded Boat Mode Builder & Morph Animation System for All Rescue Bots
 import * as THREE from 'three';
 import { toonGrad3, toonGrad4 } from '../rendering/materials.js';
+import type { BotRig } from '../types/game.js';
+
+interface BoatBotRig extends BotRig {
+    chaseBoatHull?: THREE.Object3D;
+    chaseBridgeGroup?: THREE.Object3D;
+    chaseRadarScanner?: THREE.Object3D;
+    bladesHoverSkirt?: THREE.Object3D;
+    bladesHoverDeck?: THREE.Object3D;
+    bladesLeftFanRotor?: THREE.Object3D;
+    bladesRightFanRotor?: THREE.Object3D;
+    boulderBargeHull?: THREE.Object3D;
+    boulderPushKnees?: THREE.Object3D;
+    boulderDredgeGantry?: THREE.Object3D;
+    boulderPilothouse?: THREE.Object3D;
+    boulderLeftPropRotor?: THREE.Object3D;
+    boulderRightPropRotor?: THREE.Object3D;
+    optimusFlagshipHull?: THREE.Object3D;
+    optimusBridge?: THREE.Object3D;
+    optimusDelugeTurrets?: THREE.Object3D;
+    optimusLatticeMast?: THREE.Object3D;
+    optimusNavRadar?: THREE.Object3D;
+    bumblebeeRacingHull?: THREE.Object3D;
+    bumblebeeCockpit?: THREE.Object3D;
+    bumblebeeRacingWing?: THREE.Object3D;
+    blurrFuselage?: THREE.Object3D;
+    blurrBowFoil?: THREE.Object3D;
+    blurrSternFoil?: THREE.Object3D;
+    blurrTurbines?: THREE.Object3D;
+    salvageCatamaranHulls?: THREE.Object3D;
+    salvageConveyor?: THREE.Object3D;
+    salvageHopper?: THREE.Object3D;
+    salvageLeftPaddlewheel?: THREE.Object3D;
+    salvageRightPaddlewheel?: THREE.Object3D;
+    quickshadowStealthHull?: THREE.Object3D;
+    quickshadowDeckhouse?: THREE.Object3D;
+    quickshadowExhaust?: THREE.Object3D;
+    starspeedJetSkiHull?: THREE.Object3D;
+    starspeedJetSkiBars?: THREE.Object3D;
+}
 
 // Reusable Shared Materials
 const matChrome = new THREE.MeshToonMaterial({ color: 0xe2e8f0, gradientMap: toonGrad4 });
@@ -18,7 +57,7 @@ const matTintedGlass = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap
 // ---------------------------------------------------------------------
 // 1. CHASE: COAST GUARD INTERCEPTOR (RB-M / Defender-Class Response Boat)
 // ---------------------------------------------------------------------
-export function buildChaseBoat(parts: any) {
+export function buildChaseBoat(parts: BotRig) {
     const boatGroup = new THREE.Group();
     boatGroup.userData.isBoatPart = true;
     boatGroup.visible = false;
@@ -159,7 +198,7 @@ export function buildChaseBoat(parts: any) {
 // ---------------------------------------------------------------------
 // 2. BLADES: AIR-SEA RESCUE HOVERCRAFT (Griffon 2000TD / AP1-88 Style)
 // ---------------------------------------------------------------------
-export function buildBladesBoat(parts: any) {
+export function buildBladesBoat(parts: BotRig) {
     const boatGroup = new THREE.Group();
     boatGroup.userData.isBoatPart = true;
     boatGroup.visible = false;
@@ -309,7 +348,7 @@ export function buildBladesBoat(parts: any) {
 // ---------------------------------------------------------------------
 // 3. BOULDER: CHANNEL DREDGER (Heavy Push-Boat & Dredging Barge)
 // ---------------------------------------------------------------------
-export function buildBoulderBoat(parts: any) {
+export function buildBoulderBoat(parts: BotRig) {
     const boatGroup = new THREE.Group();
     boatGroup.userData.isBoatPart = true;
     boatGroup.visible = false;
@@ -447,7 +486,7 @@ export function buildBoulderBoat(parts: any) {
 // ---------------------------------------------------------------------
 // 4. OPTIMUS PRIME: OFFSHORE COMMAND FLAGSHIP (Heavy Naval Cutter)
 // ---------------------------------------------------------------------
-export function buildOptimusBoat(parts: any) {
+export function buildOptimusBoat(parts: BotRig) {
     const boatGroup = new THREE.Group();
     boatGroup.userData.isBoatPart = true;
     boatGroup.visible = false;
@@ -569,7 +608,7 @@ export function buildOptimusBoat(parts: any) {
 // ---------------------------------------------------------------------
 // 5. BUMBLEBEE: HIGH-SPEED OFFSHORE JET BOAT (Cigarette / Donzi Racing Boat)
 // ---------------------------------------------------------------------
-export function buildBumblebeeBoat(parts: any) {
+export function buildBumblebeeBoat(parts: BotRig) {
     const boatGroup = new THREE.Group();
     boatGroup.userData.isBoatPart = true;
     boatGroup.visible = false;
@@ -684,7 +723,7 @@ export function buildBumblebeeBoat(parts: any) {
 // ---------------------------------------------------------------------
 // 6. BLURR: SUPERSONIC FOIL-BORNE HYDROFOIL RACER (SailGP F50 Style)
 // ---------------------------------------------------------------------
-export function buildBlurrBoat(parts: any) {
+export function buildBlurrBoat(parts: BotRig) {
     const boatGroup = new THREE.Group();
     boatGroup.userData.isBoatPart = true;
     boatGroup.visible = false;
@@ -779,7 +818,7 @@ export function buildBlurrBoat(parts: any) {
 // ---------------------------------------------------------------------
 // 7. SALVAGE: TRASH COLLECTOR CATAMARAN (Mr. Trash Wheel / Skimmer Style)
 // ---------------------------------------------------------------------
-export function buildSalvageBoat(parts: any) {
+export function buildSalvageBoat(parts: BotRig) {
     const boatGroup = new THREE.Group();
     boatGroup.userData.isBoatPart = true;
     boatGroup.visible = false;
@@ -898,7 +937,7 @@ export function buildSalvageBoat(parts: any) {
 // ---------------------------------------------------------------------
 // 8. QUICKSHADOW: STEALTH WAVE-PIERCING INTERCEPTOR (M80 Stiletto Style)
 // ---------------------------------------------------------------------
-export function buildQuickshadowBoat(parts: any) {
+export function buildQuickshadowBoat(parts: BotRig) {
     const boatGroup = new THREE.Group();
     boatGroup.userData.isBoatPart = true;
     boatGroup.visible = false;
@@ -986,7 +1025,7 @@ export function buildQuickshadowBoat(parts: any) {
 // ---------------------------------------------------------------------
 // 9. ANIMATE BOAT MORPH TRANSFORMATION FOR ALL BOTS
 // ---------------------------------------------------------------------
-export function animateBotBoatMorph(rig: any, boatMorph: number, now: number, dt: number) {
+export function animateBotBoatMorph(rig: BoatBotRig, boatMorph: number, now: number, _dt: number) {
     if (!rig || rig.botType === 'HIGHTIDE') return;
 
     const b = Math.max(0, Math.min(1, boatMorph));
@@ -1015,7 +1054,7 @@ export function animateBotBoatMorph(rig: any, boatMorph: number, now: number, dt
             rig.rightLegWheelMount.visible = !rig.isMega;
         }
         if (rig.wheels && Array.isArray(rig.wheels) && !rig.isMega) {
-            rig.wheels.forEach((w: any) => {
+            rig.wheels.forEach((w: THREE.Object3D) => {
                 if (w && !w.userData?.isBoatPart) {
                     w.scale.setScalar(1.0);
                     w.visible = true;
@@ -1060,7 +1099,7 @@ export function animateBotBoatMorph(rig: any, boatMorph: number, now: number, dt
         rig.rightLegWheelMount.visible = wheelVisible;
     }
     if (rig.wheels && Array.isArray(rig.wheels)) {
-        rig.wheels.forEach((w: any) => {
+        rig.wheels.forEach((w: THREE.Object3D) => {
             if (w && !w.userData?.isBoatPart) {
                 w.scale.setScalar(wheelScale);
                 w.visible = wheelVisible;
@@ -1238,7 +1277,7 @@ export function animateBotBoatMorph(rig: any, boatMorph: number, now: number, dt
 }
 
 // 9. STARSPEED: COSMIC HYDRO JET SKI
-export function buildStarspeedBoat(parts) {
+export function buildStarspeedBoat(parts: BotRig) {
     const boatGroup = new THREE.Group();
     boatGroup.visible = false;
     parts.boatGroup = boatGroup;

@@ -1,5 +1,6 @@
 // Underground Cavern & Braided Tunnel System Game Mode
 import * as THREE from 'three';
+import type { PlayerState } from '../types/game.js';
 import { scene, camera, renderer } from '../rendering/scene.js';
 import { toonGrad3, matInkOutline, applyCartoonInkOutlines, OUTLINE_LAYER } from '../rendering/materials.js';
 import { player, buddyBot, botRigs, worldState } from '../state/gameState.js';
@@ -10,7 +11,7 @@ import {
     spawnSparkleGlints, spawnEnergonLightningParticles
 } from './emergencies.js';
 import { sfx } from '../audio/soundFX.js';
-import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
+import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
 import { SVG_ICONS } from '../ui/icons.js';
 import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
@@ -2021,7 +2022,7 @@ export function resolveUndergroundPointCollision(pos: { x: number; z: number }, 
     }
 }
 
-export function resolveUndergroundCollisions(p: any, dt: number, now: number) {
+export function resolveUndergroundCollisions(p: PlayerState, dt: number, now: number) {
     if (!_built) return;
     const playerRadius = (p.mode === 'VEHICLE') ? 2.8 : 2.4;
 
@@ -2067,8 +2068,9 @@ export function resolveUndergroundCollisions(p: any, dt: number, now: number) {
                     p.knockbackVz = hit.nz * 16.5;
                     p.speed *= 0.35;
                     spawnBurstParticles(p.pos.x, p.pos.y + 1.4, p.pos.z, 0xfacc15, 10, 1.1);
-                    if (!p._lastDinoNudgeToast || now - p._lastDinoNudgeToast > 4000) {
-                        p._lastDinoNudgeToast = now;
+                    const pExt = p as PlayerState & { _lastDinoNudgeToast?: number };
+                    if (!pExt._lastDinoNudgeToast || now - pExt._lastDinoNudgeToast > 4000) {
+                        pExt._lastDinoNudgeToast = now;
                         showToast(`${d.name.toUpperCase()} NUDGE!`, `Whoa! That friendly giant gave you a playful dino bump!`);
                     }
                 }
@@ -2144,7 +2146,7 @@ export function checkUndergroundBoulderStrike(x: number, y: number, z: number, h
                     ? 'Boulder shattered the cracked wall into a secret glowing chamber!'
                     : 'Boulder blasted a brand new tunnel shortcut through solid rock!'
             );
-            triggerNPCSpeech('BOULDER', 'Excavation Bot', 'Ha-ha! Nothing stands in the way of my rotary drill and dozer blade!', player, true);
+            triggerNPCSpeech('BOULDER', 'Excavation Bot', 'Ha-ha! Nothing stands in the way of my rotary drill and dozer blade!', player as unknown as SpeechTarget, true);
         }
     }
 
@@ -2164,8 +2166,8 @@ export function checkUndergroundBoulderStrike(x: number, y: number, z: number, h
         }
     }
 
-    if (brokeAnyWall && typeof (window as any).renderMinimap === 'function') {
-        (window as any).renderMinimap();
+    if (brokeAnyWall && typeof window.renderMinimap === 'function') {
+        window.renderMinimap();
     }
 }
 
@@ -2292,10 +2294,11 @@ function setTransitionOverlay(visible: boolean, direction: 'DOWN' | 'UP') {
 }
 
 export function syncUndergroundBotRigs(oldBotType?: string, newBotType?: string) {
-    if (!botRigs) return;
+    const rigs = botRigs;
+    if (!rigs) return;
     if (worldState.activeArea === 'UNDERGROUND') {
-        Object.keys(botRigs).forEach(k => {
-            const rig = botRigs[k];
+        Object.keys(rigs).forEach(k => {
+            const rig = rigs[k];
             if (!rig || !rig.root) return;
             const keepInUnderground = (k === player.botType || k === buddyBot.botType);
             if (keepInUnderground && rig.root.parent !== undergroundScene) {
@@ -2306,8 +2309,8 @@ export function syncUndergroundBotRigs(oldBotType?: string, newBotType?: string)
             }
         });
     } else {
-        Object.keys(botRigs).forEach(k => {
-            const rig = botRigs[k];
+        Object.keys(rigs).forEach(k => {
+            const rig = rigs[k];
             if (rig && rig.root && rig.root.parent !== scene) {
                 scene.add(rig.root);
             }
@@ -2355,7 +2358,7 @@ export function installSigmaParts() {
             'HEATWAVE',
             'Rescue Bots Leader',
             'Systems green, thrusters ignited! The Sigma is flight-ready—let us launch into orbit!',
-            player,
+            player as unknown as SpeechTarget,
             true
         );
     } else {
@@ -2368,7 +2371,7 @@ export function installSigmaParts() {
             'BOULDER',
             'Chief Engineer',
             `Great work! ${installedCount} of 3 Sigma systems restored. Only ${remaining} more part${remaining > 1 ? 's' : ''} to go!`,
-            player,
+            player as unknown as SpeechTarget,
             true
         );
     }
@@ -2382,8 +2385,8 @@ export function triggerSigmaCavernAction() {
     if (progression.sigmaRepaired) {
         if (_onLaunchSigma) {
             _onLaunchSigma();
-        } else if (typeof (window as any).startSpaceTransition === 'function') {
-            (window as any).startSpaceTransition('TO_SPACE');
+        } else if (typeof window.startSpaceTransition === 'function') {
+            (window.startSpaceTransition as (mode: string) => void)('TO_SPACE');
         }
         return;
     }
@@ -2498,7 +2501,7 @@ export function swapToUnderground() {
     syncUndergroundBotRigs();
     setActiveParticleScene(undergroundScene);
     if (_reparentSharedFX) _reparentSharedFX(undergroundScene);
-    const wp = _getWaypointGroup ? _getWaypointGroup() : (window as any).waypointGroup;
+    const wp = _getWaypointGroup ? _getWaypointGroup() : window.waypointGroup;
     if (wp) wp.visible = false;
 
     if (_boreholeDecal) _boreholeDecal.visible = false;
@@ -2514,8 +2517,8 @@ export function swapToUnderground() {
     }
 
     updateCavernHUD();
-    if (typeof (window as any).syncHUDToActiveBot === 'function') (window as any).syncHUDToActiveBot();
-    if (typeof (window as any).renderMinimap === 'function') (window as any).renderMinimap();
+    if (typeof window.syncHUDToActiveBot === 'function') (window.syncHUDToActiveBot as () => void)();
+    if (typeof window.renderMinimap === 'function') window.renderMinimap();
 }
 
 export function swapToSurface(immediate = false) {
@@ -2526,7 +2529,7 @@ export function swapToSurface(immediate = false) {
 
     const sx = worldState.savedSurfacePos?.x ?? 0;
     const sz = worldState.savedSurfacePos?.z ?? -15;
-    const terrainSurfY = (window as any).getSurfaceHeight?.(sx, sz) ?? 5;
+    const terrainSurfY = typeof window.getSurfaceHeight === 'function' ? (window.getSurfaceHeight as (x: number, z: number) => number)(sx, sz) : 5;
     const sy = Math.max(worldState.savedSurfacePos?.y ?? 5, terrainSurfY);
     player.pos.set(sx, sy, sz);
     player.heading = worldState.savedSurfaceHeading || 0;
@@ -2550,7 +2553,7 @@ export function swapToSurface(immediate = false) {
     syncUndergroundBotRigs();
     setActiveParticleScene(scene);
     if (_reparentSharedFX) _reparentSharedFX(scene);
-    const wp = _getWaypointGroup ? _getWaypointGroup() : (window as any).waypointGroup;
+    const wp = _getWaypointGroup ? _getWaypointGroup() : window.waypointGroup;
     if (wp) wp.visible = false;
     if (_boreholeDecal) _boreholeDecal.visible = false;
 
@@ -2565,8 +2568,8 @@ export function swapToSurface(immediate = false) {
     }
 
     updateCavernHUD();
-    if (typeof (window as any).syncHUDToActiveBot === 'function') (window as any).syncHUDToActiveBot();
-    if (typeof (window as any).renderMinimap === 'function') (window as any).renderMinimap();
+    if (typeof window.syncHUDToActiveBot === 'function') (window.syncHUDToActiveBot as () => void)();
+    if (typeof window.renderMinimap === 'function') window.renderMinimap();
 }
 
 export function triggerBoulderDrillTransition() {
@@ -2580,9 +2583,9 @@ export function triggerBoulderDrillTransition() {
 
     if (worldState.activeArea === 'SURFACE') {
         // Check surface water via global terrain helper (never check underground lagoon coords on surface!)
-        const isSurfaceWater = (window as any).isPointInWater?.(player.pos.x, player.pos.z);
-        const surfY = (window as any).getSurfaceHeight?.(player.pos.x, player.pos.z) ?? player.pos.y;
-        if (isSurfaceWater || player.targetBoatMorph > 0.3 || surfY < 0.25) {
+        const isSurfaceWater = typeof window.isPointInWater === 'function' ? (window.isPointInWater as (x: number, z: number) => boolean)(player.pos.x, player.pos.z) : false;
+        const surfY = typeof window.getSurfaceHeight === 'function' ? (window.getSurfaceHeight as (x: number, z: number) => number)(player.pos.x, player.pos.z) : player.pos.y;
+        if (isSurfaceWater || (player.targetBoatMorph ?? 0) > 0.3 || surfY < 0.25) {
             showToast('SOLID GROUND REQUIRED', 'Drive onto dry land before drilling into the underground caverns!');
             sfx.playSpeechPop();
             return;
@@ -2623,7 +2626,7 @@ export function exitUndergroundViaShaft() {
         setTransitionOverlay(false, 'UP');
         _transitionLock = false;
         showToast('BACK ON GRIFFIN ROCK!', 'Returned via Sunlit Cavern Exit Shaft!');
-        triggerNPCSpeech('HEATWAVE', 'Rescue Bots Leader', 'Welcome back to the surface! Ready for island patrol!', player, true);
+        triggerNPCSpeech('HEATWAVE', 'Rescue Bots Leader', 'Welcome back to the surface! Ready for island patrol!', player as unknown as SpeechTarget, true);
     }, 450);
 }
 
@@ -2652,13 +2655,15 @@ function startDrillAnimation(direction: 'DOWN' | 'UP') {
     const boulderRig = botRigs?.BOULDER;
     if (boulderRig) {
         const isVeh = player.mode === 'VEHICLE' || player.morph >= 0.5;
-        if (boulderRig.botDrillAssembly) {
-            boulderRig.botDrillAssembly.visible = !isVeh;
-            if (!isVeh) boulderRig.botDrillAssembly.scale.setScalar(1.0);
+        const botDrill = boulderRig.botDrillAssembly as THREE.Object3D | undefined;
+        const vehDrill = boulderRig.vehDrillAssembly as THREE.Object3D | undefined;
+        if (botDrill) {
+            botDrill.visible = !isVeh;
+            if (!isVeh) botDrill.scale.setScalar(1.0);
         }
-        if (boulderRig.vehDrillAssembly) {
-            boulderRig.vehDrillAssembly.visible = isVeh;
-            if (isVeh) boulderRig.vehDrillAssembly.scale.setScalar(1.22);
+        if (vehDrill) {
+            vehDrill.visible = isVeh;
+            if (isVeh) vehDrill.scale.setScalar(1.22);
         }
     }
 
@@ -2671,7 +2676,7 @@ function startDrillAnimation(direction: 'DOWN' | 'UP') {
     sfx.playDrillBore();
     if (direction === 'DOWN') {
         showToast('ROTARY DRILL ENGAGED!', 'Boulder is boring down into the Griffin Rock Caverns!');
-        triggerNPCSpeech('BOULDER', 'Excavation Bot', 'Rotary auger online! Drilling straight down into the deep caverns!', player, true);
+        triggerNPCSpeech('BOULDER', 'Excavation Bot', 'Rotary auger online! Drilling straight down into the deep caverns!', player as unknown as SpeechTarget, true);
     } else {
         showToast('DRILLING TO SURFACE!', 'Boulder is punching back through the cavern roof!');
     }
@@ -2828,7 +2833,7 @@ export function updateUnderground(dt: number, now: number) {
                 foundCount >= 3
                     ? `That is all 3 Sigma components! Return to the Starship Sigma to complete repairs and launch!`
                     : `Recovered the ${part.name}! ${3 - foundCount} Sigma part${3 - foundCount > 1 ? 's' : ''} remaining in the caverns.`,
-                player,
+                player as unknown as SpeechTarget,
                 true
             );
             updateCavernHUD();
@@ -2982,7 +2987,7 @@ export function updateUnderground(dt: number, now: number) {
                 spawnSparkleGlints(disc.x, 5.0, disc.z, 24);
                 spawnBurstParticles(disc.x, 5.0, disc.z, 0xfacc15, 18, 1.5);
                 showToast(`DISCOVERY (${progression.discoveredCavernLandmarks.length}/${CAVERN_DISCOVERIES.length}): ${disc.name.toUpperCase()}`, disc.subtitle);
-                triggerNPCSpeech(disc.speechSpeaker, disc.speechRole, disc.speechLine, player, true);
+                triggerNPCSpeech(disc.speechSpeaker, disc.speechRole, disc.speechLine, player as unknown as SpeechTarget, true);
             }
         }
     }

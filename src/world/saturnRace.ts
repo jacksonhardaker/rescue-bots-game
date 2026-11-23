@@ -1,5 +1,6 @@
 // Saturn Ring Racing Circuit in Bot Mode (worldState.activeArea === 'SATURN_RING_RACE')
 import * as THREE from 'three';
+import type { BotRig } from '../types/game.js';
 import { scene, camera, renderer } from '../rendering/scene.js';
 import { toonGrad3, applyCartoonInkOutlines } from '../rendering/materials.js';
 import { player, buddyBot, botRigs, input, worldState } from '../state/gameState.js';
@@ -8,7 +9,7 @@ import { buildRescueBotModel, applyBotRigMorph } from '../bots/botRigs.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { setActiveParticleScene, spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
 import { sfx } from '../audio/soundFX.js';
-import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
+import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 import { isActionActive } from '../settings/settings.js';
 
 export const saturnRaceScene = new THREE.Scene();
@@ -36,7 +37,7 @@ interface IceMoonlet {
 
 interface RivalRacer {
     botType: string;
-    rig: any;
+    rig: BotRig;
     angle: number;
     totalAngle: number;
     radialOffset: number;
@@ -54,6 +55,7 @@ export const saturnRaceState = {
     speed: 44,          // Linear speed along ring (m/s)
     radialVel: 0,
     boostTimer: 0,
+    rockSlowTimer: 0,   // Substantial slowdown after hitting an ice-moonlet
     jumpY: 0,
     jumpVy: 0,
     lap: 1,
@@ -63,7 +65,7 @@ export const saturnRaceState = {
     currentLapTime: 0,
     bestLapTime: null as number | null,
     finished: false,
-    touchSteer: 0,      // -1 left (inner), +1 right (outer)
+    touchSteer: 0,      // -1 left (outer lane), +1 right (inner lane)
     touchBoost: false
 };
 
@@ -307,7 +309,7 @@ function spawnSaturnRivals() {
 
     chosen.forEach((botType, idx) => {
         const rig = buildRescueBotModel(botType);
-        applyBotRigMorph(rig, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        applyBotRigMorph(rig, 1, 0, 0, 0, 0, 0, 0, 0, 0);
         saturnRaceScene.add(rig.root);
         const startAng = 0.03 + idx * 0.025;
         const lane = (idx - 1) * 8.5;
@@ -333,6 +335,7 @@ export function resetSaturnRace() {
     saturnRaceState.speed = 46;
     saturnRaceState.radialVel = 0;
     saturnRaceState.boostTimer = 0;
+    saturnRaceState.rockSlowTimer = 0;
     saturnRaceState.jumpY = 0;
     saturnRaceState.jumpVy = 0;
     saturnRaceState.lap = 1;
@@ -387,23 +390,27 @@ export function swapToSaturnRace() {
         saveProgression({ immediate: true });
     }
 
-    // Force Bot Mode for Saturn Ring Sprint!
-    player.mode = 'BOT';
-    player.morph = 0;
-    player.targetMorph = 0;
+    // Default to Vehicle Mode for Saturn Ring Race (player can still transform freely via Space or TRANSFORM button!)
+    player.mode = 'VEHICLE';
+    player.morph = 1;
+    player.targetMorph = 1;
     player.dinoMorph = 0;
     player.targetDinoMorph = 0;
+    player.boatMorph = 0;
+    player.targetBoatMorph = 0;
     player.hasWaypoint = false;
     player.flightAlt = 0;
 
     // Attach active Rescue Bot rig to saturnRaceScene
-    const pRig = botRigs[player.botType]?.root;
-    Object.values(botRigs).forEach((r: any) => {
-        if (r?.root && r.root.parent === saturnRaceScene && r.root !== pRig) {
-            scene.add(r.root);
-        }
-    });
-    if (pRig) saturnRaceScene.add(pRig);
+    if (botRigs) {
+        const pRig = botRigs[player.botType]?.root;
+        Object.values(botRigs).forEach((r) => {
+            if (r?.root && r.root.parent === saturnRaceScene && r.root !== pRig) {
+                scene.add(r.root);
+            }
+        });
+        if (pRig) saturnRaceScene.add(pRig);
+    }
     setActiveParticleScene(saturnRaceScene);
 
     resetSaturnRace();
@@ -433,24 +440,26 @@ export function swapToSaturnRace() {
 
     updateSaturnRaceHUD();
     showToast(
-        'SATURN RING RACE — BOT MODE!',
-        'A/D or Left/Right to weave lanes • SPACE / BOOST for Turbo • Sprint through all 12 glowing Ring Gates!'
+        'SATURN RING GRAND PRIX!',
+        'A/D or Left/Right (or Tap Left/Right) to steer • SPACE to Transform • SHIFT / BOOST for Turbo!'
     );
     triggerNPCSpeech(
         'BLURR',
         'Ring Speedster',
-        'Welcome to Saturn’s icy rings! Sprint in Bot Mode through the golden Turbo Gates for maximum velocity!',
-        player,
+        'Welcome to Saturn’s icy rings! Race in Vehicle Mode (or transform anytime!) through the golden Turbo Gates — and dodge those ice rocks!',
+        player as unknown as SpeechTarget,
         true
     );
 }
 
 export function restoreRigsFromSaturnRace() {
-    Object.values(botRigs).forEach((r: any) => {
-        if (r?.root && r.root.parent === saturnRaceScene) {
-            scene.add(r.root);
-        }
-    });
+    if (botRigs) {
+        Object.values(botRigs).forEach((r) => {
+            if (r?.root && r.root.parent === saturnRaceScene) {
+                scene.add(r.root);
+            }
+        });
+    }
     setActiveParticleScene(scene);
 }
 
@@ -458,48 +467,58 @@ export function updateSaturnRace(dt: number, now: number) {
     if (worldState.activeArea !== 'SATURN_RING_RACE') return;
     const nowSec = now * 0.001;
 
-    // Keep active bot rig synced & in BOT mode if player switches bots in the roster
-    player.mode = 'BOT';
-    player.morph = 0;
-    player.targetMorph = 0;
-    player.dinoMorph = 0;
-    player.targetDinoMorph = 0;
-    const pRig = botRigs[player.botType]?.root;
-    Object.values(botRigs).forEach((r: any) => {
-        if (r?.root && r.root.parent === saturnRaceScene && r.root !== pRig) {
-            scene.add(r.root);
-        }
-    });
-    if (pRig && pRig.parent !== saturnRaceScene) saturnRaceScene.add(pRig);
+    // Smoothly animate Vehicle / Bot / Dino morph transitions while racing!
+    player.morph = THREE.MathUtils.lerp(player.morph, player.targetMorph, Math.min(1, dt * 6.0));
+    player.dinoMorph = THREE.MathUtils.lerp(player.dinoMorph, player.targetDinoMorph, Math.min(1, dt * 6.0));
+    player.boatMorph = 0;
+    player.targetBoatMorph = 0;
+
+    // Keep active bot rig synced if player switches bots in the roster
+    const pRig = botRigs?.[player.botType]?.root;
+    if (botRigs) {
+        Object.values(botRigs).forEach((r) => {
+            if (r?.root && r.root.parent === saturnRaceScene && r.root !== pRig) {
+                scene.add(r.root);
+            }
+        });
+        if (pRig && pRig.parent !== saturnRaceScene) saturnRaceScene.add(pRig);
+    }
 
     // Rotate Saturn gently
     if (_saturnPlanetMesh) _saturnPlanetMesh.rotation.y += dt * 0.04;
 
-    // Gather steering & boost inputs
-    const steerLeft = isActionActive('steerLeft', input.keys) || input.keys['arrowleft'] || saturnRaceState.touchSteer < 0;
-    const steerRight = isActionActive('steerRight', input.keys) || input.keys['arrowright'] || saturnRaceState.touchSteer > 0;
-    const accel = isActionActive('moveForward', input.keys) || input.keys['arrowup'];
-    const brake = isActionActive('moveBackward', input.keys) || input.keys['arrowdown'];
-    const boostKey = input.keys[' '] || input.keys['shift'] || saturnRaceState.touchBoost;
+    // Gather steering, throttle & boost inputs (matching e.code keys & settings action names!)
+    const steerLeft = isActionActive('left', input.keys) || Boolean(input.keys['ArrowLeft']) || Boolean(input.keys['KeyA']) || saturnRaceState.touchSteer < 0;
+    const steerRight = isActionActive('right', input.keys) || Boolean(input.keys['ArrowRight']) || Boolean(input.keys['KeyD']) || saturnRaceState.touchSteer > 0;
+    const accel = isActionActive('forward', input.keys) || Boolean(input.keys['ArrowUp']) || Boolean(input.keys['KeyW']);
+    const brake = isActionActive('backward', input.keys) || Boolean(input.keys['ArrowDown']) || Boolean(input.keys['KeyS']);
+    const boostKey = isActionActive('primaryAction', input.keys) || Boolean(input.keys['ShiftLeft']) || Boolean(input.keys['ShiftRight']) || saturnRaceState.touchBoost;
 
     if (boostKey && saturnRaceState.boostTimer <= 0.1) {
         triggerSaturnRaceBoost();
     }
     if (saturnRaceState.boostTimer > 0) saturnRaceState.boostTimer = Math.max(0, saturnRaceState.boostTimer - dt);
+    if (saturnRaceState.rockSlowTimer > 0) saturnRaceState.rockSlowTimer = Math.max(0, saturnRaceState.rockSlowTimer - dt);
 
-    // Base cruise speed + throttle + turbo boost (Blurr gets a subtle extra kick!)
+    // Base cruise speed + throttle + turbo boost (and substantial drag if recovering from an ice-rock hit!)
     const botBonus = player.botType === 'BLURR' ? 8 : (player.botType === 'STARSPEED' ? 7 : (player.botType === 'BUMBLEBEE' || player.botType === 'QUICKSHADOW' ? 4 : 0));
-    let targetSpeed = 52 + botBonus;
+    const modeBonus = player.mode === 'VEHICLE' ? 8 : (player.mode === 'DINO' ? 4 : 0);
+    let targetSpeed = 50 + botBonus + modeBonus;
     if (accel) targetSpeed += 18;
     if (brake) targetSpeed -= 24;
     if (saturnRaceState.boostTimer > 0) targetSpeed += 38;
-    saturnRaceState.speed = THREE.MathUtils.lerp(saturnRaceState.speed, Math.max(22, targetSpeed), Math.min(1, dt * 4.5));
+    if (saturnRaceState.rockSlowTimer > 0) targetSpeed = Math.min(targetSpeed, 18);
+    const speedLerp = saturnRaceState.rockSlowTimer > 0 ? 2.2 : 4.5;
+    saturnRaceState.speed = THREE.MathUtils.lerp(saturnRaceState.speed, Math.max(12, targetSpeed), Math.min(1, dt * speedLerp));
 
-    // Lateral lane weaving across the icy ring track
-    let steerInput = 0;
-    if (steerLeft) steerInput -= 1;
-    if (steerRight) steerInput += 1;
-    saturnRaceState.radialVel = THREE.MathUtils.lerp(saturnRaceState.radialVel, steerInput * 30.0, Math.min(1, dt * 8.0));
+    // Lateral lane weaving across the icy ring track:
+    // Moving LEFT (A / ArrowLeft / Tap Left) -> OUTER lane (+radialOffset)
+    // Moving RIGHT (D / ArrowRight / Tap Right) -> INNER lane (-radialOffset)
+    let steerVisual = 0; // -1 = left on screen, +1 = right on screen
+    if (steerLeft) steerVisual -= 1;
+    if (steerRight) steerVisual += 1;
+    const radialDir = -steerVisual; // Left (-1) => +1 (outer), Right (+1) => -1 (inner)
+    saturnRaceState.radialVel = THREE.MathUtils.lerp(saturnRaceState.radialVel, radialDir * 30.0, Math.min(1, dt * 8.0));
     saturnRaceState.radialOffset = THREE.MathUtils.clamp(
         saturnRaceState.radialOffset + saturnRaceState.radialVel * dt,
         -(SATURN_TRACK_HALF_WIDTH - 2.2),
@@ -539,7 +558,7 @@ export function updateSaturnRace(dt: number, now: number) {
         if (rv.rig?.root) {
             rv.rig.root.position.set(rx, 0, rz);
             rv.rig.root.rotation.y = Math.atan2(rtx, rtz);
-            applyBotRigMorph(rv.rig, 0, 0, rv.walkCycle, rvSpeed * 0.5, 0, now, 0, 0, 0);
+            applyBotRigMorph(rv.rig, 1, 0, rv.walkCycle, rvSpeed * 0.5, 0, now, 0, 0, 0);
         }
         if (rv.totalAngle > saturnRaceState.totalAngle) aheadCount++;
     }
@@ -553,14 +572,14 @@ export function updateSaturnRace(dt: number, now: number) {
     const heading = Math.atan2(tangentX, tangentZ);
 
     player.pos.set(wx, saturnRaceState.jumpY, wz);
-    player.heading = heading - steerInput * 0.18;
+    player.heading = heading - steerVisual * 0.22;
     player.speed = saturnRaceState.speed * 0.55;
     player.walkCycle += dt * (saturnRaceState.speed * 0.34);
 
     if (pRig) {
         pRig.position.copy(player.pos);
         pRig.rotation.y = player.heading;
-        pRig.rotation.z = -steerInput * 0.16;
+        pRig.rotation.z = -steerVisual * 0.16;
     }
     updateAllBotTransforms(dt, now);
 
@@ -628,12 +647,19 @@ export function updateSaturnRace(dt: number, now: number) {
             m.hitCooldown = 6.0;
             m.mesh.visible = false;
             sfx.playRockBreak();
-            spawnBurstParticles(m.mesh.position.x, 2.0, m.mesh.position.z, 0xbae6fd, 14, 1.0);
-            if (saturnRaceState.boostTimer > 0 || player.botType === 'BOULDER') {
+            spawnBurstParticles(m.mesh.position.x, 2.0, m.mesh.position.z, 0xbae6fd, 18, 1.2);
+            // Substantial rock impact slowdown! (Cancels boost and imposes heavy drag recovery)
+            saturnRaceState.boostTimer = 0;
+            if (player.botType === 'BOULDER') {
+                // Boulder's heavy armor takes a lighter jolt & still earns +1 Energon
+                saturnRaceState.speed = Math.max(22, saturnRaceState.speed * 0.55);
+                saturnRaceState.rockSlowTimer = 0.85;
                 progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 1;
                 saveProgression();
             } else {
-                saturnRaceState.speed = Math.max(24, saturnRaceState.speed * 0.62);
+                saturnRaceState.speed = Math.max(12, saturnRaceState.speed * 0.28);
+                saturnRaceState.rockSlowTimer = 1.9;
+                showToast('ICE ROCK IMPACT!', 'Heavy slowdown — weave around the ice moonlets!');
             }
         }
     }

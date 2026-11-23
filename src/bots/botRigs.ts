@@ -17,8 +17,42 @@ import { buildHighTide } from "./hightide.js";
 import { buildQuickshadow } from "./quickshadow.js";
 import { buildStarspeed } from "./starspeed.js";
 import { animateBotBoatMorph } from "./botBoats.js";
+import type { BotRig, LightbarAssembly } from "../types/game.js";
 
-export const BOT_SCALES = {
+interface DetailedBotRig extends BotRig {
+    lightbar: (LightbarAssembly & { redPod?: THREE.Object3D; bluePod?: THREE.Object3D }) | null;
+    megaCranes?: THREE.Object3D[];
+    trailerHitch?: THREE.Object3D;
+    trailerArticAngle?: number;
+    megaTrailer?: THREE.Object3D;
+    megaDumpBucket?: THREE.Object3D;
+    megaBomberShell?: THREE.Object3D;
+    megaMonsterShell?: THREE.Object3D;
+    megaDumpster?: THREE.Object3D;
+    megaCargoPod?: THREE.Object3D;
+    megaAxe?: THREE.Object3D;
+    megaShield?: THREE.Object3D;
+    megaBotShields?: THREE.Object3D | THREE.Object3D[];
+    megaBackPack?: THREE.Object3D;
+    megaDinoArmor?: THREE.Object3D;
+    megaDinoTail?: THREE.Object3D;
+    megaDinoScutes?: THREE.Object3D;
+    leftSponson?: THREE.Object3D;
+    rightSponson?: THREE.Object3D;
+    leftBoatCannon?: THREE.Object3D;
+    rightBoatCannon?: THREE.Object3D;
+    bridgeDeck?: THREE.Object3D;
+    bowDeflector?: THREE.Object3D;
+    lifeBuoys?: THREE.Object3D[];
+    gantryArch?: THREE.Object3D;
+    botDrillAssembly?: THREE.Object3D;
+    botDrillBit?: THREE.Object3D;
+    vehDrillAssembly?: THREE.Object3D;
+    vehDrillBit?: THREE.Object3D;
+    starspeedBikeShell?: THREE.Object3D;
+}
+
+export const BOT_SCALES: Record<string, number> = {
     BOULDER: 1.0,
     BOULDER_MEGA: 1.65,
     HEATWAVE: 1.0,
@@ -42,7 +76,7 @@ export const BOT_SCALES = {
     STARSPEED: 1.0
 };
 
-export function getBotScale(botType) {
+export function getBotScale(botType: string): number {
     if (botType === "HIGHTIDE" && typeof window !== "undefined" && window.progression && window.progression.highTideDocked) {
         return 3.85;
     }
@@ -55,37 +89,37 @@ export function getBotScale(botType) {
     return BOT_SCALES[botType] || 1.0;
 }
 
-export function setOptimusRigMega(rig, isMega) {
+export function setOptimusRigMega(rig: BotRig, isMega: boolean): void {
     if (!rig || rig.botType !== 'OPTIMUS') return;
     rig.isMega = Boolean(isMega);
     const scale = rig.isMega ? 1.65 : 1.25;
     rig.root.scale.setScalar(scale);
-    rig.root.traverse(child => {
+    rig.root.traverse((child: THREE.Object3D) => {
         if (child.userData && child.userData.isStandardPart !== undefined) {
             child.visible = !rig.isMega;
         }
         if (child.userData && child.userData.isMegaPart !== undefined) {
-            child.visible = rig.isMega;
+            child.visible = Boolean(rig.isMega);
         }
     });
 }
 
-export function setHighTideRigMega(rig, isMega) {
+export function setHighTideRigMega(rig: BotRig, isMega: boolean): void {
     if (!rig || rig.botType !== 'HIGHTIDE') return;
     rig.isMega = Boolean(isMega);
     const scale = rig.isMega ? 3.85 : 1.30;
     rig.root.scale.setScalar(scale);
-    rig.root.traverse(child => {
+    rig.root.traverse((child: THREE.Object3D) => {
         if (child.userData && child.userData.isStandardPart !== undefined) {
             child.visible = !rig.isMega;
         }
         if (child.userData && child.userData.isMegaPart !== undefined) {
-            child.visible = rig.isMega;
+            child.visible = Boolean(rig.isMega);
         }
     });
 }
 
-export function setBotRigMega(rig, isMega) {
+export function setBotRigMega(rig: BotRig, isMega: boolean): void {
     if (!rig) return;
     if (rig.botType === 'HIGHTIDE') {
         setHighTideRigMega(rig, isMega);
@@ -99,24 +133,24 @@ export function setBotRigMega(rig, isMega) {
     const base = BOT_SCALES[rig.botType] || 1.0;
     const scale = rig.isMega ? 1.65 : base;
     rig.root.scale.setScalar(scale);
-    rig.root.traverse(child => {
+    rig.root.traverse((child: THREE.Object3D) => {
         if (child.userData && child.userData.isStandardPart !== undefined) {
             child.visible = !rig.isMega;
         }
         if (child.userData && child.userData.isMegaPart !== undefined) {
-            child.visible = rig.isMega;
+            child.visible = Boolean(rig.isMega);
         }
     });
 }
 
-export function buildRescueBotModel(botType) {
+export function buildRescueBotModel(botType: string): BotRig {
     const root = new THREE.Group();
             const bScale = (typeof BOT_SCALES !== 'undefined' && BOT_SCALES[botType]) || 1.0;
             root.scale.setScalar(bScale);
             const chassis = new THREE.Group();
             root.add(chassis);
 
-            const parts = {
+            const parts: BotRig = {
                 botType,
                 root,
                 chassis,
@@ -192,7 +226,8 @@ export function buildRescueBotModel(botType) {
     return parts;
 }
 
-export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, scoopTimer = 0, boatMorph = 0, drillAmount = 0) {
+export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCycle: number, speed: number, smashTimer: number, now: number, scoopTimer = 0, boatMorph = 0, drillAmount = 0) {
+            const rig = rigInput as DetailedBotRig;
             // Boat Mode: folds limbs into vehicle aerodynamic layout under the boat shell
             if (rig.botType !== 'HIGHTIDE' && boatMorph > 0) {
                 m = Math.max(m, boatMorph);
@@ -200,7 +235,7 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
             // Apply mode-dependent ground elevation so the bot's ground contact surface stays flush on terrain
             const bKey = rig.isMega ? `${rig.botType}_MEGA` : rig.botType;
             const gOffsets = BOT_GROUND_OFFSETS[bKey] || BOT_GROUND_OFFSETS[rig.botType] || { bot: 0, veh: 0, dino: 0, boat: 0 };
-            const boatOffset = (gOffsets as any).boat !== undefined ? (gOffsets as any).boat : gOffsets.veh;
+            const boatOffset = gOffsets.boat !== undefined ? gOffsets.boat : gOffsets.veh;
             const groundLiftY = (gOffsets.bot * (1 - m - d) + gOffsets.veh * m + gOffsets.dino * d) * (1 - boatMorph) + boatOffset * boatMorph;
             if (rig.chassis) {
                 rig.chassis.position.y = groundLiftY;
@@ -823,7 +858,7 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
             }
 
             // Spin Wheels & Propellers & Flash Emergency Lightbars
-            rig.wheels.forEach(w => {
+            rig.wheels.forEach((w: THREE.Object3D) => {
                 w.rotation.x += speed * 0.016;
             });
             if (rig.rotors) {
@@ -839,7 +874,7 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                     if (rig.isMega && rig.megaCranes && rig.megaCranes.length > 0) {
                         const craneSmashLunge = smashOffset * 0.95;
                         const craneIdleSway = Math.sin(now * 0.0025) * 0.06;
-                        rig.megaCranes.forEach((crane, idx) => {
+                        rig.megaCranes.forEach((crane: THREE.Object3D, idx: number) => {
                             const sideFactor = idx === 0 ? -1 : 1;
                             if (m > 0.5) {
                                 // Vehicle (Rescue Ship) mode: deck crane elevated ready for salvage
@@ -866,8 +901,8 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 const flash = Math.floor(now / (isSirenFlashing ? 95 : 140)) % 2 === 0;
                 const highScale = isSirenFlashing ? 1.38 : 1.18;
                 const lowScale = isSirenFlashing ? 0.84 : 0.92;
-                rig.lightbar.redPod.scale.setScalar(flash ? highScale : lowScale);
-                rig.lightbar.bluePod.scale.setScalar(!flash ? highScale : lowScale);
+                if (rig.lightbar.redPod) rig.lightbar.redPod.scale.setScalar(flash ? highScale : lowScale);
+                if (rig.lightbar.bluePod) rig.lightbar.bluePod.scale.setScalar(!flash ? highScale : lowScale);
             }
 
             // Articulated Trailer Hitch (Optimus, Chase, Heatwave)
@@ -899,7 +934,7 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                 if (rig.megaShield) rig.megaShield.visible = inBot;
                 if (rig.megaBotShields) {
                     if (Array.isArray(rig.megaBotShields)) {
-                        rig.megaBotShields.forEach(s => { s.visible = inBot; });
+                        rig.megaBotShields.forEach((s: THREE.Object3D) => { s.visible = inBot; });
                     } else {
                         rig.megaBotShields.visible = inBot;
                     }
@@ -990,7 +1025,7 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                     if (rig.lifeBuoys && Array.isArray(rig.lifeBuoys)) {
                         const tBuoy = THREE.MathUtils.smoothstep(b, 0.35, 0.85);
                         const buoyScale = THREE.MathUtils.lerp(0.01, 1.0, tBuoy);
-                        rig.lifeBuoys.forEach((lb: any) => lb.scale.setScalar(buoyScale));
+                        rig.lifeBuoys.forEach((lb: THREE.Object3D) => lb.scale.setScalar(buoyScale));
                     }
 
                     // 6. Rear Gantry Arch / Spoiler: Swings up from flat deck into aerodynamic beacon spoiler
@@ -1068,7 +1103,7 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                         rig.rightLegWheelMount.visible = wheelVisible;
                     }
                     if (rig.wheels) {
-                        rig.wheels.forEach((w: any) => { w.visible = wheelVisible; });
+                        rig.wheels.forEach((w: THREE.Object3D) => { w.visible = wheelVisible; });
                     }
                 } else {
                     // Reset to standard Fire Engine / Bot mode transforms
@@ -1099,7 +1134,7 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                         rig.bowDeflector.scale.set(1, 1, 1);
                     }
                     if (rig.lifeBuoys && Array.isArray(rig.lifeBuoys)) {
-                        rig.lifeBuoys.forEach((lb: any) => lb.scale.setScalar(1));
+                        rig.lifeBuoys.forEach((lb: THREE.Object3D) => lb.scale.setScalar(1));
                     }
                     if (rig.gantryArch) {
                         rig.gantryArch.position.set(0, 1.25, -1.80);
@@ -1134,7 +1169,7 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
                         rig.rightLegWheelMount.visible = !rig.isMega;
                     }
                     if (rig.wheels && !rig.isMega) {
-                        rig.wheels.forEach((w: any) => { w.visible = true; });
+                        rig.wheels.forEach((w: THREE.Object3D) => { w.visible = true; });
                     }
                 }
             }
@@ -1165,9 +1200,9 @@ export function applyBotRigMorph(rig, m, d, walkCycle, speed, smashTimer, now, s
             }
         }
 
-export let botRigs = null;
+export let botRigs: Record<string, BotRig> | null = null;
 
-export function initBotRigs(scene) {
+export function initBotRigs(scene?: THREE.Scene | null): Record<string, BotRig> {
     botRigs = {
         BOULDER: buildRescueBotModel("BOULDER"),
         HEATWAVE: buildRescueBotModel("HEATWAVE"),
@@ -1183,7 +1218,7 @@ export function initBotRigs(scene) {
     };
 
     if (scene) {
-        Object.values(botRigs as Record<string, any>).forEach(r => scene.add(r.root));
+        Object.values(botRigs).forEach(r => scene.add(r.root));
     }
     window.botRigs = botRigs;
     return botRigs;

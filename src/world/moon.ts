@@ -12,7 +12,7 @@ import { setMoonTerrainHooks } from './terrain.js';
 import { setActiveParticleScene, spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
 import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
 import { sfx } from '../audio/soundFX.js';
-import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
+import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 import { SVG_ICONS } from '../ui/icons.js';
 
 export const moonScene = new THREE.Scene();
@@ -531,10 +531,11 @@ function buildMoonWorld() {
 }
 
 export function syncMoonBotRigs() {
-    if (!botRigs) return;
+    const rigs = botRigs;
+    if (!rigs) return;
     if (worldState.activeArea === 'MOON') {
-        Object.keys(botRigs).forEach(k => {
-            const rig = botRigs[k];
+        Object.keys(rigs).forEach(k => {
+            const rig = rigs[k];
             if (!rig || !rig.root) return;
             const keepOnMoon = (k === player.botType || k === buddyBot.botType);
             if (keepOnMoon && rig.root.parent !== moonScene) {
@@ -545,8 +546,8 @@ export function syncMoonBotRigs() {
             }
         });
     } else if (worldState.activeArea === 'SURFACE') {
-        Object.keys(botRigs).forEach(k => {
-            const rig = botRigs[k];
+        Object.keys(rigs).forEach(k => {
+            const rig = rigs[k];
             if (rig && rig.root && rig.root.parent !== scene) {
                 scene.add(rig.root);
             }
@@ -621,7 +622,7 @@ export function swapToMoon() {
     }
 
     syncMoonBotRigs();
-    const wp = (window as any).waypointGroup;
+    const wp = window.waypointGroup;
     if (wp) {
         moonScene.add(wp);
         wp.visible = false;
@@ -649,15 +650,15 @@ export function swapToMoon() {
     if (botControls) botControls.classList.remove('hidden');
 
     updateMoonHUD();
-    if (typeof (window as any).syncHUDToActiveBot === 'function') (window as any).syncHUDToActiveBot();
-    if (typeof (window as any).renderMinimap === 'function') (window as any).renderMinimap();
+    if (typeof window.syncHUDToActiveBot === 'function') (window.syncHUDToActiveBot as () => void)();
+    if (typeof window.renderMinimap === 'function') window.renderMinimap();
 
     showToast('TOUCHDOWN ON THE MOON!', 'Low-gravity 0.35G active! Jump high, explore craters & find 5 Lunar Relics!');
     triggerNPCSpeech(
         'BLADES',
         'Aerial Recon',
         'Whoa! We are on the Moon! Try jumping—the low gravity lets us soar right over craters!',
-        player,
+        player as unknown as SpeechTarget,
         true
     );
 }
@@ -781,7 +782,7 @@ export function updateMoon(dt: number, now: number) {
             'OPTIMUS',
             'Autobot Commander',
             'One giant leap for Griffin Rock and all Rescue Bots!',
-            player,
+            player as unknown as SpeechTarget,
             true
         );
     }

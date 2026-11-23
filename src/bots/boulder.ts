@@ -3,14 +3,9 @@ import * as THREE from 'three';
 import { texFaceBoulder } from '../rendering/textures.js';
 import { createWheelAssembly } from './botHelpers.js';
 import { buildBoulderBoat } from './botBoats.js';
+import type { BotRig } from '../types/game.js';
 
-export function buildBoulder(parts, materials = {}, textures = {}) {
-    const {
-        toonGrad3, toonGrad4, toonGradGlossy,
-        matChrome, matDarkSteel, matTire, matCabGlass,
-        matVisorCyan, matVisorGold, matSirenRed, matSirenBlue,
-        matEmblem, matHazardMat, matGrille, matInkOutline
-    } = ((typeof window !== 'undefined' ? window : {}) as any);
+export function buildBoulder(parts: BotRig, _materials: Record<string, unknown> = {}, _textures: Record<string, unknown> = {}) {
 
     // TV Show Boulder: Vibrant Chartreuse-Lime Green (#76d31b), Construction Yellow (#ffcc00) & Silver Trim
                 const matGreen = new THREE.MeshToonMaterial({ color: 0x76d31b, gradientMap: toonGrad4 });
@@ -592,9 +587,9 @@ export function buildBoulder(parts, materials = {}, textures = {}) {
                 parts.vehDrillBit = vehDrill.bitGroup;
 
                 // Initialize visibility matching current docked status
-                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.boulderDocked);
-                if (typeof (window as any).setBotRigMega === 'function') {
-                    (window as any).setBotRigMega(parts, isCurrentMega);
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && window.progression && window.progression.boulderDocked);
+                if (typeof setBotRigMega === 'function') {
+                    setBotRigMega(parts, isCurrentMega);
                 }
 }
 

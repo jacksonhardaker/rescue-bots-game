@@ -2,14 +2,9 @@
 import * as THREE from 'three';
 import { createQuickshadowWheel } from './botHelpers.js';
 import { buildQuickshadowBoat } from './botBoats.js';
+import type { BotRig } from '../types/game.js';
 
-export function buildQuickshadow(parts, materials = {}, textures = {}) {
-    const {
-        toonGrad3, toonGrad4, toonGradGlossy,
-        matChrome, matDarkSteel, matTire, matCabGlass,
-        matVisorCyan, matVisorGold, matSirenRed, matSirenBlue,
-        matEmblem, matHazardMat, matGrille, matInkOutline
-    } = ((typeof window !== 'undefined' ? window : {}) as any);
+export function buildQuickshadow(parts: BotRig, _materials: Record<string, unknown> = {}, _textures: Record<string, unknown> = {}) {
 
     // TV Show Quickshadow: Sleek, stylish British covert operations specialist!
                 // Elegant, athletic feminine silhouette: slender hourglass waist, flared hip armor,
@@ -423,9 +418,9 @@ export function buildQuickshadow(parts, materials = {}, textures = {}) {
                 buildQuickshadowBoat(parts);
 
                 // Initialize visibility matching current docked status
-                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.quickshadowDocked);
-                if (typeof (window as any).setBotRigMega === 'function') {
-                    (window as any).setBotRigMega(parts, isCurrentMega);
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && window.progression && window.progression.quickshadowDocked);
+                if (typeof setBotRigMega === 'function') {
+                    setBotRigMega(parts, isCurrentMega);
                 }
 }
 

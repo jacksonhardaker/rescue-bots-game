@@ -1,5 +1,6 @@
 // Sector-Chunked Instanced Forests, Bushes & Rocks for Viewport Culling
 import * as THREE from 'three';
+import type { ColliderItem } from '../types/game.js';
 import { getTerrainHeight, isPointInWater, getRailwayRadius, isPointOnRoad } from './terrain.js';
 import { toonGrad3, toonGrad4, matInkOutline, OUTLINE_LAYER } from '../rendering/materials.js';
 import { freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
@@ -17,7 +18,34 @@ import {
     matRockToon
 } from './propModels.js';
 
-export let sectorChunks: any[] = [];
+export interface SectorTreeMeshes {
+    iTrunks: THREE.InstancedMesh;
+    iLeaves: THREE.InstancedMesh;
+    iOutline: THREE.InstancedMesh;
+}
+
+export interface SectorBushMeshes {
+    iBushes: THREE.InstancedMesh;
+    iBushOut: THREE.InstancedMesh;
+}
+
+export interface SectorRockMeshes {
+    iRocks: THREE.InstancedMesh;
+    iRockOut: THREE.InstancedMesh;
+}
+
+export interface SectorBucket {
+    cx: number;
+    cz: number;
+    treeTypes: TreeInstance[][];
+    bushes: BushInstance[];
+    rocks: RockInstance[];
+    treeMeshes: Array<SectorTreeMeshes | undefined>;
+    bushMeshes: SectorBushMeshes | null;
+    rockMeshes: SectorRockMeshes | null;
+}
+
+export let sectorChunks: SectorBucket[] = [];
 
 export interface TreeInstance {
     id: number;
@@ -31,9 +59,9 @@ export interface TreeInstance {
     color: number;
     archIdx: number;
     instanceIdx: number;
-    bucket: any;
+    bucket: SectorBucket | null;
     destroyed: boolean;
-    collider: any;
+    collider: ColliderItem | null;
 }
 
 export interface RockInstance {
@@ -47,9 +75,9 @@ export interface RockInstance {
     r2: number;
     color: number;
     instanceIdx: number;
-    bucket: any;
+    bucket: SectorBucket | null;
     destroyed: boolean;
-    collider: any;
+    collider: ColliderItem | null;
 }
 
 export interface BushInstance {
@@ -63,9 +91,9 @@ export interface BushInstance {
     rot: number;
     color: number;
     instanceIdx: number;
-    bucket: any;
+    bucket: SectorBucket | null;
     destroyed: boolean;
-    collider: any;
+    collider: ColliderItem | null;
 }
 
 export const allTrees: TreeInstance[] = [];
@@ -126,7 +154,7 @@ let lastColossalToastTime = 0;
         const SECTOR_GRID = 4;
         const SECTOR_SPAN = 3400; // Covers -1700 .. +1700 island landmass
         const SECTOR_STEP = SECTOR_SPAN / SECTOR_GRID;
-        const sectorBuckets = Array.from({ length: SECTOR_GRID * SECTOR_GRID }, (_, idx) => {
+        const sectorBuckets: SectorBucket[] = Array.from({ length: SECTOR_GRID * SECTOR_GRID }, (_, idx) => {
             const gx = idx % SECTOR_GRID;
             const gz = Math.floor(idx / SECTOR_GRID);
             const cx = -SECTOR_SPAN / 2 + (gx + 0.5) * SECTOR_STEP;
@@ -134,22 +162,22 @@ let lastColossalToastTime = 0;
             return {
                 cx,
                 cz,
-                treeTypes: Array.from({ length: TREE_ARCHETYPES.length }, () => []),
-                bushes: [],
-                rocks: [],
-                treeMeshes: [] as any[],
-                bushMeshes: null as any,
-                rockMeshes: null as any
+                treeTypes: Array.from({ length: TREE_ARCHETYPES.length }, () => [] as TreeInstance[]),
+                bushes: [] as BushInstance[],
+                rocks: [] as RockInstance[],
+                treeMeshes: [] as Array<SectorTreeMeshes | undefined>,
+                bushMeshes: null as SectorBushMeshes | null,
+                rockMeshes: null as SectorRockMeshes | null
             };
         });
 
-        function getSectorBucket(x, z) {
+        function getSectorBucket(x: number, z: number): SectorBucket {
             const gx = Math.max(0, Math.min(SECTOR_GRID - 1, Math.floor((x + SECTOR_SPAN / 2) / SECTOR_STEP)));
             const gz = Math.max(0, Math.min(SECTOR_GRID - 1, Math.floor((z + SECTOR_SPAN / 2) / SECTOR_STEP)));
             return sectorBuckets[gz * SECTOR_GRID + gx];
         }
 
-        function isInsideAnyPlaza(x, z) {
+        function isInsideAnyPlaza(x: number, z: number): boolean {
             if (Math.hypot(x, z - 20) < 165) return true; // Central Town Plaza
             if (Math.hypot(x, z - 1140) < 145) return true; // South Harbor
             if (Math.hypot(x + 1120, z - 25) < 125) return true; // West Tech
@@ -364,7 +392,7 @@ let lastColossalToastTime = 0;
             placed++;
         }
 
-export function buildInstancedVegetation(scene) {
+export function buildInstancedVegetation(scene?: THREE.Scene | null) {
     const s = scene || (typeof window !== 'undefined' ? window.scene : null);
     if (!s) return;
 
@@ -497,9 +525,9 @@ export function buildInstancedVegetation(scene) {
     sectorChunks = sectorBuckets;
     if (typeof window !== 'undefined') {
         window.sectorChunks = sectorChunks;
-        (window as any).allTrees = allTrees;
-        (window as any).allRocks = allRocks;
-        (window as any).allBushes = allBushes;
+        window.allTrees = allTrees;
+        window.allRocks = allRocks;
+        window.allBushes = allBushes;
     }
 }
 
@@ -529,7 +557,7 @@ export function explodeRock(rock: RockInstance) {
     spawnBurstParticles(rock.x, rock.y + 1.4 * rock.s, rock.z, 0x94a3b8, 16, 2.4);
     spawnBurstParticles(rock.x, rock.y + 0.6 * rock.s, rock.z, 0xfacc15, 14, 1.8);
 
-    progression.heroPoints = (progression.heroPoints || 0) + 5;
+    progression.heroPoints = (Number(progression.heroPoints) || 0) + 5;
     saveProgression();
 
     showToast("BOULDER DOZER SMASH", "Rock Demolished! +5 Hero Pts");
@@ -544,8 +572,9 @@ export function explodeTree(tree: TreeInstance) {
         tree.collider.r = 0;
     }
 
-    if (tree.bucket && tree.bucket.treeMeshes && tree.bucket.treeMeshes[tree.archIdx]) {
-        const { iTrunks, iLeaves, iOutline } = tree.bucket.treeMeshes[tree.archIdx];
+    const treeMeshes = tree.bucket?.treeMeshes?.[tree.archIdx];
+    if (treeMeshes) {
+        const { iTrunks, iLeaves, iOutline } = treeMeshes;
         iTrunks.setMatrixAt(tree.instanceIdx, zeroMatrix);
         iLeaves.setMatrixAt(tree.instanceIdx, zeroMatrix);
         iOutline.setMatrixAt(tree.instanceIdx, zeroMatrix);
@@ -562,7 +591,7 @@ export function explodeTree(tree: TreeInstance) {
     spawnBurstParticles(tree.x, tree.y + arch.leavesY * tree.s, tree.z, tree.color || 0x22c55e, 28, 2.5);
     spawnBurstParticles(tree.x, tree.y + 1.2, tree.z, 0xfacc15, 14, 1.8);
 
-    progression.heroPoints = (progression.heroPoints || 0) + 5;
+    progression.heroPoints = (Number(progression.heroPoints) || 0) + 5;
     saveProgression();
 
     showToast("TIMBERRRR", "Tree Cleared by Dozer Scoop! +5 Hero Pts");
@@ -591,7 +620,7 @@ export function explodeBush(bush: BushInstance) {
     spawnBurstParticles(bush.x, bush.y + 0.8 * bush.s, bush.z, 0x84cc16, 16, 1.6);
     spawnBurstParticles(bush.x, bush.y + 0.3 * bush.s, bush.z, 0xfacc15, 12, 1.4);
 
-    progression.heroPoints = (progression.heroPoints || 0) + 5;
+    progression.heroPoints = (Number(progression.heroPoints) || 0) + 5;
     saveProgression();
 
     showToast("DOZER SCOOP SMASH", "Bush Cleared by Boulder! +5 Hero Pts");
@@ -612,9 +641,10 @@ export function waterTree(tree: TreeInstance, growthDelta: number) {
     }
 
     // Update instance transforms
-    if (tree.bucket && tree.bucket.treeMeshes && tree.bucket.treeMeshes[tree.archIdx]) {
+    const waterTreeMeshes = tree.bucket?.treeMeshes?.[tree.archIdx];
+    if (waterTreeMeshes) {
         const arch = TREE_ARCHETYPES[tree.archIdx];
-        const { iTrunks, iLeaves, iOutline } = tree.bucket.treeMeshes[tree.archIdx];
+        const { iTrunks, iLeaves, iOutline } = waterTreeMeshes;
 
         // Trunk
         dummy.position.set(tree.x, tree.y + arch.trunkY * currentScale, tree.z);
@@ -662,7 +692,7 @@ export function waterTree(tree: TreeInstance, growthDelta: number) {
             lastColossalToastTime = now;
             showToast("COLOSSAL REDWOOD", "Tree watered to 5x maximum size! +10 Hero Pts");
         }
-        progression.heroPoints = (progression.heroPoints || 0) + 10;
+        progression.heroPoints = (Number(progression.heroPoints) || 0) + 10;
         saveProgression();
     }
 
@@ -717,7 +747,7 @@ export function waterBush(bush: BushInstance, growthDelta: number) {
             lastColossalToastTime = now;
             showToast("COLOSSAL BUSH", "Bush watered to 5x maximum size! +10 Hero Pts");
         }
-        progression.heroPoints = (progression.heroPoints || 0) + 10;
+        progression.heroPoints = (Number(progression.heroPoints) || 0) + 10;
         saveProgression();
     }
 
@@ -850,15 +880,15 @@ export function checkWaterCannonFoliage(originX: number, originZ: number, headin
 }
 
 if (typeof window !== 'undefined') {
-    (window as any).allTrees = allTrees;
-    (window as any).allRocks = allRocks;
-    (window as any).allBushes = allBushes;
-    (window as any).explodeRock = explodeRock;
-    (window as any).explodeTree = explodeTree;
-    (window as any).explodeBush = explodeBush;
-    (window as any).waterTree = waterTree;
-    (window as any).waterBush = waterBush;
-    (window as any).checkBoulderScoopAttack = checkBoulderScoopAttack;
-    (window as any).checkWaterCannonFoliage = checkWaterCannonFoliage;
+    window.allTrees = allTrees;
+    window.allRocks = allRocks;
+    window.allBushes = allBushes;
+    window.explodeRock = explodeRock;
+    window.explodeTree = explodeTree;
+    window.explodeBush = explodeBush;
+    window.waterTree = waterTree;
+    window.waterBush = waterBush;
+    window.checkBoulderScoopAttack = checkBoulderScoopAttack;
+    window.checkWaterCannonFoliage = checkWaterCannonFoliage;
 }
 

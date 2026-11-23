@@ -1,9 +1,10 @@
 // 8 Island-Wide Emergencies, Hazard Beacons & Particle Bursts
 import * as THREE from 'three';
+import type { BotRig } from '../types/game.js';
 import { scene } from '../rendering/scene.js';
 import { getTerrainHeight, getSurfaceHeight, isPointInWater } from './terrain.js';
 import { toonGrad3, toonGrad4, matDarkSteel, matChrome, matInkOutline, OUTLINE_LAYER } from '../rendering/materials.js';
-import { player, buddyBot, botRigs, worldState } from '../state/gameState.js';
+import { player, buddyBot, botRigs, worldState, registerCullableObject } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
@@ -13,10 +14,80 @@ import { BOT_METADATA } from '../bots/botMeta.js';
 import { renderMinimap } from '../ui/tacticalMap.js';
 import { spawnBonusEnergonCubes } from './collectibles.js';
 import { speakBotCatchphrase } from '../physics/player.js';
-export const activeParticles = [];
-export const beacons = [];
-export let activeHazardNodes = [];
-export const emergentRescues = [];
+
+export interface ActiveParticle {
+    mesh: THREE.Object3D;
+    poolType?: 'outlined' | 'plain';
+    baseScaleX?: number;
+    baseScaleY?: number;
+    baseScaleZ?: number;
+    vx: number;
+    vy: number;
+    vz: number;
+    gravity?: number;
+    life: number;
+    isWater?: boolean;
+    isSplat?: boolean;
+    [key: string]: unknown;
+}
+
+export interface HazardNodeEntry {
+    mesh: THREE.Object3D;
+    type: string;
+    x: number;
+    y: number;
+    z: number;
+    r: number;
+    cleared: boolean;
+}
+
+export interface StrandedCitizenEntry {
+    rig: ReturnType<typeof createHumanNPCMesh>;
+    name: string;
+    role: string;
+    x: number;
+    y: number;
+    z: number;
+    helpCall: string;
+    voicePitch: number;
+    lastCallTime: number;
+    [key: string]: unknown;
+}
+
+export interface BeaconEntry {
+    id: number;
+    name: string;
+    type: string;
+    x: number;
+    z: number;
+    group: THREE.Group;
+    orb: THREE.Mesh;
+    skyBeam: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+    nodes: HazardNodeEntry[];
+    strandedCitizens: StrandedCitizenEntry[];
+    restored: boolean;
+    restoredAtTime: number;
+    _lastFireWarn?: number;
+    _lastRockWarn?: number;
+}
+
+export interface EmergentRescueEntry {
+    id: string;
+    name: string;
+    x: number;
+    z: number;
+    y: number;
+    radius: number;
+    type: string;
+    solved: boolean;
+    grp: THREE.Group;
+    rig?: ReturnType<typeof createHumanNPCMesh>;
+}
+
+export const activeParticles: ActiveParticle[] = [];
+export const beacons: BeaconEntry[] = [];
+export let activeHazardNodes: HazardNodeEntry[] = [];
+export const emergentRescues: EmergentRescueEntry[] = [];
 
         const EMERGENCY_SITES = [
             {
@@ -91,8 +162,8 @@ const matBeaconOrange = new THREE.MeshBasicMaterial({ color: 0xff6414 });
 const matBeaconCyan = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
 const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
 
-        export function spawnHazardNodesForSite(site, idx) {
-            const siteNodes = [];
+        export function spawnHazardNodesForSite(site: (typeof EMERGENCY_SITES)[number], idx: number): HazardNodeEntry[] {
+            const siteNodes: HazardNodeEntry[] = [];
             for (let i = 0; i < 6; i++) {
                 const ang = (i / 6) * Math.PI * 2 + (idx * 0.4);
                 const dist = 4.5 + (i % 2) * 2.0;
@@ -113,7 +184,8 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
                     nodeMesh = createHazardRockslideMesh(s, i, i * 1.3);
                     nodeMesh.position.set(nx, ny + s * 1.1, nz);
                 }
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(nodeMesh);
+                const targetScene = scene || (typeof window !== "undefined" ? window.scene : null);
+                if (targetScene) targetScene.add(nodeMesh);
 
                 siteNodes.push({
                     mesh: nodeMesh,
@@ -128,10 +200,10 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
             return siteNodes;
         }
 
-        export function respawnSingleBeacon(beacon, announceToast = true) {
+        export function respawnSingleBeacon(beacon: BeaconEntry, announceToast = true) {
             if (!beacon) return;
             if (Array.isArray(progression.completedMissions)) {
-                progression.completedMissions = progression.completedMissions.filter(id => id !== beacon.id);
+                progression.completedMissions = progression.completedMissions.filter(id => String(id) !== String(beacon.id));
                 saveProgression();
             }
             beacon.nodes.forEach(n => scene.remove(n.mesh));
@@ -155,9 +227,9 @@ const matBeaconGreen = new THREE.MeshBasicMaterial({ color: 0x38b000 });
             }
         }
 
-        export function buildHazardSites(scene?: any) {
+        export function buildHazardSites(targetScene?: THREE.Scene | null) {
             clearTimeout(window._endlessWaveTimeout);
-            const activeScene = scene || (typeof window !== "undefined" ? window.scene : null);
+            const activeScene = targetScene || scene || (typeof window !== "undefined" ? window.scene : null);
             beacons.forEach(b => {
                 if (activeScene) {
                     activeScene.remove(b.group);
@@ -315,7 +387,7 @@ const _nozzleSinglePos = new THREE.Vector3();
 const _nozzleFallbackPos = new THREE.Vector3();
 const _nozzlePositions: THREE.Vector3[] = [];
 
-function ensureParticleRoot(targetScene?: any): THREE.Group {
+function ensureParticleRoot(targetScene?: THREE.Scene | null): THREE.Group {
     const s = targetScene || _activeParticleScene || scene || (typeof window !== 'undefined' ? window.scene : null);
     if (s && particleRootGroup.parent !== s) {
         s.add(particleRootGroup);
@@ -333,7 +405,7 @@ function acquireParticleMesh(
     mat: THREE.MeshBasicMaterial,
     outlined: boolean,
     outlineScale = 1.18,
-    targetScene?: any
+    targetScene?: THREE.Scene | null
 ): { mesh: THREE.Object3D; poolType: 'outlined' | 'plain' } {
     ensureParticleRoot(targetScene);
     if (outlined) {
@@ -374,20 +446,20 @@ function acquireParticleMesh(
     return { mesh, poolType: 'plain' };
 }
 
-export function releaseParticle(p: any) {
+export function releaseParticle(p: ActiveParticle | null | undefined) {
     if (!p || !p.mesh) return;
     p.mesh.visible = false;
     if (p.poolType === 'outlined') {
-        _outlinedPool.push(p.mesh);
+        _outlinedPool.push(p.mesh as THREE.Group);
     } else if (p.poolType === 'plain') {
-        _plainPool.push(p.mesh);
+        _plainPool.push(p.mesh as THREE.Mesh);
     } else {
         const s = _activeParticleScene || scene || (typeof window !== 'undefined' ? window.scene : null);
         if (s) s.remove(p.mesh);
     }
 }
 
-export function prewarmParticlePool(targetScene?: any) {
+export function prewarmParticlePool(targetScene?: THREE.Scene | null) {
     ensureParticleRoot(targetScene);
     const defaultMat = getParticleMaterial(0xffffff);
     const preGeos = [_partGeoOcta, _partGeoSphere];
@@ -401,7 +473,7 @@ export function prewarmParticlePool(targetScene?: any) {
     }
 }
 
-function pushPooledParticle(item: any) {
+function pushPooledParticle(item: ActiveParticle) {
     if (activeParticles.length >= MAX_ACTIVE_PARTICLES) {
         const oldest = activeParticles.shift();
         if (oldest) releaseParticle(oldest);
@@ -409,7 +481,7 @@ function pushPooledParticle(item: any) {
     activeParticles.push(item);
 }
 
-        export function spawnBurstParticles(x, y, z, colorHex = 0x78716c, count = 10, speedScale = 1) {
+        export function spawnBurstParticles(x: number, y: number, z: number, colorHex = 0x78716c, count = 10, speedScale = 1) {
             for (let i = 0; i < count; i++) {
                 const mat = getParticleMaterial(i % 3 === 0 ? 0xffd60a : colorHex);
                 const { mesh: pGroup, poolType } = acquireParticleMesh(_partGeoOcta, mat, true, 1.18);
@@ -433,7 +505,7 @@ function pushPooledParticle(item: any) {
             }
         }
 
-        export function spawnSoapSudsParticles(x, y, z, count = 6) {
+        export function spawnSoapSudsParticles(x: number, y: number, z: number, count = 6) {
             const bubbleColors = [0xffffff, 0xbae6fd, 0xfbcfe8, 0xfef08a, 0xa5f3fc];
             for (let i = 0; i < count; i++) {
                 const scaleS = (0.45 + Math.random() * 0.75) / 0.6;
@@ -462,7 +534,7 @@ function pushPooledParticle(item: any) {
             }
         }
 
-        export function spawnSparkleGlints(x, y, z, count = 12) {
+        export function spawnSparkleGlints(x: number, y: number, z: number, count = 12) {
             for (let i = 0; i < count; i++) {
                 const gScale = (0.45 + Math.random() * 0.4) / 0.65;
                 const sx = 0.65 * gScale;
@@ -493,7 +565,7 @@ function pushPooledParticle(item: any) {
             }
         }
 
-        export function spawnRocketExhaustParticles(x, y, z, count = 28) {
+        export function spawnRocketExhaustParticles(x: number, y: number, z: number, count = 28) {
             const fireColors = [0xff4500, 0xf97316, 0xfacc15, 0xffffff, 0x94a3b8];
             for (let i = 0; i < count; i++) {
                 const scaleS = (0.5 + Math.random() * 0.7) / 0.65;
@@ -518,7 +590,7 @@ function pushPooledParticle(item: any) {
             }
         }
 
-        export function spawnDinerFoodParticles(x, y, z, count = 16) {
+        export function spawnDinerFoodParticles(x: number, y: number, z: number, count = 16) {
             const foodColors = [0xd97706, 0x22c55e, 0xef4444, 0xfacc15, 0x78350f, 0x38bdf8];
             for (let i = 0; i < count; i++) {
                 const isBox = i % 2 === 0;
@@ -544,7 +616,7 @@ function pushPooledParticle(item: any) {
             }
         }
 
-        export function spawnEnergonLightningParticles(x, y, z, count = 22) {
+        export function spawnEnergonLightningParticles(x: number, y: number, z: number, count = 22) {
             const colors = [0x22d3ee, 0x06b6d4, 0xfacc15, 0xa855f7, 0xffffff];
             for (let i = 0; i < count; i++) {
                 const lScale = (0.5 + Math.random() * 0.5) / 0.65;
@@ -573,7 +645,7 @@ function pushPooledParticle(item: any) {
             }
         }
 
-        export function spawnWarpVortexParticles(x, y, z, count = 26) {
+        export function spawnWarpVortexParticles(x: number, y: number, z: number, count = 26) {
             const portalColors = [0x06b6d4, 0x3b82f6, 0xa855f7, 0xec4899, 0xffffff];
             for (let i = 0; i < count; i++) {
                 const scaleS = (0.45 + Math.random() * 0.4) / 0.6;
@@ -598,7 +670,7 @@ function pushPooledParticle(item: any) {
             }
         }
 
-        export function spawnWaterWakeParticles(x, y, z, count = 16) {
+        export function spawnWaterWakeParticles(x: number, y: number, z: number, count = 16) {
             const foamColors = [0xffffff, 0xe0f2fe, 0xbae6fd, 0x7dd3fc];
             for (let i = 0; i < count; i++) {
                 const wScale = (0.6 + Math.random() * 0.8) / 0.8;
@@ -623,7 +695,7 @@ function pushPooledParticle(item: any) {
             }
         }
 
-        export function spawnMagnetSparkParticles(x, y, z, count = 18) {
+        export function spawnMagnetSparkParticles(x: number, y: number, z: number, count = 18) {
             const sparkColors = [0x38bdf8, 0x0284c7, 0xfacc15, 0xffffff];
             for (let i = 0; i < count; i++) {
                 const scaleS = (0.35 + Math.random() * 0.3) / 0.65;
@@ -648,7 +720,7 @@ function pushPooledParticle(item: any) {
             }
         }
 
-        export function spawnPaintSplatParticles(x, y, z, colorHex = 0xf43f5e, count = 22) {
+        export function spawnPaintSplatParticles(x: number, y: number, z: number, colorHex = 0xf43f5e, count = 22) {
             const mat = getParticleMaterial(colorHex);
             for (let i = 0; i < count; i++) {
                 const isSphere = i % 2 === 0;
@@ -674,20 +746,24 @@ function pushPooledParticle(item: any) {
         }
 
         // Aimed High-Pressure Ballistic Water Cannon Arc for Heatwave (Automatically targets nearest active Fire/Hazard!)
-        export function spawnWaterCannonStream(sourceRig = botRigs.HEATWAVE, sourceOrigin = null, sourceHeading = player.heading) {
+        export function spawnWaterCannonStream(sourceRig: BotRig | null | undefined = botRigs?.HEATWAVE, sourceOrigin: THREE.Vector3 | null = null, sourceHeading = player.heading) {
             const rig = sourceRig;
-            const isHeatwaveBoat = (rig === botRigs.HEATWAVE && player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && (player.boatMorph > 0.4 || isPointInWater(player.pos.x, player.pos.z)) && !sourceOrigin);
+            if (!rig && !sourceOrigin) return;
+            const isHeatwaveBoat = (rig === botRigs?.HEATWAVE && player.botType === 'HEATWAVE' && player.mode === 'VEHICLE' && ((player.boatMorph ?? 0) > 0.4 || isPointInWater(player.pos.x, player.pos.z)) && !sourceOrigin);
             _nozzlePositions.length = 0;
+
+            const leftBoatNozzle = rig?.leftBoatNozzle as THREE.Object3D | undefined;
+            const rightBoatNozzle = rig?.rightBoatNozzle as THREE.Object3D | undefined;
 
             if (sourceOrigin) {
                 _nozzleSinglePos.copy(sourceOrigin);
                 _nozzlePositions.push(_nozzleSinglePos);
-            } else if (isHeatwaveBoat && rig.leftBoatNozzle && rig.rightBoatNozzle) {
-                rig.leftBoatNozzle.getWorldPosition(_nozzleLeftPos);
-                rig.rightBoatNozzle.getWorldPosition(_nozzleRightPos);
+            } else if (isHeatwaveBoat && leftBoatNozzle && rightBoatNozzle) {
+                leftBoatNozzle.getWorldPosition(_nozzleLeftPos);
+                rightBoatNozzle.getWorldPosition(_nozzleRightPos);
                 _nozzlePositions.push(_nozzleLeftPos, _nozzleRightPos);
             } else {
-                const activeNozzle = player.mode === 'DINO' ? rig.dinoNozzleTip : rig.nozzleTip;
+                const activeNozzle = player.mode === 'DINO' ? rig?.dinoNozzleTip : rig?.nozzleTip;
                 if (activeNozzle) activeNozzle.getWorldPosition(_nozzleSinglePos);
                 else {
                     _nozzleFallbackPos.set(player.pos.x, player.pos.y + 2, player.pos.z);
@@ -731,12 +807,12 @@ function pushPooledParticle(item: any) {
                     // High ballistic arc that peaks in the middle and lands squarely on target!
                     baseVy = (dy + 0.5 * gravity * flightTime * flightTime) / flightTime;
 
-                    if (!isHeatwaveBoat && rig.backAttachment) {
+                    if (!isHeatwaveBoat && rig?.backAttachment) {
                         const worldAimYaw = Math.atan2(dx, dz);
                         rig.backAttachment.rotation.y = worldAimYaw - sourceHeading;
                     }
                 } else {
-                    if (!isHeatwaveBoat && rig.backAttachment) {
+                    if (!isHeatwaveBoat && rig?.backAttachment) {
                         rig.backAttachment.rotation.y = 0;
                     }
                     const jetSpeed = 42;
@@ -773,8 +849,10 @@ function pushPooledParticle(item: any) {
 
         export function updateMissionHUD() {
             const restoredCount = beacons.filter(b => b.restored).length;
-            document.getElementById('mission-status-text').textContent = `Emergencies Resolved: ${restoredCount} / ${beacons.length}`;
-            const pips = document.getElementById('beacon-pips').children;
+            const statusTextEl = document.getElementById('mission-status-text');
+            if (statusTextEl) statusTextEl.textContent = `Emergencies Resolved: ${restoredCount} / ${beacons.length}`;
+            const pips = document.getElementById('beacon-pips')?.children;
+            if (!pips) return;
             beacons.forEach((b, idx) => {
                 if (!pips[idx]) return;
                 if (b.restored) {
@@ -804,12 +882,12 @@ function pushPooledParticle(item: any) {
                         );
                     }, 5800);
                 } else {
-                    document.getElementById('victory-modal').classList.remove('hidden');
+                    document.getElementById('victory-modal')?.classList.remove('hidden');
                 }
             }
         }
 
-        export function clearHazardNode(beacon, node, attackType = null) {
+        export function clearHazardNode(beacon: BeaconEntry, node: HazardNodeEntry, attackType: string | null = null) {
             if (worldState.activeArea === 'UNDERGROUND') return;
             if (node.cleared) return;
 
@@ -890,7 +968,7 @@ function pushPooledParticle(item: any) {
                     });
                     const speaker = beacon.strandedCitizens[0];
                     const botName = BOT_METADATA[player.botType] ? BOT_METADATA[player.botType].name : player.botType;
-                    clearTimeout(window._citizenThankTimeout);
+                    clearTimeout(window._citizenThankTimeout as ReturnType<typeof setTimeout> | undefined);
                     window._citizenThankTimeout = setTimeout(() => {
                         triggerNPCSpeech(
                             speaker.name,
@@ -908,7 +986,8 @@ function pushPooledParticle(item: any) {
 
         // emergentRescues exported above
 
-        export function initEmergentRescues(scene) {
+        export function initEmergentRescues(targetScene?: THREE.Scene | null) {
+            const s = targetScene || scene || (typeof window !== "undefined" ? window.scene : null);
             // 1. Overheated Delivery Van on Mountain Pass shoulder
             const vanGrp = new THREE.Group();
             const matVanBody = new THREE.MeshToonMaterial({ color: 0x0284c7, gradientMap: toonGrad3 });
@@ -1013,7 +1092,7 @@ function pushPooledParticle(item: any) {
         }
 
         let emergentCheckCooldown = 0;
-        export function updateEmergentRescues(dt, now) {
+        export function updateEmergentRescues(dt: number, now: number) {
             emergentCheckCooldown++;
             const nowSec = now * 0.001;
 
@@ -1035,7 +1114,7 @@ function pushPooledParticle(item: any) {
                 const isClose = dist2D <= ev.radius;
 
                 if (isClose) {
-                    const actionTriggered = player.activeActionDuration > 0 || Math.abs(player.speed) > 2.0;
+                    const actionTriggered = player.waterTimer > 0 || player.smashTimer > 0 || player.scoopTimer > 0 || Math.abs(player.speed) > 2.0;
                     if (actionTriggered) {
                         ev.solved = true;
                         progression.totalEmergenciesResolved++;

@@ -1,10 +1,11 @@
 // Griffin Rock Interactive Commercial Recycling Dumpsters & Salvage Hopper Dump Mechanic
 import * as THREE from 'three';
+import type { ColliderItem, PlayerState } from '../types/game.js';
 import { getSurfaceHeight } from './terrain.js';
 import { toonGrad3, toonGrad4, matDarkSteel, matChrome, matInkOutline } from '../rendering/materials.js';
 import { player, botRigs, worldColliders, registerCullableObject, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
-import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
+import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { spawnBurstParticles, spawnSparkleGlints } from './emergencies.js';
 import { createDumpsterMesh } from './propModels.js';
@@ -22,7 +23,7 @@ export interface DumpsterInstance {
     bodyMesh: THREE.Mesh;
     lidGroup: THREE.Group;
     trashGroup: THREE.Group;
-    collider: any;
+    collider: ColliderItem | null;
     isBeingDumped: boolean;
     emptied: boolean;
     refillTimer: number;
@@ -50,8 +51,8 @@ export const DUMPSTER_LOCATIONS = [
     { name: "East Lighthouse Lookout Shed", x: 1175.0, z: -78.0, rotY: -1.35 }
 ];
 
-export function initDumpsters(scene: THREE.Scene) {
-    const s = scene || (typeof window !== 'undefined' ? (window as any).scene : null);
+export function initDumpsters(scene?: THREE.Scene | null) {
+    const s = scene || (typeof window !== 'undefined' ? window.scene : null);
     if (!s) return;
 
     activeDumpsters.length = 0;
@@ -100,9 +101,9 @@ export function initDumpsters(scene: THREE.Scene) {
     });
 
     if (typeof window !== 'undefined') {
-        (window as any).activeDumpsters = activeDumpsters;
-        (window as any).getNearestDumpster = getNearestDumpster;
-        (window as any).triggerDumpsterHopperDump = triggerDumpsterHopperDump;
+        window.activeDumpsters = activeDumpsters;
+        window.getNearestDumpster = getNearestDumpster;
+        window.triggerDumpsterHopperDump = triggerDumpsterHopperDump;
     }
 }
 
@@ -110,7 +111,7 @@ export function initDumpsters(scene: THREE.Scene) {
 // Salvage Dumpster Detection & Hopper Dump Interaction
 // ---------------------------------------------------------------------
 
-export function getNearestDumpster(playerRef: any, maxDist = 8.5): DumpsterInstance | null {
+export function getNearestDumpster(playerRef: PlayerState | null, maxDist = 8.5): DumpsterInstance | null {
     if (!playerRef || !playerRef.pos) return null;
     let closest: DumpsterInstance | null = null;
     let closestDist = maxDist;
@@ -127,12 +128,12 @@ export function getNearestDumpster(playerRef: any, maxDist = 8.5): DumpsterInsta
     return closest;
 }
 
-export function isDumpsterNearPlayer(playerRef: any, threshold = 8.5): boolean {
+export function isDumpsterNearPlayer(playerRef: PlayerState | null, threshold = 8.5): boolean {
     if (worldState.activeArea === 'UNDERGROUND') return false;
     return getNearestDumpster(playerRef, threshold) !== null;
 }
 
-export function triggerDumpsterHopperDump(playerRef: any): boolean {
+export function triggerDumpsterHopperDump(playerRef: PlayerState | null): boolean {
     if (!playerRef || playerRef.botType !== 'SALVAGE') return false;
     if (playerRef.dumpsterTimer > 0) return false;
 
@@ -173,11 +174,11 @@ export function updateDumpsters(dt: number, now: number) {
         player.dumpsterTimer = Math.max(0, player.dumpsterTimer - dt);
         player.speed = 0; // Hold vehicle stationary while lifting
 
-        const d: DumpsterInstance = player.activeDumpster;
+        const d = player.activeDumpster as DumpsterInstance;
         const totalDuration = 2.4;
         const progress = 1.0 - (player.dumpsterTimer / totalDuration); // 0.0 to 1.0
 
-        const salvageRig = botRigs.SALVAGE;
+        const salvageRig = botRigs?.SALVAGE;
         const isVeh = player.mode === 'VEHICLE';
 
         // Orientation vectors for Salvage
@@ -185,18 +186,19 @@ export function updateDumpsters(dt: number, now: number) {
         const cosH = Math.cos(player.heading);
 
         // Articulate Salvage loader arms if available
-        if (salvageRig && salvageRig.salvageLoaderArms) {
+        const loaderArms = salvageRig?.salvageLoaderArms as THREE.Object3D | undefined;
+        if (loaderArms) {
             if (progress < 0.40) {
                 // Arms raising forward & up
                 const armPhase = progress / 0.40;
-                salvageRig.salvageLoaderArms.rotation.x = -armPhase * Math.PI * 0.72;
+                loaderArms.rotation.x = -armPhase * Math.PI * 0.72;
             } else if (progress < 0.68) {
                 // Arms tipped back over hopper
-                salvageRig.salvageLoaderArms.rotation.x = -Math.PI * 0.72;
+                loaderArms.rotation.x = -Math.PI * 0.72;
             } else {
                 // Arms lowering back down
                 const armPhase = (progress - 0.68) / 0.32;
-                salvageRig.salvageLoaderArms.rotation.x = -(1.0 - armPhase) * Math.PI * 0.72;
+                loaderArms.rotation.x = -(1.0 - armPhase) * Math.PI * 0.72;
             }
         }
 
@@ -284,8 +286,9 @@ export function updateDumpsters(dt: number, now: number) {
             d.emptied = true;
             d.refillTimer = 0;
 
-            if (salvageRig && salvageRig.salvageLoaderArms) {
-                salvageRig.salvageLoaderArms.rotation.x = 0;
+            const resetLoaderArms = salvageRig?.salvageLoaderArms as THREE.Object3D | undefined;
+            if (resetLoaderArms) {
+                resetLoaderArms.rotation.x = 0;
             }
 
             player.dumpsterTimer = 0;
@@ -296,8 +299,8 @@ export function updateDumpsters(dt: number, now: number) {
             sfx.playRankUp();
 
             // Awards
-            progression.heroPoints = (progression.heroPoints || 0) + 25;
-            progression.energonCollected = (progression.energonCollected || 0) + 15;
+            progression.heroPoints = (Number(progression.heroPoints) || 0) + 25;
+            progression.energonCollected = (Number(progression.energonCollected) || 0) + 15;
             saveProgression();
 
             spawnBurstParticles(player.pos.x, player.pos.y + 2.5, player.pos.z, 0x84cc16, 26, 1.8);
@@ -313,7 +316,7 @@ export function updateDumpsters(dt: number, now: number) {
                 "SALVAGE",
                 "Recycling Hero",
                 "Clean, green, recycling machine! That dumpster is sorted and compacted!",
-                player,
+                player as unknown as SpeechTarget,
                 false
             );
         }

@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { buildRescueBotModel, applyBotRigMorph, setBotRigMega } from '../bots/botRigs.js';
 import { toonGrad3, OUTLINE_LAYER } from '../rendering/materials.js';
 import { SVG_ICONS } from '../ui/icons.js';
+import type { BotRig } from '../types/game.js';
 
 export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
     const params = new URLSearchParams(location.search);
@@ -91,7 +92,7 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         const baseType = isMega ? id.replace('_MEGA', '') : id;
         const rig = buildRescueBotModel(baseType);
         setBotRigMega(rig, isMega);
-        rig.root.traverse((o: any) => { if (o.isMesh && !o.userData.isOutline) o.castShadow = true; });
+        rig.root.traverse((o: THREE.Object3D) => { if (o instanceof THREE.Mesh && !o.userData.isOutline) o.castShadow = true; });
         return rig;
     }
 
@@ -104,7 +105,7 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         mode: string;
         isMega: boolean;
         gridPos: THREE.Vector3;
-        rig: any | null;
+        rig: BotRig | null;
         holder: THREE.Group | null;
         label: HTMLDivElement | null;
         _center: THREE.Vector3;
@@ -137,7 +138,7 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         c.holder = holder;
         c.label = label;
         builtRigCount++;
-        (window as any).__botCheckBuiltRigs = builtRigCount;
+        window.__botCheckBuiltRigs = builtRigCount;
     }
 
     // Grid layout: rows = bots, columns = modes. Boat mode included for all amphibious bots (all except High Tide).
@@ -175,8 +176,8 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
     });
     const gridDepth = rowZ;
 
-    (window as any).__botCheckCells = cells;
-    (window as any).__botCheckBuiltRigs = builtRigCount;
+    window.__botCheckCells = cells;
+    window.__botCheckBuiltRigs = builtRigCount;
 
     // Measure the lowest point of VISIBLE (non-outline) geometry => ground contact check
     const _box = new THREE.Box3();
@@ -184,12 +185,14 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
     function visibleBounds(obj: THREE.Object3D) {
         _box.makeEmpty();
         obj.updateMatrixWorld(true);
-        (function walk(o: any) {
+        (function walk(o: THREE.Object3D) {
             if (!o.visible) return;
-            if (o.isMesh && !o.userData.isOutline && o.geometry) {
+            if (o instanceof THREE.Mesh && !o.userData.isOutline && o.geometry) {
                 if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
-                _tmp.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
-                _box.union(_tmp);
+                if (o.geometry.boundingBox) {
+                    _tmp.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
+                    _box.union(_tmp);
+                }
             }
             if (o.children) o.children.forEach(walk);
         })(obj);
@@ -230,22 +233,26 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         <div data-report style="margin-top:8px;max-height:220px;overflow:auto;font:11px/1.35 ui-monospace,monospace;"></div>
         <div style="margin-top:6px;color:#94a3b8;font-size:11px;">Drag to orbit · wheel to zoom · <a href="./modelcheck.html" style="color:#7dd3fc;">model check</a> · <a href="./index.html" style="color:#7dd3fc;">back to game</a></div>`;
     document.body.appendChild(panel);
-    const q = (sel: string): any => panel.querySelector(sel);
+    const q = <T extends HTMLElement = HTMLElement>(sel: string): T | null => panel.querySelector<T>(sel);
+    const stateMap = state as unknown as Record<string, string | number | boolean>;
 
     let needsBoundsRefresh = true;
-    panel.querySelectorAll('[data-k]').forEach((el: any) => {
+    panel.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-k]').forEach((el) => {
         const k = el.dataset.k;
-        if (el.type === 'checkbox') el.checked = (state as any)[k];
-        else el.value = (state as any)[k];
+        if (!k) return;
+        if (el instanceof HTMLInputElement && el.type === 'checkbox') el.checked = Boolean(stateMap[k]);
+        else el.value = String(stateMap[k] ?? '');
         el.addEventListener('input', () => {
-            (state as any)[k] = el.type === 'checkbox' ? el.checked : (el.type === 'range' ? parseFloat(el.value) : el.value);
+            stateMap[k] = el instanceof HTMLInputElement && el.type === 'checkbox'
+                ? el.checked
+                : (el instanceof HTMLInputElement && el.type === 'range' ? parseFloat(el.value) : el.value);
             needsBoundsRefresh = true;
             syncUrl();
         });
     });
 
     let smashT = 0;
-    q('[data-smash]').addEventListener('click', () => {
+    q('[data-smash]')?.addEventListener('click', () => {
         smashT = 0.45;
         needsBoundsRefresh = true;
     });
@@ -267,7 +274,8 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         lastX = e.clientX;
         lastY = e.clientY;
         state.spin = false;
-        q('[data-k=spin]').checked = false;
+        const spinInput = q<HTMLInputElement>('[data-k=spin]');
+        if (spinInput) spinInput.checked = false;
     });
     window.addEventListener('pointerup', () => { dragging = false; });
     window.addEventListener('pointermove', (e: PointerEvent) => {
@@ -292,8 +300,8 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
     const _size = new THREE.Vector3();
     const _camTarget = new THREE.Vector3();
     const _camDir = new THREE.Vector3();
-    (window as any).__botCheckCamera = bcCamera;
-    (window as any).__botCheckCamTarget = _camTarget;
+    window.__botCheckCamera = bcCamera;
+    window.__botCheckCamTarget = _camTarget;
     let lastNow = performance.now();
     let walkCycle = 0;
     let reportTimer = 0;
@@ -308,8 +316,10 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         if (state.walk) walkCycle += dt * 9;
 
         const isFocus = state.view === 'focus';
-        q('[data-focus]').style.display = isFocus ? '' : 'none';
-        q('[data-morphval]').textContent = state.morph.toFixed(2);
+        const focusEl = q('[data-focus]');
+        if (focusEl) focusEl.style.display = isFocus ? '' : 'none';
+        const morphValEl = q('[data-morphval]');
+        if (morphValEl) morphValEl.textContent = state.morph.toFixed(2);
         const morphLabelEl = q('[data-morphlabel]');
         if (morphLabelEl) {
             if (state.mode === 'boat') {
@@ -380,7 +390,7 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
                 focusCell = c;
             }
 
-            applyBotRigMorph(c.rig, m, d, walk, speed, smash, t, 0, bm);
+            if (c.rig) applyBotRigMorph(c.rig, m, d, walk, speed, smash, t, 0, bm);
 
             const refreshFullBounds = needsBoundsRefresh || !c._boundsReady;
             if (refreshFullBounds || emitReport) {
@@ -484,10 +494,13 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
 
         if (emitReport) {
             console.log('[BOTCHECK_REPORT]', JSON.stringify(issues));
-            q('[data-report]').innerHTML = issues.length
-                ? `<div style="color:#fca5a5;font-weight:700;">${issues.length} ground-contact issue(s):</div>` + issues.map(s => `<div>${s}</div>`).join('')
-                : '<div style="color:#86efac;">OK: No ground-contact issues in view</div>';
-            (window as any).__botCheckIssues = issues.slice();
+            const reportEl = q('[data-report]');
+            if (reportEl) {
+                reportEl.innerHTML = issues.length
+                    ? `<div style="color:#fca5a5;font-weight:700;">${issues.length} ground-contact issue(s):</div>` + issues.map(s => `<div>${s}</div>`).join('')
+                    : '<div style="color:#86efac;">OK: No ground-contact issues in view</div>';
+            }
+            window.__botCheckIssues = issues.slice();
         }
 
         renderer.render(bcScene, bcCamera);
@@ -496,5 +509,5 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
 }
 
 if (typeof window !== 'undefined') {
-    (window as any).startBotCheck = startBotCheck;
+    window.startBotCheck = startBotCheck;
 }

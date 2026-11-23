@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { scene } from '../rendering/scene.js';
 import { getTerrainHeight } from './terrain.js';
-import { player } from '../state/gameState.js';
+import { player, registerCullableObject } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { progression, saveProgression } from '../progression/progression.js';
 import { showToast } from '../ui/dialogs.js';
@@ -11,8 +11,30 @@ import { createEnergonCubeMesh, createGoldenCrestMesh } from './propModels.js';
 
 export { createEnergonCubeMesh, createGoldenCrestMesh };
 
-export const energonCubes = [];
-export const goldenCrests = [];
+export interface EnergonCubeEntry {
+    homeX: number;
+    homeY: number;
+    homeZ: number;
+    x: number;
+    y: number;
+    z: number;
+    phase: number;
+    collected: boolean;
+    collectedAtTime: number;
+    isBonusDrop: boolean;
+    mesh: ReturnType<typeof createEnergonCubeMesh>;
+}
+
+export interface GoldenCrestEntry {
+    def: { id: string; name: string; x: number; y: number; z: number };
+    mesh: THREE.Group;
+    collected: boolean;
+    baseY: number;
+    phase: number;
+}
+
+export const energonCubes: EnergonCubeEntry[] = [];
+export const goldenCrests: GoldenCrestEntry[] = [];
 
         const RAINBOW_TRAIL_COLORS = [0xef4444, 0xf97316, 0xfacc15, 0x4ade80, 0x38bdf8, 0xa855f7];
         let rainbowTrailIdx = 0;
@@ -57,8 +79,10 @@ export const goldenCrests = [];
             { x: 0, z: 1160, alt: 26 }
         ];
 
-        export function buildEnergonCubes(scene?: any) {
-            energonCubes.forEach(c => scene.remove(c.mesh.root));
+        export function buildEnergonCubes(targetScene?: THREE.Scene | null) {
+            const s = targetScene || scene || (typeof window !== 'undefined' ? window.scene : null);
+            if (!s) return;
+            energonCubes.forEach(c => s.remove(c.mesh.root));
             energonCubes.length = 0;
 
             ENERGON_SPAWN_SITES.forEach((pt, idx) => {
@@ -69,7 +93,7 @@ export const goldenCrests = [];
                 if (pt.alt && pt.alt > 8) {
                     mesh.baseRing.visible = false; // Floating sky cube
                 }
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh.root);
+                s.add(mesh.root);
                 energonCubes.push({
                     homeX: pt.x,
                     homeY: baseY,
@@ -86,7 +110,8 @@ export const goldenCrests = [];
             });
         }
 
-        export function spawnBonusEnergonCubes(centerX, centerZ, count = 3) {
+        export function spawnBonusEnergonCubes(centerX: number, centerZ: number, count = 3) {
+            const s = scene || (typeof window !== "undefined" ? window.scene : null);
             for (let i = 0; i < count; i++) {
                 const ang = (i / count) * Math.PI * 2 + Math.random() * 0.5;
                 const dist = 6.5 + Math.random() * 3.5;
@@ -95,7 +120,7 @@ export const goldenCrests = [];
                 const cy = Math.max(0.2, getTerrainHeight(cx, cz));
                 const mesh = createEnergonCubeMesh();
                 mesh.root.position.set(cx, cy, cz);
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh.root);
+                if (s) s.add(mesh.root);
                 energonCubes.push({
                     homeX: cx,
                     homeY: cy,
@@ -112,7 +137,7 @@ export const goldenCrests = [];
             }
         }
 
-        export function updateEnergonCubes(dt, now) {
+        export function updateEnergonCubes(dt: number, now: number) {
             const nowSec = now * 0.001;
             for (let i = energonCubes.length - 1; i >= 0; i--) {
                 const c = energonCubes[i];
@@ -203,7 +228,7 @@ export const goldenCrests = [];
         ];
 
         let landmarkCheckCooldown = 0;
-        export function updateLandmarkDiscovery(px, pz) {
+        export function updateLandmarkDiscovery(px: number, pz: number) {
             landmarkCheckCooldown++;
             if (landmarkCheckCooldown % 15 !== 0) return;
             if (!Array.isArray(progression.discoveredLandmarks)) {
@@ -243,7 +268,8 @@ export const goldenCrests = [];
             { id: "crest_volcano_rim", name: "Mount Griffin Rim Crest", x: -650, y: 48.0, z: 650 }
         ];
 
-        export function initGoldenCrests(scene) {
+        export function initGoldenCrests(targetScene?: THREE.Scene | null) {
+            const s = targetScene || scene || (typeof window !== "undefined" ? window.scene : null);
             if (!Array.isArray(progression.collectedCrests)) {
                 progression.collectedCrests = [];
             }
@@ -252,7 +278,7 @@ export const goldenCrests = [];
                 mesh.position.set(def.x, def.y, def.z);
                 const isCollected = progression.collectedCrests.includes(def.id);
                 mesh.visible = !isCollected;
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(mesh);
+                if (s) s.add(mesh);
                 registerCullableObject(mesh, def.x, def.y, def.z, 22);
                 goldenCrests.push({
                     def,
@@ -264,7 +290,7 @@ export const goldenCrests = [];
             });
         }
 
-        export function updateGoldenCrests(dt, now) {
+        export function updateGoldenCrests(dt: number, now: number) {
             const nowSec = now * 0.001;
             for (let i = 0; i < goldenCrests.length; i++) {
                 const c = goldenCrests[i];

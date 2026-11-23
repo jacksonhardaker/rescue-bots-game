@@ -26,7 +26,7 @@ import { applyWeatherMode, currentWeatherIdx, cycleWeatherMode } from '../world/
 import { closeUtilityMenu } from '../physics/movement.js';
 import { buildHazardSites } from '../world/emergencies.js';
 import { buildEnergonCubes } from '../world/collectibles.js';
-        export function bindButton(id, fn) {
+        export function bindButton(id: string, fn: () => void) {
             const el = document.getElementById(id);
             if (!el) return;
             el.addEventListener('touchstart', e => {
@@ -88,7 +88,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('btn-sigma-action', () => {
             if (worldState.activeArea === 'PLANET_SURFACE') {
                 if (worldState.planetReturnSector) {
-                    swapToSpace(true, worldState.planetReturnSector);
+                    swapToSpace(true, worldState.planetReturnSector as Parameters<typeof swapToSpace>[1]);
                 } else {
                     swapToSolarHub();
                 }
@@ -103,7 +103,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('space-return-earth-btn', () => startSpaceTransition('TO_EARTH'));
         bindButton('moon-orbit-btn', () => {
             if (worldState.activeArea === 'PLANET_SURFACE' && worldState.planetReturnSector) {
-                swapToSpace(true, worldState.planetReturnSector);
+                swapToSpace(true, worldState.planetReturnSector as Parameters<typeof swapToSpace>[1]);
             } else {
                 startSpaceTransition('MOON_TO_SPACE');
             }
@@ -113,6 +113,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('btn-solar-warp', () => launchWarpToSelected());
         bindButton('saturn-solar-btn', () => openSolarSystemHub());
         bindButton('saturn-restart-btn', () => resetSaturnRace());
+        bindButton('saturn-transform-btn', () => triggerTransform());
         bindButton('saturn-boost-btn', () => triggerSaturnRaceBoost());
 
         const bindHold = (id: string, onDown: () => void, onUp: () => void) => {
@@ -143,8 +144,9 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         });
 
         // Bind Bottom-Left 4-Bot Roster Cards
-        document.querySelectorAll('.bot-card').forEach(card => {
+        document.querySelectorAll<HTMLElement>('.bot-card').forEach(card => {
             const botType = card.dataset.bot;
+            if (!botType) return;
             card.addEventListener('touchstart', e => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -162,10 +164,11 @@ import { buildEnergonCubes } from '../world/collectibles.js';
             const toggleBtn = document.getElementById('btn-menu-toggle');
             const iconBars = document.getElementById('menu-icon-bars');
             const iconClose = document.getElementById('menu-icon-close');
+            if (!dropdown) return;
             const isHidden = dropdown.classList.toggle('hidden');
-            toggleBtn.setAttribute('aria-expanded', String(!isHidden));
-            iconBars.classList.toggle('hidden', !isHidden);
-            iconClose.classList.toggle('hidden', isHidden);
+            if (toggleBtn) toggleBtn.setAttribute('aria-expanded', String(!isHidden));
+            if (iconBars) iconBars.classList.toggle('hidden', !isHidden);
+            if (iconClose) iconClose.classList.toggle('hidden', isHidden);
         });
 
         // Warp to Rescue Bots Headquarters Button
@@ -186,7 +189,8 @@ import { buildEnergonCubes } from '../world/collectibles.js';
             player.heading = 0;
             player.speed = 0;
             player.hasWaypoint = false;
-            waypointGroup.visible = false;
+            const wg = waypointGroup as unknown as { visible: boolean } | null;
+            if (wg) wg.visible = false;
             const isFlying = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
                              (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW'));
             player.flightAlt = isFlying ? 16 : 0;
@@ -212,9 +216,10 @@ import { buildEnergonCubes } from '../world/collectibles.js';
             }
 
             if (progression.autoSpawnEmergencies) {
-                const allRestored = beacons.length > 0 && beacons.every(b => b.restored);
+                const beaconList = beacons as Array<{ restored?: boolean }>;
+                const allRestored = beaconList.length > 0 && beaconList.every(b => b.restored);
                 if (allRestored) {
-                    document.getElementById('victory-modal').classList.add('hidden');
+                    document.getElementById('victory-modal')?.classList.add('hidden');
                     buildHazardSites();
                     sfx.playSirenPulse();
                     showToast("ENDLESS DISPATCH ON!", "8 New Island Emergencies Active!");
@@ -234,7 +239,8 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('btn-cam', () => {
             input.camZoomMode = (input.camZoomMode + 1) % 3;
             const labels = ['View: WIDE', 'View: SKY MAP', 'View: CLOSE'];
-            document.getElementById('cam-label').textContent = labels[input.camZoomMode];
+            const camLabel = document.getElementById('cam-label');
+            if (camLabel) camLabel.textContent = labels[input.camZoomMode];
         });
 
         bindButton('btn-sound', () => {
@@ -257,7 +263,8 @@ import { buildEnergonCubes } from '../world/collectibles.js';
             player.heading = 0;
             player.speed = 0;
             player.hasWaypoint = false;
-            waypointGroup.visible = false;
+            const wg = waypointGroup as unknown as { visible: boolean } | null;
+            if (wg) wg.visible = false;
             buildHazardSites();
             buildEnergonCubes();
             closeUtilityMenu();

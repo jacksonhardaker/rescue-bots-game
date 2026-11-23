@@ -33,54 +33,57 @@ sunLight.shadow.normalBias = 0.02;
 scene.add(sunLight);
 scene.add(sunLight.target);
 
-export let canvas = null;
-export let renderer = null;
+export let canvas: HTMLCanvasElement | null = null;
+export let renderer: THREE.WebGLRenderer | null = null;
 
 if (typeof window !== 'undefined') {
     window.scene = scene;
     window.camera = camera;
     window.sunLight = sunLight;
     window.hemiLight = hemiLight;
-    (window as any).isMobileDevice = isMobileDevice;
+    window.isMobileDevice = isMobileDevice;
 }
 
-export function initScene(customCanvas?: any) {
+export function initScene(customCanvas?: HTMLCanvasElement | null) {
     if (typeof document === 'undefined') return { scene, camera, renderer, canvas };
 
-    canvas = customCanvas || document.getElementById('game-canvas');
-    if (!canvas) {
+    const targetCanvas = customCanvas || (document.getElementById('game-canvas') as HTMLCanvasElement | null);
+    if (!targetCanvas) {
         console.warn('Canvas game-canvas not found, creating virtual canvas');
         canvas = document.createElement('canvas');
+    } else {
+        canvas = targetCanvas;
     }
 
     let preferAntialias = true;
     try {
         const raw = window.localStorage.getItem('rescue_bots_settings_v1');
         if (raw) {
-            const parsed = JSON.parse(raw);
+            const parsed = JSON.parse(raw) as { graphics?: { preset?: string; resolution?: string } } | null;
             if (parsed?.graphics?.preset === 'low' || parsed?.graphics?.resolution === 'ultralow') {
                 preferAntialias = false;
             }
         }
     } catch {}
 
-    renderer = new THREE.WebGLRenderer({
+    const activeRenderer = new THREE.WebGLRenderer({
         canvas,
         antialias: preferAntialias,
         powerPreference: 'high-performance'
     });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobileDevice ? 1.5 : 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = isMobileDevice ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
-    renderer.shadowMap.autoUpdate = !isMobileDevice;
-    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer = activeRenderer;
+    activeRenderer.setSize(window.innerWidth, window.innerHeight);
+    activeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isMobileDevice ? 1.5 : 2));
+    activeRenderer.shadowMap.enabled = true;
+    activeRenderer.shadowMap.type = isMobileDevice ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
+    activeRenderer.shadowMap.autoUpdate = !isMobileDevice;
+    activeRenderer.outputEncoding = THREE.sRGBEncoding;
 
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
     if (typeof window !== 'undefined') {
-        window.renderer = renderer;
+        window.renderer = activeRenderer;
     }
 
     return { canvas, renderer, scene, camera, hemiLight, sunLight };

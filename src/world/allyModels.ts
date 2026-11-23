@@ -172,7 +172,7 @@ export function createHighTideShipMesh() {
     frontRail.position.set(0, 8.5, 2.4);
     ship.add(frontRail);
 
-    const cranes: any[] = [];
+    const cranes: Array<{ base: THREE.Group; boom: THREE.Group; claws: THREE.Group }> = [];
     [-1, 1].forEach(side => {
         const craneBase = new THREE.Group();
         craneBase.position.set(side * 4.6, 3.2, 4.5);
@@ -225,7 +225,7 @@ export function createHighTideShipMesh() {
     });
     ship.userData.cranes = cranes;
 
-    const thrusters: any[] = [];
+    const thrusters: THREE.Group[] = [];
     [-2.6, 2.6].forEach(tx => {
         const duct = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 3.8, 16).rotateX(Math.PI / 2), matMegaHullWhite);
         duct.position.set(tx, 0.4, -12.5);

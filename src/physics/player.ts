@@ -13,7 +13,11 @@ import { triggerNPCSpeech, showToast } from '../ui/dialogs.js';
 import { progression, saveProgression, isBotDocked, setBotDocked, ALL_PLAYABLE_BOTS } from '../progression/progression.js';
 import { syncVisitingAutobotsVisibility, WORLD_MEGA_ATTACHMENTS, WORLD_MEGA_LOCATIONS } from '../world/allies.js';
 export { syncVisitingAutobotsVisibility };
-import { spawnWaterCannonStream, spawnBurstParticles } from '../world/emergencies.js';
+import { spawnWaterCannonStream, spawnBurstParticles, clearHazardNode } from '../world/emergencies.js';
+import type { BotMetaEntry, PlayerState, BuddyBotState } from '../types/game.js';
+
+type PlayerStateExt = PlayerState & { pitch?: number; roll?: number };
+type BuddyStateExt = BuddyBotState & { mode?: string; pitch?: number; roll?: number };
 import { checkBoulderScoopAttack, checkWaterCannonFoliage } from '../world/vegetation.js';
 import { isDumpsterNearPlayer, triggerDumpsterHopperDump } from '../world/dumpsters.js';
 import { SVG_ICONS } from '../ui/icons.js';
@@ -27,7 +31,7 @@ import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
 import { camera } from '../rendering/scene.js';
 import { renderMinimap } from '../ui/tacticalMap.js';
-        export const BOT_CATCHPHRASES = {
+        export const BOT_CATCHPHRASES: Record<string, Record<string, string[]>> = {
             BOULDER: {
                 DEPLOY: [
                     "Boulder ready to roll! No rockslide is too big for us!",
@@ -555,13 +559,13 @@ import { renderMinimap } from '../ui/tacticalMap.js';
         // botPhraseCounters exported in gameState.js
 const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0, QUICKSHADOW: 0, STARSPEED: 0 };
 
-        export function speakBotCatchphrase(botType, eventKey) {
+        export function speakBotCatchphrase(botType: string, eventKey: string) {
             const botLines = BOT_CATCHPHRASES[botType] && BOT_CATCHPHRASES[botType][eventKey];
             const meta = BOT_METADATA[botType];
             if (!botLines || !meta) return;
             const idx = (botPhraseCounters[botType]++) % botLines.length;
             const line = botLines[idx];
-            triggerNPCSpeech(meta.name, meta.role, line, player, true);
+            triggerNPCSpeech(meta.name, meta.role, line, player as unknown as Parameters<typeof triggerNPCSpeech>[3], true);
         }
 
 
@@ -588,9 +592,13 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 ? `${meta.dinoName} MODE`
                 : (isBoat ? `${meta.boatName || 'BOAT'} MODE` : (isVeh ? `${meta.vehName} MODE` : `BOT MODE`));
 
-            document.getElementById('mode-readout').textContent = `${meta.name} • ${modeLabel}`;
-            document.getElementById('mode-readout').className = `text-xs sm:text-sm font-bold tracking-wide uppercase ${meta.colorClass}`;
-            document.getElementById('mode-dot').className = `w-2.5 h-2.5 rounded-full ${meta.dotClass}`;
+            const modeReadoutEl = document.getElementById('mode-readout');
+            if (modeReadoutEl) {
+                modeReadoutEl.textContent = `${meta.name} • ${modeLabel}`;
+                modeReadoutEl.className = `text-xs sm:text-sm font-bold tracking-wide uppercase ${meta.colorClass}`;
+            }
+            const modeDotEl = document.getElementById('mode-dot');
+            if (modeDotEl) modeDotEl.className = `w-2.5 h-2.5 rounded-full ${meta.dotClass}`;
 
             let nextTransformLabel = 'TO ROBOT';
             if (player.botType !== 'HIGHTIDE') {
@@ -616,7 +624,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     ? `TO ${meta.vehName}`
                     : (player.mode === 'VEHICLE' ? (meta.dinoName ? `TO ${meta.dinoName}` : 'TO ROBOT') : 'TO ROBOT');
             }
-            document.getElementById('transform-sub').textContent = nextTransformLabel;
+            const transformSubEl = document.getElementById('transform-sub');
+            if (transformSubEl) transformSubEl.textContent = nextTransformLabel;
 
             let actionKey = isDino
                 ? meta.dinoActionIcon
@@ -634,7 +643,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             if (actionIconEl) {
                 actionIconEl.innerHTML = SVG_ICONS[actionKey] || '';
             }
-            document.getElementById('action-label').textContent = actionLabel;
+            const actionLabelEl = document.getElementById('action-label');
+            if (actionLabelEl) actionLabelEl.textContent = actionLabel;
 
             const btnAction = document.getElementById('btn-action');
             if (btnAction) {
@@ -696,25 +706,26 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             const altReadout = document.getElementById('altitude-readout');
 
             const jumpIconEl = document.getElementById('jump-icon');
+            const jumpLabelEl = document.getElementById('jump-label');
             if (isFlyingCopter) {
-                btnDescend.classList.remove('hidden');
-                altSep.classList.remove('hidden');
-                altReadout.classList.remove('hidden');
+                btnDescend?.classList.remove('hidden');
+                altSep?.classList.remove('hidden');
+                altReadout?.classList.remove('hidden');
                 if (jumpIconEl) jumpIconEl.innerHTML = SVG_ICONS.ASCEND;
-                document.getElementById('jump-label').textContent = 'ASCEND';
+                if (jumpLabelEl) jumpLabelEl.textContent = 'ASCEND';
             } else {
-                btnDescend.classList.add('hidden');
-                altSep.classList.add('hidden');
-                altReadout.classList.add('hidden');
+                btnDescend?.classList.add('hidden');
+                altSep?.classList.add('hidden');
+                altReadout?.classList.add('hidden');
                 if (jumpIconEl) jumpIconEl.innerHTML = isVeh ? SVG_ICONS.SONAR : SVG_ICONS.JUMP;
-                document.getElementById('jump-label').textContent = isVeh ? 'SONAR' : 'JUMP';
+                if (jumpLabelEl) jumpLabelEl.textContent = isVeh ? 'SONAR' : 'JUMP';
             }
 
             // Update visibility of newly discovered ally bot selector buttons
             updateBotRosterUI();
 
             // Highlight active bot card in Bottom-Left Roster
-            document.querySelectorAll('.bot-card').forEach(btn => {
+            document.querySelectorAll<HTMLElement>('.bot-card').forEach(btn => {
                 const bType = btn.dataset.bot;
                 if (bType === player.botType) {
                     btn.classList.add('active-bot');
@@ -746,8 +757,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         // Dynamically toggle visibility of bot selector buttons based on discovery
         export function updateBotRosterUI() {
             const unlocked = getUnlockedPlayableBots();
-            document.querySelectorAll('.bot-card').forEach(btn => {
-                const bType = btn.dataset.bot;
+            document.querySelectorAll<HTMLElement>('.bot-card').forEach(btn => {
+                const bType = btn.dataset.bot || '';
                 if (unlocked.includes(bType)) {
                     btn.classList.remove('hidden');
                 } else {
@@ -765,7 +776,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             setBuddyBot(nextBot);
         }
 
-        export function unlockAndSwitchBot(botType) {
+        export function unlockAndSwitchBot(botType: string) {
             if (!Array.isArray(progression.discoveredAllies)) {
                 progression.discoveredAllies = [];
             }
@@ -778,7 +789,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
 
-        export function setBuddyBot(botType) {
+        export function setBuddyBot(botType: string) {
             if (botType === player.botType) return;
             buddyBot.botType = botType;
             progression.buddyBotType = botType;
@@ -815,12 +826,12 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             sfx.playWaypointTap();
             const bMeta = BOT_METADATA[botType];
             showToast("RESCUE WINGMAN", `${bMeta.name} is now your Buddy Bot!`);
-            triggerNPCSpeech(bMeta.name, "Wingman Partner", `I'm right behind you, ${BOT_METADATA[player.botType].name}! Ready to rescue!`, buddyBot, true);
+            triggerNPCSpeech(bMeta.name, "Wingman Partner", `I'm right behind you, ${BOT_METADATA[player.botType].name}! Ready to rescue!`, buddyBot as unknown as Parameters<typeof triggerNPCSpeech>[3], true);
             syncVisitingAutobotsVisibility();
             syncHUDToActiveBot();
         }
 
-        export function switchRescueBot(newBotType) {
+        export function switchRescueBot(newBotType: string) {
             if (newBotType === player.botType) {
                 speakBotCatchphrase(newBotType, 'DEPLOY');
                 return;
@@ -884,7 +895,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 // High Tide Megabot Docking Persistence:
                 if (newBotType === 'HIGHTIDE') {
                     const isMega = Boolean(progression.highTideDocked);
-                    setHighTideRigMega(botRigs['HIGHTIDE'], isMega);
+                    if (botRigs?.['HIGHTIDE']) setHighTideRigMega(botRigs['HIGHTIDE'], isMega);
                     if (highTideWorldShip) highTideWorldShip.visible = !isMega;
                 } else if (oldBotType === 'HIGHTIDE') {
                     if (highTideWorldShip) highTideWorldShip.visible = true;
@@ -893,7 +904,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 // Optimus Prime Mega Docking Persistence:
                 if (newBotType === 'OPTIMUS') {
                     const isMega = Boolean(progression.optimusDocked);
-                    setOptimusRigMega(botRigs['OPTIMUS'], isMega);
+                    if (botRigs?.['OPTIMUS']) setOptimusRigMega(botRigs['OPTIMUS'], isMega);
                     if (optimusWorldTrailer) optimusWorldTrailer.visible = !isMega;
                 } else if (oldBotType === 'OPTIMUS') {
                     if (optimusWorldTrailer) optimusWorldTrailer.visible = true;
@@ -908,7 +919,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             speakBotCatchphrase(newBotType, 'DEPLOY');
         }
 
-        export function updateAllBotTransforms(dt, now) {
+        export function updateAllBotTransforms(dt: number, now: number) {
+            const pExt = player as PlayerStateExt;
+            const bExt = buddyBot as BuddyStateExt;
             // Smoothly interpolate active player vehicle & dino morphs (~0.95s duration matching the 5-step transformation sound!)
             const morphSpeed = 1.05;
             if (player.morph < player.targetMorph) {
@@ -952,7 +965,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             // Buddy Bot mirrors player mode & morphs
             const isPlayerVehOrBoat = (player.mode === 'VEHICLE');
             if (isPlayerVehOrBoat) {
-                buddyBot.mode = 'VEHICLE';
+                bExt.mode = 'VEHICLE';
                 buddyBot.targetMorph = 1.0;
                 buddyBot.targetDinoMorph = 0.0;
                 if (buddyBot.botType !== 'HIGHTIDE') {
@@ -964,7 +977,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             } else {
                 buddyBot.targetMorph = player.targetMorph;
                 buddyBot.targetDinoMorph = player.targetDinoMorph;
-                if (buddyBot.botType !== 'HIGHTIDE' && buddyBot.mode === 'VEHICLE') {
+                if (buddyBot.botType !== 'HIGHTIDE' && bExt.mode === 'VEHICLE') {
                     const buddyInWater = isPointInWater(buddyBot.pos.x, buddyBot.pos.z) || getSurfaceHeight(buddyBot.pos.x, buddyBot.pos.z) < 0.25;
                     buddyBot.targetBoatMorph = buddyInWater ? 1.0 : 0.0;
                 } else {
@@ -989,8 +1002,10 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 buddyBot.dinoMorph = Math.max(buddyBot.targetDinoMorph, buddyBot.dinoMorph - dt * morphSpeed);
             }
 
-            Object.keys(botRigs).forEach(botKey => {
-                const rig = botRigs[botKey];
+            const parkingSlots: Record<string, { x: number; y: number; z: number; rotY: number; morph: number }> = HQ_PARKING_SLOTS;
+            const rigs = botRigs;
+            if (rigs) Object.keys(rigs).forEach(botKey => {
+                const rig = rigs[botKey];
                 const shouldBeMega = Boolean(
                     (botKey === player.botType && isBotDocked(botKey)) ||
                     (botKey === buddyBot.botType && isBotDocked(botKey))
@@ -1008,11 +1023,11 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                         rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (player.speed / 65) * 0.28, dt * 6);
                         rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, 0, dt * 6);
                     } else if (player.mode === 'VEHICLE' || player.mode === 'DINO') {
-                        rig.chassis.rotation.x = -player.pitch;
-                        rig.chassis.rotation.z = player.roll;
+                        rig.chassis.rotation.x = -(pExt.pitch || 0);
+                        rig.chassis.rotation.z = pExt.roll || 0;
                     } else {
-                        rig.chassis.rotation.x = -player.pitch * 0.35;
-                        rig.chassis.rotation.z = player.roll * 0.35;
+                        rig.chassis.rotation.x = -(pExt.pitch || 0) * 0.35;
+                        rig.chassis.rotation.z = (pExt.roll || 0) * 0.35;
                     }
                     applyBotRigMorph(rig, player.morph, player.dinoMorph, player.walkCycle, player.speed, player.smashTimer, now, player.scoopTimer, player.boatMorph || 0,
                         botKey === 'BOULDER' && ((player.drillEquipTimer || 0) > 0 || worldState.drillAnim?.active)
@@ -1038,18 +1053,18 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                         rig.chassis.rotation.x = THREE.MathUtils.lerp(rig.chassis.rotation.x, (buddyBot.speed / 65) * 0.28, dt * 6);
                         rig.chassis.rotation.z = THREE.MathUtils.lerp(rig.chassis.rotation.z, 0, dt * 6);
                     } else if (player.mode === 'VEHICLE' || player.mode === 'DINO') {
-                        rig.chassis.rotation.x = -buddyBot.pitch;
-                        rig.chassis.rotation.z = buddyBot.roll;
+                        rig.chassis.rotation.x = -(bExt.pitch || 0);
+                        rig.chassis.rotation.z = bExt.roll || 0;
                     } else {
-                        rig.chassis.rotation.x = -buddyBot.pitch * 0.35;
-                        rig.chassis.rotation.z = buddyBot.roll * 0.35;
+                        rig.chassis.rotation.x = -(bExt.pitch || 0) * 0.35;
+                        rig.chassis.rotation.z = (bExt.roll || 0) * 0.35;
                     }
                     applyBotRigMorph(rig, buddyBot.morph, buddyBot.dinoMorph, buddyBot.walkCycle, buddyBot.speed, buddyBot.smashTimer, now, buddyBot.scoopTimer, buddyBot.boatMorph || 0, 0);
                 } else if (worldState.activeArea === 'UNDERGROUND') {
                     rig.root.visible = false;
                 } else {
                     // Inactive Bots stay parked in standby at Rescue Bots Headquarters or hidden if secret ally!
-                    const slot = HQ_PARKING_SLOTS[botKey];
+                    const slot = parkingSlots[botKey];
                     if (slot) {
                         // Performance optimization: Cull inactive parked bot rigs when beyond 140m of camera
                         const camDist = Math.hypot(camera.position.x - slot.x, camera.position.z - slot.z);
@@ -1082,7 +1097,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
 
-        export function setPlayerMode(nextMode) {
+        export function setPlayerMode(nextMode: string) {
             if (nextMode === 'VEHICLE') {
                 if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
                     showToast("🌊 WATER REQUIRED TO SUBMERGE", "High Tide's submarine mode requires water! Head to the harbor or shoreline!");
@@ -1164,7 +1179,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 highTideWorldShip.visible = false;
             }
 
-            const rig = botRigs['HIGHTIDE'];
+            const rig = botRigs?.['HIGHTIDE'];
             if (rig) {
                 setHighTideRigMega(rig, true);
             }
@@ -1199,7 +1214,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 highTideWorldShip.visible = true;
             }
 
-            const rig = botRigs['HIGHTIDE'];
+            const rig = botRigs?.['HIGHTIDE'];
             if (rig) {
                 setHighTideRigMega(rig, false);
             }
@@ -1223,7 +1238,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 optimusWorldTrailer.visible = false;
             }
 
-            const rig = botRigs['OPTIMUS'];
+            const rig = botRigs?.['OPTIMUS'];
             if (rig) {
                 setOptimusRigMega(rig, true);
             }
@@ -1258,7 +1273,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 optimusWorldTrailer.visible = true;
             }
 
-            const rig = botRigs['OPTIMUS'];
+            const rig = botRigs?.['OPTIMUS'];
             if (rig) {
                 setOptimusRigMega(rig, false);
             }
@@ -1326,7 +1341,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             spawnBurstParticles(player.pos.x, player.pos.y + 2.0, player.pos.z, 0x94a3b8, 20, 1.5);
 
             const worldMesh = WORLD_MEGA_ATTACHMENTS && WORLD_MEGA_ATTACHMENTS[botType];
-            const defaultLoc = WORLD_MEGA_LOCATIONS && (WORLD_MEGA_LOCATIONS as any)[botType];
+            const megaLocs = WORLD_MEGA_LOCATIONS as Record<string, { x: number; z: number; rotY?: number }>;
+            const defaultLoc = megaLocs && megaLocs[botType];
             if (worldMesh) {
                 if (defaultLoc && Math.hypot(player.pos.x - defaultLoc.x, player.pos.z - defaultLoc.z) < 35.0) {
                     const gy = getSurfaceHeight(defaultLoc.x, defaultLoc.z);
@@ -1440,7 +1456,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 triggerNearbyDinoReaction(player.pos.x, player.pos.z);
             } else {
                 // Check MorBot hit with active bot's special ability
-                const currentBotMeta = BOT_METADATA[player.botType];
+                const currentBotMeta = BOT_METADATA[player.botType] as (BotMetaEntry & { powerName?: string }) | undefined;
                 const botAttackName = currentBotMeta ? `${currentBotMeta.name} ${currentBotMeta.powerName || "SPECIAL POWER"}` : "HEROIC SPECIAL POWER";
                 checkHitMorBotWithSpecialAbility(48.0, botAttackName);
             }
@@ -1486,7 +1502,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 checkHitMorBotWithSpecialAbility(30.0, "STINGER EMP");
 
                 // Target the closest uncleared hazard node within 26m, or deploy 12m in front of Chase!
-                let targetNode = null;
+                let targetNode: { x: number; y: number; z: number } | null = null;
                 let bestDist = 26.0;
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
@@ -1500,8 +1516,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     });
                 });
 
-                if (targetNode) {
-                    player.netTarget.set(targetNode.x, targetNode.y + 0.5, targetNode.z);
+                const foundTarget = targetNode as { x: number; y: number; z: number } | null;
+                if (foundTarget) {
+                    player.netTarget.set(foundTarget.x, foundTarget.y + 0.5, foundTarget.z);
                 } else {
                     const tx = player.pos.x + Math.sin(player.heading) * 12.0;
                     const tz = player.pos.z + Math.cos(player.heading) * 12.0;
@@ -2103,13 +2120,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             // 4. Restore Player Mode & Morph Values
             const savedMode = progression.playerMode || 'BOT';
+            const bExtRestore = buddyBot as BuddyStateExt;
             if (savedMode === 'VEHICLE') {
                 player.mode = 'VEHICLE';
                 player.morph = 1.0;
                 player.targetMorph = 1.0;
                 player.dinoMorph = 0.0;
                 player.targetDinoMorph = 0.0;
-                buddyBot.mode = 'VEHICLE';
+                bExtRestore.mode = 'VEHICLE';
                 buddyBot.morph = 1.0;
                 buddyBot.targetMorph = 1.0;
                 buddyBot.dinoMorph = 0.0;
@@ -2124,7 +2142,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.targetMorph = 0.0;
                 player.dinoMorph = 1.0;
                 player.targetDinoMorph = 1.0;
-                buddyBot.mode = 'DINO';
+                bExtRestore.mode = 'DINO';
                 buddyBot.morph = 0.0;
                 buddyBot.targetMorph = 0.0;
                 buddyBot.dinoMorph = 1.0;
@@ -2139,7 +2157,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.targetMorph = 0.0;
                 player.dinoMorph = 0.0;
                 player.targetDinoMorph = 0.0;
-                buddyBot.mode = 'BOT';
+                bExtRestore.mode = 'BOT';
                 buddyBot.morph = 0.0;
                 buddyBot.targetMorph = 0.0;
                 buddyBot.dinoMorph = 0.0;
@@ -2178,11 +2196,11 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             // 6. Update bot rigs visual transforms immediately
             const now = performance.now();
-            const rig = botRigs[player.botType];
+            const rig = botRigs?.[player.botType];
             if (rig) {
                 applyBotRigMorph(rig, player.morph, player.dinoMorph, 0, 0, 0, now, 0);
             }
-            const bRig = botRigs[buddyBot.botType];
+            const bRig = botRigs?.[buddyBot.botType];
             if (bRig) {
                 applyBotRigMorph(bRig, buddyBot.morph, buddyBot.dinoMorph, 0, 0, 0, now, 0);
             }

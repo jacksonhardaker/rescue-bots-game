@@ -6,23 +6,23 @@ import { isMobileDevice } from '../rendering/scene.js';
 import { gameSettings } from '../settings/settings.js';
 import { freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
 
-export let terrainMesh = null;
-export let waterMesh = null;
-export let shorelineFoamRing = null;
+export let terrainMesh: THREE.Mesh | null = null;
+export let waterMesh: THREE.Mesh | null = null;
+export let shorelineFoamRing: THREE.Mesh | null = null;
 
         export function createHighResTerrainTexture() {
             const TEX_SIZE = (isMobileDevice || gameSettings.graphics.preset === 'low' || gameSettings.graphics.resolution === 'ultralow') ? 2048 : 4096;
             const c = document.createElement('canvas');
             c.width = TEX_SIZE;
             c.height = TEX_SIZE;
-            const ctx = c.getContext('2d');
+            const ctx = c.getContext('2d')!;
 
             // 1. Base Biome Pixel Map (Meadow Grass, Highland, Mountain Slate, Volcano & Golden Sand)
             const BASE_SIZE = 512;
             const baseCanvas = document.createElement('canvas');
             baseCanvas.width = BASE_SIZE;
             baseCanvas.height = BASE_SIZE;
-            const bCtx = baseCanvas.getContext('2d');
+            const bCtx = baseCanvas.getContext('2d')!;
             const imgData = bCtx.createImageData(BASE_SIZE, BASE_SIZE);
             const data = imgData.data;
 
@@ -106,7 +106,7 @@ export let shorelineFoamRing = null;
             }
 
             // 3. Crisp Paved Town Plazas across the 10X Island
-            function drawPavedPlaza(cx, cz, w, h, radius) {
+            function drawPavedPlaza(cx: number, cz: number, w: number, h: number, radius: number) {
                 const x0 = cx - w / 2;
                 const z0 = cz - h / 2;
 
@@ -259,7 +259,7 @@ export let shorelineFoamRing = null;
             ctx.setLineDash([]);
 
             // Layer 4F: Crisp White Pedestrian Zebra Crosswalks in Griffin Town & HQ
-            function drawCrosswalk(cx, cz, horizontal) {
+            function drawCrosswalk(cx: number, cz: number, horizontal: boolean) {
                 ctx.fillStyle = '#f8fafc';
                 ctx.strokeStyle = '#0f172a';
                 ctx.lineWidth = 0.35;
@@ -287,7 +287,7 @@ export let shorelineFoamRing = null;
         }
 
 
-export function buildTerrainMesh(scene) {
+export function buildTerrainMesh(scene?: THREE.Scene | null) {
     const terrainGeo = new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE, 360, 360);
     terrainGeo.rotateX(-Math.PI / 2);
     const posAttr = terrainGeo.attributes.position;

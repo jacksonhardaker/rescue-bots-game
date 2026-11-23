@@ -2,14 +2,9 @@
 import * as THREE from 'three';
 import { createWheelAssembly } from './botHelpers.js';
 import { buildBumblebeeBoat } from './botBoats.js';
+import type { BotRig } from '../types/game.js';
 
-export function buildBumblebee(parts, materials = {}, textures = {}) {
-    const {
-        toonGrad3, toonGrad4, toonGradGlossy,
-        matChrome, matDarkSteel, matTire, matCabGlass,
-        matVisorCyan, matVisorGold, matSirenRed, matSirenBlue,
-        matEmblem, matHazardMat, matGrille, matInkOutline
-    } = ((typeof window !== 'undefined' ? window : {}) as any);
+export function buildBumblebee(parts: BotRig, _materials: Record<string, unknown> = {}, _textures: Record<string, unknown> = {}) {
 
     // TV Show Bumblebee: Screen-accurate Bright Yellow Sports Speedster & Velociraptor Dinobot Mode
                 // 1. Torso: Central Sports Car Body (Hood, Aerodynamic Windshield, Roof, Midriff & Pelvis)
@@ -491,9 +486,9 @@ export function buildBumblebee(parts, materials = {}, textures = {}) {
                 buildBumblebeeBoat(parts);
 
                 // Initialize visibility matching current docked status
-                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.bumblebeeDocked);
-                if (typeof (window as any).setBotRigMega === 'function') {
-                    (window as any).setBotRigMega(parts, isCurrentMega);
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && window.progression && window.progression.bumblebeeDocked);
+                if (typeof setBotRigMega === 'function') {
+                    setBotRigMega(parts, isCurrentMega);
                 }
 }
 

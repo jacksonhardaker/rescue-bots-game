@@ -8,7 +8,7 @@ import { sfx } from '../audio/soundFX.js';
 import { bindButton } from './hud.js';
 import { BOT_METADATA } from '../bots/botMeta.js';
 
-import { getRescueStarRank, CURRENT_SAVE_VERSION, saveProgression, ALL_PLAYABLE_BOTS, getBotDockedKey, isBotDocked } from '../progression/progression.js';
+import { getRescueStarRank, CURRENT_SAVE_VERSION, saveProgression, ALL_PLAYABLE_BOTS, getBotDockedKey, isBotDocked, progression } from '../progression/progression.js';
 import { showToast } from './dialogs.js';
 import { DEFAULT_SETTINGS, matchesAction } from '../settings/settings.js';
 import { applyWeatherMode, currentWeatherIdx, cycleWeatherMode, toggleAutoCycle } from '../world/weather.js';
@@ -21,7 +21,7 @@ import { toggleBumblebeeMorph } from '../world/allies.js';
 import { triggerBoulderDrillTransition } from '../world/underground.js';
 import { morbotBattle } from '../world/morbot.js';
 import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
-let activeRebindAction = null;
+let activeRebindAction: string | null = null;
 
         export function renderSettingsControlsList() {
             const container = document.getElementById('settings-controls-list');
@@ -34,7 +34,7 @@ let activeRebindAction = null;
 
                 const label = document.createElement('span');
                 label.className = 'font-bold text-slate-200 pr-2';
-                label.textContent = ACTION_LABELS[action];
+                label.textContent = (ACTION_LABELS as Record<string, string>)[action] || action;
                 row.appendChild(label);
 
                 const btn = document.createElement('button');
@@ -59,25 +59,25 @@ let activeRebindAction = null;
 
         export function syncSettingsUI() {
             // Audio Sliders
-            const sMaster = document.getElementById('slider-vol-master');
+            const sMaster = document.getElementById('slider-vol-master') as HTMLInputElement | null;
             const lMaster = document.getElementById('label-vol-master');
             if (sMaster && lMaster) {
                 const pct = Math.round(gameSettings.audio.masterVolume * 100);
-                sMaster.value = pct;
+                sMaster.value = String(pct);
                 lMaster.textContent = pct + '%';
             }
-            const sSfx = document.getElementById('slider-vol-sfx');
+            const sSfx = document.getElementById('slider-vol-sfx') as HTMLInputElement | null;
             const lSfx = document.getElementById('label-vol-sfx');
             if (sSfx && lSfx) {
                 const pct = Math.round(gameSettings.audio.sfxVolume * 100);
-                sSfx.value = pct;
+                sSfx.value = String(pct);
                 lSfx.textContent = pct + '%';
             }
-            const sEngine = document.getElementById('slider-vol-engine');
+            const sEngine = document.getElementById('slider-vol-engine') as HTMLInputElement | null;
             const lEngine = document.getElementById('label-vol-engine');
             if (sEngine && lEngine) {
                 const pct = Math.round(gameSettings.audio.engineVolume * 100);
-                sEngine.value = pct;
+                sEngine.value = String(pct);
                 lEngine.textContent = pct + '%';
             }
             const btnMute = document.getElementById('btn-toggle-mute');
@@ -119,7 +119,7 @@ let activeRebindAction = null;
             }
 
             // Graphics Preset Buttons Active Highlight
-            document.querySelectorAll('.gfx-preset-btn').forEach((b: any) => {
+            document.querySelectorAll<HTMLElement>('.gfx-preset-btn').forEach(b => {
                 const active = b.dataset.preset === gameSettings.graphics.preset;
                 b.className = 'gfx-preset-btn px-3 py-2.5 rounded-xl text-xs font-bold border transition-colors ' +
                     (active
@@ -130,10 +130,10 @@ let activeRebindAction = null;
             // Graphics Shadows Label & Buttons
             const labelShadows = document.getElementById('label-gfx-shadows');
             if (labelShadows) {
-                const map = { off: 'Disabled', low: 'Low (180m)', medium: 'Med (280m)', high: 'High (380m)' };
+                const map: Record<string, string> = { off: 'Disabled', low: 'Low (180m)', medium: 'Med (280m)', high: 'High (380m)' };
                 labelShadows.textContent = map[gameSettings.graphics.shadows] || 'High';
             }
-            document.querySelectorAll('.gfx-opt-btn[data-opt="shadows"]').forEach((b: any) => {
+            document.querySelectorAll<HTMLElement>('.gfx-opt-btn[data-opt="shadows"]').forEach(b => {
                 const active = b.dataset.val === gameSettings.graphics.shadows;
                 b.className = 'gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold border transition-colors ' +
                     (active ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700');
@@ -142,10 +142,10 @@ let activeRebindAction = null;
             // Graphics Draw Distance
             const labelDrawDist = document.getElementById('label-gfx-drawdist');
             if (labelDrawDist) {
-                const map = { low: 'Near (950m)', medium: 'Med (1600m)', high: 'Far (2400m)' };
+                const map: Record<string, string> = { low: 'Near (950m)', medium: 'Med (1600m)', high: 'Far (2400m)' };
                 labelDrawDist.textContent = map[gameSettings.graphics.drawDistance] || 'Far';
             }
-            document.querySelectorAll('.gfx-opt-btn[data-opt="drawDistance"]').forEach((b: any) => {
+            document.querySelectorAll<HTMLElement>('.gfx-opt-btn[data-opt="drawDistance"]').forEach(b => {
                 const active = b.dataset.val === gameSettings.graphics.drawDistance;
                 b.className = 'gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold border transition-colors ' +
                     (active ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700');
@@ -154,10 +154,10 @@ let activeRebindAction = null;
             // Graphics Resolution
             const labelRes = document.getElementById('label-gfx-res');
             if (labelRes) {
-                const map = { ultralow: '0.75x Turbo', low: '1x Perf', medium: '1.35x Med', high: '2x Sharp' };
+                const map: Record<string, string> = { ultralow: '0.75x Turbo', low: '1x Perf', medium: '1.35x Med', high: '2x Sharp' };
                 labelRes.textContent = map[gameSettings.graphics.resolution] || '2x Sharp';
             }
-            document.querySelectorAll('.gfx-opt-btn[data-opt="resolution"]').forEach((b: any) => {
+            document.querySelectorAll<HTMLElement>('.gfx-opt-btn[data-opt="resolution"]').forEach(b => {
                 const active = b.dataset.val === gameSettings.graphics.resolution;
                 b.className = 'gfx-opt-btn px-2.5 py-2 rounded-lg text-xs font-bold border transition-colors ' +
                     (active ? 'bg-cyan-500/30 text-cyan-200 border-cyan-400' : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700');
@@ -202,15 +202,18 @@ function _localExport() {
         }
 
         // importSaveData imported from progression.js
-function _localImport(file) {
+function _localImport(file: Blob | null | undefined) {
             if (!file) return;
             const reader = new FileReader();
             reader.onload = e => {
                 try {
-                    const parsed = JSON.parse(e.target.result as string);
+                    const rawResult = e.target?.result;
+                    if (typeof rawResult !== 'string') return;
+                    const parsed = JSON.parse(rawResult) as Record<string, unknown>;
                     if (parsed && typeof parsed === 'object') {
                         ['totalEmergenciesResolved', 'totalCitizensRescued', 'totalEnergonCubes', 'totalStuntsCompleted'].forEach(f => {
-                            if (Number.isFinite(parsed[f])) progression[f] = Math.max(0, Math.floor(parsed[f]));
+                            const val = parsed[f];
+                            if (typeof val === 'number' && Number.isFinite(val)) progression[f] = Math.max(0, Math.floor(val));
                         });
                         ['discoveredLandmarks', 'collectedCrests', 'discoveredAllies'].forEach(f => {
                             if (Array.isArray(parsed[f])) progression[f] = parsed[f];
@@ -231,10 +234,10 @@ function _localImport(file) {
                             }
                         });
                         if (parsed.playerPosition && typeof parsed.playerPosition === 'object') {
-                            progression.playerPosition = parsed.playerPosition;
+                            progression.playerPosition = parsed.playerPosition as { x: number; y: number; z: number; heading: number };
                         }
                         if (Array.isArray(parsed.completedMissions)) {
-                            progression.completedMissions = parsed.completedMissions;
+                            progression.completedMissions = parsed.completedMissions.filter((x): x is number => typeof x === 'number');
                         }
                         saveProgression();
                         showToast('SAVE IMPORTED!', 'Career progression loaded successfully!');
@@ -242,7 +245,8 @@ function _localImport(file) {
                         setTimeout(() => window.location.reload(), 1000);
                     }
                 } catch (err) {
-                    alert('Could not read or parse save file: ' + err.message);
+                    const msg = err instanceof Error ? err.message : String(err);
+                    alert('Could not read or parse save file: ' + msg);
                 }
             };
             reader.readAsText(file);
@@ -294,10 +298,10 @@ function _localReset() {
         });
 
         // Tab Navigation
-        document.querySelectorAll('.settings-tab-btn').forEach(tabBtn => {
+        document.querySelectorAll<HTMLElement>('.settings-tab-btn').forEach(tabBtn => {
             tabBtn.onclick = () => {
                 const tabKey = tabBtn.dataset.tab;
-                document.querySelectorAll('.settings-tab-btn').forEach(b => {
+                document.querySelectorAll<HTMLElement>('.settings-tab-btn').forEach(b => {
                     b.classList.remove('active', 'bg-cyan-500/30', 'border-cyan-400', 'text-white');
                     b.classList.add('bg-slate-800/80', 'border-slate-700', 'text-slate-300');
                 });
@@ -313,26 +317,32 @@ function _localReset() {
         });
 
         // Audio Sliders
-        const sMasterEl = document.getElementById('slider-vol-master');
+        const sMasterEl = document.getElementById('slider-vol-master') as HTMLInputElement | null;
         if (sMasterEl) {
             sMasterEl.oninput = (e) => {
-                gameSettings.audio.masterVolume = parseFloat(e.target.value) / 100;
+                const target = e.target as HTMLInputElement | null;
+                if (!target) return;
+                gameSettings.audio.masterVolume = parseFloat(target.value) / 100;
                 saveGameSettings();
                 applyGameSettings();
             };
         }
-        const sSfxEl = document.getElementById('slider-vol-sfx');
+        const sSfxEl = document.getElementById('slider-vol-sfx') as HTMLInputElement | null;
         if (sSfxEl) {
             sSfxEl.oninput = (e) => {
-                gameSettings.audio.sfxVolume = parseFloat(e.target.value) / 100;
+                const target = e.target as HTMLInputElement | null;
+                if (!target) return;
+                gameSettings.audio.sfxVolume = parseFloat(target.value) / 100;
                 saveGameSettings();
                 applyGameSettings();
             };
         }
-        const sEngineEl = document.getElementById('slider-vol-engine');
+        const sEngineEl = document.getElementById('slider-vol-engine') as HTMLInputElement | null;
         if (sEngineEl) {
             sEngineEl.oninput = (e) => {
-                gameSettings.audio.engineVolume = parseFloat(e.target.value) / 100;
+                const target = e.target as HTMLInputElement | null;
+                if (!target) return;
+                gameSettings.audio.engineVolume = parseFloat(target.value) / 100;
                 saveGameSettings();
                 applyGameSettings();
             };
@@ -359,9 +369,10 @@ function _localReset() {
         });
 
         // Graphics Quality Presets
-        document.querySelectorAll('.gfx-preset-btn').forEach(btn => {
+        document.querySelectorAll<HTMLElement>('.gfx-preset-btn').forEach(btn => {
             btn.onclick = () => {
                 const p = btn.dataset.preset;
+                if (!p) return;
                 gameSettings.graphics.preset = p;
                 if (p === 'low') {
                     gameSettings.graphics.shadows = 'off';
@@ -390,11 +401,11 @@ function _localReset() {
         });
 
         // Graphics Option Buttons (Shadows, Draw Distance, Resolution)
-        document.querySelectorAll('.gfx-opt-btn').forEach(btn => {
+        document.querySelectorAll<HTMLElement>('.gfx-opt-btn').forEach(btn => {
             btn.onclick = () => {
                 const opt = btn.dataset.opt;
                 const val = btn.dataset.val;
-                if (opt && val) {
+                if ((opt === 'shadows' || opt === 'drawDistance' || opt === 'resolution') && val) {
                     gameSettings.graphics[opt] = val;
                     saveGameSettings();
                     applyGameSettings();
@@ -412,11 +423,12 @@ function _localReset() {
 
         // Save Export / Import / Reset
         bindButton('btn-export-save', exportSaveData);
-        const fileImportEl = document.getElementById('file-import-save');
+        const fileImportEl = document.getElementById('file-import-save') as HTMLInputElement | null;
         if (fileImportEl) {
             fileImportEl.onchange = (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    importSaveData(e.target.files[0]);
+                const target = e.target as HTMLInputElement | null;
+                if (target?.files && target.files[0]) {
+                    importSaveData(target.files[0]);
                 }
             };
         }
@@ -438,10 +450,10 @@ function _localReset() {
         });
 
         bindButton('btn-keep-exploring', () => {
-            document.getElementById('victory-modal').classList.add('hidden');
+            document.getElementById('victory-modal')?.classList.add('hidden');
         });
         bindButton('btn-new-hazards', () => {
-            document.getElementById('victory-modal').classList.add('hidden');
+            document.getElementById('victory-modal')?.classList.add('hidden');
             buildHazardSites();
             showToast("EMERGENCY DISPATCH!", "8 New Island Emergencies Active!");
         });
@@ -524,7 +536,8 @@ function _localReset() {
                 }
             }
             if (e.code === 'KeyR' && !e.repeat) {
-                const bee = (typeof visitingAutobots !== 'undefined') ? visitingAutobots.find(a => a.id === 'BUMBLEBEE') : null;
+                const allies = (typeof visitingAutobots !== 'undefined' ? visitingAutobots : []) as Array<{ id: string; x: number; z: number }>;
+                const bee = allies.find(a => a.id === 'BUMBLEBEE');
                 if (bee && Math.hypot(player.pos.x - bee.x, player.pos.z - bee.z) < 32) {
                     toggleBumblebeeMorph();
                 }

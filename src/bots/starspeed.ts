@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { toonGrad3, matDarkSteel, matChrome, applyCartoonInkOutlines } from '../rendering/materials.js';
 import { buildStarspeedBoat } from './botBoats.js';
+import type { BotRig } from '../types/game.js';
 
 function createKnobbyBikeWheel(radius = 0.92, width = 0.42): THREE.Group {
     const wg = new THREE.Group();
@@ -35,7 +36,7 @@ function createKnobbyBikeWheel(radius = 0.92, width = 0.42): THREE.Group {
     return wg;
 }
 
-export function buildStarspeed(parts: any) {
+export function buildStarspeed(parts: BotRig) {
     const matTeal = new THREE.MeshToonMaterial({ color: 0x06b6d4, gradientMap: toonGrad3 });
     const matDeepTeal = new THREE.MeshToonMaterial({ color: 0x0e7490, gradientMap: toonGrad3 });
     const matWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 });

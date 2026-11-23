@@ -1,13 +1,14 @@
 // Visiting Autobot Allies (Optimus Prime, Bumblebee, Blurr, Salvage, High Tide & Servo)
 import * as THREE from 'three';
+import type { BotRig } from '../types/game.js';
 import { getTerrainHeight, getSurfaceHeight } from './terrain.js';
 import {
     toonGrad3, matHighTideGold, matChrome, applyCartoonInkOutlines
 } from '../rendering/materials.js';
-import { player, buddyBot, botRigs } from '../state/gameState.js';
+import { player, buddyBot, botRigs, registerCullableObject } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { progression, saveProgression, isBotDocked } from '../progression/progression.js';
-import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
+import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 import { spawnBurstParticles } from './emergencies.js';
 
 import { applyBotRigMorph, buildRescueBotModel } from '../bots/botRigs.js';
@@ -44,8 +45,30 @@ export {
     createBladesCargoMesh
 };
 
-export let visitingAutobots = [];
-export let servoPupRig = null;
+export type ServoPupRig = ReturnType<typeof buildServoPupModel>;
+
+export interface VisitingAutobotEntry {
+    id: string;
+    name: string;
+    role: string;
+    voicePitch: number;
+    badgeColor: string;
+    x: number;
+    y: number;
+    z: number;
+    rotY: number;
+    dialogues: string[];
+    root: THREE.Group;
+    charRig: BotRig;
+    isRaptor: boolean;
+    servo: ServoPupRig | null;
+    holoGlobe: THREE.Mesh | null;
+    holoProjector: THREE.Mesh | null;
+    lastSpeechTime: number;
+}
+
+export let visitingAutobots: VisitingAutobotEntry[] = [];
+export let servoPupRig: ServoPupRig | null = null;
 
 export function syncVisitingAutobotsVisibility() {
     if (typeof visitingAutobots === 'undefined' || !visitingAutobots) return;
@@ -167,7 +190,7 @@ export function syncVisitingAutobotsVisibility() {
 
         visitingAutobots = [];
 
-        export function toggleBumblebeeMorph(toRaptor = null) {
+        export function toggleBumblebeeMorph(toRaptor: boolean | null = null) {
             const bee = visitingAutobots.find(a => a.id === 'BUMBLEBEE');
             if (!bee || !bee.charRig) return;
             const nextState = (toRaptor !== null) ? toRaptor : !bee.isRaptor;
@@ -185,14 +208,14 @@ export function syncVisitingAutobotsVisibility() {
 
             if (bee.isRaptor) {
                 showToast("🦖 DINOBOT RAPTOR MODE!", "Bumblebee shifted to Velociraptor Form!");
-                triggerNPCSpeech("Bumblebee", "Dinobot Raptor Ally", "RAWR! Check out my Raptor Mode! Ready to pounce on any hazard across Griffin Rock!", bee.root, true);
+                triggerNPCSpeech("Bumblebee", "Dinobot Raptor Ally", "RAWR! Check out my Raptor Mode! Ready to pounce on every hazard across Griffin Rock!", bee.root as unknown as SpeechTarget, true);
             } else {
                 showToast("🏎️ AUTOBOT BOT MODE!", "Bumblebee transformed into Heroic Bot Form!");
-                triggerNPCSpeech("Bumblebee", "Autobot Scout", "Back in Bot Mode and ready to roll! Teamwork saves the day!", bee.root, true);
+                triggerNPCSpeech("Bumblebee", "Autobot Scout", "Back in Bot Mode and ready to roll! Teamwork saves the day!", bee.root as unknown as SpeechTarget, true);
             }
         }
 
-        export function discoverVisitingAutobot(ally) {
+        export function discoverVisitingAutobot(ally: VisitingAutobotEntry) {
             if (!Array.isArray(progression.discoveredAllies)) {
                 progression.discoveredAllies = [];
             }
@@ -210,7 +233,7 @@ export function syncVisitingAutobotsVisibility() {
             spawnSparkleGlints(ally.x, ally.y + 2.5, ally.z, 26);
 
             showToast(`⭐ ${ally.name.toUpperCase()} UNLOCKED!`, `Added to Rescue Roster! (+50 Energon)`);
-            triggerNPCSpeech(ally.name, ally.role, ally.dialogues[0], ally.root, true);
+            triggerNPCSpeech(ally.name, ally.role, ally.dialogues[0], ally.root as unknown as SpeechTarget, true);
 
             if (ally.id === 'BUMBLEBEE') {
                 setTimeout(() => {
@@ -222,10 +245,10 @@ export function syncVisitingAutobotsVisibility() {
         // =====================================================================
         // HIGH TIDE CYBERTRONIAN OCEANIC RESCUE VESSEL & WORLD MEGA ATTACHMENTS
         // =====================================================================
-        export let highTideWorldShip: any = null;
-        export let optimusWorldTrailer: any = null;
+        export let highTideWorldShip: THREE.Group | null = null;
+        export let optimusWorldTrailer: THREE.Group | null = null;
 
-        export const WORLD_MEGA_ATTACHMENTS: Record<string, any> = {
+        export const WORLD_MEGA_ATTACHMENTS: Record<string, THREE.Group | null> = {
             BOULDER: null,
             HEATWAVE: null,
             CHASE: null,
@@ -238,7 +261,7 @@ export function syncVisitingAutobotsVisibility() {
             HIGHTIDE: null
         };
 
-        export const WORLD_MEGA_LOCATIONS = {
+        export const WORLD_MEGA_LOCATIONS: Record<string, { x: number; z: number; rotY: number }> = {
             BOULDER:     { x: -74,  z: -16,  rotY: 0.2 },
             HEATWAVE:    { x: -64,  z: -28,  rotY: 0.0 },
             CHASE:       { x: -80,  z: -50,  rotY: 0.0 },
@@ -251,11 +274,11 @@ export function syncVisitingAutobotsVisibility() {
             HIGHTIDE:    { x: -95,  z: 1480, rotY: 0.35 }
         };
 
-        export function initVisitingAutobots(scene) {
+        export function initVisitingAutobots(scene?: THREE.Scene | null) {
             if (!Array.isArray(progression.discoveredAllies)) {
                 progression.discoveredAllies = [];
             }
-            const sceneRef = (scene || (typeof window !== "undefined" ? (window as any).scene : null));
+            const sceneRef = (scene || (typeof window !== "undefined" ? window.scene : null));
 
             // High Tide Cybertronian Oceanic Rescue Vessel moored in South Harbor Bay (X: -95, Z: 1480)
             if (!highTideWorldShip) {
@@ -297,14 +320,14 @@ export function syncVisitingAutobotsVisibility() {
             Object.entries(BUILDERS).forEach(([botKey, builderFn]) => {
                 if (!WORLD_MEGA_ATTACHMENTS[botKey]) {
                     const mesh = builderFn();
-                    const loc = (WORLD_MEGA_LOCATIONS as any)[botKey];
+                    const loc = WORLD_MEGA_LOCATIONS[botKey];
                     const gy = getSurfaceHeight(loc.x, loc.z);
                     mesh.position.set(loc.x, gy, loc.z);
                     mesh.rotation.y = loc.rotY || 0;
                     if (sceneRef) sceneRef.add(mesh);
                     mesh.visible = !(player.botType === botKey && isBotDocked(botKey));
                     WORLD_MEGA_ATTACHMENTS[botKey] = mesh;
-                    if (typeof window !== 'undefined') (window as any)[`${botKey.toLowerCase()}WorldAttachment`] = mesh;
+                    if (typeof window !== 'undefined') window[`${botKey.toLowerCase()}WorldAttachment`] = mesh;
                 }
             });
 
@@ -441,7 +464,7 @@ export function syncVisitingAutobotsVisibility() {
                     grp.add(pad);
                 }
 
-                (scene || (typeof window !== "undefined" ? window.scene : null)).add(grp);
+                if (sceneRef) sceneRef.add(grp);
                 registerCullableObject(grp, cfg.x, cfg.y, cfg.z, 36);
 
                 visitingAutobots.push({
@@ -468,7 +491,7 @@ export function syncVisitingAutobotsVisibility() {
             syncVisitingAutobotsVisibility();
         }
 
-        export function updateVisitingAutobots(dt, now) {
+        export function updateVisitingAutobots(dt: number, now: number) {
             const nowSec = now * 0.001;
             if (!visitingAutobots || visitingAutobots.length === 0) return;
 
@@ -515,8 +538,9 @@ export function syncVisitingAutobotsVisibility() {
                         ally.holoGlobe.rotation.x = Math.sin(nowSec * 1.5) * 0.15;
                     }
                 } else if (ally.id === 'HIGHTIDE') {
-                    if (ally.charRig && ally.charRig.propellers) {
-                        ally.charRig.propellers.forEach(p => {
+                    const propellers = ally.charRig?.propellers as THREE.Object3D[] | undefined;
+                    if (propellers) {
+                        propellers.forEach((p: THREE.Object3D) => {
                             p.rotation.z += dt * 3.5;
                         });
                     }
@@ -544,7 +568,7 @@ export function syncVisitingAutobotsVisibility() {
                 } else if (isDiscovered && dist < 10.0 && (nowSec - ally.lastSpeechTime > 14.0)) {
                     ally.lastSpeechTime = nowSec;
                     const randomDialogue = ally.dialogues[Math.floor(Math.random() * ally.dialogues.length)];
-                    triggerNPCSpeech(ally.name, ally.role, randomDialogue, ally.root, false);
+                    triggerNPCSpeech(ally.name, ally.role, randomDialogue, ally.root as unknown as SpeechTarget, false);
                 }
             }
 
@@ -553,13 +577,15 @@ export function syncVisitingAutobotsVisibility() {
                 highTideWorldShip.position.y = -0.45 + Math.sin(nowSec * 1.8) * 0.12;
                 highTideWorldShip.rotation.z = Math.sin(nowSec * 1.2) * 0.02;
                 highTideWorldShip.rotation.x = Math.cos(nowSec * 1.5) * 0.015;
-                if (highTideWorldShip.userData && highTideWorldShip.userData.cranes) {
-                    highTideWorldShip.userData.cranes.forEach((crane, i) => {
+                const shipCranes = highTideWorldShip.userData?.cranes as Array<{ boom: THREE.Object3D }> | undefined;
+                if (shipCranes) {
+                    shipCranes.forEach((crane, i) => {
                         crane.boom.rotation.x = Math.sin(nowSec * 2.0 + i * Math.PI) * 0.06;
                     });
                 }
-                if (highTideWorldShip.userData && highTideWorldShip.userData.thrusters) {
-                    highTideWorldShip.userData.thrusters.forEach(prop => {
+                const shipThrusters = highTideWorldShip.userData?.thrusters as THREE.Object3D[] | undefined;
+                if (shipThrusters) {
+                    shipThrusters.forEach((prop) => {
                         prop.rotation.z += dt * 3.5;
                     });
                 }

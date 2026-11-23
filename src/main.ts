@@ -95,7 +95,7 @@ export function initGame() {
     initProps(scene);
     initDumpsters(scene);
     initWeather(scene);
-    initUnderground(renderer, camera);
+    initUnderground(renderer ?? undefined, camera);
 
     // 4. Build Bot Models
     initBotRigs(scene);
@@ -127,7 +127,7 @@ export function initGame() {
     // 8B. Pre-warm Particle Pool & Compile WebGL Shaders at Startup (prevents mid-action shader stalls on iPad)
     prewarmParticlePool(scene);
     try {
-        renderer.compile(scene, camera);
+        renderer?.compile(scene, camera);
     } catch (e) {
         console.warn('WebGL shader pre-compile skipped:', e);
     }

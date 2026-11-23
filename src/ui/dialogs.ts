@@ -34,7 +34,16 @@ export function getSpeakerAvatar(name: string, role: string): string {
     return SVG_ICONS.PEOPLE;
 }
 
-export function findSpeakerSource(speakerName) {
+interface VisitingAutobotRef {
+    id: string;
+    name?: string;
+    voicePitch?: number;
+    [key: string]: unknown;
+}
+
+export type SpeechTarget = { voicePitch?: number; [key: string]: unknown };
+
+export function findSpeakerSource(speakerName: string): unknown {
     if (!speakerName) return player;
     const upper = speakerName.toUpperCase();
     if (BOT_METADATA[player.botType] && BOT_METADATA[player.botType].name.toUpperCase() === upper) {
@@ -48,7 +57,9 @@ export function findSpeakerSource(speakerName) {
             return humanNPCs[i];
         }
     }
-    const visitingAutobots = typeof window !== 'undefined' ? window.visitingAutobots : null;
+    const visitingAutobots = typeof window !== 'undefined' && Array.isArray(window.visitingAutobots)
+        ? (window.visitingAutobots as VisitingAutobotRef[])
+        : null;
     if (visitingAutobots) {
         for (let k = 0; k < visitingAutobots.length; k++) {
             const ally = visitingAutobots[k];
@@ -64,7 +75,15 @@ export function findSpeakerSource(speakerName) {
     return player;
 }
 
-export const activeSpeech = {
+export const activeSpeech: {
+    visible: boolean;
+    source: unknown;
+    speakerName: string;
+    speakerRole: string;
+    speechText: string;
+    timer: number;
+    yOffset: number;
+} = {
     visible: false,
     source: null,
     speakerName: "",
@@ -74,10 +93,17 @@ export const activeSpeech = {
     yOffset: 3.3
 };
 
-let activeSpeechTimer = null;
+let activeSpeechTimer: ReturnType<typeof setTimeout> | null = null;
 let lastGlobalVoiceTime = -99;
 
-export function triggerNPCSpeech(speakerName, speakerRole, speechText, targetOrPitch = null, isDirectPlayerLine = false, isEmergencyCall = false): any {
+export function triggerNPCSpeech(
+    speakerName: string,
+    speakerRole: string,
+    speechText: string,
+    targetOrPitch: number | SpeechTarget | null = null,
+    isDirectPlayerLine = false,
+    isEmergencyCall = false
+): void {
     const nowSec = performance.now() / 1000;
     if (nowSec - lastGlobalVoiceTime < 0.85 && !isDirectPlayerLine && !isEmergencyCall) {
         return;
@@ -105,6 +131,7 @@ export function triggerNPCSpeech(speakerName, speakerRole, speechText, targetOrP
     } else if (targetOrPitch && typeof targetOrPitch.voicePitch === 'number') {
         pitch = targetOrPitch.voicePitch;
     }
+    void pitch;
 
     if (sfx && typeof sfx.playSpeechPop === 'function') {
         sfx.playSpeechPop();
@@ -128,7 +155,7 @@ export function triggerNPCSpeech(speakerName, speakerRole, speechText, targetOrP
 
 const _STRIP_EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{2300}-\u{23FF}\u{FE0F}]/gu;
 
-export function showToast(subtitle, title) {
+export function showToast(subtitle: string, title: string) {
     const banner = document.getElementById('toast-banner');
     if (!banner) return;
     const sub = document.getElementById('toast-subtitle');
@@ -136,7 +163,7 @@ export function showToast(subtitle, title) {
     if (sub) sub.textContent = String(subtitle || '').replace(_STRIP_EMOJI_RE, '').trim();
     if (tit) tit.textContent = String(title || '').replace(_STRIP_EMOJI_RE, '').trim();
     banner.classList.remove('hidden');
-    clearTimeout(window._toastTimeout);
+    if (window._toastTimeout) clearTimeout(window._toastTimeout as ReturnType<typeof setTimeout>);
     window._toastTimeout = setTimeout(() => {
         banner.classList.add('hidden');
     }, 3100);

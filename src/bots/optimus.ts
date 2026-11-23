@@ -2,17 +2,9 @@
 import * as THREE from 'three';
 import { createWheelAssembly } from './botHelpers.js';
 import { buildOptimusBoat } from './botBoats.js';
+import type { BotRig } from '../types/game.js';
 
-export function buildOptimus(parts, materials = {}, textures = {}) {
-    const {
-        toonGrad3, toonGrad4, toonGradGlossy,
-        matChrome, matDarkSteel, matTire, matCabGlass,
-        matVisorCyan, matVisorGold, matSirenRed, matSirenBlue,
-        matEmblem, matHazardMat, matGrille, matInkOutline,
-        matOptimusRed, matOptimusBlue, matOptimusGold, matOptimusFace,
-        matMegaTrailerSilver, matMegaTrailerStripe,
-        matEnergonAxeCyan, matEnergonAxeGlow
-    } = ((typeof window !== 'undefined' ? window : {}) as any);
+export function buildOptimus(parts: BotRig, _materials: Record<string, unknown> = {}, _textures: Record<string, unknown> = {}) {
 
     // TV Show Optimus Prime: Supreme Commander Heavy Cab-over Semi-Truck
                 // Torso: Heavy Cab Chest
@@ -626,9 +618,9 @@ export function buildOptimus(parts, materials = {}, textures = {}) {
                 buildOptimusBoat(parts);
 
                 // Initialize rig part visibility to match current docked status
-                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.optimusDocked);
-                if (typeof (window as any).setOptimusRigMega === 'function') {
-                    (window as any).setOptimusRigMega(parts, isCurrentMega);
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && window.progression && window.progression.optimusDocked);
+                if (typeof setOptimusRigMega === 'function') {
+                    setOptimusRigMega(parts, isCurrentMega);
                 }
 }
 

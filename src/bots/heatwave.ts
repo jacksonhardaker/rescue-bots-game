@@ -2,14 +2,9 @@
 import * as THREE from 'three';
 import { texFaceHeatwave } from '../rendering/textures.js';
 import { createLightbar, createWheelAssembly } from './botHelpers.js';
+import type { BotRig } from '../types/game.js';
 
-export function buildHeatwave(parts, materials = {}, textures = {}) {
-    const {
-        toonGrad3, toonGrad4, toonGradGlossy,
-        matChrome, matDarkSteel, matTire, matCabGlass,
-        matVisorCyan, matVisorGold, matSirenRed, matSirenBlue,
-        matEmblem, matHazardMat, matGrille, matInkOutline
-    } = ((typeof window !== 'undefined' ? window : {}) as any);
+export function buildHeatwave(parts: BotRig, _materials: Record<string, unknown> = {}, _textures: Record<string, unknown> = {}) {
 
     // TV Show Heatwave: Vivid Fire-Engine Red (#e81e25), Gold Accent (#ffcc00) & Silver Faceplate
                 const matRed = new THREE.MeshToonMaterial({ color: 0xe81e25, gradientMap: toonGrad4 });
@@ -593,7 +588,7 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                 parts.bowDeflector = bowDeflector;
 
                 // 3. Two Yellow & White Life Ring Buoys on the Foredeck
-                const lifeBuoys = [];
+                const lifeBuoys: THREE.Group[] = [];
                 [-0.68, 0.68].forEach(lx => {
                     const lifeBuoyGroup = new THREE.Group();
                     lifeBuoyGroup.position.set(lx, 1.20, 1.95);
@@ -649,9 +644,9 @@ export function buildHeatwave(parts, materials = {}, textures = {}) {
                 parts.gantryArch = gantryArch;
 
                 // Initialize visibility matching current docked status
-                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.heatwaveDocked);
-                if (typeof (window as any).setBotRigMega === 'function') {
-                    (window as any).setBotRigMega(parts, isCurrentMega);
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && window.progression && window.progression.heatwaveDocked);
+                if (typeof setBotRigMega === 'function') {
+                    setBotRigMega(parts, isCurrentMega);
                 }
 }
 

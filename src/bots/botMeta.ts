@@ -1,8 +1,9 @@
-// Metadata, Parking Slots & Ground Contact Offsets for all 10 Rescue Bots & Megabot
+// Metadata, Parking Slots & Ground Contact Offsets for all 11 Rescue Bots & Megabot
+import type { BotMetaEntry, GroundOffsetEntry } from '../types/game.js';
 
 export const HQ_POS = { x: -48, z: -45 }; // Rescue Bots Firehouse HQ base coordinates
 
-export const BOT_METADATA = {
+export const BOT_METADATA: Record<string, BotMetaEntry> = {
     BOULDER: {
         name: 'BOULDER',
         role: 'Construction Rescue Bot',
@@ -322,6 +323,7 @@ export const BOT_METADATA = {
         scale: 1.30,
         voicePitch: 0.76,
         vehName: 'SUBMARINE',
+        boatName: 'SUBMARINE',
         dinoName: 'PLESIOSAUR',
         colorClass: 'text-blue-400',
         dotClass: 'bg-blue-600',
@@ -330,6 +332,8 @@ export const BOT_METADATA = {
         botActionLabel: 'TIDAL SURGE',
         vehActionIcon: 'HYDRO_TORPEDO',
         vehActionLabel: 'HYDRO TORPEDO',
+        boatActionIcon: 'HYDRO_TORPEDO',
+        boatActionLabel: 'HYDRO TORPEDO',
         dinoActionIcon: 'TIDAL_SURGE',
         dinoActionLabel: 'PLESIO SURGE'
     },
@@ -404,7 +408,7 @@ export const HQ_PARKING_SLOTS = {
 };
 
 // Calibrated Ground Clearance Offsets
-export const BOT_GROUND_OFFSETS = {
+export const BOT_GROUND_OFFSETS: Record<string, GroundOffsetEntry> = {
     BOULDER:          { bot: 0.36, veh: 0.00, dino: 0.79, boat: 0.25 },
     BOULDER_MEGA:     { bot: 0.36, veh: 0.00, dino: 0.79, boat: 0.25 },
     HEATWAVE:         { bot: 0.53, veh: 0.00, dino: 0.68, boat: 0.25 },

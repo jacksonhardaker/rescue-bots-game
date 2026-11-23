@@ -99,7 +99,7 @@ export function initWeatherHazards(sceneNode: THREE.Scene) {
     });
 
     if (typeof window !== 'undefined') {
-        (window as any).activeMagmaDebris = activeMagmaDebris;
+        window.activeMagmaDebris = activeMagmaDebris;
     }
 }
 
@@ -255,14 +255,14 @@ export function updateWeatherHazards(dt: number, now: number, activeWeatherId: s
 
         // A. Water Extinguish Check (Heatwave Water Cannon / High Tide Hydro Jet / All Boat Modes)
         const isWaterBot = (player.botType === 'HEATWAVE' || player.botType === 'HIGHTIDE' || (player.mode === 'VEHICLE' && (player.boatMorph || 0) > 0.3));
-        const isWaterActive = player.isActionActive || (player.mode === 'VEHICLE' && (player.boatMorph || 0) > 0.4);
+        const isWaterActive = player.waterTimer > 0 || (player.mode === 'VEHICLE' && (player.boatMorph || 0) > 0.4);
         if (!d.quenched && distToPlayer < 18.0 && isWaterBot && isWaterActive) {
             quenchMagmaDebris(d, 'WATER');
         }
 
         // B. Dozer Scoop / Ram Smash Check (Boulder or Megabot)
         const isBoulderScooping = (player.botType === 'BOULDER' && (player.scoopTimer > 0 || player.smashTimer > 0));
-        const isHeavyRam = Math.abs(player.speed) > 14.0 || player.isMega;
+        const isHeavyRam = Math.abs(player.speed) > 14.0 || Boolean(window.botRigs?.[player.botType]?.isMega);
         if (distToPlayer < 4.8) {
             if (isBoulderScooping || isHeavyRam) {
                 smashMagmaDebris(d, isBoulderScooping ? 'BOULDER' : 'RAM');
@@ -285,7 +285,7 @@ export function quenchMagmaDebris(debris: MagmaDebris, method: string) {
     spawnSteamBurst(debris.x, debris.y + 0.8, debris.z, 24);
     sfx.playSteamHiss();
 
-    progression.heroPoints = (progression.heroPoints || 0) + 5;
+    progression.heroPoints = (Number(progression.heroPoints) || 0) + 5;
     saveProgression();
 
     showToast("🌋 MOLTEN ROCK EXTINGUISHED!", "+5 Hero Pts • Basalt Cooled & Highway Cleared!");
@@ -300,7 +300,7 @@ export function smashMagmaDebris(debris: MagmaDebris, method: string) {
     spawnSteamBurst(debris.x, debris.y + 0.8, debris.z, 14);
     sfx.playRockBreak();
 
-    progression.heroPoints = (progression.heroPoints || 0) + 5;
+    progression.heroPoints = (Number(progression.heroPoints) || 0) + 5;
     saveProgression();
 
     const title = method === 'BOULDER' ? "🚜 BOULDER DOZER CLEARANCE!" : "💥 HEAVY IMPACT SMASH!";
@@ -309,8 +309,8 @@ export function smashMagmaDebris(debris: MagmaDebris, method: string) {
 }
 
 if (typeof window !== 'undefined') {
-    (window as any).activeMagmaDebris = activeMagmaDebris;
-    (window as any).quenchMagmaDebris = quenchMagmaDebris;
-    (window as any).smashMagmaDebris = smashMagmaDebris;
-    (window as any).triggerLightningStrike = triggerLightningStrike;
+    window.activeMagmaDebris = activeMagmaDebris;
+    window.quenchMagmaDebris = quenchMagmaDebris;
+    window.smashMagmaDebris = smashMagmaDebris;
+    window.triggerLightningStrike = triggerLightningStrike;
 }

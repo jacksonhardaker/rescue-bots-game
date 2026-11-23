@@ -16,6 +16,7 @@ export function createToonGradientMap(steps = [95, 195, 255]) {
     c.width = steps.length;
     c.height = 1;
     const ctx = c.getContext('2d');
+    if (!ctx) return null;
     steps.forEach((val, i) => {
         ctx.fillStyle = `rgb(${val}, ${val}, ${val})`;
         ctx.fillRect(i, 0, 1, 1);
@@ -44,11 +45,11 @@ export const matInkEdgeLine = new THREE.LineBasicMaterial({
 });
 
 // Helper to apply Saturday-Morning Cartoon Ink Outlines + Panel Crease Lines to a 3D hierarchy
-export function applyCartoonInkOutlines(rootObj, scaleThickness = 1.055, addCreaseLines = true) {
-    const meshes = [];
-    rootObj.traverse(child => {
-        if (child.isMesh && !child.userData.isOutline && !child.userData.noOutline) {
-            meshes.push(child);
+export function applyCartoonInkOutlines(rootObj: THREE.Object3D, scaleThickness = 1.055, addCreaseLines = true) {
+    const meshes: THREE.Mesh[] = [];
+    rootObj.traverse((child: THREE.Object3D) => {
+        if ((child as THREE.Mesh).isMesh && !child.userData.isOutline && !child.userData.noOutline) {
+            meshes.push(child as THREE.Mesh);
         }
     });
 

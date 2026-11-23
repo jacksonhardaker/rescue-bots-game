@@ -2,7 +2,38 @@
 import { gameSettings } from "../settings/settings.js";
 
 class RescueSoundFX {
-    [key: string]: any;
+    ctx: AudioContext | null;
+    enabled: boolean;
+    loopsReady: boolean;
+    masterBus: GainNode | null;
+    sfxBus: GainNode | null;
+    engineBus: GainNode | null;
+    noiseBuf: AudioBuffer | null;
+    steamNoiseBuf: AudioBuffer | null;
+
+    engineFilter!: BiquadFilterNode;
+    engineOsc1!: OscillatorNode;
+    engineOsc2!: OscillatorNode;
+    engineSubGain!: GainNode;
+    engineLfo!: OscillatorNode;
+    engineLfoFilterGain!: GainNode;
+    engineLfoPitchGain!: GainNode;
+    engineGain!: GainNode;
+
+    rotorNoiseSrc!: AudioBufferSourceNode;
+    rotorBandpass!: BiquadFilterNode;
+    rotorThumpOsc!: OscillatorNode;
+    rotorThumpGain!: GainNode;
+    rotorChopGain!: GainNode;
+    rotorLfo!: OscillatorNode;
+    rotorLfoAmpGain!: GainNode;
+    rotorLfoFilterGain!: GainNode;
+    rotorGain!: GainNode;
+
+    sirenOsc!: OscillatorNode;
+    sirenFilter!: BiquadFilterNode;
+    sirenGain!: GainNode;
+
     constructor() {
                 this.ctx = null;
                 this.enabled = true;
@@ -65,7 +96,7 @@ class RescueSoundFX {
                 }
             }
             applySettingsVolumes() {
-                if (!this.ctx || !this.masterBus) return;
+                if (!this.ctx || !this.masterBus || !this.sfxBus || !this.engineBus) return;
                 const aud = (typeof gameSettings !== "undefined" && gameSettings.audio)
                     ? gameSettings.audio
                     : { masterVolume: 1.0, sfxVolume: 1.0, engineVolume: 0.75, muted: false };
@@ -78,13 +109,13 @@ class RescueSoundFX {
                 this.sfxBus.gain.setValueAtTime(s, now);
                 this.engineBus.gain.setValueAtTime(e, now);
             }
-            getSfxDest() {
+            getSfxDest(): AudioNode {
                 this.init();
-                return this.sfxBus || (this.ctx ? this.ctx.destination : null);
+                return this.sfxBus || this.ctx!.destination;
             }
-            getEngineDest() {
+            getEngineDest(): AudioNode {
                 this.init();
-                return this.engineBus || (this.ctx ? this.ctx.destination : null);
+                return this.engineBus || this.ctx!.destination;
             }
             playSpeechPop() {
                 if (!this.enabled) return;
@@ -103,7 +134,7 @@ class RescueSoundFX {
                 osc.start(now);
                 osc.stop(now + 0.13);
             }
-            playTransform(toVehicle) {
+            playTransform(toVehicle: boolean) {
                 if (!this.enabled) return;
                 this.init();
                 if (!this.ctx) return;
@@ -220,8 +251,8 @@ class RescueSoundFX {
                 const baseFreq = isPterosaur ? 720 : (isGallimimus ? 560 : (isRaptor ? 420 : (isDilophosaur ? 380 : (isPlesiosaur ? 210 : (isAnkylosaur ? 125 : (isTRex ? 82 : (botType === 'CHASE' ? 165 : 115)))))));
                 const roarDuration = isTRex ? 0.65 : (isPlesiosaur ? 0.58 : 0.48);
                 [1.0, 1.35].forEach((mult, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = (isPterosaur || isRaptor || isGallimimus || isDilophosaur) ? 'triangle' : 'sawtooth';
                     osc.frequency.setValueAtTime(baseFreq * mult, now + idx * 0.04);
                     osc.frequency.exponentialRampToValueAtTime(baseFreq * mult * (isPterosaur ? 1.45 : (isGallimimus ? 1.75 : (isRaptor ? 1.65 : (isDilophosaur ? 1.55 : (isTRex ? 1.55 : (isPlesiosaur ? 1.35 : 0.68)))))), now + 0.22);
@@ -240,8 +271,8 @@ class RescueSoundFX {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 [330, 440, 659.25].forEach((f, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(f, now + i * 0.06);
                     gain.gain.setValueAtTime(0.14, now + i * 0.06);
@@ -310,8 +341,8 @@ class RescueSoundFX {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 [210, 145, 95].forEach((f, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'square';
                     osc.frequency.setValueAtTime(f, now + i * 0.04);
                     osc.frequency.exponentialRampToValueAtTime(40, now + i * 0.04 + 0.18);
@@ -329,8 +360,8 @@ class RescueSoundFX {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 [523.25, 659.25, 783.99, 1046.5].forEach((n, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(n, now + i * 0.085);
                     gain.gain.setValueAtTime(0.15, now + i * 0.085);
@@ -347,8 +378,8 @@ class RescueSoundFX {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 [587.33, 880].forEach((n, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(n, now + i * 0.055);
                     gain.gain.setValueAtTime(0.11, now + i * 0.055);
@@ -365,8 +396,8 @@ class RescueSoundFX {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 [440, 659.25, 880].forEach((n, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(n, now + i * 0.04);
                     gain.gain.setValueAtTime(0.12, now + i * 0.04);
@@ -383,8 +414,8 @@ class RescueSoundFX {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 [880, 587.33].forEach((n, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(n, now + i * 0.04);
                     gain.gain.setValueAtTime(0.10, now + i * 0.04);
@@ -401,8 +432,8 @@ class RescueSoundFX {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 [659.25, 880, 1174.66, 1567.98].forEach((n, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(n, now + i * 0.045);
                     gain.gain.setValueAtTime(0.14, now + i * 0.045);
@@ -419,8 +450,8 @@ class RescueSoundFX {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98].forEach((n, i) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = i % 2 === 0 ? 'triangle' : 'sine';
                     osc.frequency.setValueAtTime(n, now + i * 0.075);
                     gain.gain.setValueAtTime(0.18, now + i * 0.075);
@@ -461,8 +492,8 @@ class RescueSoundFX {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98].forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     const t = now + idx * 0.05;
                     osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
                     osc.frequency.setValueAtTime(freq, t);
@@ -630,8 +661,8 @@ class RescueSoundFX {
                 const now = this.ctx.currentTime;
                 // High sparkling ascending golden arpeggio (C6, E6, G6, C7)
                 [1046.5, 1318.5, 1567.98, 2093.0].forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(freq, now + idx * 0.09);
                     gain.gain.setValueAtTime(0.15, now + idx * 0.09);
@@ -649,8 +680,8 @@ class RescueSoundFX {
                 const now = this.ctx.currentTime;
                 // Celebratory resonant brass/fanfare chime
                 [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(freq, now + idx * 0.08);
                     gain.gain.setValueAtTime(0.18, now + idx * 0.08);
@@ -668,8 +699,8 @@ class RescueSoundFX {
                 const now = this.ctx.currentTime;
                 // Bright high service bell ding (fundamental 1568Hz + overtone 3136Hz)
                 [1567.98, 3135.96].forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(freq, now);
                     gain.gain.setValueAtTime(idx === 0 ? 0.22 : 0.08, now);
@@ -687,9 +718,9 @@ class RescueSoundFX {
                 const now = this.ctx.currentTime;
                 // Dual ascending sci-fi harmonic charge
                 [140, 210, 280].forEach((baseFreq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    const filter = this.ctx.createBiquadFilter();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
+                    const filter = this.ctx!.createBiquadFilter();
                     osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
                     osc.frequency.setValueAtTime(baseFreq, now);
                     osc.frequency.exponentialRampToValueAtTime(baseFreq * 4.5, now + 0.65);
@@ -738,8 +769,8 @@ class RescueSoundFX {
                 const now = this.ctx.currentTime;
                 [587.33, 659.25, 880.00].forEach((freq, idx) => {
                     const t = now + idx * 0.16;
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'square';
                     osc.frequency.setValueAtTime(freq, t);
                     gain.gain.setValueAtTime(0.12, t);
@@ -787,8 +818,8 @@ class RescueSoundFX {
                 const now = this.ctx.currentTime;
                 // Deep resonant dual-tone marine foghorn / ferry horn (110Hz A2 + 146.83Hz D3)
                 [110.0, 146.83, 220.0].forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = idx === 2 ? 'sawtooth' : 'triangle';
                     osc.frequency.setValueAtTime(freq, now);
                     gain.gain.setValueAtTime(0.001, now);
@@ -809,8 +840,8 @@ class RescueSoundFX {
                 // Dual-tone cheerful civilian car horn (F4 349.23Hz + A4 440Hz)
                 const freqs = [349.23 * pitch, 440.0 * pitch];
                 freqs.forEach(freq => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(freq, now);
                     gain.gain.setValueAtTime(0.001, now);
@@ -831,8 +862,8 @@ class RescueSoundFX {
                 // Iconic 5-chime American diesel/steam locomotive horn chord (Eb4, F#4, G#4, B4, Eb5)
                 const freqs = [311.13, 369.99, 415.30, 493.88, 622.25];
                 freqs.forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
                     osc.frequency.setValueAtTime(freq, now);
                     // Slight pitch wobble for rich locomotive acoustic chime
@@ -855,8 +886,8 @@ class RescueSoundFX {
                 const now = this.ctx.currentTime;
                 // Clean resonant metallic railroad crossing bell ding (A5 880Hz + 1760Hz harmonic)
                 [880.0, 1760.0].forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = idx === 0 ? 'triangle' : 'sine';
                     osc.frequency.setValueAtTime(freq, now);
                     gain.gain.setValueAtTime(idx === 0 ? 0.08 : 0.03, now);
@@ -947,8 +978,8 @@ class RescueSoundFX {
                 const now = this.ctx.currentTime;
                 // Target bell chime + wet paint pop
                 [1318.51, 1567.98].forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(freq, now);
                     gain.gain.setValueAtTime(0.18, now);
@@ -986,8 +1017,8 @@ class RescueSoundFX {
                 const now = this.ctx.currentTime;
                 // Melodic cheerful music-box arpeggio for Ferris wheel & carnival boardwalk
                 [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(freq, now + idx * 0.09);
                     gain.gain.setValueAtTime(0.001, now + idx * 0.09);
@@ -1126,7 +1157,7 @@ class RescueSoundFX {
                 this.rotorGain.gain.setTargetAtTime(0.0001, t, 0.05);
                 this.sirenGain.gain.setTargetAtTime(0.0001, t, 0.05);
             }
-            updateContinuousLoops(botType, mode, speed, sirenActive, boostTimer, nowMs) {
+            updateContinuousLoops(botType: string, mode: string, speed: number, sirenActive: boolean, boostTimer: number, nowMs: number) {
                 if (!this.enabled || !this.ctx || this.ctx.state !== 'running') {
                     this.stopContinuousLoops();
                     return;
@@ -1140,7 +1171,7 @@ class RescueSoundFX {
 
                 // A. Ground Vehicle Engine vs Aircraft Flight vs Helicopter Rotor Chop
                 const isBladesAir = botType === 'BLADES' && (mode === 'VEHICLE' || mode === 'DINO');
-                const isQuickshadowAir = botType === 'QUICKSHADOW' && mode === 'VEHICLE' && (typeof window !== 'undefined' && (window as any).isBotDocked && (window as any).isBotDocked('QUICKSHADOW'));
+                const isQuickshadowAir = botType === 'QUICKSHADOW' && mode === 'VEHICLE' && (typeof window !== 'undefined' && typeof window.isBotDocked === 'function' && window.isBotDocked('QUICKSHADOW'));
                 const isGroundVehicle = !isBladesAir && !isQuickshadowAir && mode === 'VEHICLE';
 
                 if (isGroundVehicle) {
@@ -1239,13 +1270,13 @@ class RescueSoundFX {
                     // Ominous villain fanfare: minor triad pulse (D4 -> F4 -> Ab4 -> D5)
                     const notes = [293.66, 349.23, 415.30, 587.33];
                     notes.forEach((freq, idx) => {
-                        const osc = this.ctx.createOscillator();
-                        const gain = this.ctx.createGain();
+                        const osc = this.ctx!.createOscillator();
+                        const gain = this.ctx!.createGain();
                         osc.type = 'sawtooth';
                         osc.frequency.setValueAtTime(freq, t + idx * 0.16);
                         osc.frequency.exponentialRampToValueAtTime(freq * 1.02, t + idx * 0.16 + 0.35);
 
-                        const filter = this.ctx.createBiquadFilter();
+                        const filter = this.ctx!.createBiquadFilter();
                         filter.type = 'lowpass';
                         filter.frequency.setValueAtTime(1400, t + idx * 0.16);
 
@@ -1311,8 +1342,8 @@ class RescueSoundFX {
                     // Escalating victory brass fanfare
                     const fanNotes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
                     fanNotes.forEach((f, idx) => {
-                        const osc = this.ctx.createOscillator();
-                        const gain = this.ctx.createGain();
+                        const osc = this.ctx!.createOscillator();
+                        const gain = this.ctx!.createGain();
                         osc.type = 'triangle';
                         osc.frequency.setValueAtTime(f, t + idx * 0.12);
 

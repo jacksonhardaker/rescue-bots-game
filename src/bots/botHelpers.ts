@@ -81,7 +81,7 @@ export function createQuickshadowWheel(radius = 0.64, width = 0.42) {
             const bluePod = new THREE.Mesh(new THREE.BoxGeometry(width * 0.42, 0.26, 0.38), matSirenBlue);
             bluePod.position.set(width * 0.25, 0.13, 0);
             lb.add(bluePod);
-            return { group: lb, redPod, bluePod };
+            return { group: lb, redPod, bluePod, red: redPod, blue: bluePod, redMat: matSirenRed, blueMat: matSirenBlue };
         }
 
 if (typeof window !== 'undefined') {

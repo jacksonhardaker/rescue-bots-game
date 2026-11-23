@@ -1,7 +1,11 @@
 // Global Game State Singletons
 import * as THREE from 'three';
+import type {
+    PlayerState, BuddyBotState, WorldState, InputState,
+    RampItem, ColliderItem, CullableEntry, HumanNPCEntry, VehicleNPCEntry
+} from '../types/game.js';
 
-export const player: Record<string, any> = {
+export const player: PlayerState = {
     botType: 'BOULDER',
     mode: 'BOT',          // 'BOT', 'VEHICLE', or 'DINO'
     morph: 0,             // Vehicle morph (0 -> 1)
@@ -56,7 +60,7 @@ export const player: Record<string, any> = {
     trailerArticAngle: 0
 };
 
-export const worldState: Record<string, any> = {
+export const worldState: WorldState = {
     activeArea: 'SURFACE', // 'SURFACE' | 'UNDERGROUND' | 'SOLAR_HUB' | 'SPACE' | 'MOON' | 'PLANET_SURFACE' | 'SATURN_RING_RACE'
     activePlanetId: 'MOON', // 'MOON' | 'MERCURY' | 'VENUS' | 'EARTH' | 'MARS' | 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE' | 'PLUTO' | 'EUROPA' | 'MIRANDA' | 'TRITON'
     activeSpaceSector: 'MOON_ORBIT', // 'MOON_ORBIT' | 'JUPITER' | 'URANUS' | 'NEPTUNE'
@@ -94,7 +98,7 @@ export const worldState: Record<string, any> = {
     }
 };
 
-export const buddyBot: Record<string, any> = {
+export const buddyBot: BuddyBotState = {
     botType: 'HEATWAVE',
     pos: new THREE.Vector3(-6, 5, -18),
     heading: 0,
@@ -115,7 +119,7 @@ export const buddyBot: Record<string, any> = {
     trailerArticAngle: 0
 };
 
-export const input: Record<string, any> = {
+export const input: InputState = {
     keys: {},
     camYaw: 0,
     camPitch: 0.48,
@@ -123,11 +127,11 @@ export const input: Record<string, any> = {
     autoCam: true
 };
 
-export const ramps: any[] = [];
+export const ramps: RampItem[] = [];
 
-export const worldColliders: any[] = [];
+export const worldColliders: ColliderItem[] = [];
 const COLLIDER_CELL_SIZE = 48;
-const _colliderGrid = new Map<number, any[]>();
+const _colliderGrid = new Map<number, ColliderItem[]>();
 let _indexedColliderCount = 0;
 let _colliderQueryStamp = 0;
 
@@ -135,7 +139,7 @@ function _cellKey(cx: number, cz: number): number {
     return (((cx + 512) & 0xfff) << 12) | ((cz + 512) & 0xfff);
 }
 
-function _indexCollider(c: any) {
+function _indexCollider(c: ColliderItem) {
     if (!c) return;
     const r = Math.max(c.r || 0, 1);
     const minCx = Math.floor((c.x - r) / COLLIDER_CELL_SIZE);
@@ -155,7 +159,7 @@ function _indexCollider(c: any) {
     }
 }
 
-export function queryNearbyColliders(x: number, z: number, radius: number, outList: any[] = []): any[] {
+export function queryNearbyColliders(x: number, z: number, radius: number, outList: ColliderItem[] = []): ColliderItem[] {
     if (_indexedColliderCount > worldColliders.length) {
         _colliderGrid.clear();
         _indexedColliderCount = 0;
@@ -184,22 +188,22 @@ export function queryNearbyColliders(x: number, z: number, radius: number, outLi
     }
     return outList;
 }
-export const cullableWorldObjects: any[] = []; // Viewport & Distance Frustum Culling Registry
-export const humanNPCs: any[] = [];
-export const vehicleNPCs: any[] = [];
+export const cullableWorldObjects: CullableEntry[] = []; // Viewport & Distance Frustum Culling Registry
+export const humanNPCs: HumanNPCEntry[] = [];
+export const vehicleNPCs: VehicleNPCEntry[] = [];
 export { botRigs } from '../bots/botRigs.js';
 
-export function registerCullableObject(obj, x, y, z, radius = 28) {
+export function registerCullableObject(obj: THREE.Object3D, x: number, y: number, z: number, radius = 28) {
     obj.userData.cullCenter = new THREE.Vector3(x, y, z);
     obj.userData.cullRadius = radius;
     cullableWorldObjects.push({ obj, x, y, z, radius });
 }
 
-export const stateHolder = {
+export const stateHolder: { ferryController: { currentPos: THREE.Vector3; currentRotY: number; state: string } | null } = {
     ferryController: null
 };
 
-export const botPhraseCounters = {
+export const botPhraseCounters: Record<string, number> = {
     BOULDER: 0,
     HEATWAVE: 0,
     CHASE: 0,
@@ -220,7 +224,7 @@ if (typeof window !== 'undefined') {
     window.input = input;
     window.ramps = ramps;
     window.worldColliders = worldColliders;
-    (window as any).queryNearbyColliders = queryNearbyColliders;
+    window.queryNearbyColliders = queryNearbyColliders;
     window.cullableWorldObjects = cullableWorldObjects;
     window.humanNPCs = humanNPCs;
     window.vehicleNPCs = vehicleNPCs;

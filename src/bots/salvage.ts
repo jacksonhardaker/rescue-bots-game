@@ -2,14 +2,9 @@
 import * as THREE from 'three';
 import { createWheelAssembly } from './botHelpers.js';
 import { buildSalvageBoat } from './botBoats.js';
+import type { BotRig } from '../types/game.js';
 
-export function buildSalvage(parts, materials = {}, textures = {}) {
-    const {
-        toonGrad3, toonGrad4, toonGradGlossy,
-        matChrome, matDarkSteel, matTire, matCabGlass,
-        matVisorCyan, matVisorGold, matSirenRed, matSirenBlue,
-        matEmblem, matHazardMat, matGrille, matInkOutline
-    } = ((typeof window !== 'undefined' ? window : {}) as any);
+export function buildSalvage(parts: BotRig, _materials: Record<string, unknown> = {}, _textures: Record<string, unknown> = {}) {
 
     // TV Show Salvage: Electric Lime-Green Cab & Helmet, Royal Blue Shoulders & Hopper, Safety Orange Loader Arms, Charcoal Steel Chassis & Stacked Dual Leg Tires!
                 // 1. Torso: Electric Lime Cab Chest with Split Aqua Windshields & Iconic Green Recycling Symbol
@@ -388,9 +383,9 @@ export function buildSalvage(parts, materials = {}, textures = {}) {
                 buildSalvageBoat(parts);
 
                 // Initialize visibility matching current docked status
-                const isCurrentMega = Boolean(typeof window !== 'undefined' && (window as any).progression && (window as any).progression.salvageDocked);
-                if (typeof (window as any).setBotRigMega === 'function') {
-                    (window as any).setBotRigMega(parts, isCurrentMega);
+                const isCurrentMega = Boolean(typeof window !== 'undefined' && window.progression && window.progression.salvageDocked);
+                if (typeof setBotRigMega === 'function') {
+                    setBotRigMega(parts, isCurrentMega);
                 }
 }
 

@@ -8,12 +8,12 @@ import {
 } from '../rendering/materials.js';
 import { player, buddyBot, botRigs, input, worldState } from '../state/gameState.js';
 import { progression, saveProgression } from '../progression/progression.js';
-import { buildCrashedSpaceshipSigma } from './spaceshipSigma.js';
+import { buildCrashedSpaceshipSigma, type SigmaAnimatedEntry } from './spaceshipSigma.js';
 import { swapToMoon, updateMoonHUD } from './moon.js';
 import { swapToPlanetSurface, LandablePlanetId } from './planetSurface.js';
 import { swapToSurface, setSigmaLaunchHandler, updateCavernHUD } from './underground.js';
 import { sfx } from '../audio/soundFX.js';
-import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
+import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
 import { isActionActive } from '../settings/settings.js';
 
 export const spaceScene = new THREE.Scene();
@@ -371,7 +371,7 @@ function buildLaunchScene() {
     launchScene.add(_launchStars);
 
     // Starship Sigma centered in launch scene, pitched straight up along +Y
-    const animDummy: any[] = [];
+    const animDummy: SigmaAnimatedEntry[] = [];
     _launchSigmaRoot = buildCrashedSpaceshipSigma(launchScene, animDummy, null, {
         originX: 0,
         originZ: 0,
@@ -1009,7 +1009,7 @@ export function swapToSpace(fromMoon = false, sectorId: SpaceSectorId = 'MOON_OR
     updateCavernHUD();
     updateMoonHUD();
     updateSpaceHUD();
-    if (typeof (window as any).renderMinimap === 'function') (window as any).renderMinimap();
+    if (typeof window.renderMinimap === 'function') window.renderMinimap();
 
     if (sectorId === 'JUPITER') {
         showToast(
@@ -1702,7 +1702,7 @@ export function updateSpace(dt: number, now: number) {
                             'DR. MOROCCO',
                             'Arch-Nemesis',
                             'Curse you, Rescue Bots! My orbital weather-disruptor satellite took months to launch!',
-                            player,
+                            player as unknown as SpeechTarget,
                             true
                         );
                         updateSpaceHUD();

@@ -9,7 +9,7 @@ import {
     matBlimpGreen, matBlimpGreenDark, matBlimpGondolaYellow, matBlimpGondolaWood, matBlimpWindowBlue, matBlimpCable, matMoroccoSkin, matMoroccoMustache,
     applyCartoonInkOutlines
 } from '../rendering/materials.js';
-import { player, buddyBot, botRigs } from '../state/gameState.js';
+import { player, buddyBot, botRigs, registerCullableObject } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { triggerNPCSpeech, showToast } from '../ui/dialogs.js';
 import { spawnBurstParticles, spawnWaterCannonStream } from './emergencies.js';
@@ -30,7 +30,17 @@ export let morbotState = null;
 const _sparkHazardGeo = new THREE.SphereGeometry(0.75, 8, 8);
 const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe: true });
 
-        export const morbotBattle: any = {
+type MorBotRig = ReturnType<typeof buildMorBotModel>;
+
+interface SparkHazard {
+    mesh: THREE.Mesh;
+    x: number;
+    y: number;
+    z: number;
+    life: number;
+}
+
+        export const morbotBattle = {
             state: 'IDLE', // 'IDLE', 'PURSUIT', 'ROBOT', 'INTERMISSION', 'VICTORY', 'DEFEATED'
             fleetIndex: 0,
             hp: 4,
@@ -48,29 +58,29 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
             sparkTimer: 0,
             rocketLaunchY: 0,
             rocketSpeed: 0,
-            battlefieldRocket: null,
+            battlefieldRocket: null as THREE.Group | null,
             battlefieldRocketY: 0,
             battlefieldRocketSpeed: 0,
-            sparkHazards: [],
+            sparkHazards: [] as SparkHazard[],
             // Highway pursuit route
             pursuitTheta: 4.2,
             pursuitLaneOffset: 3.2,
             // 3D Objects
-            rigs: [],
-            rig: null,
-            lairGroup: null,
-            rocketMesh: null,
-            triggerRingMesh: null,
-            triggerRingGlow: null,
-            teslaArcs: [],
-            blimpEnvelopeG: null,
-            blimpProps: [],
-            blimpCage: null,
+            rigs: [] as MorBotRig[],
+            rig: null as MorBotRig | null,
+            lairGroup: null as THREE.Group | null,
+            rocketMesh: null as THREE.Group | null,
+            triggerRingMesh: null as THREE.Mesh | null,
+            triggerRingGlow: null as THREE.Mesh | null,
+            teslaArcs: [] as THREE.Object3D[],
+            blimpEnvelopeG: null as THREE.Group | null,
+            blimpProps: [] as THREE.Object3D[],
+            blimpCage: null as THREE.Group | null,
             // 3D World Overhead Health Bar Billboard
-            overheadCanvas: null,
-            overheadCtx: null,
-            overheadTex: null,
-            overheadMesh: null,
+            overheadCanvas: null as HTMLCanvasElement | null,
+            overheadCtx: null as CanvasRenderingContext2D | null,
+            overheadTex: null as THREE.CanvasTexture | null,
+            overheadMesh: null as THREE.Mesh | null,
 
             getCurrentConfig() {
                 return MORBOT_FLEET_CONFIGS[this.fleetIndex] || MORBOT_FLEET_CONFIGS[0];
@@ -173,7 +183,7 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                 this.redrawOverheadBar();
             },
 
-            drawSafeRoundRect(ctx, x, y, w, h, r) {
+            drawSafeRoundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
                 if (ctx.roundRect) {
                     ctx.beginPath();
                     ctx.roundRect(x, y, w, h, r);
@@ -284,7 +294,7 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                         ctx.shadowBlur = 0;
                     }
 
-                    this.overheadTex.needsUpdate = true;
+                    if (this.overheadTex) this.overheadTex.needsUpdate = true;
                 } catch (e) {
                     console.warn("Error drawing overhead bar:", e);
                 }
@@ -296,7 +306,7 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                 if (modal) modal.classList.remove('hidden');
             },
 
-            closeChallengeModal(startBattle) {
+            closeChallengeModal(startBattle: boolean) {
                 const modal = document.getElementById('morocco-modal');
                 if (modal) modal.classList.add('hidden');
 
@@ -310,7 +320,7 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                 this.spawnBot(0, true);
             },
 
-            spawnBot(index, isFirst = false) {
+            spawnBot(index: number, isFirst = false) {
                 this.fleetIndex = index;
                 const cfg = this.getCurrentConfig();
 
@@ -461,12 +471,14 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                         this.hp = cfg.robotHp;
                         this.maxHp = cfg.robotHp;
                         this.invulnerableTimer = 1.8;
-                        this.rig.setMode(true);
-                        if (this.rig.rHeadGroup) this.rig.rHeadGroup.rotation.x = 0;
-                        if (this.rig.leftArm) this.rig.leftArm.rotation.x = 0;
-                        if (this.rig.rightArm) this.rig.rightArm.rotation.x = 0;
-                        if (this.rig.leftLeg) this.rig.leftLeg.rotation.x = 0;
-                        if (this.rig.rightLeg) this.rig.rightLeg.rotation.x = 0;
+                        if (this.rig) {
+                            this.rig.setMode(true);
+                            if (this.rig.rHeadGroup) this.rig.rHeadGroup.rotation.x = 0;
+                            if (this.rig.leftArm) this.rig.leftArm.rotation.x = 0;
+                            if (this.rig.rightArm) this.rig.rightArm.rotation.x = 0;
+                            if (this.rig.leftLeg) this.rig.leftLeg.rotation.x = 0;
+                            if (this.rig.rightLeg) this.rig.rightLeg.rotation.x = 0;
+                        }
 
                         sfx.playTransform(false); // transformation sound
                         sfx.playMorbotAlert();
@@ -601,7 +613,7 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                 this.rocketSpeed = 45.0;
 
                 // 3. Award +75 Energon Cubes
-                progression.energonCubesCollected = (progression.energonCubesCollected || 0) + 75;
+                progression.energonCubesCollected = (Number(progression.energonCubesCollected) || 0) + 75;
                 saveProgression();
                 updateMissionHUD();
 
@@ -650,19 +662,19 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                 this.rocketSpeed = 0;
             },
 
-            spawnSparkHazard(x, y, z) {
+            spawnSparkHazard(x: number, y: number, z: number) {
                 const mesh = new THREE.Mesh(_sparkHazardGeo, _sparkHazardMat);
                 mesh.position.set(x, y + 0.35, z);
                 scene.add(mesh);
                 this.sparkHazards.push({ mesh, x, y, z, life: 7.0 });
                 if (this.sparkHazards.length > 8) {
                     const old = this.sparkHazards.shift();
-                    scene.remove(old.mesh);
+                    if (old) scene.remove(old.mesh);
                 }
             }
         };
 
-        export function updateMorBotBattle(dt, now) {
+        export function updateMorBotBattle(dt: number, now: number) {
             if (morbotBattle.triggerCooldown > 0) {
                 morbotBattle.triggerCooldown -= dt;
             }
@@ -694,8 +706,8 @@ const _sparkHazardMat = new THREE.MeshBasicMaterial({ color: 0xef4444, wireframe
                 morbotBattle.hitFlashTimer -= dt;
                 const isFlash = Math.sin(morbotBattle.hitFlashTimer * 30) > 0;
                 if (morbotBattle.rig) {
-                    if (morbotBattle.rig.vCore) morbotBattle.rig.vCore.material.color.setHex(isFlash ? 0xffffff : 0x22c55e);
-                    if (morbotBattle.rig.rCore) morbotBattle.rig.rCore.material.color.setHex(isFlash ? 0xffffff : 0x22c55e);
+                    if (morbotBattle.rig.vCore) (morbotBattle.rig.vCore.material as THREE.MeshBasicMaterial).color.setHex(isFlash ? 0xffffff : 0x22c55e);
+                    if (morbotBattle.rig.rCore) (morbotBattle.rig.rCore.material as THREE.MeshBasicMaterial).color.setHex(isFlash ? 0xffffff : 0x22c55e);
                 }
             }
 

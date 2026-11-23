@@ -168,11 +168,13 @@ function liftMinYToFloor(obj: THREE.Object3D, clearance = 0): THREE.Group {
     wrap.updateMatrixWorld(true);
     const box = new THREE.Box3();
     const tmp = new THREE.Box3();
-    wrap.traverse((o: any) => {
-        if (o.isMesh && !o.userData?.isOutline && o.geometry) {
+    wrap.traverse((o: THREE.Object3D) => {
+        if (o instanceof THREE.Mesh && !o.userData?.isOutline && o.geometry) {
             if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
-            tmp.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
-            box.union(tmp);
+            if (o.geometry.boundingBox) {
+                tmp.copy(o.geometry.boundingBox).applyMatrix4(o.matrixWorld);
+                box.union(tmp);
+            }
         }
     });
     if (!box.isEmpty() && box.min.y < clearance) {
@@ -1933,16 +1935,17 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
 
     const _wireframeTouched = new Set<THREE.Material>();
     function applyWireframeToTree(root: THREE.Object3D, enabled: boolean) {
-        root.traverse((obj: any) => {
-            if (!obj.isMesh || obj.userData?.isOutline) return;
-            const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-            mats.forEach((m: any) => {
-                if (m && typeof m.wireframe === 'boolean' && (enabled || _wireframeTouched.has(m))) {
-                    if (m.userData?.baseWireframe === undefined) {
-                        m.userData = m.userData || {};
-                        m.userData.baseWireframe = m.wireframe;
+        root.traverse((obj: THREE.Object3D) => {
+            if (!(obj instanceof THREE.Mesh) || obj.userData?.isOutline) return;
+            const mats: THREE.Material[] = Array.isArray(obj.material) ? obj.material : [obj.material];
+            mats.forEach((m: THREE.Material) => {
+                if (m && 'wireframe' in m && typeof (m as THREE.MeshBasicMaterial).wireframe === 'boolean' && (enabled || _wireframeTouched.has(m))) {
+                    const wfMat = m as THREE.MeshBasicMaterial;
+                    if (wfMat.userData?.baseWireframe === undefined) {
+                        wfMat.userData = wfMat.userData || {};
+                        wfMat.userData.baseWireframe = wfMat.wireframe;
                     }
-                    m.wireframe = enabled ? true : Boolean(m.userData.baseWireframe);
+                    wfMat.wireframe = enabled ? true : Boolean(wfMat.userData.baseWireframe);
                     _wireframeTouched.add(m);
                 }
             });
@@ -2037,8 +2040,8 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
 
     rebuildGridLayout();
 
-    (window as any).__modelCheckCatalog = MODEL_CATALOG.map(({ id, name, category }) => ({ id, name, category }));
-    (window as any).__modelCheckCells = cells;
+    window.__modelCheckCatalog = MODEL_CATALOG.map(({ id, name, category }) => ({ id, name, category }));
+    window.__modelCheckCells = cells;
 
     const _box = new THREE.Box3();
     const _tmpBox = new THREE.Box3();
@@ -2047,17 +2050,19 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
         root.updateMatrixWorld(true);
         let meshCount = 0;
         let triCount = 0;
-        root.traverse((o: any) => {
+        root.traverse((o: THREE.Object3D) => {
             if (!o.visible) return;
-            if (o.isMesh && !o.userData?.isOutline && o.geometry) {
+            if (o instanceof THREE.Mesh && !o.userData?.isOutline && o.geometry) {
                 meshCount++;
                 const geo = o.geometry;
                 const idx = geo.getIndex();
                 if (idx) triCount += Math.floor(idx.count / 3);
                 else if (geo.attributes?.position) triCount += Math.floor(geo.attributes.position.count / 3);
                 if (!geo.boundingBox) geo.computeBoundingBox();
-                _tmpBox.copy(geo.boundingBox).applyMatrix4(o.matrixWorld);
-                _box.union(_tmpBox);
+                if (geo.boundingBox) {
+                    _tmpBox.copy(geo.boundingBox).applyMatrix4(o.matrixWorld);
+                    _box.union(_tmpBox);
+                }
             }
         });
         return { box: _box, meshCount, triCount };
@@ -2066,8 +2071,8 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
     function ensureCellBuilt(c: ModelCell) {
         if (c.holder && c.label) return;
         const built = c.spec.build();
-        built.root.traverse((o: any) => {
-            if (o.isMesh && !o.userData?.isOutline) {
+        built.root.traverse((o: THREE.Object3D) => {
+            if (o instanceof THREE.Mesh && !o.userData?.isOutline) {
                 o.castShadow = true;
             }
         });
@@ -2163,7 +2168,8 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
             <a href="./botcheck.html" style="color:#7dd3fc;">bot check</a> · <a href="./index.html" style="color:#7dd3fc;">back to game</a>
         </div>`;
     document.body.appendChild(panel);
-    const q = (sel: string): any => panel.querySelector(sel);
+    const q = <T extends HTMLElement = HTMLElement>(sel: string): T | null => panel.querySelector<T>(sel);
+    const stateMap = state as unknown as Record<string, string | number | boolean>;
 
     const _panOffset = new THREE.Vector3();
     let needsBoundsRefresh = true;
@@ -2189,10 +2195,11 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
     }
 
     function syncControlsToState() {
-        panel.querySelectorAll('[data-k]').forEach((el: any) => {
+        panel.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-k]').forEach((el) => {
             const k = el.dataset.k;
-            if (el.type === 'checkbox') el.checked = (state as any)[k];
-            else el.value = (state as any)[k];
+            if (!k) return;
+            if (el instanceof HTMLInputElement && el.type === 'checkbox') el.checked = Boolean(stateMap[k]);
+            else el.value = String(stateMap[k] ?? '');
         });
     }
 
@@ -2228,10 +2235,11 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
         }
     }
 
-    panel.querySelectorAll('[data-k]').forEach((el: any) => {
+    panel.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-k]').forEach((el) => {
         const k = el.dataset.k;
-        if (el.type === 'checkbox') el.checked = (state as any)[k];
-        else el.value = (state as any)[k];
+        if (!k) return;
+        if (el instanceof HTMLInputElement && el.type === 'checkbox') el.checked = Boolean(stateMap[k]);
+        else el.value = String(stateMap[k] ?? '');
         el.addEventListener('input', () => {
             if (k === 'model') {
                 selectModel(el.value);
@@ -2246,7 +2254,7 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
                 syncUrl();
                 return;
             }
-            (state as any)[k] = el.type === 'checkbox' ? el.checked : el.value;
+            stateMap[k] = el instanceof HTMLInputElement && el.type === 'checkbox' ? el.checked : el.value;
             if (k === 'env' || k === 'grid') applyEnvironment(state.env);
             if (k === 'outlines') applyOutlineToggle(state.outlines);
             if (k === 'wireframe') {
@@ -2274,7 +2282,7 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
         selectModel(filteredIds[(idx + 1) % filteredIds.length]);
     });
 
-    panel.querySelectorAll('[data-cam]').forEach((btn: any) => {
+    panel.querySelectorAll<HTMLElement>('[data-cam]').forEach((btn) => {
         btn.addEventListener('click', () => {
             const preset = btn.dataset.cam;
             state.spin = false;
@@ -2306,7 +2314,7 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
     rebuildModelDropdown();
 
     // Expose programmatic switcher helper for testing
-    (window as any).__setModelCheckState = (patch: Partial<typeof state>) => {
+    window.__setModelCheckState = (patch: Partial<typeof state>) => {
         const categoryChanged = patch.category !== undefined && patch.category !== state.category;
         Object.assign(state, patch);
         if (categoryChanged) {
@@ -2340,7 +2348,8 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
         } else {
             dragMode = 'orbit';
             state.spin = false;
-            q('[data-k=spin]').checked = false;
+            const spinInput = q<HTMLInputElement>('[data-k=spin]');
+            if (spinInput) spinInput.checked = false;
         }
     });
     window.addEventListener('pointerup', () => { dragMode = 'none'; });
@@ -2381,8 +2390,8 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
     const _size = new THREE.Vector3();
     const _camTarget = new THREE.Vector3();
     const _camDir = new THREE.Vector3();
-    (window as any).__modelCheckCamera = mcCamera;
-    (window as any).__modelCheckCamTarget = _camTarget;
+    window.__modelCheckCamera = mcCamera;
+    window.__modelCheckCamTarget = _camTarget;
     let lastNow = performance.now();
     let telemetryTimer = 0;
 
@@ -2423,7 +2432,8 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
         if (state.spin) state.yaw += dt * 0.32;
 
         const isFocus = state.view === 'focus';
-        q('[data-focus]').style.display = isFocus ? '' : 'none';
+        const focusEl = q('[data-focus]');
+        if (focusEl) focusEl.style.display = isFocus ? '' : 'none';
 
         telemetryTimer -= dt;
         const updateTelemetry = telemetryTimer <= 0;
@@ -2587,7 +2597,7 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
                         `<div>Visible Tris: ${totalTris.toLocaleString()}</div>`;
                 }
             }
-            (window as any).__modelCheckStats = {
+            window.__modelCheckStats = {
                 builtCount,
                 activeCategoryCount,
                 totalCatalog: cells.length,
@@ -2608,5 +2618,5 @@ export function startModelCheck(canvasEl?: HTMLCanvasElement | null) {
 }
 
 if (typeof window !== 'undefined') {
-    (window as any).startModelCheck = startModelCheck;
+    window.startModelCheck = startModelCheck;
 }

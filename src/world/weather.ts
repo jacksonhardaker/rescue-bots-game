@@ -1,5 +1,6 @@
 // Griffin Rock Island Dynamic Weather & Environmental Systems
 import * as THREE from 'three';
+import type { PlayerState } from '../types/game.js';
 import { scene, hemiLight, sunLight } from '../rendering/scene.js';
 import { SVG_ICONS } from '../ui/icons.js';
 import { progression, saveProgression } from '../progression/progression.js';
@@ -10,9 +11,13 @@ import { speakBotCatchphrase } from '../physics/player.js';
 import { matStreetlampBulb } from './props.js';
 import { initWeatherHazards, updateWeatherHazards } from './weatherHazards.js';
 
-export let rainSystem: any = null;
-export let volcanoEmberSystem: any = null;
-export let starField: any = null;
+export type RainSystem = ReturnType<typeof createRainSystem>;
+export type VolcanoEmberSystem = ReturnType<typeof createVolcanoEmberSystem>;
+export type StarFieldSystem = ReturnType<typeof createStarField>;
+
+export let rainSystem: RainSystem | null = null;
+export let volcanoEmberSystem: VolcanoEmberSystem | null = null;
+export let starField: StarFieldSystem | null = null;
 export let auroraMesh: THREE.Mesh | null = null;
 export let currentWeatherIdx = 0;
 export let lightningFlashTimer = 0;
@@ -297,8 +302,8 @@ export function applyWeatherMode(idx: number, announce = true) {
     else if (w.id === 'VOLCANO') timeOfDay = 19.0;
 
     if (typeof window !== 'undefined') {
-        (window as any).currentWeatherIdx = currentWeatherIdx;
-        (window as any).timeOfDay = timeOfDay;
+        window.currentWeatherIdx = currentWeatherIdx;
+        window.timeOfDay = timeOfDay;
     }
 
     applyVisualWeatherState(w);
@@ -360,16 +365,16 @@ function applyVisualWeatherState(w: typeof WEATHER_MODES[0]) {
     if (starField && starField.group) starField.group.visible = (w.id === 'NIGHT');
 
     targetHeadlightIntensity = w.headlightIntensity;
-    (window as any).targetHeadlightIntensity = targetHeadlightIntensity;
-    (window as any).currentWeatherId = w.id;
+    window.targetHeadlightIntensity = targetHeadlightIntensity;
+    window.currentWeatherId = w.id;
 
     // Streetlamps & Civilian Headlights
     const isDark = targetHeadlightIntensity > 0 || timeOfDay >= 18.0 || timeOfDay < 6.0;
     if (matStreetlampBulb) {
         matStreetlampBulb.color.setHex(isDark ? 0xfef08a : 0x94a3b8);
     }
-    if (typeof (window as any).setCivilianVehicleHeadlights === 'function') {
-        (window as any).setCivilianVehicleHeadlights(isDark);
+    if (typeof window.setCivilianVehicleHeadlights === 'function') {
+        (window.setCivilianVehicleHeadlights as (dark: boolean) => void)(isDark);
     }
 
     updateHUDTimeWidget();
@@ -395,9 +400,9 @@ export function updateHUDTimeWidget() {
 }
 
 // Per-frame environmental animation loop
-export function updateWeather(dt: number, now: number, playerRef: any) {
+export function updateWeather(dt: number, now: number, playerRef: PlayerState) {
     const currentMode = WEATHER_MODES[currentWeatherIdx] || WEATHER_MODES[0];
-    (window as any).currentWeatherId = currentMode.id;
+    window.currentWeatherId = currentMode.id;
 
     // 1. Advance Time of Day when in Auto-Cycle
     if (isAutoCycle) {
@@ -448,13 +453,13 @@ export function updateWeather(dt: number, now: number, playerRef: any) {
     const phase = getTimePhase(timeOfDay);
     const isNightOrDusk = (phase === 'NIGHT' || phase === 'DUSK' || currentMode.headlightIntensity > 0);
     targetHeadlightIntensity = isNightOrDusk ? Math.max(2.4, currentMode.headlightIntensity) : currentMode.headlightIntensity;
-    (window as any).targetHeadlightIntensity = targetHeadlightIntensity;
+    window.targetHeadlightIntensity = targetHeadlightIntensity;
 
     if (matStreetlampBulb) {
         matStreetlampBulb.color.setHex(isNightOrDusk ? 0xfef08a : 0x94a3b8);
     }
-    if (typeof (window as any).setCivilianVehicleHeadlights === 'function') {
-        (window as any).setCivilianVehicleHeadlights(isNightOrDusk);
+    if (typeof window.setCivilianVehicleHeadlights === 'function') {
+        (window.setCivilianVehicleHeadlights as (dark: boolean) => void)(isNightOrDusk);
     }
 
     // 4. Foghorn in Coastal Sea Fog

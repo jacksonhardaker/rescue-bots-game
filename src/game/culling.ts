@@ -7,6 +7,18 @@ import { islandTrain } from '../world/railway.js';
 import { beacons } from '../world/emergencies.js';
 import { gameSettings } from '../settings/settings.js';
 
+interface CullableTrain {
+    cars: Array<{ x: number; y: number; z: number; halfLength: number; root: THREE.Object3D }>;
+}
+
+interface CullableBeacon {
+    x: number;
+    z: number;
+    group: THREE.Object3D;
+    nodes: Array<{ cleared?: boolean; mesh: THREE.Object3D }>;
+    strandedCitizens?: Array<{ rig: { root: THREE.Object3D } }>;
+}
+
         /***********************************************************************
          * 8C. VIEWPORT FRUSTUM & DISTANCE RENDERING CULLER (10X WORLD OPTIMIZER)
          ***********************************************************************/
@@ -61,24 +73,27 @@ import { gameSettings } from '../settings/settings.js';
             // 2. Cull Human NPCs outside camera frustum or beyond draw-distance threshold
             for (let i = 0; i < humanNPCs.length; i++) {
                 const npc = humanNPCs[i];
+                const npcRoot = (npc.rig as { root: THREE.Object3D } | undefined)?.root;
+                if (!npcRoot) continue;
                 const dist = Math.hypot(npc.x - camX, npc.z - camZ);
                 if (dist > humanMaxDist) {
-                    npc.rig.root.visible = false;
+                    npcRoot.visible = false;
                     continue;
                 }
                 if (dist < 45) {
-                    npc.rig.root.visible = true;
+                    npcRoot.visible = true;
                     continue;
                 }
                 _cullSphere.center.set(npc.x, npc.y + 2.5, npc.z);
                 _cullSphere.radius = 6.5;
-                npc.rig.root.visible = _cullFrustum.intersectsSphere(_cullSphere);
+                npcRoot.visible = _cullFrustum.intersectsSphere(_cullSphere);
             }
 
             // 3B. Cull Griffin Rock Island Train Cars outside camera frustum or beyond draw-distance threshold
-            if (typeof islandTrain !== 'undefined' && islandTrain.cars.length > 0) {
-                for (let i = 0; i < islandTrain.cars.length; i++) {
-                    const car = islandTrain.cars[i];
+            const train = (typeof islandTrain !== 'undefined' ? islandTrain : null) as unknown as CullableTrain | null;
+            if (train && train.cars.length > 0) {
+                for (let i = 0; i < train.cars.length; i++) {
+                    const car = train.cars[i];
                     const dist = Math.hypot(car.x - camX, car.z - camZ);
                     if (dist > trainMaxDist) {
                         car.root.visible = false;
@@ -97,23 +112,26 @@ import { gameSettings } from '../settings/settings.js';
             // 3. Cull Civilian Vehicle NPCs outside camera frustum or beyond draw-distance threshold
             for (let i = 0; i < vehicleNPCs.length; i++) {
                 const v = vehicleNPCs[i];
+                const vRoot = v.root as THREE.Object3D | undefined;
+                if (!vRoot) continue;
                 const dist = Math.hypot(v.x - camX, v.z - camZ);
                 if (dist > vehicleMaxDist) {
-                    v.root.visible = false;
+                    vRoot.visible = false;
                     continue;
                 }
                 if (dist < 50) {
-                    v.root.visible = true;
+                    vRoot.visible = true;
                     continue;
                 }
                 _cullSphere.center.set(v.x, v.y + 2.0, v.z);
                 _cullSphere.radius = 9.0;
-                v.root.visible = _cullFrustum.intersectsSphere(_cullSphere);
+                vRoot.visible = _cullFrustum.intersectsSphere(_cullSphere);
             }
 
             // 4. Cull Emergency Beacon Hazard Nodes when off-screen
-            for (let i = 0; i < beacons.length; i++) {
-                const b = beacons[i];
+            const cullBeacons = beacons as unknown as CullableBeacon[];
+            for (let i = 0; i < cullBeacons.length; i++) {
+                const b = cullBeacons[i];
                 _cullSphere.center.set(b.x, 45, b.z);
                 _cullSphere.radius = 95;
                 const beaconInView = _cullFrustum.intersectsSphere(_cullSphere);

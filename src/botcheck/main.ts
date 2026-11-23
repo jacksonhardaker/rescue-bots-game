@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { startBotCheck } from './visualCheck.js';
 
 if (typeof window !== 'undefined') {
-    (window as any).THREE = THREE;
+    window.THREE = THREE;
     const boot = () => startBotCheck(document.getElementById('botcheck-canvas') as HTMLCanvasElement | null);
     if (document.readyState === 'loading') {
         window.addEventListener('DOMContentLoaded', boot);

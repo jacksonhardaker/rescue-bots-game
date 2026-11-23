@@ -165,12 +165,12 @@ import { registerCullableObject } from '../state/gameState.js';
             return tex;
         }
 
-        export let sharedRailTrackTexture = null;
+        export let sharedRailTrackTexture: THREE.Texture | null = null;
 
 
-export let roadTexture = null;
+export let roadTexture: THREE.Texture | null = null;
 
-        export function createRoadRibbon(points, width = 18.2, isLoop = false, polyOffsetFactor = -1.0, polyOffsetUnits = -4.0, customTexture = null, vRepeatPeriod = 12.0, yLift = 0.12) {
+        export function createRoadRibbon(points: Array<{ x: number; z: number }>, width = 18.2, isLoop = false, polyOffsetFactor = -1.0, polyOffsetUnits = -4.0, customTexture: THREE.Texture | null = null, vRepeatPeriod = 12.0, yLift = 0.12) {
             const N = points.length;
             const segments = isLoop ? N : N - 1;
             const numVerts = N * 3;
@@ -286,7 +286,7 @@ export let roadTexture = null;
             return mesh;
         }
 
-        export function createRoadIntersectionPad(cx, cz, radius = 18.5) {
+        export function createRoadIntersectionPad(cx: number, cz: number, radius = 18.5) {
             const gy = getSurfaceHeight(cx, cz);
             const padG = new THREE.Group();
             padG.position.set(cx, gy + 0.16, cz);
@@ -328,7 +328,7 @@ export let roadTexture = null;
             return padG;
         }
 
-export function initRoads(scene) {
+export function initRoads(scene?: THREE.Scene | null) {
     if (!roadTexture) {
         roadTexture = makeProceduralRoadTexture();
     }

@@ -35,63 +35,148 @@ import {
     buildSkyStuntHoopMesh
 } from './buildingModels.js';
 
+export interface GroundBridgePortalEntry {
+    cfg: { id: string; name: string; x: number; z: number; rotY: number; dest: { x: number; z: number; heading: number } };
+    group: THREE.Group;
+    irisRing1: THREE.Mesh;
+    irisRing2: THREE.Mesh;
+    irisRing3: THREE.Mesh;
+    vortexDisc: THREE.Mesh;
+    baseY: number;
+}
+
+export interface StuntHoopRigEntry {
+    def: { id: number; name: string; x: number; y: number; z: number; rotY: number; radius: number; color: number };
+    group: THREE.Group;
+    torusMesh: THREE.Mesh;
+    haloMesh: THREE.Mesh;
+    starPivot: THREE.Object3D;
+    baseY: number;
+    cooldown: number;
+    flashTimer: number;
+}
+
+export interface FerryControllerState {
+    state: string;
+    timeInState: number;
+    cruiseTime: number;
+    boardingCooldown: number;
+    dockPos: THREE.Vector3;
+    dockRotY: number;
+    currentPos: THREE.Vector3;
+    prevPos: THREE.Vector3;
+    currentRotY: number;
+    prevRotY: number;
+    rampMesh: THREE.Object3D | null;
+    rampAngle: number;
+    lastCommentTime: number;
+    waypoints: Array<{ x: number; z: number }>;
+}
+
+export interface CraneInteractiveState {
+    craneX: number;
+    craneZ: number;
+    padX: number;
+    padZ: number;
+    dropX: number;
+    dropZ: number;
+    state: string;
+    timer: number;
+    cooldown: number;
+    boomPivot: THREE.Object3D | null;
+    cableMesh: THREE.Object3D | null;
+    magnetGroup: THREE.Object3D | null;
+    padLights: THREE.Object3D[];
+}
+
+export interface TestYardState {
+    baseX: number;
+    baseZ: number;
+    baseY?: number;
+    bouncePad: { x: number; z: number; radius: number; mesh: THREE.Object3D | null };
+    speedStrip: { minX: number; maxX: number; z: number; width: number };
+    targets: Array<{
+        id: number;
+        name: string;
+        x: number;
+        z: number;
+        color: number;
+        mesh: THREE.Object3D;
+        wobble: number;
+        cooldown: number;
+    }>;
+}
+
+export interface BabyDinoEntry {
+    group: THREE.Group;
+    headPivot: THREE.Object3D;
+    leftLeg: THREE.Object3D;
+    rightLeg: THREE.Object3D;
+    tail: THREE.Object3D;
+    phase: number;
+    worldX: number;
+    worldZ: number;
+    name: string;
+}
+
 export const HQ_POS = { x: -48, z: -45 };
 export const HQ_SWAP_PAD = { x: -48, z: -15, r: 12.5 };
-export let hqGroup: any = null;
-export let roboWashGroup: any = null;
-export let launchPadGroup: any = null;
-export let dinerGroup: any = null;
-export let chargerStation: any = null;
-export let groundbridgePortals: any[] = [];
-export const stuntHoopRigs: any[] = [];
-export let ferryController: any = null;
+export let hqGroup: THREE.Group | null = null;
+export let roboWashGroup: THREE.Group | null = null;
+export let launchPadGroup: THREE.Group | null = null;
+export let dinerGroup: THREE.Group | null = null;
+export let chargerStation: THREE.Group | null = null;
+export let groundbridgePortals: GroundBridgePortalEntry[] = [];
+export const stuntHoopRigs: StuntHoopRigEntry[] = [];
+export let ferryController: FerryControllerState | null = null;
 
 // Animated Landmark References
-export let hqRadarPivot: any = null;
-export let swapPadRing: any = null;
-export const outpostPadRings: any[] = [];
-export let lhBeamPivot: any = null;
-export let observatoryDomePivot: any = null;
-export const windTurbineRotors: any[] = [];
-export let volcanoLavaPool: any = null;
-export const volcanoSmokePuffs: any[] = [];
+export let hqRadarPivot: THREE.Object3D | null = null;
+export let swapPadRing: THREE.Object3D | null = null;
+export const outpostPadRings: THREE.Object3D[] = [];
+export let lhBeamPivot: THREE.Object3D | null = null;
+export let observatoryDomePivot: THREE.Object3D | null = null;
+export const windTurbineRotors: THREE.Object3D[] = [];
+export let volcanoLavaPool: THREE.Object3D | null = null;
+export const volcanoSmokePuffs: THREE.Mesh[] = [];
 
 // Interactive Feature State & Positions
 export const ROBO_WASH_POS = { x: -92, z: -15 };
 export let rwY = 0;
-export let rwLeftBrush: any = null;
-export let rwRightBrush: any = null;
-export let rwTopBrush: any = null;
+export let rwLeftBrush: THREE.Object3D | null = null;
+export let rwRightBrush: THREE.Object3D | null = null;
+export let rwTopBrush: THREE.Object3D | null = null;
 
 export const CATAPULT_POS = { x: 36, z: -45 };
 export let catY = 0;
-export let catapultCarriage: any = null;
-export const catapultStrobes: any[] = [];
+export let catapultCarriage: THREE.Object3D | null = null;
+export const catapultStrobes: THREE.Mesh[] = [];
 
 export const DINER_POS = { x: 78, z: -15 };
 export let dinerY = 0;
-export let dinerBurgerGroup: any = null;
+export let dinerBurgerGroup: THREE.Object3D | null = null;
 
 export const CHARGER_POS = { x: -1110, z: -42 };
 export let chargerY = 0;
-export const energonCoilRings: any[] = [];
-export const energonOrbs: any[] = [];
+export const energonCoilRings: THREE.Mesh[] = [];
+export const energonOrbs: THREE.Mesh[] = [];
 
-export const groundBridgePortals: any[] = [];
-export let harborFerryGroup: any = null;
-export let craneInteractive: any = null;
-export let testYard: any = null;
-export let ferrisWheelPivot: any = null;
-export const ferrisGondolas: any[] = [];
+export const groundBridgePortals: GroundBridgePortalEntry[] = [];
+export let harborFerryGroup: THREE.Group | null = null;
+export let craneInteractive: CraneInteractiveState | null = null;
+export let testYard: TestYardState | null = null;
+export let ferrisWheelPivot: THREE.Object3D | null = null;
+export const ferrisGondolas: THREE.Object3D[] = [];
 export const bwX = -825, bwZ = 825;
-export const babyDinos: any[] = [];
-export let amberSpire: any = null;
+export const babyDinos: BabyDinoEntry[] = [];
+export let amberSpire: THREE.Object3D | null = null;
 export const drX = -750, drZ = -750;
-export let waywardEnergonShard: any = null;
+export let waywardEnergonShard: THREE.Object3D | null = null;
 
 export function initBuildings(scene?: THREE.Scene) {
-    const s = scene || (typeof window !== 'undefined' ? (window as any).scene : null);
+    const s = scene || (typeof window !== 'undefined' ? window.scene : null);
     if (!s) return;
+    const targetScene: THREE.Scene = s;
 
     // =========================================================================
     // 5A. ICONIC RESCUE BOTS FIREHOUSE HEADQUARTERS (At X: -48, Z: -45)
@@ -221,7 +306,7 @@ export function initBuildings(scene?: THREE.Scene) {
         group.position.set(x, gy, z);
         group.rotation.y = rotY;
         mergeStaticMeshesInGroup(group);
-        s.add(group);
+        targetScene.add(group);
         registerCullableObject(group, x, gy + h * 0.5, z, Math.max(w, d, h) + 12);
         worldColliders.push({ x, z, r: Math.max(w, d) * 0.58 });
     }
@@ -298,7 +383,7 @@ export function initBuildings(scene?: THREE.Scene) {
     // =========================================================================
     // INTERACTIVE HIGH-FLYING MAGNETIC GANTRY CRANE (At X: -105, Z: 1162)
     // =========================================================================
-    craneInteractive = {
+    const craneState: CraneInteractiveState = {
         craneX: -105,
         craneZ: 1162,
         padX: -105,
@@ -313,19 +398,20 @@ export function initBuildings(scene?: THREE.Scene) {
         magnetGroup: null,
         padLights: []
     };
+    craneInteractive = craneState;
 
     {
-        const cy = Math.max(0.5, getTerrainHeight(craneInteractive.craneX, craneInteractive.craneZ));
+        const cy = Math.max(0.5, getTerrainHeight(craneState.craneX, craneState.craneZ));
         const magCraneRes = buildMagneticGantryCraneMesh();
         const craneGroup = magCraneRes.root;
-        craneGroup.position.set(craneInteractive.craneX, cy, craneInteractive.craneZ);
-        craneInteractive.boomPivot = magCraneRes.boomPivot;
-        craneInteractive.cableMesh = magCraneRes.cableMesh;
-        craneInteractive.magnetGroup = magCraneRes.magnetGroup;
+        craneGroup.position.set(craneState.craneX, cy, craneState.craneZ);
+        craneState.boomPivot = magCraneRes.boomPivot;
+        craneState.cableMesh = magCraneRes.cableMesh;
+        craneState.magnetGroup = magCraneRes.magnetGroup;
         mergeStaticMeshesInGroup(craneGroup, [magCraneRes.boomPivot]);
-        s.add(craneGroup);
-        registerCullableObject(craneGroup, craneInteractive.craneX, cy + 16, craneInteractive.craneZ, 48);
-        worldColliders.push({ x: craneInteractive.craneX, z: craneInteractive.craneZ, r: 6.5 });
+        targetScene.add(craneGroup);
+        registerCullableObject(craneGroup, craneState.craneX, cy + 16, craneState.craneZ, 48);
+        worldColliders.push({ x: craneState.craneX, z: craneState.craneZ, r: 6.5 });
     }
 
     // Ground Target Pickup Pad for Crane Magnet
@@ -351,10 +437,10 @@ export function initBuildings(scene?: THREE.Scene) {
                 new THREE.SphereGeometry(0.35, 8, 8),
                 new THREE.MeshBasicMaterial({ color: 0xfacc15 })
             );
-            bulb.position.set(craneInteractive.padX + ox, padY + 0.5, craneInteractive.padZ + oz);
+            bulb.position.set(craneState.padX + ox, padY + 0.5, craneState.padZ + oz);
             bulb.userData.noOutline = true;
-            s.add(bulb);
-            craneInteractive.padLights.push(bulb);
+            targetScene.add(bulb);
+            craneState.padLights.push(bulb);
         });
     }
 
@@ -411,7 +497,7 @@ export function initBuildings(scene?: THREE.Scene) {
     ferryController.rampMesh = ferryRes.ferryRampPivot;
     mergeStaticMeshesInGroup(harborFerryGroup, [ferryRes.ferryRampPivot]);
     harborFerryGroup.matrixAutoUpdate = true;
-    harborFerryGroup.traverse((child: any) => {
+    harborFerryGroup.traverse((child: THREE.Object3D) => {
         child.frustumCulled = false;
     });
     s.add(harborFerryGroup);
@@ -426,26 +512,27 @@ export function initBuildings(scene?: THREE.Scene) {
     // =========================================================================
     // 1D. DOC GREENE'S ANTI-GRAVITY TESTING YARD (X: -1250, Z: 65)
     // =========================================================================
-    testYard = {
+    const tyState: TestYardState = {
         baseX: -1250,
         baseZ: 65,
         bouncePad: { x: -1250, z: 58, radius: 5.5, mesh: null },
         speedStrip: { minX: -1290, maxX: -1210, z: 84, width: 7.0 },
         targets: []
     };
+    testYard = tyState;
 
     const tyRes = buildAntiGravTestYardMesh();
     const testYardGroup = tyRes.root;
-    const testYardY = Math.max(0.5, getTerrainHeight(testYard.baseX, testYard.baseZ));
-    testYard.baseY = testYardY;
-    testYardGroup.position.set(testYard.baseX, testYardY, testYard.baseZ);
-    testYard.bouncePad.mesh = tyRes.bounceMembrane;
+    const testYardY = Math.max(0.5, getTerrainHeight(tyState.baseX, tyState.baseZ));
+    tyState.baseY = testYardY;
+    testYardGroup.position.set(tyState.baseX, testYardY, tyState.baseZ);
+    tyState.bouncePad.mesh = tyRes.bounceMembrane;
     tyRes.targetEntries.forEach(td => {
-        testYard.targets.push({
+        tyState.targets.push({
             id: td.id,
             name: td.name,
-            x: testYard.baseX + td.lx,
-            z: testYard.baseZ + td.lz,
+            x: tyState.baseX + td.lx,
+            z: tyState.baseZ + td.lz,
             color: td.color,
             mesh: td.mesh,
             wobble: 0,
@@ -453,10 +540,10 @@ export function initBuildings(scene?: THREE.Scene) {
         });
     });
     mergeStaticMeshesInGroup(testYardGroup, [tyRes.bounceMembrane, ...tyRes.targetEntries.map(t => t.mesh)]);
-    s.add(testYardGroup);
-    registerCullableObject(testYardGroup, testYard.baseX, testYardY + 5, testYard.baseZ, 55);
-    worldColliders.push({ x: testYard.baseX - 35, z: testYard.baseZ, r: 2.5 });
-    worldColliders.push({ x: testYard.baseX + 35, z: testYard.baseZ, r: 2.5 });
+    targetScene.add(testYardGroup);
+    registerCullableObject(testYardGroup, tyState.baseX, testYardY + 5, tyState.baseZ, 55);
+    worldColliders.push({ x: tyState.baseX - 35, z: tyState.baseZ, r: 2.5 });
+    worldColliders.push({ x: tyState.baseX + 35, z: tyState.baseZ, r: 2.5 });
 
     // 2. Volcano Ridge Caldera (-735, -755)
     const volcX = -735, volcZ = -755;
@@ -630,11 +717,11 @@ export function initBuildings(scene?: THREE.Scene) {
         ramp.position.set(x, gyCenter, z);
         ramp.rotation.y = rotY;
         freezeStaticHierarchy(ramp);
-        s.add(ramp);
+        targetScene.add(ramp);
         registerCullableObject(ramp, x, gyCenter + 2, z, 20);
 
         ramps.push({
-            x, z, rotY,
+            x, z,
             w, l, height: rampHeight,
             cosY, sinY,
             r: Math.hypot(w, l) * 0.65
@@ -682,16 +769,15 @@ export function initBuildings(scene?: THREE.Scene) {
 
     stateHolder.ferryController = ferryController;
     if (typeof window !== 'undefined') {
-        const w = window as any;
-        w.HQ_POS = HQ_POS;
-        w.HQ_SWAP_PAD = HQ_SWAP_PAD;
-        w.hqGroup = hqGroup;
-        w.roboWashGroup = roboWashGroup;
-        w.launchPadGroup = launchPadGroup;
-        w.dinerGroup = dinerGroup;
-        w.chargerStation = chargerStation;
-        w.groundbridgePortals = groundbridgePortals;
-        w.stuntHoopRigs = stuntHoopRigs;
-        w.ferryController = ferryController;
+        window.HQ_POS = HQ_POS;
+        window.HQ_SWAP_PAD = HQ_SWAP_PAD;
+        window.hqGroup = hqGroup;
+        window.roboWashGroup = roboWashGroup;
+        window.launchPadGroup = launchPadGroup;
+        window.dinerGroup = dinerGroup;
+        window.chargerStation = chargerStation;
+        window.groundbridgePortals = groundbridgePortals;
+        window.stuntHoopRigs = stuntHoopRigs;
+        window.ferryController = ferryController;
     }
 }

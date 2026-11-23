@@ -1,5 +1,37 @@
 // Main Render Loop & Animation Frame Dispatcher
 import * as THREE from 'three';
+import type { BuddyBotState, PlayerState } from '../types/game.js';
+
+interface SpeechSource {
+    pos?: THREE.Vector3;
+    rig?: { root?: THREE.Object3D };
+    x?: number;
+    y?: number;
+    z?: number;
+}
+
+interface LoopBeacon {
+    x: number;
+    z: number;
+    type: string;
+    restored: boolean;
+    restoredAtTime: number;
+    orb: THREE.Object3D;
+    nodes: Array<{ cleared?: boolean; mesh: THREE.Object3D }>;
+}
+
+interface LoopTrain {
+    cars: Array<{ x: number; z: number }>;
+}
+
+type LoopPlayerState = PlayerState & {
+    lastBoardwalkSoundTime?: number;
+    lastDinoSoundTime?: number;
+};
+
+type LoopBuddyState = BuddyBotState & {
+    onFerry?: boolean;
+};
 import { renderer, scene, camera, sunLight, isMobileDevice } from '../rendering/scene.js';
 import { player, buddyBot, botRigs, input, worldState } from '../state/gameState.js';
 import { undergroundScene, updateUnderground, updateDrillTransition } from '../world/underground.js';
@@ -106,7 +138,7 @@ function updateSpeechBubbleProjection(dt: number) {
     if (!bubbleEl) return;
 
     let wx = 0, wy = 0, wz = 0;
-    const s = activeSpeech.source;
+    const s = activeSpeech.source as SpeechSource | null;
     if (s) {
         if (s.pos) {
             wx = s.pos.x; wy = s.pos.y; wz = s.pos.z;
@@ -114,7 +146,7 @@ function updateSpeechBubbleProjection(dt: number) {
             wx = s.rig.root.position.x;
             wy = s.rig.root.position.y;
             wz = s.rig.root.position.z;
-        } else if (s.x !== undefined) {
+        } else if (s.x !== undefined && s.z !== undefined) {
             wx = s.x;
             wy = s.y !== undefined ? s.y : getTerrainHeight(s.x, s.z);
             wz = s.z;
@@ -160,7 +192,7 @@ function updateSpeechBubbleProjection(dt: number) {
     }
 }
 
-        export function animate(now) {
+        export function animate(now: number) {
             requestAnimationFrame(animate);
 
             const dt = Math.min(0.05, (now - lastTime) / 1000);
@@ -219,15 +251,15 @@ function updateSpeechBubbleProjection(dt: number) {
                 hudWaterCheckTimer = 0;
                 if (player && (player.mode === 'VEHICLE' || player.botType === 'HIGHTIDE')) {
                     const near = isNearWater(player.pos.x, player.pos.z, 24.0);
-                    if ((player as any)._lastNearWater !== near) {
-                        (player as any)._lastNearWater = near;
+                    if (player._lastNearWater !== near) {
+                        player._lastNearWater = near;
                         syncHUDToActiveBot();
                     }
                 }
                 if (player && player.botType === 'SALVAGE') {
                     const nearDumpster = isDumpsterNearPlayer(player, 8.5);
-                    if ((player as any)._lastNearDumpster !== nearDumpster) {
-                        (player as any)._lastNearDumpster = nearDumpster;
+                    if (player._lastNearDumpster !== nearDumpster) {
+                        player._lastNearDumpster = nearDumpster;
                         syncHUDToActiveBot();
                     }
                 }
@@ -335,9 +367,10 @@ function updateSpeechBubbleProjection(dt: number) {
                 volcanoLavaPool.scale.setScalar(1.0 + Math.sin(now * 0.005) * 0.04);
             }
             if (volcanoSmokePuffs) {
-                for (let i = 0; i < volcanoSmokePuffs.length; i++) {
-                    const puff = volcanoSmokePuffs[i];
-                    const p = (puff.userData.phase + now * 0.00018) % 1.0;
+                const smokeMeshes = volcanoSmokePuffs as unknown as THREE.Mesh[];
+                for (let i = 0; i < smokeMeshes.length; i++) {
+                    const puff = smokeMeshes[i];
+                    const p = ((Number(puff.userData.phase) || 0) + now * 0.00018) % 1.0;
                     puff.position.set(
                         Math.sin(p * 6.0 + i) * (4.0 + p * 8.0),
                         6.0 + p * 46.0,
@@ -377,7 +410,7 @@ function updateSpeechBubbleProjection(dt: number) {
                     lightningTimer = 8.0 + Math.random() * 9.0;
                     lightningFlashTimer = 0.12;
                     sunLight.intensity = 2.8;
-                    scene.background.setHex(0xdbeafe);
+                    if (scene.background instanceof THREE.Color) scene.background.setHex(0xdbeafe);
                     setTimeout(() => {
                         if (WEATHER_MODES[currentWeatherIdx].id === 'RAIN') {
                             sfx.playThunderRumble();
@@ -387,21 +420,23 @@ function updateSpeechBubbleProjection(dt: number) {
                 if (lightningFlashTimer > 0) {
                     lightningFlashTimer -= dt;
                     if (lightningFlashTimer <= 0 && WEATHER_MODES[currentWeatherIdx].id === 'RAIN') {
-                        scene.background.setHex(WEATHER_MODES[currentWeatherIdx].skyColor);
+                        if (scene.background instanceof THREE.Color) scene.background.setHex(WEATHER_MODES[currentWeatherIdx].skyColor);
                         sunLight.intensity = WEATHER_MODES[currentWeatherIdx].sunIntensity;
                     }
                 }
             } else if (currentMode.id === 'VOLCANO') {
-                volcanoEmberSystem.group.position.set(player.pos.x, player.pos.y, player.pos.z);
-                const embers = volcanoEmberSystem.embers;
-                for (let i = 0; i < embers.length; i++) {
-                    const e = embers[i];
-                    e.mesh.position.y += e.vy * dt;
-                    e.mesh.position.x += Math.sin(now * 0.002 * e.driftFreq + e.phase) * e.driftAmp * dt;
-                    if (e.mesh.position.y > 50) {
-                        e.mesh.position.y = -2;
-                        e.mesh.position.x = (Math.random() - 0.5) * 120;
-                        e.mesh.position.z = (Math.random() - 0.5) * 120;
+                if (volcanoEmberSystem) {
+                    volcanoEmberSystem.group.position.set(player.pos.x, player.pos.y, player.pos.z);
+                    const embers = volcanoEmberSystem.embers;
+                    for (let i = 0; i < embers.length; i++) {
+                        const e = embers[i];
+                        e.mesh.position.y += e.vy * dt;
+                        e.mesh.position.x += Math.sin(now * 0.002 * e.driftFreq + e.phase) * e.driftAmp * dt;
+                        if (e.mesh.position.y > 50) {
+                            e.mesh.position.y = -2;
+                            e.mesh.position.x = (Math.random() - 0.5) * 120;
+                            e.mesh.position.z = (Math.random() - 0.5) * 120;
+                        }
                     }
                 }
                 if (volcanoLavaPool) volcanoLavaPool.scale.setScalar(1.0 + Math.sin(now * 0.008) * 0.08);
@@ -413,13 +448,15 @@ function updateSpeechBubbleProjection(dt: number) {
                 }
 
                 // Animate twinkling diamond stars & pulsing moon halo
-                const stars = starField.stars;
-                for (let i = 0; i < stars.length; i++) {
-                    const s = stars[i];
-                    const sc = s.userData.baseScale * (1.0 + Math.sin(now * 0.0022 * s.userData.twinkleSpeed + s.userData.phase) * 0.38);
-                    s.scale.set(sc * 0.65, sc * 1.85, sc * 0.65);
+                if (starField) {
+                    const stars = starField.stars;
+                    for (let i = 0; i < stars.length; i++) {
+                        const s = stars[i];
+                        const sc = s.userData.baseScale * (1.0 + Math.sin(now * 0.0022 * s.userData.twinkleSpeed + s.userData.phase) * 0.38);
+                        s.scale.set(sc * 0.65, sc * 1.85, sc * 0.65);
+                    }
+                    starField.haloMesh.scale.setScalar(1.0 + Math.sin(now * 0.002) * 0.08);
                 }
-                starField.haloMesh.scale.setScalar(1.0 + Math.sin(now * 0.002) * 0.08);
             }
 
             // Spin Robo-Wash Roller Brushes
@@ -478,7 +515,7 @@ function updateSpeechBubbleProjection(dt: number) {
             if (catapultStrobes) {
                 catapultStrobes.forEach((strobe, idx) => {
                     const isLit = player.catapultTimer > 0 ? ((idx + Math.floor(now / 80)) % 2 === 0) : strobeLit;
-                    strobe.material.color.setHex(isLit ? 0xffffff : 0xfacc15);
+                    (strobe.material as THREE.MeshBasicMaterial).color.setHex(isLit ? 0xffffff : 0xfacc15);
                 });
             }
 
@@ -563,7 +600,7 @@ function updateSpeechBubbleProjection(dt: number) {
             }
             if (energonOrbs) {
                 const orbPulse = 1.0 + Math.sin(now * (inChargingBay ? 0.015 : 0.004)) * (inChargingBay ? 0.22 : 0.08);
-                energonOrbs.forEach(orb => orb.scale.setScalar(orbPulse));
+                (energonOrbs as unknown as THREE.Mesh[]).forEach(orb => orb.scale.setScalar(orbPulse));
             }
 
             if (inChargingBay && player.chargerCooldown <= 0) {
@@ -588,7 +625,7 @@ function updateSpeechBubbleProjection(dt: number) {
                 portal.irisRing1.rotation.z += dt * 2.2;
                 portal.irisRing2.rotation.z -= dt * 2.8;
                 portal.irisRing3.rotation.z += dt * 3.4;
-                portal.vortexDisc.material.opacity = 0.55 + Math.sin(now * 0.005) * 0.18;
+                (portal.vortexDisc.material as THREE.MeshBasicMaterial).opacity = 0.55 + Math.sin(now * 0.005) * 0.18;
 
                 if (player.portalCooldown <= 0) {
                     const distToPortal = Math.hypot(player.pos.x - portal.cfg.x, player.pos.z - portal.cfg.z);
@@ -597,7 +634,8 @@ function updateSpeechBubbleProjection(dt: number) {
                         sfx.playWarpWhoosh();
                         spawnWarpVortexParticles(player.pos.x, player.pos.y + 2.0, player.pos.z, 28);
 
-                        const dest = portal.cfg.dest;
+                        const dest = (portal.cfg as unknown as { dest?: { x: number; z: number; heading: number } }).dest;
+                        if (!dest) return;
                         const destY = getTerrainHeight(dest.x, dest.z);
                         player.pos.set(dest.x, destY + 0.6, dest.z);
                         player.heading = dest.heading;
@@ -716,11 +754,12 @@ function updateSpeechBubbleProjection(dt: number) {
                             player.heading = -Math.PI / 2; // Facing west toward mainland
                             player.speed = 0;
                             player.hasWaypoint = false;
-                            if (typeof waypointGroup !== 'undefined') waypointGroup.visible = false;
+                            if (typeof waypointGroup !== 'undefined' && waypointGroup) waypointGroup.visible = false;
                         }
 
+                        const loopBuddy = buddyBot as LoopBuddyState;
                         if (buddyBot.botType) {
-                            buddyBot.onFerry = false;
+                            loopBuddy.onFerry = false;
                             buddyBot.pos.set(8.0, 3.4, 1216.0);
                             buddyBot.heading = -Math.PI / 2;
                         }
@@ -744,8 +783,10 @@ function updateSpeechBubbleProjection(dt: number) {
                 const ferryPitch = Math.cos(now * 0.0019) * 0.018;
 
                 ferryController.currentPos.y = ferryWaveY;
-                harborFerryGroup.position.copy(ferryController.currentPos);
-                harborFerryGroup.rotation.set(ferryPitch, ferryController.currentRotY, ferryRoll);
+                if (harborFerryGroup) {
+                    harborFerryGroup.position.copy(ferryController.currentPos);
+                    harborFerryGroup.rotation.set(ferryPitch, ferryController.currentRotY, ferryRoll);
+                }
                 if (ferryController.rampMesh) {
                     ferryController.rampMesh.rotation.x = ferryController.rampAngle;
                 }
@@ -796,8 +837,9 @@ function updateSpeechBubbleProjection(dt: number) {
 
                 // Keep buddy bot smoothly riding along beside the player on the deck
                 if (buddyBot.botType) {
+                    const loopBuddy = buddyBot as LoopBuddyState;
                     if (player.onFerry && !buddyBot.flightAlt) {
-                        buddyBot.onFerry = true;
+                        loopBuddy.onFerry = true;
                         const bDistToFerry = Math.hypot(buddyBot.pos.x - ferryController.currentPos.x, buddyBot.pos.z - ferryController.currentPos.z);
                         if (bDistToFerry > 22) {
                             // Position buddy bot on car deck behind player
@@ -835,7 +877,7 @@ function updateSpeechBubbleProjection(dt: number) {
                             }
                         }
                     } else if (!player.onFerry) {
-                        buddyBot.onFerry = false;
+                        (buddyBot as LoopBuddyState).onFerry = false;
                     }
                 }
             }
@@ -849,14 +891,18 @@ function updateSpeechBubbleProjection(dt: number) {
                 // Animate Ground Pickup Pad Amber/Cyan Strobes
                 craneInteractive.padLights.forEach((light, lIdx) => {
                     const strobeCycle = (Math.floor(now / 130) + lIdx) % 2 === 0;
-                    light.material.color.setHex(strobeCycle ? 0xfacc15 : 0x38bdf8);
+                    if (light instanceof THREE.Mesh) {
+                        (light.material as THREE.MeshBasicMaterial).color.setHex(strobeCycle ? 0xfacc15 : 0x38bdf8);
+                    }
                 });
 
                 if (craneInteractive.state === 'IDLE') {
-                    craneInteractive.boomPivot.rotation.y = THREE.MathUtils.lerp(craneInteractive.boomPivot.rotation.y, 0, dt * 2.0);
-                    craneInteractive.cableMesh.scale.y = THREE.MathUtils.lerp(craneInteractive.cableMesh.scale.y, 1.0, dt * 3.0);
-                    craneInteractive.cableMesh.position.y = -11;
-                    craneInteractive.magnetGroup.position.y = -21.5;
+                    if (craneInteractive.boomPivot) craneInteractive.boomPivot.rotation.y = THREE.MathUtils.lerp(craneInteractive.boomPivot.rotation.y, 0, dt * 2.0);
+                    if (craneInteractive.cableMesh) {
+                        craneInteractive.cableMesh.scale.y = THREE.MathUtils.lerp(craneInteractive.cableMesh.scale.y, 1.0, dt * 3.0);
+                        craneInteractive.cableMesh.position.y = -11;
+                    }
+                    if (craneInteractive.magnetGroup) craneInteractive.magnetGroup.position.y = -21.5;
 
                     const distToCranePad = Math.hypot(player.pos.x - craneInteractive.padX, player.pos.z - craneInteractive.padZ);
                     if (distToCranePad < 4.5 && player.grounded && craneInteractive.cooldown <= 0 && !player.inCrane) {
@@ -890,9 +936,11 @@ function updateSpeechBubbleProjection(dt: number) {
                     player.speed = 0;
 
                     const cableLen = Math.max(2.0, 26.0 - hoistY);
-                    craneInteractive.cableMesh.scale.y = cableLen / 22.0;
-                    craneInteractive.cableMesh.position.y = -cableLen * 0.5;
-                    craneInteractive.magnetGroup.position.y = -cableLen - 0.4;
+                    if (craneInteractive.cableMesh) {
+                        craneInteractive.cableMesh.scale.y = cableLen / 22.0;
+                        craneInteractive.cableMesh.position.y = -cableLen * 0.5;
+                    }
+                    if (craneInteractive.magnetGroup) craneInteractive.magnetGroup.position.y = -cableLen - 0.4;
 
                     if (Math.random() < 0.3) {
                         spawnMagnetSparkParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 4);
@@ -906,7 +954,7 @@ function updateSpeechBubbleProjection(dt: number) {
                     craneInteractive.timer -= dt;
                     const swingFrac = 1.0 - Math.max(0, craneInteractive.timer / 1.6);
                     const swingAngle = swingFrac * Math.PI; // 180 degree rotation from north pad to south drop
-                    craneInteractive.boomPivot.rotation.y = swingAngle;
+                    if (craneInteractive.boomPivot) craneInteractive.boomPivot.rotation.y = swingAngle;
 
                     const boomRadius = 24.0;
                     const rad = -Math.PI * 0.5 + swingAngle;
@@ -943,10 +991,12 @@ function updateSpeechBubbleProjection(dt: number) {
                     speakBotCatchphrase(player.botType, 'STUNT');
                 } else if (craneInteractive.state === 'RESETTING') {
                     craneInteractive.timer -= dt;
-                    craneInteractive.boomPivot.rotation.y = THREE.MathUtils.lerp(craneInteractive.boomPivot.rotation.y, 0, dt * 2.2);
-                    craneInteractive.cableMesh.scale.y = THREE.MathUtils.lerp(craneInteractive.cableMesh.scale.y, 1.0, dt * 2.5);
-                    craneInteractive.cableMesh.position.y = -11;
-                    craneInteractive.magnetGroup.position.y = -21.5;
+                    if (craneInteractive.boomPivot) craneInteractive.boomPivot.rotation.y = THREE.MathUtils.lerp(craneInteractive.boomPivot.rotation.y, 0, dt * 2.2);
+                    if (craneInteractive.cableMesh) {
+                        craneInteractive.cableMesh.scale.y = THREE.MathUtils.lerp(craneInteractive.cableMesh.scale.y, 1.0, dt * 2.5);
+                        craneInteractive.cableMesh.position.y = -11;
+                    }
+                    if (craneInteractive.magnetGroup) craneInteractive.magnetGroup.position.y = -21.5;
 
                     if (craneInteractive.timer <= 0) {
                         craneInteractive.state = 'IDLE';
@@ -1050,9 +1100,10 @@ function updateSpeechBubbleProjection(dt: number) {
                         ferrisGondolas[i].rotation.z = -ferrisWheelPivot.rotation.z;
                     }
                 }
+                const loopPlayer = player as LoopPlayerState;
                 const distToWheel = Math.hypot(player.pos.x - bwX, player.pos.z - (bwZ - 12));
-                if (distToWheel < 32 && (now - (player.lastBoardwalkSoundTime || 0) > 16000)) {
-                    player.lastBoardwalkSoundTime = now;
+                if (distToWheel < 32 && (now - (loopPlayer.lastBoardwalkSoundTime || 0) > 16000)) {
+                    loopPlayer.lastBoardwalkSoundTime = now;
                     sfx.playCarnivalChime();
                     showToast("🎡 SUNNY SANDS BOARDWALK!", "Carnival Music & Ocean Breeze!");
                     speakBotCatchphrase(player.botType, 'STUNT');
@@ -1072,9 +1123,10 @@ function updateSpeechBubbleProjection(dt: number) {
                 if (typeof amberSpire !== 'undefined' && amberSpire) {
                     amberSpire.rotation.y += dt * 1.2;
                 }
+                const loopPlayer = player as LoopPlayerState;
                 const distToDinos = Math.hypot(player.pos.x - drX, player.pos.z - drZ);
-                if (distToDinos < 28 && (now - (player.lastDinoSoundTime || 0) > 15000)) {
-                    player.lastDinoSoundTime = now;
+                if (distToDinos < 28 && (now - (loopPlayer.lastDinoSoundTime || 0) > 15000)) {
+                    loopPlayer.lastDinoSoundTime = now;
                     sfx.playBabyDinoRoar();
                     showToast("🦖 DINO RIDGE SANCTUARY!", "Baby Dinos happily greeted your Rescue Bot!");
                     speakBotCatchphrase(player.botType, 'DINO');
@@ -1097,10 +1149,10 @@ function updateSpeechBubbleProjection(dt: number) {
                 if (rig.flashTimer > 0) {
                     rig.flashTimer -= dt;
                     const flashVal = Math.floor(now / 70) % 2 === 0 ? 0xffffff : 0xfacc15;
-                    rig.torusMesh.material.color.setHex(flashVal);
+                    (rig.torusMesh.material as THREE.MeshBasicMaterial).color.setHex(flashVal);
                     rig.haloMesh.scale.setScalar(1.25 + Math.sin(now * 0.02) * 0.15);
                 } else {
-                    rig.torusMesh.material.color.setHex(rig.def.color);
+                    (rig.torusMesh.material as THREE.MeshBasicMaterial).color.setHex(rig.def.color);
                     rig.haloMesh.scale.setScalar(1.0 + Math.sin(now * 0.005 + idx) * 0.05);
                 }
 
@@ -1139,12 +1191,13 @@ function updateSpeechBubbleProjection(dt: number) {
             });
 
             const nowSec = now * 0.001;
+            const loopBeacons = beacons as unknown as LoopBeacon[];
             let restoredCount = 0;
-            for (let i = 0; i < beacons.length; i++) {
-                if (beacons[i].restored) restoredCount++;
+            for (let i = 0; i < loopBeacons.length; i++) {
+                if (loopBeacons[i].restored) restoredCount++;
             }
 
-            beacons.forEach(b => {
+            loopBeacons.forEach(b => {
                 if (!b.restored) {
                     const pulse = 1 + Math.sin(now * 0.008) * 0.18;
                     b.orb.scale.setScalar(pulse);
@@ -1159,13 +1212,13 @@ function updateSpeechBubbleProjection(dt: number) {
                 } else if (
                     progression.autoSpawnEmergencies &&
                     restoredCount >= 2 &&
-                    restoredCount < beacons.length &&
+                    restoredCount < loopBeacons.length &&
                     b.restoredAtTime > 0 &&
                     (nowSec - b.restoredAtTime) > 65.0 &&
                     Math.hypot(player.pos.x - b.x, player.pos.z - b.z) > 220.0
                 ) {
                     // Dynamically re-dispatch distant resolved sites after 65s so the island stays perpetually alive!
-                    respawnSingleBeacon(b, true);
+                    respawnSingleBeacon(b as never, true);
                 }
             });
 
@@ -1211,7 +1264,7 @@ function updateSpeechBubbleProjection(dt: number) {
             }
 
             const _perfTRender0 = performance.now();
-            renderer.render(scene, camera);
+            if (renderer) renderer.render(scene, camera);
             const _perfTRender = performance.now() - _perfTRender0;
 
             renderedFrames++;
@@ -1227,8 +1280,9 @@ function updateSpeechBubbleProjection(dt: number) {
             const _perfTotalMs = performance.now() - _perfT0;
             if (renderedFrames > 4 && _perfTotalMs > 24.0) {
                 let distToTrain = 999;
-                if (typeof islandTrain !== 'undefined' && islandTrain.cars.length > 0) {
-                    distToTrain = Math.hypot(player.pos.x - islandTrain.cars[0].x, player.pos.z - islandTrain.cars[0].z);
+                const trainObj = (typeof islandTrain !== 'undefined' ? islandTrain : null) as unknown as LoopTrain | null;
+                if (trainObj && trainObj.cars.length > 0) {
+                    distToTrain = Math.hypot(player.pos.x - trainObj.cars[0].x, player.pos.z - trainObj.cars[0].z);
                 }
                 console.warn('[FRAME LAG SPIKE]', {
                     frameMs: _perfTotalMs.toFixed(1),
@@ -1246,7 +1300,7 @@ function updateSpeechBubbleProjection(dt: number) {
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            if (renderer) renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
 

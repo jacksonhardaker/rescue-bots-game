@@ -1,5 +1,5 @@
 // Vector Graphics & Icon System for Transformers: Rescue Bots
-export const SVG_ICONS = {
+export const SVG_ICONS: Record<string, string> = {
             // Career Progression & Info Box Indicators (14x14)
             STAR: `<svg viewBox="0 0 24 24" width="13" height="13" style="width:13px;height:13px;display:inline-block;vertical-align:middle;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#fbbf24" stroke="#d97706" stroke-width="1.2"/></svg>`,
             MEDAL: `<svg viewBox="0 0 24 24" width="13" height="13" style="width:13px;height:13px;display:inline-block;vertical-align:middle;" class="shrink-0" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/><path d="M8.21 13.89L7 2l5 3 5-3-1.21 11.89" fill="#ef4444" stroke="#dc2626" stroke-width="1.2"/></svg>`,
