@@ -957,10 +957,12 @@ export function updateUnderwater(dt: number, now: number) {
     if (_exitCooldown > 0) _exitCooldown -= dt;
 
     // 1. Read 3D Swim Controls (Keyboard + Touch)
-    const fwd = (isActionActive('moveForward', input.keys) ? 1 : 0) - (isActionActive('moveBackward', input.keys) ? 1 : 0);
-    const turn = (isActionActive('turnLeft', input.keys) ? 1 : 0) - (isActionActive('turnRight', input.keys) ? 1 : 0);
-    const climb = (input.keys['KeyE'] || input.keys['Space'] ? 1 : 0) + underwaterSub.touchAscend
-        - ((input.keys['KeyQ'] || input.keys['KeyC'] ? 1 : 0) + underwaterSub.touchDescend);
+    const fwd = ((isActionActive('forward') || input.keys['KeyW'] || input.keys['ArrowUp']) ? 1 : 0)
+        - ((isActionActive('backward') || input.keys['KeyS'] || input.keys['ArrowDown']) ? 1 : 0);
+    const turn = ((isActionActive('left') || input.keys['KeyA'] || input.keys['ArrowLeft']) ? 1 : 0)
+        - ((isActionActive('right') || input.keys['KeyD'] || input.keys['ArrowRight']) ? 1 : 0);
+    const climb = ((isActionActive('secondaryAction') || input.keys['KeyE'] || input.keys['Space']) ? 1 : 0) + underwaterSub.touchAscend
+        - (((isActionActive('descendAction') || input.keys['KeyQ'] || input.keys['KeyC']) ? 1 : 0) + underwaterSub.touchDescend);
 
     if (input.keys['ShiftLeft'] || input.keys['ShiftRight']) {
         if (underwaterSub.boostTimer <= 0.1) triggerUnderwaterBoost();
