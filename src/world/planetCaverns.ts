@@ -830,9 +830,11 @@ export function getPlanetCavernMapData() {
     };
 }
 
-// Register cave entrance callbacks on planetSurface.ts and moon.ts
-setPlanetCavernEnterHandler((planetId) => swapToPlanetCavern(planetId));
-setMoonCaveEnterHandler(() => swapToPlanetCavern('MOON'));
+// Register cave entrance callbacks on planetSurface.ts and moon.ts (deferred via microtask to avoid circular-import TDZ)
+queueMicrotask(() => {
+    setPlanetCavernEnterHandler((planetId) => swapToPlanetCavern(planetId));
+    setMoonCaveEnterHandler(() => swapToPlanetCavern('MOON'));
+});
 
 // Register terrain hooks with terrain.ts
 setPlanetCavernTerrainHooks({

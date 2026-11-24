@@ -2136,8 +2136,10 @@ export function getSpaceMapData() {
     };
 }
 
-// Register launch handler with underground.ts so clicking LAUNCH SIGMA launches cleanly
-setSigmaLaunchHandler(() => startSpaceTransition('TO_SPACE'));
+// Register launch handler with underground.ts (deferred via microtask to avoid circular-import TDZ)
+queueMicrotask(() => {
+    setSigmaLaunchHandler(() => startSpaceTransition('TO_SPACE'));
+});
 
 if (typeof window !== 'undefined') {
     Object.assign(window, {

@@ -669,7 +669,9 @@ export function updateSolarHub(dt: number, now: number) {
 }
 
 // Register swapToSolarHub with space.ts so launching Sigma from Caverns enters the 3D Solar System Hub!
-setSolarHubHandler(swapToSolarHub);
+queueMicrotask(() => {
+    setSolarHubHandler(swapToSolarHub);
+});
 
 if (typeof window !== 'undefined') {
     Object.assign(window, {
