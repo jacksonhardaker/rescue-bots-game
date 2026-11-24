@@ -36,10 +36,10 @@ import { renderer, scene, camera, sunLight, isMobileDevice } from '../rendering/
 import { player, buddyBot, botRigs, input, worldState } from '../state/gameState.js';
 import { undergroundScene, updateUnderground, updateDrillTransition } from '../world/underground.js';
 import { spaceScene, updateSpace, updateSpaceLaunchTransition } from '../world/space.js';
-import { moonScene, updateMoon } from '../world/moon.js';
+import { moonScene, updateMoon, getNearestMoonDiscovery } from '../world/moon.js';
 import { solarHubScene, updateSolarHub } from '../world/solarSystem.js';
-import { planetSurfaceScene, updatePlanetSurface } from '../world/planetSurface.js';
-import { planetCavernScene, updatePlanetCavern } from '../world/planetCaverns.js';
+import { planetSurfaceScene, updatePlanetSurface, getNearestPlanetDiscovery } from '../world/planetSurface.js';
+import { planetCavernScene, updatePlanetCavern, getNearestCavernDiscovery } from '../world/planetCaverns.js';
 import { saturnRaceScene, updateSaturnRace } from '../world/saturnRace.js';
 import { updatePhysics, waypointGroup, wpOuterRing, wpArrowCone } from '../physics/movement.js';
 import { updateAllBotTransforms, speakBotCatchphrase, syncHUDToActiveBot } from '../physics/player.js';
@@ -193,6 +193,58 @@ function updateSpeechBubbleProjection(dt: number) {
     }
 }
 
+        let _discoveryHudEl: HTMLElement | null = null;
+        let _discoveryLabelEl: HTMLElement | null = null;
+        let _discoveryDistEl: HTMLElement | null = null;
+        let _discoveryDotEl: HTMLElement | null = null;
+        const COMPASS_DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+
+        function updatePlanetDiscoveryHUD(show: boolean) {
+            if (!_discoveryHudEl) _discoveryHudEl = document.getElementById('planet-discovery-hud');
+            if (!_discoveryHudEl) return;
+            if (!show) {
+                _discoveryHudEl.classList.add('hidden');
+                return;
+            }
+            _discoveryHudEl.classList.remove('hidden');
+            if (!_discoveryLabelEl) _discoveryLabelEl = document.getElementById('planet-discovery-label');
+            if (!_discoveryDistEl) _discoveryDistEl = document.getElementById('planet-discovery-dist');
+            if (!_discoveryDotEl) _discoveryDotEl = document.getElementById('planet-discovery-dot');
+
+            const target = worldState.activeArea === 'MOON'
+                ? getNearestMoonDiscovery()
+                : (worldState.activeArea === 'PLANET_CAVERN' ? getNearestCavernDiscovery() : getNearestPlanetDiscovery());
+
+            if (!target) {
+                if (_discoveryLabelEl) _discoveryLabelEl.textContent = 'ALL DISCOVERIES COMPLETE!';
+                if (_discoveryDistEl) {
+                    _discoveryDistEl.textContent = '100%';
+                    _discoveryDistEl.style.background = '#4ade80';
+                }
+                if (_discoveryDotEl) {
+                    _discoveryDotEl.style.background = '#4ade80';
+                    _discoveryDotEl.style.boxShadow = '0 0 8px #4ade80';
+                }
+                return;
+            }
+
+            const dx = target.x - player.pos.x;
+            const dz = target.z - player.pos.z;
+            const angle = Math.atan2(dx, -dz);
+            const dirIdx = ((Math.round((angle * 8) / (Math.PI * 2)) % 8) + 8) % 8;
+            const dir = COMPASS_DIRS[dirIdx];
+
+            if (_discoveryLabelEl) _discoveryLabelEl.textContent = `${target.name}`;
+            if (_discoveryDistEl) {
+                _discoveryDistEl.textContent = `${Math.round(target.dist)}m ${dir}`;
+                _discoveryDistEl.style.background = target.color;
+            }
+            if (_discoveryDotEl) {
+                _discoveryDotEl.style.background = target.color;
+                _discoveryDotEl.style.boxShadow = `0 0 8px ${target.color}`;
+            }
+        }
+
         export function animate(now: number) {
             requestAnimationFrame(animate);
 
@@ -299,12 +351,14 @@ function updateSpeechBubbleProjection(dt: number) {
             }
 
             if (worldState.activeArea === 'SOLAR_HUB') {
+                updatePlanetDiscoveryHUD(false);
                 updateSolarHub(dt, now);
                 if (renderer) renderer.render(solarHubScene, camera);
                 return;
             }
 
             if (worldState.activeArea === 'SATURN_RING_RACE') {
+                updatePlanetDiscoveryHUD(false);
                 updateSaturnRace(dt, now);
                 updateSpeechBubbleProjection(dt);
                 if (renderer) renderer.render(saturnRaceScene, camera);
@@ -312,6 +366,7 @@ function updateSpeechBubbleProjection(dt: number) {
             }
 
             if (worldState.activeArea === 'SPACE') {
+                updatePlanetDiscoveryHUD(false);
                 updateSpace(dt, now);
                 updateSpeechBubbleProjection(dt);
                 if (renderer) renderer.render(spaceScene, camera);
@@ -323,6 +378,7 @@ function updateSpeechBubbleProjection(dt: number) {
                 updateBuddyBotAI(dt, now);
                 updateAllBotTransforms(dt, now);
                 updatePlanetCavern(dt, now);
+                updatePlanetDiscoveryHUD(true);
                 updateSpeechBubbleProjection(dt);
                 if (renderer) renderer.render(planetCavernScene, camera);
                 return;
@@ -333,6 +389,7 @@ function updateSpeechBubbleProjection(dt: number) {
                 updateBuddyBotAI(dt, now);
                 updateAllBotTransforms(dt, now);
                 updatePlanetSurface(dt, now);
+                updatePlanetDiscoveryHUD(true);
                 const cavePrompt = document.getElementById('cavern-enter-prompt');
                 if (cavePrompt) cavePrompt.classList.toggle('hidden', !worldState.nearPlanetCaveEntrance);
                 updateSpeechBubbleProjection(dt);
@@ -345,6 +402,7 @@ function updateSpeechBubbleProjection(dt: number) {
                 updateBuddyBotAI(dt, now);
                 updateAllBotTransforms(dt, now);
                 updateMoon(dt, now);
+                updatePlanetDiscoveryHUD(true);
                 const cavePrompt = document.getElementById('cavern-enter-prompt');
                 if (cavePrompt) cavePrompt.classList.toggle('hidden', !worldState.nearPlanetCaveEntrance);
                 updateSpeechBubbleProjection(dt);
@@ -353,6 +411,7 @@ function updateSpeechBubbleProjection(dt: number) {
             }
 
             if (worldState.activeArea === 'UNDERGROUND') {
+                updatePlanetDiscoveryHUD(false);
                 updatePhysics(dt, now);
                 updateBuddyBotAI(dt, now);
                 updateAllBotTransforms(dt, now);
@@ -361,6 +420,8 @@ function updateSpeechBubbleProjection(dt: number) {
                 if (renderer) renderer.render(undergroundScene, camera);
                 return;
             }
+
+            updatePlanetDiscoveryHUD(false);
 
             // Animate HQ Radar Dish, Outpost Rings, Lighthouse Beam, Regional Landmarks, Ocean Waves & Flickering Fires
             if (hqRadarPivot) hqRadarPivot.rotation.y += dt * 1.4;

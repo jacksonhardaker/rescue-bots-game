@@ -224,7 +224,7 @@ export function handleTacticalMapTap(clientX: number, clientY: number) {
 
                 if (worldState.activeArea === 'PLANET_CAVERN') {
                     const pc = getPlanetCavernMapData();
-                    const cR = pc.radius || 148;
+                    const cR = pc.radius || 320;
                     const cScale = (cx * 0.84) / cR;
                     let wx = (canvasX - cx) / cScale;
                     let wz = (canvasY - cy) / cScale;
@@ -246,7 +246,7 @@ export function handleTacticalMapTap(clientX: number, clientY: number) {
 
                 if (worldState.activeArea === 'PLANET_SURFACE') {
                     const pd = window.getPlanetSurfaceMapData?.();
-                    const pR = pd?.radius || 175;
+                    const pR = pd?.radius || 560;
                     const pScale = (cx * 0.84) / pR;
                     let wx = (canvasX - cx) / pScale;
                     let wz = (canvasY - cy) / pScale;
@@ -869,13 +869,20 @@ function ensureMinimapBgCache(w: number, h: number) {
                 if (pc.theme.hasWaterLagoon) {
                     ctx.fillStyle = 'rgba(6, 182, 212, 0.55)';
                     ctx.beginPath();
-                    ctx.arc(cx + (-48) * sc, cy + 28 * sc, 54 * sc, 0, Math.PI * 2);
+                    ctx.arc(cx + (-95) * sc, cy + 55 * sc, 160 * sc, 0, Math.PI * 2);
                     ctx.fill();
                 }
                 pc.colliders.forEach(c => {
                     ctx.fillStyle = 'rgba(15, 23, 42, 0.65)';
                     ctx.beginPath();
                     ctx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                pc.gems.forEach(g => {
+                    if (g.collected) return;
+                    ctx.fillStyle = '#22d3ee';
+                    ctx.beginPath();
+                    ctx.arc(cx + g.x * sc, cy + g.z * sc, 2.4, 0, Math.PI * 2);
                     ctx.fill();
                 });
                 ctx.fillStyle = '#facc15';
@@ -898,6 +905,7 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const pd = window.getPlanetSurfaceMapData?.() as (ReturnType<NonNullable<typeof window.getPlanetSurfaceMapData>> & {
                     cavePos?: { x: number; z: number };
                     islands?: Array<{ x: number; z: number; r: number }>;
+                    volcanoes?: Array<{ name: string; x: number; z: number; radius: number }>;
                     isWaterWorld?: boolean;
                 }) | undefined;
                 ctx.clearRect(0, 0, w, h);
@@ -908,7 +916,7 @@ function ensureMinimapBgCache(w: number, h: number) {
                 ctx.fillStyle = pd?.isWaterWorld ? '#0369a1' : (pd?.config?.groundAccentHex || '#1e293b');
                 ctx.fillRect(0, 0, w, h);
                 if (pd) {
-                    const sc = (cx * 0.85) / (pd.radius || 340);
+                    const sc = (cx * 0.85) / (pd.radius || 560);
                     if (pd.isWaterWorld && pd.islands) {
                         pd.islands.forEach((isl) => {
                             ctx.fillStyle = '#bae6fd';
@@ -917,6 +925,15 @@ function ensureMinimapBgCache(w: number, h: number) {
                             ctx.fill();
                         });
                     }
+                    pd.volcanoes?.forEach((v) => {
+                        ctx.fillStyle = 'rgba(239, 68, 68, 0.65)';
+                        ctx.strokeStyle = '#f97316';
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath();
+                        ctx.arc(cx + v.x * sc, cy + v.z * sc, Math.max(4, v.radius * 0.45 * sc), 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    });
                     pd.craters?.forEach((c) => {
                         ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
                         ctx.lineWidth = 1.2;
@@ -967,7 +984,7 @@ function ensureMinimapBgCache(w: number, h: number) {
                 ctx.fillStyle = '#1e293b';
                 ctx.fillRect(0, 0, w, h);
                 if (md) {
-                    const sc = (cx * 0.85) / (md.radius || 185);
+                    const sc = (cx * 0.85) / (md.radius || 580);
                     md.craters?.forEach((c) => {
                         ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
                         ctx.lineWidth = 1.2;
@@ -1315,14 +1332,24 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const sc = (cx * 0.84) / pc.radius;
                 if (pc.theme.hasWaterLagoon) {
                     ctx.fillStyle = 'rgba(6, 182, 212, 0.45)';
+                    ctx.strokeStyle = 'rgba(34, 211, 238, 0.7)';
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.arc(cx + (-48) * sc, cy + 28 * sc, 54 * sc, 0, Math.PI * 2);
+                    ctx.arc(cx + (-95) * sc, cy + 55 * sc, 160 * sc, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.stroke();
                 }
                 pc.colliders.forEach(c => {
                     ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
                     ctx.beginPath();
                     ctx.arc(cx + c.x * sc, cy + c.z * sc, c.r * sc, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                pc.gems.forEach((g) => {
+                    if (g.collected) return;
+                    ctx.fillStyle = '#22d3ee';
+                    ctx.beginPath();
+                    ctx.arc(cx + g.x * sc, cy + g.z * sc, 4, 0, Math.PI * 2);
                     ctx.fill();
                 });
                 const drawCavPin = (wx: number, wz: number, r: number, col: string, label: string) => {
@@ -1356,6 +1383,7 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const pd = window.getPlanetSurfaceMapData?.() as (ReturnType<NonNullable<typeof window.getPlanetSurfaceMapData>> & {
                     cavePos?: { x: number; z: number };
                     islands?: Array<{ x: number; z: number; r: number }>;
+                    volcanoes?: Array<{ name: string; x: number; z: number; radius: number }>;
                     isWaterWorld?: boolean;
                     monoliths?: Array<{ name: string; x: number; z: number; scanned: boolean }>;
                 }) | undefined;
@@ -1384,7 +1412,7 @@ function ensureMinimapBgCache(w: number, h: number) {
                     ctx.fillRect(0, 0, w, h);
                 }
 
-                const sc = (cx * 0.84) / (pd?.radius || 340);
+                const sc = (cx * 0.84) / (pd?.radius || 560);
                 if (pd) {
                     if (pd.isWaterWorld && pd.islands) {
                         pd.islands.forEach((isl) => {
@@ -1428,6 +1456,9 @@ function ensureMinimapBgCache(w: number, h: number) {
 
                     drawPlanetaryPin(pd.sigmaPos.x, pd.sigmaPos.z, 9, '#22d3ee', 'STARSHIP SIGMA PAD');
                     if (pd.cavePos) drawPlanetaryPin(pd.cavePos.x, pd.cavePos.z, 7.5, '#d97706', 'CAVE ENTRANCE');
+                    pd.volcanoes?.forEach((v) => {
+                        drawPlanetaryPin(v.x, v.z, 7.5, '#ef4444', v.name.toUpperCase());
+                    });
                     pd.monoliths?.forEach((m) => {
                         if (!m.scanned) drawPlanetaryPin(m.x, m.z, 6, '#a855f7', m.name.toUpperCase());
                     });

@@ -348,14 +348,14 @@ waypointGroup.add(wpArrowCone);
             const r = Math.hypot(hitPoint.x, hitPoint.z);
 
             if (isUndergroundTap) {
-                const maxUg = worldState.activeArea === 'PLANET_CAVERN' ? 132 : 228;
+                const maxUg = worldState.activeArea === 'PLANET_CAVERN' ? 305 : 228;
                 hitPoint.x = Math.max(-maxUg, Math.min(maxUg, hitPoint.x));
                 hitPoint.z = Math.max(-maxUg, Math.min(maxUg, hitPoint.z));
                 if (playChime && worldState.activeArea === 'UNDERGROUND') {
                     triggerNearbyDinoReaction(hitPoint.x, hitPoint.z);
                 }
             } else if (isPlanetTap) {
-                const maxPlanetR = worldState.activeArea === 'MOON' ? 350 : 330;
+                const maxPlanetR = worldState.activeArea === 'MOON' ? 565 : (worldState.activePlanetId === 'EUROPA' ? 665 : 545);
                 if (r > maxPlanetR) {
                     hitPoint.x = (hitPoint.x / r) * maxPlanetR;
                     hitPoint.z = (hitPoint.z / r) * maxPlanetR;
@@ -481,6 +481,7 @@ waypointGroup.add(wpArrowCone);
                 target.closest('#cavern-exit-prompt') ||
                 target.closest('#cavern-enter-prompt') ||
                 target.closest('#planet-cavern-exit-prompt') ||
+                target.closest('#planet-discovery-hud') ||
                 target.closest('#space-controls-bar') ||
                 target.closest('#space-hud-pill') ||
                 target.closest('#space-launch-banner') ||

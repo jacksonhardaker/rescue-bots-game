@@ -17,7 +17,7 @@ import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js
 import { SVG_ICONS } from '../ui/icons.js';
 
 export const moonScene = new THREE.Scene();
-export const MOON_WORLD_RADIUS = 360;
+export const MOON_WORLD_RADIUS = 580;
 export const MOON_SIGMA_POS = { x: 0, z: -28 };
 export const MOON_FLAG_POS = { x: 20, z: 6 };
 export const MOON_CAVE_POS = { x: -56, z: 22 };
@@ -31,15 +31,15 @@ interface CraterDef {
 }
 
 const MOON_CRATERS: CraterDef[] = [
-    { x: -108, z: -96, r: 36, depth: 3.8, rim: 2.3 },
-    { x: 126, z: -104, r: 42, depth: 4.2, rim: 2.6 },
-    { x: -134, z: 108, r: 44, depth: 4.4, rim: 2.8 },
-    { x: 118, z: 128, r: 36, depth: 3.6, rim: 2.2 },
-    { x: 0, z: 208, r: 46, depth: 4.5, rim: 2.8 },
-    { x: -210, z: -12, r: 34, depth: 3.2, rim: 2.0 },
-    { x: 214, z: 24, r: 38, depth: 3.6, rim: 2.2 },
-    { x: -22, z: -195, r: 38, depth: 3.6, rim: 2.2 },
-    { x: 220, z: -175, r: 32, depth: 3.2, rim: 2.0 }
+    { x: -168, z: -156, r: 46, depth: 4.5, rim: 2.8 },
+    { x: 196, z: -164, r: 52, depth: 5.0, rim: 3.1 },
+    { x: -204, z: 168, r: 54, depth: 5.2, rim: 3.2 },
+    { x: 188, z: 188, r: 46, depth: 4.4, rim: 2.8 },
+    { x: 0, z: 318, r: 56, depth: 5.4, rim: 3.4 },
+    { x: -330, z: -22, r: 44, depth: 4.0, rim: 2.5 },
+    { x: 334, z: 34, r: 48, depth: 4.4, rim: 2.7 },
+    { x: -32, z: -315, r: 48, depth: 4.4, rim: 2.7 },
+    { x: 330, z: -275, r: 42, depth: 4.0, rim: 2.5 }
 ];
 
 export interface MoonRelicDef {
@@ -50,11 +50,11 @@ export interface MoonRelicDef {
 }
 
 export const MOON_RELIC_DEFS: MoonRelicDef[] = [
-    { id: 'TYCHO_CRYSTAL', name: 'Tycho Energon Shard', x: -108, z: -96 },
-    { id: 'TRANQUILITY_CORE', name: 'Tranquility Star Core', x: 126, z: -104 },
-    { id: 'LUNAR_CREST', name: 'Cybertronian Lunar Crest', x: -134, z: 108 },
-    { id: 'ORBITAL_PRISM', name: 'Moonbeam Energon Prism', x: 118, z: 128 },
-    { id: 'POLAR_BEACON', name: 'South Rim Star Relic', x: 0, z: 208 }
+    { id: 'TYCHO_CRYSTAL', name: 'Tycho Energon Shard', x: -168, z: -156 },
+    { id: 'TRANQUILITY_CORE', name: 'Tranquility Star Core', x: 196, z: -164 },
+    { id: 'LUNAR_CREST', name: 'Cybertronian Lunar Crest', x: -204, z: 168 },
+    { id: 'ORBITAL_PRISM', name: 'Moonbeam Energon Prism', x: 188, z: 188 },
+    { id: 'POLAR_BEACON', name: 'South Rim Star Relic', x: 0, z: 318 }
 ];
 
 const MOON_JUMP_PADS = [
@@ -501,6 +501,13 @@ function buildMoonWorld() {
     const moonCaveMesh = buildSurfaceCaveEntranceMesh(0x64748b, 0x38bdf8, false);
     moonCaveMesh.position.set(MOON_CAVE_POS.x, caveY, MOON_CAVE_POS.z);
     moonCaveMesh.rotation.y = Math.atan2(-MOON_CAVE_POS.x, -MOON_CAVE_POS.z); // Faces directly toward central landing zone!
+    const moonCaveBeam = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.55, 1.4, 38, 10, 1, true),
+        new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false })
+    );
+    moonCaveBeam.position.set(0, 21, 1.5);
+    moonCaveBeam.userData.noOutline = true;
+    moonCaveMesh.add(moonCaveBeam);
     moonScene.add(moonCaveMesh);
     _moonColliders.push({ x: MOON_CAVE_POS.x - 5.2, z: MOON_CAVE_POS.z - 3.2, r: 2.8 });
     _moonColliders.push({ x: MOON_CAVE_POS.x + 2.6, z: MOON_CAVE_POS.z - 5.2, r: 2.8 });
@@ -1003,6 +1010,24 @@ export function updateMoon(dt: number, now: number) {
             }
         }
     }
+}
+
+export function getNearestMoonDiscovery() {
+    const candidates: Array<{ name: string; kind: string; x: number; z: number; color: string }> = [];
+    _moonRelics.forEach(r => {
+        if (!r.collected) candidates.push({ name: r.name, kind: 'RELIC', x: r.x, z: r.z, color: '#fbbf24' });
+    });
+    _moonMonoliths.forEach(m => {
+        if (!m.scanned) candidates.push({ name: m.name, kind: 'MONOLITH', x: m.x, z: m.z, color: '#c084fc' });
+    });
+    candidates.push({ name: 'Lunar Cave Entrance', kind: 'CAVE', x: MOON_CAVE_POS.x, z: MOON_CAVE_POS.z, color: '#f97316' });
+    let best: { name: string; kind: string; x: number; z: number; dist: number; color: string } | null = null;
+    for (let i = 0; i < candidates.length; i++) {
+        const c = candidates[i];
+        const d = Math.hypot(c.x - player.pos.x, c.z - player.pos.z);
+        if (!best || d < best.dist) best = { ...c, dist: d };
+    }
+    return best;
 }
 
 export function getMoonMapData() {

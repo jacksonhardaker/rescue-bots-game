@@ -76,14 +76,15 @@ export const PLANET_CAVERN_THEMES: Record<CavernWorldId, CavernTheme> = {
     MARS: {
         id: 'MARS',
         name: 'MARS',
-        cavernTitle: 'OLYMPUS FOSSIL LAVA TUBES',
-        skyColor: 0x1a0906,
-        fogColor: 0x2a0f0a,
+        cavernTitle: 'SUBTERRANEAN ANCIENT OCEAN',
+        skyColor: 0x091622,
+        fogColor: 0x102838,
         wallColor: 0x7c2d12,
-        floorHex: '#431407',
+        floorHex: '#0f3d4c',
         crystalColor: 0x22d3ee,
         relicId: 'CAV_MARS_1',
-        relicName: 'Martian Ancient Fossil'
+        relicName: 'Martian Ancient Fossil',
+        hasWaterLagoon: true
     },
     PLUTO: {
         id: 'PLUTO',
@@ -186,7 +187,7 @@ export const PLANET_CAVERN_THEMES: Record<CavernWorldId, CavernTheme> = {
 };
 
 export const planetCavernScene = new THREE.Scene();
-export const PLANET_CAVERN_RADIUS = 148;
+export const PLANET_CAVERN_RADIUS = 320;
 const CAVERN_WATER_LEVEL = 5.6;
 
 interface CavernRockRuntime {
@@ -231,15 +232,15 @@ const _resonanceNodes: ResonanceNode[] = [];
 const _cavernAnimated: Array<{ obj: THREE.Object3D; phase: number }> = [];
 
 export function getPlanetCavernSurfaceHeight(x: number, z: number): number {
-    // Sub-glacial ocean lagoon on Europa (West & South-West basin)
+    // Massive subterranean ocean basin on Europa and Mars (West & South-West expanse)
     if (_activeTheme.hasWaterLagoon) {
-        const dLagoon = Math.hypot(x + 48, z - 28);
-        if (dLagoon < 56) {
-            const t = Math.max(0, Math.min(1, (dLagoon - 32) / 24));
-            return THREE.MathUtils.lerp(3.2, 6.4, t * t * (3 - 2 * t));
+        const dLagoon = Math.hypot(x + 95, z - 55);
+        if (dLagoon < 165) {
+            const t = Math.max(0, Math.min(1, (dLagoon - 125) / 40));
+            return THREE.MathUtils.lerp(3.0, 6.4, t * t * (3 - 2 * t));
         }
     }
-    return 6.2 + Math.sin(x * 0.04) * Math.cos(z * 0.04) * 0.65;
+    return 6.2 + Math.sin(x * 0.03) * Math.cos(z * 0.03) * 0.85;
 }
 
 export function isPlanetCavernPointInWater(x: number, z: number): boolean {
@@ -270,18 +271,18 @@ function buildPlanetCavernWorld(theme: CavernTheme) {
     _vaultUnlocked = false;
 
     planetCavernScene.background = new THREE.Color(theme.skyColor);
-    planetCavernScene.fog = new THREE.FogExp2(theme.fogColor, 0.0052);
+    planetCavernScene.fog = new THREE.FogExp2(theme.fogColor, 0.0028);
 
     _cavernGroup = new THREE.Group();
     planetCavernScene.add(_cavernGroup);
 
-    _cavernGroup.add(new THREE.HemisphereLight(theme.crystalColor, theme.skyColor, 1.1));
-    const pt = new THREE.PointLight(theme.crystalColor, 1.6, 260, 0.5);
-    pt.position.set(0, 24, 0);
+    _cavernGroup.add(new THREE.HemisphereLight(theme.crystalColor, theme.skyColor, 1.15));
+    const pt = new THREE.PointLight(theme.crystalColor, 1.8, 520, 0.4);
+    pt.position.set(0, 38, 0);
     _cavernGroup.add(pt);
 
     // Cavern Floor
-    const floorGeo = new THREE.PlaneGeometry(PLANET_CAVERN_RADIUS * 2.1, PLANET_CAVERN_RADIUS * 2.1, 48, 48);
+    const floorGeo = new THREE.PlaneGeometry(PLANET_CAVERN_RADIUS * 2.1, PLANET_CAVERN_RADIUS * 2.1, 64, 64);
     floorGeo.rotateX(-Math.PI / 2);
     const vPos = floorGeo.attributes.position;
     for (let i = 0; i < vPos.count; i++) {
@@ -294,86 +295,104 @@ function buildPlanetCavernWorld(theme: CavernTheme) {
     );
     _cavernGroup.add(floorMesh);
 
-    // Subterranean Bioluminescent Lagoon (Europa) or Lava Pool (Io / Mercury)
+    // Massive Subterranean Ocean (Europa & Mars) or Magma Lake (Io / Mercury)
     if (theme.hasWaterLagoon) {
         const lagoon = new THREE.Mesh(
-            new THREE.CircleGeometry(58, 36).rotateX(-Math.PI / 2),
+            new THREE.CircleGeometry(165, 48).rotateX(-Math.PI / 2),
             new THREE.MeshToonMaterial({
                 color: 0x06b6d4,
                 emissive: 0x0284c7,
                 emissiveIntensity: 0.45,
                 transparent: true,
-                opacity: 0.85,
+                opacity: 0.86,
                 gradientMap: toonGrad3
             })
         );
-        lagoon.position.set(-48, CAVERN_WATER_LEVEL, 28);
+        lagoon.position.set(-95, CAVERN_WATER_LEVEL, 55);
         _cavernGroup.add(lagoon);
     } else if (theme.hasLavaGlow) {
         const lava = new THREE.Mesh(
-            new THREE.CircleGeometry(22, 24).rotateX(-Math.PI / 2),
-            new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.8 })
+            new THREE.CircleGeometry(58, 32).rotateX(-Math.PI / 2),
+            new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.85 })
         );
-        lava.position.set(-54, 6.35, 36);
+        lava.position.set(-95, 6.35, 55);
         _cavernGroup.add(lava);
     }
 
     // Cavern Dome Ceiling + Hanging Stalactites
     const matWall = new THREE.MeshToonMaterial({ color: theme.wallColor, gradientMap: toonGrad3 });
     const ceiling = new THREE.Mesh(
-        new THREE.SphereGeometry(PLANET_CAVERN_RADIUS + 8, 28, 14, 0, Math.PI * 2, 0, Math.PI * 0.48),
+        new THREE.SphereGeometry(PLANET_CAVERN_RADIUS + 14, 32, 16, 0, Math.PI * 2, 0, Math.PI * 0.48),
         new THREE.MeshToonMaterial({ color: theme.wallColor, side: THREE.BackSide, gradientMap: toonGrad3 })
     );
-    ceiling.position.y = 4;
+    ceiling.position.y = 8;
     _cavernGroup.add(ceiling);
 
-    // Outer Cavern Perimeter Boulders & Interior Rock Pillars forming 4 Branching Chambers
+    // Outer Cavern Perimeter Boulders & Towering Cathedral Pillars
     const matCrystal = new THREE.MeshBasicMaterial({ color: theme.crystalColor });
-    for (let i = 0; i < 36; i++) {
-        const ang = (i / 36) * Math.PI * 2;
-        const bx = Math.cos(ang) * (PLANET_CAVERN_RADIUS - 4);
-        const bz = Math.sin(ang) * (PLANET_CAVERN_RADIUS - 4);
-        const pillar = new THREE.Mesh(new THREE.DodecahedronGeometry(14 + (i % 3) * 3, 0), matWall);
-        pillar.position.set(bx, 12, bz);
-        pillar.scale.set(1.2, 2.2, 1.2);
+    for (let i = 0; i < 56; i++) {
+        const ang = (i / 56) * Math.PI * 2;
+        const bx = Math.cos(ang) * (PLANET_CAVERN_RADIUS - 6);
+        const bz = Math.sin(ang) * (PLANET_CAVERN_RADIUS - 6);
+        const pillar = new THREE.Mesh(new THREE.DodecahedronGeometry(18 + (i % 4) * 4, 0), matWall);
+        pillar.position.set(bx, 18, bz);
+        pillar.scale.set(1.5, 3.2, 1.5);
         _cavernGroup.add(pillar);
     }
 
-    // 8 Interior Structural Pillars creating braided tunnels (clear of center & cardinal corridors)
+    // 14 Interior Structural Pillars creating grand cavern halls (kept clear of center & underground ocean)
     const pillarCoords = [
-        { x: -34, z: -34, r: 7.5 },
-        { x: 34, z: -34, r: 7.5 },
-        { x: -34, z: 34, r: 7.5 },
-        { x: 34, z: 34, r: 7.5 },
-        { x: -72, z: -72, r: 8.5 },
-        { x: 72, z: -72, r: 8.5 },
-        { x: 72, z: 72, r: 8.5 },
-        { x: -72, z: 72, r: 8.5 }
+        { x: -55, z: -65, r: 8.5 },
+        { x: 55, z: -65, r: 8.5 },
+        { x: 65, z: 55, r: 8.5 },
+        { x: -135, z: -135, r: 10.0 },
+        { x: 135, z: -135, r: 10.0 },
+        { x: 145, z: 125, r: 10.0 },
+        { x: -205, z: -120, r: 11.0 },
+        { x: 205, z: -120, r: 11.0 },
+        { x: 215, z: 145, r: 11.0 },
+        { x: 0, z: -155, r: 9.5 },
+        { x: 155, z: 0, r: 9.5 },
+        { x: 0, z: 175, r: 9.5 }
     ];
     pillarCoords.forEach((p, idx) => {
-        if (theme.hasWaterLagoon && p.x === -34 && p.z === 34) return; // Leave Europa grotto open!
+        if (theme.hasWaterLagoon && Math.hypot(p.x + 95, p.z - 55) < 168) return;
         const py = getPlanetCavernSurfaceHeight(p.x, p.z);
-        const col = new THREE.Mesh(new THREE.CylinderGeometry(p.r * 0.85, p.r * 1.15, 28, 7), matWall);
-        col.position.set(p.x, py + 12, p.z);
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(p.r * 0.82, p.r * 1.18, 42, 7), matWall);
+        col.position.set(p.x, py + 18, p.z);
         applyCartoonInkOutlines(col, 1.03, true);
         _cavernGroup!.add(col);
         _cavernColliders.push({ x: p.x, z: p.z, r: p.r });
 
-        // Glowing crystal cluster attached to pillar
-        const crys = new THREE.Mesh(new THREE.ConeGeometry(1.4, 5.2, 5), matCrystal);
-        crys.position.set(p.x + (idx % 2 === 0 ? p.r : -p.r), py + 3.6, p.z);
+        // Glowing crystal spire cluster attached to pillar
+        const crys = new THREE.Mesh(new THREE.ConeGeometry(1.8, 7.5, 5), matCrystal);
+        crys.position.set(p.x + (idx % 2 === 0 ? p.r : -p.r), py + 4.8, p.z);
         crys.rotation.z = idx % 2 === 0 ? -0.45 : 0.45;
         _cavernGroup!.add(crys);
     });
 
+    // Glowing Bioluminescent Crystal Flora Clusters
+    for (let f = 0; f < 30; f++) {
+        const ang = (f / 30) * Math.PI * 2 + 0.15;
+        const dist = 42 + ((f * 53) % 240);
+        const fx = Math.cos(ang) * dist;
+        const fz = Math.sin(ang) * dist;
+        if (theme.hasWaterLagoon && Math.hypot(fx + 95, fz - 55) < 155) continue;
+        const fy = getPlanetCavernSurfaceHeight(fx, fz);
+        const spire = new THREE.Mesh(new THREE.ConeGeometry(1.1 + (f % 3) * 0.45, 5.2 + (f % 4) * 1.8, 5), matCrystal);
+        spire.position.set(fx, fy + 2.4, fz);
+        spire.rotation.set((f % 3 - 1) * 0.12, f * 0.7, ((f + 1) % 3 - 1) * 0.12);
+        _cavernGroup.add(spire);
+    }
+
     // Hanging Ceiling Stalactites
-    for (let s = 0; s < 28; s++) {
-        const ang = (s / 28) * Math.PI * 2;
-        const r = 24 + ((s * 31) % 92);
+    for (let s = 0; s < 50; s++) {
+        const ang = (s / 50) * Math.PI * 2;
+        const r = 36 + ((s * 47) % 245);
         const sx = Math.cos(ang) * r;
         const sz = Math.sin(ang) * r;
-        const stal = new THREE.Mesh(new THREE.ConeGeometry(1.4 + (s % 3) * 0.5, 7 + (s % 4) * 2.5, 5).rotateX(Math.PI), matWall);
-        stal.position.set(sx, 27.5, sz);
+        const stal = new THREE.Mesh(new THREE.ConeGeometry(1.8 + (s % 4) * 0.6, 10 + (s % 5) * 3.5, 5).rotateX(Math.PI), matWall);
+        stal.position.set(sx, 44.0, sz);
         _cavernGroup.add(stal);
     }
 
@@ -396,16 +415,18 @@ function buildPlanetCavernWorld(theme: CavernTheme) {
     exitGroup.add(exitPad, exitRing, exitBeam);
     _cavernGroup.add(exitGroup);
 
-    // 8 Collectible Cavern Energon Gems
+    // 16 Collectible Cavern Energon Gems spread across the 320m cavern
     const gemCoords = [
-        { x: 0, z: -56 }, { x: 56, z: 0 }, { x: 0, z: 56 }, { x: -56, z: 0 },
-        { x: 48, z: -86 }, { x: -48, z: -86 }, { x: 86, z: 48 }, { x: -86, z: -48 }
+        { x: 0, z: -72 }, { x: 82, z: 0 }, { x: 0, z: 86 }, { x: -78, z: 0 },
+        { x: 96, z: -145 }, { x: -96, z: -145 }, { x: 165, z: 86 }, { x: -165, z: -96 },
+        { x: 235, z: -35 }, { x: -235, z: 35 }, { x: 120, z: 225 }, { x: -120, z: 225 },
+        { x: -135, z: 105 }, { x: -55, z: 85 }, { x: 185, z: -195 }, { x: -185, z: -195 }
     ];
     gemCoords.forEach((gc, idx) => {
-        const gy = getPlanetCavernSurfaceHeight(gc.x, gc.z);
+        const gy = Math.max(getPlanetCavernSurfaceHeight(gc.x, gc.z), theme.hasWaterLagoon ? CAVERN_WATER_LEVEL : 0);
         const gg = new THREE.Group();
-        gg.position.set(gc.x, gy + 2.2, gc.z);
-        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(1.35, 0), matCrystal);
+        gg.position.set(gc.x, gy + 2.4, gc.z);
+        const gem = new THREE.Mesh(new THREE.OctahedronGeometry(1.5, 0), matCrystal);
         gg.add(gem);
         _cavernGroup!.add(gg);
         _cavernGems.push({ x: gc.x, z: gc.z, mesh: gg, collected: false });
@@ -413,15 +434,15 @@ function buildPlanetCavernWorld(theme: CavernTheme) {
     });
 
     // Smashable Cavern Rocks
-    for (let r = 0; r < 18; r++) {
-        const ang = (r / 18) * Math.PI * 2 + 0.2;
-        const dist = 24 + ((r * 23) % 86);
+    for (let r = 0; r < 35; r++) {
+        const ang = (r / 35) * Math.PI * 2 + 0.2;
+        const dist = 34 + ((r * 41) % 245);
         const rx = Math.cos(ang) * dist;
         const rz = Math.sin(ang) * dist;
-        if (Math.hypot(rx, rz) < 16) continue;
+        if (Math.hypot(rx, rz) < 18) continue;
         const ry = getPlanetCavernSurfaceHeight(rx, rz);
         if (theme.hasWaterLagoon && ry < CAVERN_WATER_LEVEL + 0.3) continue;
-        const rad = 2.2 + (r % 3) * 0.8;
+        const rad = 2.4 + (r % 3) * 0.9;
         const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(rad, 0), matWall);
         mesh.position.set(rx, ry + rad * 0.6, rz);
         applyCartoonInkOutlines(mesh, 1.04, true);
@@ -429,42 +450,55 @@ function buildPlanetCavernWorld(theme: CavernTheme) {
         _cavernRocks.push({ mesh, x: rx, y: ry + rad * 0.6, z: rz, r: rad, destroyed: false });
     }
 
-    // Hidden Subterranean Relic / Fossil in North Chamber (0, -108)
-    _cavernRelicPos = { x: 0, z: -108 };
+    // Hidden Subterranean Relic / Fossil in Deep North Chamber (0, -245)
+    _cavernRelicPos = { x: 0, z: -245 };
     const foundCavRelics: string[] = Array.isArray(progression.planetCavernRelicsFound) ? progression.planetCavernRelicsFound : [];
     _cavernRelicCollected = foundCavRelics.includes(theme.relicId);
     const relY = getPlanetCavernSurfaceHeight(_cavernRelicPos.x, _cavernRelicPos.z);
     const relGrp = new THREE.Group();
     relGrp.position.set(_cavernRelicPos.x, relY + 2.6, _cavernRelicPos.z);
-    const relCore = new THREE.Mesh(new THREE.OctahedronGeometry(2.0, 0), matOptimusGold);
-    const relHalo = new THREE.Mesh(new THREE.TorusGeometry(3.0, 0.22, 8, 22), matCrystal);
-    relGrp.add(relCore, relHalo);
+    const relCore = new THREE.Mesh(new THREE.OctahedronGeometry(2.2, 0), matOptimusGold);
+    const relHalo = new THREE.Mesh(new THREE.TorusGeometry(3.4, 0.24, 8, 22), matCrystal);
+    const relBeam = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.2, 2.6, 36, 12, 1, true),
+        new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false })
+    );
+    relBeam.position.y = 18;
+    relGrp.add(relCore, relHalo, relBeam);
     relGrp.visible = !_cavernRelicCollected;
     _cavernGroup.add(relGrp);
     _cavernRelicMesh = relGrp;
     _cavernAnimated.push({ obj: relGrp, phase: 2.2 });
 
-    // Cavern Mini-Game: 3 Resonance Crystals -> Unlocks Secret Energon Vault in East Chamber (105, 0)
+    // Cavern Mini-Game: 5 Resonance Crystals -> Unlocks Secret Energon Vault in East Chamber (225, 0)
     const resCoords = [
-        { x: -96, z: -12 },
-        { x: 0, z: 96 },
-        { x: 66, z: -64 }
+        { x: -215, z: -65 },
+        { x: 0, z: 235 },
+        { x: 185, z: -165 },
+        { x: 225, z: 95 },
+        { x: -155, z: -210 }
     ];
     resCoords.forEach((rc, idx) => {
-        const ry = getPlanetCavernSurfaceHeight(rc.x, rc.z);
+        const ry = Math.max(getPlanetCavernSurfaceHeight(rc.x, rc.z), theme.hasWaterLagoon ? CAVERN_WATER_LEVEL : 0);
         const rMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
-        const crystalMesh = new THREE.Mesh(new THREE.OctahedronGeometry(2.2, 0), rMat);
-        crystalMesh.position.set(rc.x, ry + 3.0, rc.z);
+        const crystalMesh = new THREE.Mesh(new THREE.OctahedronGeometry(2.5, 0), rMat);
+        crystalMesh.position.set(rc.x, ry + 3.2, rc.z);
+        const resBeam = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.9, 1.8, 30, 10, 1, true),
+            new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false })
+        );
+        resBeam.position.y = 14;
+        crystalMesh.add(resBeam);
         _cavernGroup!.add(crystalMesh);
         _resonanceNodes.push({ x: rc.x, z: rc.z, mesh: crystalMesh, mat: rMat, activated: false });
         _cavernAnimated.push({ obj: crystalMesh, phase: idx * 1.4 });
     });
 
-    const vaultY = getPlanetCavernSurfaceHeight(106, 0);
+    const vaultY = getPlanetCavernSurfaceHeight(225, 0);
     const vaultGrp = new THREE.Group();
-    vaultGrp.position.set(106, vaultY, 0);
-    const vaultBase = new THREE.Mesh(new THREE.BoxGeometry(5.5, 3.5, 4.2), matOptimusGold);
-    vaultBase.position.y = 1.75;
+    vaultGrp.position.set(225, vaultY, 0);
+    const vaultBase = new THREE.Mesh(new THREE.BoxGeometry(6.5, 4.0, 4.8), matOptimusGold);
+    vaultBase.position.y = 2.0;
     vaultBase.visible = false;
     vaultGrp.add(vaultBase);
     _cavernGroup.add(vaultGrp);
@@ -529,7 +563,8 @@ export function swapToPlanetCavern(worldId: CavernWorldId) {
     if (typeof window.renderMinimap === 'function') window.renderMinimap();
 
     sfx.playCavernDiscovery();
-    showToast(`${theme.name} CAVERNS!`, `Exploring ${theme.cavernTitle}! Find ${theme.relicName} & activate 3 Resonance Crystals!`);
+    const oceanNote = theme.hasWaterLagoon ? ' Subterranean ocean detected — Boat & Submarine ready!' : '';
+    showToast(`${theme.name} CAVERNS!`, `Exploring ${theme.cavernTitle}! Find ${theme.relicName} & attune 5 Resonance Crystals!${oceanNote}`);
     triggerNPCSpeech(
         'BOULDER',
         'Geology Specialist',
@@ -722,12 +757,12 @@ export function updatePlanetCavern(dt: number, now: number) {
                 if (_vaultChestGroup && _vaultChestGroup.children[0]) {
                     _vaultChestGroup.children[0].visible = true;
                 }
-                progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 6;
+                progression.totalEnergonCubes = (progression.totalEnergonCubes || 0) + 10;
                 saveProgression({ immediate: true });
                 sfx.playRankUp();
-                showToast('CAVERN RESONANCE UNLOCKED!', 'All 3 Resonance Crystals attuned! +6 Bonus Energon!');
+                showToast('CAVERN RESONANCE UNLOCKED!', `All ${_resonanceNodes.length} Resonance Crystals attuned! +10 Bonus Energon!`);
             } else {
-                showToast(`RESONANCE CRYSTAL ${activeResCount}/3!`, 'Attune all 3 cavern crystals!');
+                showToast(`RESONANCE CRYSTAL ${activeResCount}/${_resonanceNodes.length}!`, `Attune all ${_resonanceNodes.length} cavern crystals!`);
             }
         }
     }
@@ -739,6 +774,48 @@ export function updatePlanetCavern(dt: number, now: number) {
     if (_exitCooldown <= 0 && distExit < 5.2) {
         exitPlanetCavernToSurface();
     }
+}
+
+export function getNearestCavernDiscovery(): { name: string; kind: string; x: number; z: number; dist: number; color: string } | null {
+    if (worldState.activeArea !== 'PLANET_CAVERN') return null;
+    const candidates: Array<{ name: string; kind: string; x: number; z: number; dist: number; color: string }> = [];
+    if (!_cavernRelicCollected) {
+        candidates.push({
+            name: _activeTheme.relicName,
+            kind: 'RELIC',
+            x: _cavernRelicPos.x,
+            z: _cavernRelicPos.z,
+            dist: Math.hypot(_cavernRelicPos.x - player.pos.x, _cavernRelicPos.z - player.pos.z),
+            color: '#facc15'
+        });
+    }
+    _resonanceNodes.forEach((rn, idx) => {
+        if (!rn.activated) {
+            candidates.push({
+                name: `Resonance Crystal #${idx + 1}`,
+                kind: 'CRYSTAL',
+                x: rn.x,
+                z: rn.z,
+                dist: Math.hypot(rn.x - player.pos.x, rn.z - player.pos.z),
+                color: '#f43f5e'
+            });
+        }
+    });
+    _cavernGems.forEach((g, idx) => {
+        if (!g.collected) {
+            candidates.push({
+                name: `Energon Gem #${idx + 1}`,
+                kind: 'GEM',
+                x: g.x,
+                z: g.z,
+                dist: Math.hypot(g.x - player.pos.x, g.z - player.pos.z),
+                color: '#22d3ee'
+            });
+        }
+    });
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => a.dist - b.dist);
+    return candidates[0];
 }
 
 export function getPlanetCavernMapData() {
