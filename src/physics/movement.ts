@@ -248,7 +248,9 @@ waypointGroup.add(wpArrowCone);
             targetScene.add(energyNetGroup);
         }
 
-        registerUndergroundFXCallbacks(reparentSharedFXToScene, () => waypointGroup);
+        queueMicrotask(() => {
+            registerUndergroundFXCallbacks(reparentSharedFXToScene, () => waypointGroup);
+        });
 
         document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
         document.addEventListener('gesturechange', e => e.preventDefault(), { passive: false });
