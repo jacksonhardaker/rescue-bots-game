@@ -631,6 +631,23 @@ export const SVG_ICONS: Record<string, string> = {
                 <path d="M7 5L20 12L17 15L7 5Z" fill="#fde047" fill-opacity="0.75"/>
                 <circle cx="21" cy="19" r="6" fill="#22d3ee" stroke="#0f172a" stroke-width="1.7"/>
                 <circle cx="22.5" cy="17.5" r="2" fill="#f8fafc"/>
+            </svg>`,
+            DIVE_DOWN: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 9c3-2 6-2 9 0s6 2 9 0 5-2 6 0" stroke="#7dd3fc" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M16 12v13M10.5 20L16 26l5.5-6" stroke="#fde047" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="8" cy="18" r="1.8" fill="#38bdf8"/>
+                <circle cx="24" cy="16" r="1.5" fill="#7dd3fc"/>
+            </svg>`,
+            SURFACE_UP: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 10c3-2 6-2 9 0s6 2 9 0 5-2 6 0" stroke="#7dd3fc" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M16 26V13M10.5 18L16 12l5.5 6" stroke="#4ade80" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="9" cy="23" r="1.6" fill="#38bdf8"/>
+                <circle cx="23" cy="21" r="1.8" fill="#7dd3fc"/>
+            </svg>`,
+            SONAR_WAVE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="4" fill="#22d3ee" stroke="#0f172a" stroke-width="1.6"/>
+                <circle cx="16" cy="16" r="8.5" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 3"/>
+                <circle cx="16" cy="16" r="13" stroke="#7dd3fc" stroke-width="1.8" stroke-opacity="0.8"/>
             </svg>`
         };
 

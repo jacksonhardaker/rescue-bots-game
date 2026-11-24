@@ -725,6 +725,17 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     btnDrill.classList.add('hidden');
                 }
             }
+            const btnDive = document.getElementById('btn-dive');
+            const diveIcon = document.getElementById('dive-icon');
+            if (btnDive) {
+                const canDive = worldState.activeArea === 'SURFACE' &&
+                    player.botType === 'HIGHTIDE' &&
+                    isPointInWater(player.pos.x, player.pos.z);
+                btnDive.classList.toggle('hidden', !canDive);
+                if (canDive && diveIcon && !diveIcon.innerHTML) {
+                    diveIcon.innerHTML = SVG_ICONS.DIVE_DOWN;
+                }
+            }
             updateCavernHUD();
 
             const isFlyingCopter = ((player.botType === 'BLADES' && (isVeh || isDino)) ||

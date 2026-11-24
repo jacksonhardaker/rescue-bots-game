@@ -19,6 +19,7 @@ export type BotMode = 'BOT' | 'VEHICLE' | 'DINO' | 'HIDDEN_VEHICLE';
 export type ActiveArea =
     | 'SURFACE'
     | 'UNDERGROUND'
+    | 'UNDERWATER'
     | 'SOLAR_HUB'
     | 'SPACE'
     | 'MOON'
@@ -253,7 +254,10 @@ export interface WorldState {
     savedUndergroundHeading: number;
     savedPlanetPos: THREE.Vector3;
     savedPlanetHeading: number;
+    savedOceanPos: THREE.Vector3;
+    savedOceanHeading: number;
     hasVisitedUnderground: boolean;
+    nearUnderwaterSurface: boolean;
     nearExitShaft: boolean;
     nearSigmaShip: boolean;
     sigmaActionMode: string;

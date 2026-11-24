@@ -19,6 +19,9 @@ import { buildHazardSites } from '../world/emergencies.js';
 import { switchRescueBot, unlockAndSwitchBot, triggerTransform, toggleHiddenVehicleMode, triggerPrimaryAction, triggerSecondaryAction, triggerDescendAction, toggleSiren, undockHighTideMegabot, dockHighTideMegabot, undockOptimusMegabot, dockOptimusMegabot, dockActiveBotMegabot, undockActiveBotMegabot, cycleBuddyBot } from '../physics/player.js';
 import { toggleBumblebeeMorph } from '../world/allies.js';
 import { triggerBoulderDrillTransition } from '../world/underground.js';
+import { enterUnderwaterWorld, exitUnderwaterWorld, triggerUnderwaterSonar } from '../world/underwater.js';
+import { isPointInWater } from '../world/terrain.js';
+import { worldState } from '../state/gameState.js';
 import { morbotBattle } from '../world/morbot.js';
 import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
 let activeRebindAction: string | null = null;
@@ -501,7 +504,11 @@ function _localReset() {
                 triggerTransform();
             }
             if (matchesAction(e.code, 'primaryAction') && !e.repeat) {
-                triggerPrimaryAction();
+                if (worldState.activeArea === 'UNDERWATER') {
+                    triggerUnderwaterSonar();
+                } else {
+                    triggerPrimaryAction();
+                }
             }
             if (matchesAction(e.code, 'secondaryAction') && !e.repeat) {
                 triggerSecondaryAction();
@@ -516,7 +523,13 @@ function _localReset() {
                 toggleHiddenVehicleMode();
             }
             if (matchesAction(e.code, 'drillAction') && !e.repeat) {
-                triggerBoulderDrillTransition();
+                if (worldState.activeArea === 'SURFACE' && player.botType === 'HIGHTIDE' && isPointInWater(player.pos.x, player.pos.z)) {
+                    enterUnderwaterWorld();
+                } else if (worldState.activeArea === 'UNDERWATER') {
+                    exitUnderwaterWorld();
+                } else {
+                    triggerBoulderDrillTransition();
+                }
             }
             if (matchesAction(e.code, 'dock') && !e.repeat) {
                 if (isBotDocked(player.botType)) {

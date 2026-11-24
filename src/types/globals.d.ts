@@ -57,6 +57,19 @@ declare global {
       pods?: Array<{ name: string; pos: THREE.Vector3; rescued: boolean }>;
       starRings?: Array<{ pos: THREE.Vector3 }>;
     };
+    getUnderwaterMapData?: () => {
+      radius: number;
+      surfaceY: number;
+      subPos: THREE.Vector3;
+      subHeading: number;
+      landmarks: Array<{ id: string; name: string; x: number; y: number; z: number; discovered: boolean; color: string }>;
+      relics: Array<{ id: string; name: string; x: number; y: number; z: number; collected: boolean }>;
+      crystals: Array<{ x: number; y: number; z: number; collected: boolean }>;
+      rings: Array<{ x: number; y: number; z: number }>;
+      activeRingIdx: number;
+      moroccoBuoy: { x: number; y: number; z: number; disabled: boolean };
+    };
+    setUnderwaterWaypointWorld?: (wx: number, wy: number, wz: number) => void;
     getMoonMapData?: () => {
       radius: number;
       sigmaPos: { x: number; z: number };

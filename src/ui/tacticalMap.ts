@@ -225,6 +225,40 @@ export function handleTacticalMapTap(clientX: number, clientY: number) {
                     return;
                 }
 
+                if (worldState.activeArea === 'UNDERWATER') {
+                    const uw = window.getUnderwaterMapData?.();
+                    const uR = uw?.radius || 480;
+                    const uScale = (cx * 0.84) / uR;
+                    let wx = (canvasX - cx) / uScale;
+                    let wz = (canvasY - cy) / uScale;
+                    let wy = uw ? uw.subPos.y : 34;
+                    let snapLabel = `(${Math.round(wx)}, ${Math.round(wz)})`;
+                    if (uw) {
+                        const checkUwSnap = (tx: number, ty: number, tz: number, label: string, r = 55) => {
+                            if (Math.hypot(wx - tx, wz - tz) < r) {
+                                wx = tx; wy = ty; wz = tz; snapLabel = label;
+                            }
+                        };
+                        uw.landmarks.forEach((lm) => checkUwSnap(lm.x, lm.y, lm.z, lm.name, 55));
+                        uw.relics.forEach((rel) => { if (!rel.collected) checkUwSnap(rel.x, rel.y, rel.z, rel.name, 42); });
+                        if (!uw.moroccoBuoy.disabled) {
+                            checkUwSnap(uw.moroccoBuoy.x, uw.moroccoBuoy.y, uw.moroccoBuoy.z, 'Dr. Morocco Sonic Buoy', 55);
+                        }
+                        const activeRg = uw.rings[uw.activeRingIdx];
+                        if (activeRg) checkUwSnap(activeRg.x, activeRg.y, activeRg.z, 'Active Training Ring', 42);
+                    }
+                    const d = Math.hypot(wx, wz);
+                    if (d > uR - 25) {
+                        wx *= (uR - 25) / d;
+                        wz *= (uR - 25) / d;
+                    }
+                    window.setUnderwaterWaypointWorld?.(wx, wy, wz);
+                    if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
+                    showToast('DEEP-SEA COURSE LOCKED', `High Tide swimming to ${snapLabel}`);
+                    closeTacticalMap();
+                    return;
+                }
+
                 if (worldState.activeArea === 'PLANET_CAVERN') {
                     const pc = getPlanetCavernMapData();
                     const cR = pc.radius || 320;
@@ -865,6 +899,45 @@ function ensureMinimapBgCache(w: number, h: number) {
                 return;
             }
 
+            if (worldState.activeArea === 'UNDERWATER') {
+                const uw = window.getUnderwaterMapData?.();
+                ctx.clearRect(0, 0, w, h);
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(cx, cy, cx, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.fillStyle = '#052e4a';
+                ctx.fillRect(0, 0, w, h);
+                if (uw) {
+                    const sc = (cx * 0.85) / uw.radius;
+                    uw.landmarks.forEach((lm) => {
+                        ctx.fillStyle = lm.color;
+                        ctx.beginPath();
+                        ctx.arc(cx + lm.x * sc, cy + lm.z * sc, 4.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    uw.relics.forEach((rel) => {
+                        if (rel.collected) return;
+                        ctx.fillStyle = '#facc15';
+                        ctx.beginPath();
+                        ctx.arc(cx + rel.x * sc, cy + rel.z * sc, 3.2, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    const activeRg = uw.rings[uw.activeRingIdx];
+                    if (activeRg) {
+                        ctx.strokeStyle = '#facc15';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(cx + activeRg.x * sc, cy + activeRg.z * sc, 4.5, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    drawMapChevron(ctx, cx + uw.subPos.x * sc, cy + uw.subPos.z * sc, uw.subHeading, 5.5, '#38bdf8', '#ffffff');
+                }
+                ctx.restore();
+                setNearestHintText('Griffin Rock Deep Ocean • Tap Sonar (F) to ping landmarks!');
+                return;
+            }
+
             if (worldState.activeArea === 'PLANET_CAVERN') {
                 const pc = getPlanetCavernMapData();
                 ctx.clearRect(0, 0, w, h);
@@ -1322,6 +1395,79 @@ function ensureMinimapBgCache(w: number, h: number) {
 
                     // Starship Sigma Chevron
                     drawMapChevron(ctx, cx + sp.ship.pos.x * sc, cy + sp.ship.pos.z * sc, sp.ship.yaw + Math.PI, 9.5, '#38bdf8', '#ffffff');
+                }
+                return;
+            }
+
+            if (worldState.activeArea === 'UNDERWATER') {
+                const uw = window.getUnderwaterMapData?.();
+                const titleEl = document.getElementById('tactical-map-title');
+                const subEl = document.getElementById('tactical-map-subtitle');
+                const pillEl = document.getElementById('tactical-map-status-pill');
+                const gridEl = document.getElementById('tactical-map-grid-pill');
+                const countEl = document.getElementById('tactical-active-emergencies-count');
+                if (titleEl) titleEl.textContent = 'GRIFFIN ROCK DEEP-SEA SONAR CHART';
+                if (subEl) subEl.textContent = 'High Tide 3D Underwater Exploration • Tap any landmark to swim there';
+                if (pillEl) pillEl.textContent = 'UNDERWATER';
+                if (gridEl) gridEl.textContent = `DEPTH: ${uw ? Math.max(0, Math.round(uw.surfaceY - uw.subPos.y)) : 0}m`;
+                const foundLm = uw ? uw.landmarks.filter((l) => l.discovered).length : 0;
+                if (countEl) countEl.textContent = `SITES: ${foundLm} / ${uw?.landmarks.length || 5}`;
+
+                const bgGrad = ctx.createRadialGradient(cx, cy, 35, cx, cy, cx * 1.05);
+                bgGrad.addColorStop(0, '#0c4a6e');
+                bgGrad.addColorStop(0.7, '#062c47');
+                bgGrad.addColorStop(1, '#021627');
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, w, h);
+
+                if (uw) {
+                    const sc = (cx * 0.84) / uw.radius;
+                    // Depth contour rings
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+                    ctx.lineWidth = 1.5;
+                    [160, 310, 440].forEach((rad) => {
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, rad * sc, 0, Math.PI * 2);
+                        ctx.stroke();
+                    });
+
+                    const drawUwPin = (wx: number, wz: number, r: number, col: string, label: string) => {
+                        const px = cx + wx * sc;
+                        const pz = cy + wz * sc;
+                        ctx.fillStyle = col;
+                        ctx.beginPath();
+                        ctx.arc(px, pz, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.font = 'bold 9.5px Fredoka, sans-serif';
+                        const tw = ctx.measureText(label).width;
+                        ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+                        ctx.fillRect(px - tw / 2 - 4, pz + r + 4, tw + 8, 14);
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(label, px, pz + r + 14);
+                    };
+
+                    uw.crystals.forEach((c) => {
+                        if (c.collected) return;
+                        ctx.fillStyle = '#22d3ee';
+                        ctx.beginPath();
+                        ctx.arc(cx + c.x * sc, cy + c.z * sc, 3.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    uw.landmarks.forEach((lm) => {
+                        drawUwPin(lm.x, lm.z, 8.5, lm.color, lm.name.toUpperCase());
+                    });
+                    uw.relics.forEach((rel) => {
+                        if (!rel.collected) drawUwPin(rel.x, rel.z, 5.5, '#facc15', rel.name.toUpperCase());
+                    });
+                    const activeRg = uw.rings[uw.activeRingIdx];
+                    if (activeRg) {
+                        drawUwPin(activeRg.x, activeRg.z, 7, '#facc15', `TRAINING RING ${uw.activeRingIdx + 1}/${uw.rings.length}`);
+                    }
+                    drawMapChevron(ctx, cx + uw.subPos.x * sc, cy + uw.subPos.z * sc, uw.subHeading, 9.5, '#38bdf8', '#ffffff');
                 }
                 return;
             }

@@ -73,7 +73,10 @@ export const worldState: WorldState = {
     savedUndergroundHeading: 0,
     savedPlanetPos: new THREE.Vector3(0, 6.5, 6),
     savedPlanetHeading: 0,
+    savedOceanPos: new THREE.Vector3(0, 0.2, 260),
+    savedOceanHeading: 0,
     hasVisitedUnderground: false,
+    nearUnderwaterSurface: false,
     nearExitShaft: false,
     nearSigmaShip: false,
     sigmaActionMode: '', // '' | 'NEED_PARTS' | 'INSTALL_PART' | 'LAUNCH'

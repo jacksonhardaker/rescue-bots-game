@@ -9,6 +9,7 @@ import {
 } from '../world/underground.js';
 import { resolveMoonCollisions, checkMoonBoulderStrike } from '../world/moon.js';
 import { setSpaceDestinationFromScreenPoint, clearSpaceWaypoint } from '../world/space.js';
+import { setUnderwaterDestinationFromScreenPoint } from '../world/underwater.js';
 import { getActivePlanetGravity, resolvePlanetSurfaceCollisions } from '../world/planetSurface.js';
 import { resolvePlanetCavernCollisions } from '../world/planetCaverns.js';
 import { handleSolarHubClick } from '../world/solarSystem.js';
@@ -336,6 +337,10 @@ waypointGroup.add(wpArrowCone);
                 setSpaceDestinationFromScreenPoint(clientX, clientY, playChime);
                 return;
             }
+            if (worldState.activeArea === 'UNDERWATER') {
+                setUnderwaterDestinationFromScreenPoint(clientX, clientY, playChime);
+                return;
+            }
             pointerNDC.x = (clientX / window.innerWidth) * 2 - 1;
             pointerNDC.y = -(clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(pointerNDC, camera);
@@ -484,6 +489,8 @@ waypointGroup.add(wpArrowCone);
                 target.closest('#planet-discovery-hud') ||
                 target.closest('#space-controls-bar') ||
                 target.closest('#space-hud-pill') ||
+                target.closest('#underwater-controls-bar') ||
+                target.closest('#underwater-hud-pill') ||
                 target.closest('#space-launch-banner') ||
                 target.closest('#cavern-hud-pill') ||
                 target.closest('#moon-hud-pill') ||

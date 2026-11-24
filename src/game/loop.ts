@@ -35,6 +35,7 @@ type LoopBuddyState = BuddyBotState & {
 import { renderer, scene, camera, sunLight, isMobileDevice } from '../rendering/scene.js';
 import { player, buddyBot, botRigs, input, worldState } from '../state/gameState.js';
 import { undergroundScene, updateUnderground, updateDrillTransition } from '../world/underground.js';
+import { underwaterScene, updateUnderwater, getNearestUnderwaterDiscovery } from '../world/underwater.js';
 import { spaceScene, updateSpace, updateSpaceLaunchTransition } from '../world/space.js';
 import { moonScene, updateMoon, getNearestMoonDiscovery } from '../world/moon.js';
 import { solarHubScene, updateSolarHub } from '../world/solarSystem.js';
@@ -55,7 +56,7 @@ import {
     craneInteractive, testYard, stuntHoopRigs,
     ferrisWheelPivot, ferrisGondolas, bwX, bwZ, babyDinos, amberSpire, drX, drZ, waywardEnergonShard
 } from '../world/buildings.js';
-import { getTerrainHeight, isNearWater } from '../world/terrain.js';
+import { getTerrainHeight, isNearWater, isPointInWater } from '../world/terrain.js';
 import { triggerNPCSpeech, showToast, activeSpeech } from '../ui/dialogs.js';
 import { progression, saveProgression, getRescueStarRank, lastKnownRankLevel, setLastKnownRankLevel, isBotDocked } from '../progression/progression.js';
 import {
@@ -211,9 +212,11 @@ function updateSpeechBubbleProjection(dt: number) {
             if (!_discoveryDistEl) _discoveryDistEl = document.getElementById('planet-discovery-dist');
             if (!_discoveryDotEl) _discoveryDotEl = document.getElementById('planet-discovery-dot');
 
-            const target = worldState.activeArea === 'MOON'
-                ? getNearestMoonDiscovery()
-                : (worldState.activeArea === 'PLANET_CAVERN' ? getNearestCavernDiscovery() : getNearestPlanetDiscovery());
+            const target = worldState.activeArea === 'UNDERWATER'
+                ? getNearestUnderwaterDiscovery()
+                : (worldState.activeArea === 'MOON'
+                    ? getNearestMoonDiscovery()
+                    : (worldState.activeArea === 'PLANET_CAVERN' ? getNearestCavernDiscovery() : getNearestPlanetDiscovery()));
 
             if (!target) {
                 if (_discoveryLabelEl) _discoveryLabelEl.textContent = 'ALL DISCOVERIES COMPLETE!';
@@ -304,8 +307,13 @@ function updateSpeechBubbleProjection(dt: number) {
                 hudWaterCheckTimer = 0;
                 if (player && (player.mode === 'VEHICLE' || player.botType === 'HIGHTIDE')) {
                     const near = isNearWater(player.pos.x, player.pos.z, 24.0);
-                    if (player._lastNearWater !== near) {
-                        player._lastNearWater = near;
+                    const inWaterNow = player.botType === 'HIGHTIDE' && isPointInWater(player.pos.x, player.pos.z);
+                    const combinedFlag = near || inWaterNow;
+                    const diveBtn = document.getElementById('btn-dive');
+                    const diveVisible = diveBtn ? !diveBtn.classList.contains('hidden') : false;
+                    const shouldShowDive = worldState.activeArea === 'SURFACE' && inWaterNow;
+                    if (player._lastNearWater !== combinedFlag || diveVisible !== shouldShowDive) {
+                        player._lastNearWater = combinedFlag;
                         syncHUDToActiveBot();
                     }
                 }
@@ -407,6 +415,14 @@ function updateSpeechBubbleProjection(dt: number) {
                 if (cavePrompt) cavePrompt.classList.toggle('hidden', !worldState.nearPlanetCaveEntrance);
                 updateSpeechBubbleProjection(dt);
                 if (renderer) renderer.render(moonScene, camera);
+                return;
+            }
+
+            if (worldState.activeArea === 'UNDERWATER') {
+                updateUnderwater(dt, now);
+                updatePlanetDiscoveryHUD(true);
+                updateSpeechBubbleProjection(dt);
+                if (renderer) renderer.render(underwaterScene, camera);
                 return;
             }
 

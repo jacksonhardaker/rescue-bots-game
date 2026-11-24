@@ -62,6 +62,10 @@ export interface ProgressionData {
     saturnBestLapSec: number | null;
     saturnRacesCompleted: number;
     saturnWins: number;
+    underwaterLandmarksFound: string[];
+    underwaterRelicsFound: string[];
+    underwaterMoroccoCalmed: boolean;
+    underwaterRingsCompleted: number;
     [key: string]: unknown;
 }
 
@@ -132,7 +136,11 @@ export const progression: ProgressionData = {
     spaceCometsCaught: 0,
     saturnBestLapSec: null,
     saturnRacesCompleted: 0,
-    saturnWins: 0
+    saturnWins: 0,
+    underwaterLandmarksFound: [],
+    underwaterRelicsFound: [],
+    underwaterMoroccoCalmed: false,
+    underwaterRingsCompleted: 0
 };
 
 export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED'];

@@ -1755,6 +1755,12 @@
             <span class="text-[9px] sm:text-[10px] font-bold tracking-wider uppercase mt-0.5" id="drill-label">DRILL</span>
         </button>
 
+        <!-- High Tide Deep-Sea Dive Button (Shown when High Tide is in Griffin Rock ocean water) -->
+        <button id="btn-dive" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-cyan-300 flex flex-col items-center justify-center text-white select-none cursor-pointer" style="background: linear-gradient(180deg, #0284c7 0%, #0f172a 100%) !important;" title="Dive Beneath Griffin Rock (Key: G)">
+            <span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center leading-none" id="dive-icon"></span>
+            <span class="text-[9px] sm:text-[10px] font-black tracking-wider uppercase mt-0.5" id="dive-label">DIVE</span>
+        </button>
+
         <!-- Extra Flight Descend Button (Shown when Blades is in Helicopter or Pterosaur Mode) -->
         <button id="btn-descend" class="hidden tactile-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-b from-slate-600 to-slate-800 border-2 border-cyan-300 flex flex-col items-center justify-center text-white select-none">
             <span class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center leading-none" id="descend-icon">
@@ -1893,6 +1899,37 @@
         <button id="space-return-earth-btn" class="tactile-btn px-4 py-2.5 rounded-2xl border-2 border-emerald-300 flex items-center gap-2 text-white font-black text-xs sm:text-sm cursor-pointer" style="background: linear-gradient(180deg, #10b981 0%, #047857 100%) !important;">
             <span id="space-earth-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
             <span>RETURN TO EARTH</span>
+        </button>
+    </div>
+
+    <!-- High Tide Deep-Sea Underwater Telemetry Pill -->
+    <div id="underwater-hud-pill" class="hidden pointer-events-auto" style="position: fixed; top: 72px; left: 50%; transform: translateX(-50%); z-index: 30;">
+        <div class="flex items-center gap-3 px-4 py-2 rounded-2xl border-2 border-cyan-400/70 shadow-2xl text-white text-xs font-extrabold select-none" style="background: rgba(6, 46, 74, 0.88); backdrop-filter: blur(8px);">
+            <span class="text-cyan-300">DEPTH <b id="uw-stat-depth" class="text-white mono-font">20m</b></span>
+            <span class="text-slate-400">•</span>
+            <span class="text-amber-300">SITES <b id="uw-stat-landmarks" class="text-white mono-font">0/5</b></span>
+            <span class="text-slate-400">•</span>
+            <span class="text-yellow-300">RELICS <b id="uw-stat-relics" class="text-white mono-font">0/5</b></span>
+            <span class="text-slate-400">•</span>
+            <span class="text-emerald-300">RINGS <b id="uw-stat-rings" class="text-white mono-font">0/8</b></span>
+        </div>
+    </div>
+
+    <!-- High Tide Deep-Sea 3D Underwater Controls Bar -->
+    <div id="underwater-controls-bar" class="hidden flex items-center gap-2 sm:gap-3 pointer-events-auto flex-wrap justify-center px-3" style="position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 30; max-width: 96vw;">
+        <button id="uw-sonar-btn" class="tactile-btn px-4 py-2.5 rounded-2xl border-2 border-cyan-300 flex items-center gap-2 text-white font-black text-xs sm:text-sm cursor-pointer" style="background: linear-gradient(180deg, #06b6d4 0%, #0e7490 100%) !important;">
+            <span id="uw-sonar-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
+            <span>SONAR (F)</span>
+        </button>
+        <button id="uw-boost-btn" class="tactile-btn px-4 py-2.5 rounded-2xl border-2 border-amber-300 flex items-center gap-2 text-white font-black text-xs sm:text-sm cursor-pointer" style="background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%) !important;">
+            <span>HYDRO BOOST</span>
+        </button>
+        <button id="uw-ascend-btn" class="tactile-btn px-3.5 py-2.5 rounded-2xl border-2 border-sky-300 text-white font-black text-xs cursor-pointer" style="background: linear-gradient(180deg, #0284c7 0%, #1e3a8a 100%) !important;">ASCEND (E)</button>
+        <button id="uw-descend-btn" class="tactile-btn px-3.5 py-2.5 rounded-2xl border-2 border-sky-300 text-white font-black text-xs cursor-pointer" style="background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%) !important;">DESCEND (Q)</button>
+        <button id="uw-transform-btn" class="tactile-btn px-4 py-2.5 rounded-2xl border-2 border-yellow-300 text-slate-950 font-black text-xs sm:text-sm cursor-pointer" style="background: linear-gradient(180deg, #facc15 0%, #eab308 100%) !important;">TRANSFORM</button>
+        <button id="uw-surface-btn" class="tactile-btn px-4 py-2.5 rounded-2xl border-2 border-emerald-300 flex items-center gap-2 text-white font-black text-xs sm:text-sm cursor-pointer" style="background: linear-gradient(180deg, #10b981 0%, #047857 100%) !important;">
+            <span id="uw-surface-icon" class="w-6 h-6 flex items-center justify-center shrink-0"></span>
+            <span>SURFACE</span>
         </button>
     </div>
 

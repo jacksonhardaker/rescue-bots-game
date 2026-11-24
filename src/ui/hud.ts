@@ -10,6 +10,10 @@ import { player, worldState } from '../state/gameState.js';
 import { sfx } from '../audio/soundFX.js';
 import { SVG_ICONS } from './icons.js';
 import { triggerBoulderDrillTransition, exitUndergroundViaShaft, swapToSurface, triggerSigmaCavernAction } from '../world/underground.js';
+import {
+    enterUnderwaterWorld, exitUnderwaterWorld, triggerUnderwaterSonar,
+    triggerUnderwaterBoost, setUnderwaterTouchControl
+} from '../world/underwater.js';
 import { enterActivePlanetCave } from '../world/planetSurface.js';
 import { enterMoonCave } from '../world/moon.js';
 import { exitPlanetCavernToSurface } from '../world/planetCaverns.js';
@@ -54,6 +58,17 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('btn-descend', triggerDescendAction);
         bindButton('btn-siren', toggleSiren);
         bindButton('btn-drill', triggerBoulderDrillTransition);
+        bindButton('btn-dive', enterUnderwaterWorld);
+        bindButton('uw-sonar-btn', triggerUnderwaterSonar);
+        bindButton('uw-boost-btn', triggerUnderwaterBoost);
+        bindButton('uw-transform-btn', triggerTransform);
+        bindButton('uw-surface-btn', exitUnderwaterWorld);
+        const uwSonarIcon = document.getElementById('uw-sonar-icon');
+        if (uwSonarIcon) uwSonarIcon.innerHTML = SVG_ICONS.SONAR_WAVE;
+        const uwSurfaceIcon = document.getElementById('uw-surface-icon');
+        if (uwSurfaceIcon) uwSurfaceIcon.innerHTML = SVG_ICONS.SURFACE_UP;
+        const diveIcon = document.getElementById('dive-icon');
+        if (diveIcon) diveIcon.innerHTML = SVG_ICONS.DIVE_DOWN;
         bindButton('btn-cavern-exit', exitUndergroundViaShaft);
         bindButton('btn-planet-cave-enter', () => {
             if (worldState.activeArea === 'MOON') enterMoonCave();
@@ -145,6 +160,8 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         };
         bindHold('space-climb-up-btn', () => setSpaceTouchControl('climb', 1), () => setSpaceTouchControl('climb', 0));
         bindHold('space-climb-dn-btn', () => setSpaceTouchControl('climb', -1), () => setSpaceTouchControl('climb', 0));
+        bindHold('uw-ascend-btn', () => setUnderwaterTouchControl('ascend', 1), () => setUnderwaterTouchControl('ascend', 0));
+        bindHold('uw-descend-btn', () => setUnderwaterTouchControl('descend', 1), () => setUnderwaterTouchControl('descend', 0));
         bindHold('saturn-left-btn', () => setSaturnRaceTouch('LEFT', true), () => setSaturnRaceTouch('LEFT', false));
         bindHold('saturn-right-btn', () => setSaturnRaceTouch('RIGHT', true), () => setSaturnRaceTouch('RIGHT', false));
         bindButton('btn-dock', () => {
@@ -201,6 +218,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
                 return;
             }
             if (worldState.activeArea === 'UNDERGROUND') swapToSurface(true);
+            if (worldState.activeArea === 'UNDERWATER') exitUnderwaterWorld();
             player.pos.set(HQ_SWAP_PAD.x, getTerrainHeight(HQ_SWAP_PAD.x, HQ_SWAP_PAD.z) + 0.5, HQ_SWAP_PAD.z);
             player.heading = 0;
             player.speed = 0;
@@ -276,6 +294,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
 
         bindButton('btn-reset', () => {
             if (worldState.activeArea === 'UNDERGROUND') swapToSurface(true);
+            if (worldState.activeArea === 'UNDERWATER') exitUnderwaterWorld();
             player.pos.set(HQ_SWAP_PAD.x, 5, HQ_SWAP_PAD.z);
             player.heading = 0;
             player.speed = 0;
