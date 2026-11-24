@@ -202,6 +202,9 @@ export function handleTacticalMapTap(clientX: number, clientY: number) {
                                 const pt = m.beaconRing ? m.landingPos : m.pos;
                                 checkSnap(pt.x, pt.y, pt.z, m.name, 55);
                             });
+                            if (sp.saturnRaceGatePos) {
+                                checkSnap(sp.saturnRaceGatePos.x, sp.saturnRaceGatePos.y, sp.saturnRaceGatePos.z, 'Saturn Ring Grand Prix Gate', 55);
+                            }
                         }
                         checkSnap(sp.stationPos.x, sp.stationPos.y, sp.stationPos.z, 'Autobot Orbital Station', 55);
                         sp.satellites?.forEach(s => { if (!s.repaired) checkSnap(s.pos.x, s.pos.y, s.pos.z, s.name, 42); });
@@ -748,6 +751,12 @@ function ensureMinimapBgCache(w: number, h: number) {
                                 ctx.stroke();
                             }
                         });
+                        if (sp.saturnRaceGatePos) {
+                            ctx.fillStyle = '#facc15';
+                            ctx.beginPath();
+                            ctx.arc(cx + sp.saturnRaceGatePos.x * sc, cy + sp.saturnRaceGatePos.z * sc, 5.5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
                     }
                     // Autobot Orbital Station
                     ctx.fillStyle = '#4ade80';
@@ -1295,6 +1304,9 @@ function ensureMinimapBgCache(w: number, h: number) {
                                 drawPin(m.landingPos.x, m.landingPos.z, 7, '#fbbf24', `LAND ON ${m.id}`);
                             }
                         });
+                        if (sp.saturnRaceGatePos) {
+                            drawPin(sp.saturnRaceGatePos.x, sp.saturnRaceGatePos.z, 10, '#facc15', 'SATURN RING GRAND PRIX');
+                        }
                     }
 
                     // Autobot Orbital Station

@@ -21,7 +21,6 @@ export type SolarDestinationId =
     | 'MARS'
     | 'JUPITER'
     | 'SATURN'
-    | 'TITAN'
     | 'URANUS'
     | 'NEPTUNE'
     | 'PLUTO';
@@ -131,31 +130,16 @@ export const SOLAR_DESTINATIONS: SolarDestinationDef[] = [
     {
         id: 'SATURN',
         name: 'Saturn',
-        badge: 'RING GRAND PRIX',
+        badge: 'ORBIT + TITAN + RING RACE',
         badgeColor: '#eab308',
-        gravity: 'Ring Circuit Track',
-        description: 'Race around Saturn in Vehicle Mode (or transform anytime!) on its shimmering icy rings! Dodge ice rocks and sprint through 12 Turbo Gates!',
+        gravity: 'Ring Track & 0.20G Moon',
+        description: 'Patrol Saturn’s gleaming rings! Fly to the Ring Grand Prix gate to race, or land on golden-amber moon Titan!',
         iconKey: 'PLANET_SATURN',
         orbitRadius: 132,
         orbitSpeed: 0.075,
         startAngle: 2.65,
         radius: 7.8,
         color: 0xeab308
-    },
-    {
-        id: 'TITAN',
-        name: 'Titan',
-        badge: 'LANDABLE MOON',
-        badgeColor: '#f59e0b',
-        gravity: '0.20G Golden Dunes',
-        description: 'Saturn’s giant hazy amber moon! Surf cryo-methane vents, scan monoliths, and explore amber crystal caverns!',
-        iconKey: 'PLANET_TITAN',
-        orbitRadius: 15.0,
-        orbitSpeed: 0.65,
-        startAngle: 1.2,
-        radius: 2.5,
-        color: 0xf59e0b,
-        parentId: 'SATURN'
     },
     {
         id: 'URANUS',
@@ -464,7 +448,7 @@ export function renderSolarHubUI() {
     if (warpLabel) {
         warpLabel.textContent = def.id === 'EARTH'
             ? 'RETURN TO GRIFFIN ROCK'
-            : (def.id === 'SATURN' ? 'RACE ON SATURN RINGS' : `WARP TO ${def.name.toUpperCase()}`);
+            : `WARP TO ${def.name.toUpperCase()}`;
     }
     if (warpBtn) {
         (warpBtn as HTMLButtonElement).disabled = _warpState.active;
@@ -598,7 +582,7 @@ function finishWarpToDestination(destId: SolarDestinationId) {
     } else if (destId === 'NEPTUNE') {
         swapToSpace(false, 'NEPTUNE');
     } else if (destId === 'SATURN') {
-        swapToSaturnRace();
+        swapToSpace(false, 'SATURN');
     } else {
         swapToPlanetSurface(destId as LandablePlanetId, null);
     }

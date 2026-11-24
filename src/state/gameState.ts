@@ -65,7 +65,7 @@ export const player: PlayerState = {
 export const worldState: WorldState = {
     activeArea: 'SURFACE', // 'SURFACE' | 'UNDERGROUND' | 'SOLAR_HUB' | 'SPACE' | 'MOON' | 'PLANET_SURFACE' | 'SATURN_RING_RACE'
     activePlanetId: 'MOON', // 'MOON' | 'MERCURY' | 'VENUS' | 'EARTH' | 'MARS' | 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE' | 'PLUTO' | 'EUROPA' | 'MIRANDA' | 'TRITON'
-    activeSpaceSector: 'MOON_ORBIT', // 'MOON_ORBIT' | 'JUPITER' | 'URANUS' | 'NEPTUNE'
+    activeSpaceSector: 'MOON_ORBIT', // 'MOON_ORBIT' | 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE'
     planetReturnSector: null as string | null, // If landed on Europa/Miranda/Triton, returns to that giant's orbit
     savedSurfacePos: new THREE.Vector3(0, 5, -15),
     savedSurfaceHeading: 0,

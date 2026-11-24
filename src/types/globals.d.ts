@@ -49,6 +49,7 @@ declare global {
       ship: { pos: THREE.Vector3; yaw: number; activeRingIdx: number; waypoint: THREE.Vector3; hasWaypoint: boolean };
       moonPos: THREE.Vector3;
       moonLandingPos?: THREE.Vector3;
+      saturnRaceGatePos?: THREE.Vector3 | null;
       stationPos: THREE.Vector3;
       moroccoStation?: { pos: THREE.Vector3; hp: number; maxHp: number; defeated: boolean };
       asteroids?: Array<{ alive: boolean; pos: THREE.Vector3 }>;

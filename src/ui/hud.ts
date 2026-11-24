@@ -18,7 +18,7 @@ import {
     setSpaceTouchControl, landOnActiveSectorMoon, openSolarSystemHub, swapToSpace
 } from '../world/space.js';
 import { launchWarpToSelected, swapToSolarHub } from '../world/solarSystem.js';
-import { setSaturnRaceTouch, triggerSaturnRaceBoost, resetSaturnRace } from '../world/saturnRace.js';
+import { swapToSaturnRace, setSaturnRaceTouch, triggerSaturnRaceBoost, resetSaturnRace } from '../world/saturnRace.js';
 import { openGalacticLogModal, closeGalacticLogModal } from './galacticLog.js';
 
 import { HQ_SWAP_PAD } from '../world/buildings.js';
@@ -113,6 +113,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('space-fire-btn', fireSigmaCannons);
         bindButton('space-boost-btn', triggerSpaceBoost);
         bindButton('space-land-moon-btn', () => landOnActiveSectorMoon());
+        bindButton('space-ring-race-btn', () => swapToSaturnRace());
         bindButton('space-solar-map-btn', () => openSolarSystemHub());
         bindButton('space-return-earth-btn', () => startSpaceTransition('TO_EARTH'));
         bindButton('moon-orbit-btn', () => {
@@ -125,6 +126,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('planet-solar-btn', () => openSolarSystemHub());
         bindButton('moon-earth-btn', () => startSpaceTransition('TO_EARTH'));
         bindButton('btn-solar-warp', () => launchWarpToSelected());
+        bindButton('saturn-orbit-btn', () => swapToSpace(true, 'SATURN'));
         bindButton('saturn-solar-btn', () => openSolarSystemHub());
         bindButton('saturn-restart-btn', () => resetSaturnRace());
         bindButton('saturn-transform-btn', () => triggerTransform());

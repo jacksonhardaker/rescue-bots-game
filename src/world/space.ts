@@ -11,6 +11,7 @@ import { progression, saveProgression } from '../progression/progression.js';
 import { buildCrashedSpaceshipSigma, type SigmaAnimatedEntry } from './spaceshipSigma.js';
 import { swapToMoon, updateMoonHUD } from './moon.js';
 import { swapToPlanetSurface, LandablePlanetId } from './planetSurface.js';
+import { swapToSaturnRace } from './saturnRace.js';
 import { swapToSurface, setSigmaLaunchHandler, updateCavernHUD } from './underground.js';
 import { sfx } from '../audio/soundFX.js';
 import { showToast, triggerNPCSpeech, type SpeechTarget } from '../ui/dialogs.js';
@@ -24,6 +25,7 @@ export const SPACE_MOON_POS = new THREE.Vector3(0, 45, -320);
 export const SPACE_MOON_LANDING_POS = new THREE.Vector3(0, 45, -238);
 export const SPACE_STATION_POS = new THREE.Vector3(190, 22, -70);
 export const SPACE_MOROCCO_POS = new THREE.Vector3(-195, 38, -165);
+export const SPACE_SATURN_RACE_GATE_POS = new THREE.Vector3(185, 38, -165);
 
 interface MoroccoRelay {
     group: THREE.Group;
@@ -234,7 +236,7 @@ let _spaceWaypointGroup: THREE.Group | null = null;
 let _spaceWaypointLockedToTarget = false;
 let _solarHubHandler: (() => void) | null = null;
 
-export type SpaceSectorId = 'MOON_ORBIT' | 'JUPITER' | 'URANUS' | 'NEPTUNE';
+export type SpaceSectorId = 'MOON_ORBIT' | 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE';
 
 interface SectorMoonRuntime {
     id: string;
@@ -764,6 +766,10 @@ function repositionStarRingsForSector(sectorId: SpaceSectorId) {
             [0, 28, 30], [-105, 42, -45], [-165, 52, -135], [-92, 54, -225],
             [0, 52, -238], [115, 58, -195], [165, 48, -110], [82, 30, 15]
         ],
+        SATURN: [
+            [0, 28, 32], [-100, 40, -45], [-155, 50, -130], [-85, 56, -215],
+            [15, 54, -230], [115, 52, -185], [150, 44, -95], [78, 28, 18]
+        ],
         URANUS: [
             [0, 28, 35], [-68, 56, -40], [-125, 84, -125], [-54, 70, -210],
             [48, 35, -225], [122, 12, -135], [88, 18, -35], [40, 22, 55]
@@ -800,7 +806,7 @@ export function setLaunchBanner(visible: boolean, title = '', subtitle = '') {
     }
 }
 
-function createGiantTexture(kind: 'JUPITER' | 'URANUS' | 'NEPTUNE'): THREE.CanvasTexture {
+function createGiantTexture(kind: 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE'): THREE.CanvasTexture {
     const c = document.createElement('canvas');
     c.width = 512;
     c.height = 256;
@@ -816,6 +822,12 @@ function createGiantTexture(kind: 'JUPITER' | 'URANUS' | 'NEPTUNE'): THREE.Canva
         ctx.beginPath(); ctx.ellipse(290, 152, 48, 26, -0.06, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#fef3c7'; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.ellipse(290, 152, 52, 30, -0.06, 0, Math.PI * 2); ctx.stroke();
+    } else if (kind === 'SATURN') {
+        const bands = ['#a16207', '#fef08a', '#eab308', '#fde047', '#ca8a04', '#fef9c3', '#b45309'];
+        bands.forEach((col, i) => {
+            ctx.fillStyle = col;
+            ctx.fillRect(0, (i / bands.length) * 256, 512, 256 / bands.length + 2);
+        });
     } else if (kind === 'URANUS') {
         const grad = ctx.createLinearGradient(0, 0, 0, 256);
         grad.addColorStop(0, '#a5f3fc');
@@ -842,9 +854,14 @@ function createGiantTexture(kind: 'JUPITER' | 'URANUS' | 'NEPTUNE'): THREE.Canva
     return new THREE.CanvasTexture(c);
 }
 
+let _saturnRaceGateGroup: THREE.Group | null = null;
+let _saturnRaceRingMesh: THREE.Mesh | null = null;
+let _nearSaturnRaceGate = false;
+
 function configureSpaceSector(sectorId: SpaceSectorId) {
     _activeSectorId = sectorId;
     worldState.activeSpaceSector = sectorId;
+    _nearSaturnRaceGate = false;
     const isMoonOrbit = sectorId === 'MOON_ORBIT';
 
     if (_spaceEarthGroup) _spaceEarthGroup.visible = isMoonOrbit;
@@ -861,6 +878,8 @@ function configureSpaceSector(sectorId: SpaceSectorId) {
         spaceScene.remove(_sectorBackdropGroup);
         _sectorBackdropGroup = null;
     }
+    _saturnRaceGateGroup = null;
+    _saturnRaceRingMesh = null;
     _sectorMoons.length = 0;
 
     if (isMoonOrbit) {
@@ -931,6 +950,56 @@ function configureSpaceSector(sectorId: SpaceSectorId) {
         addSectorMoon('EUROPA', 'Europa (Water Planet)', new THREE.Vector3(0, 45, -295), 42, 0x38bdf8, 'EUROPA');
         addSectorMoon('GANYMEDE', 'Ganymede (Giant Moon)', new THREE.Vector3(215, 56, -180), 48, 0xcbd5e1, 'GANYMEDE');
         addSectorMoon('CALLISTO', 'Callisto (Crater Moon)', new THREE.Vector3(-165, 22, 130), 38, 0x94a3b8, null);
+    } else if (sectorId === 'SATURN') {
+        // Giant golden-amber ringed Saturn backdrop
+        _giantBackdropPos.set(0, -290, -105);
+        _giantBackdropRadius = 185;
+        const sat = new THREE.Mesh(
+            new THREE.SphereGeometry(_giantBackdropRadius, 36, 28),
+            new THREE.MeshBasicMaterial({ map: createGiantTexture('SATURN') })
+        );
+        sat.position.copy(_giantBackdropPos);
+        const outerRing = new THREE.Mesh(
+            new THREE.RingGeometry(230, 345, 72),
+            new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.42, side: THREE.DoubleSide })
+        );
+        outerRing.position.copy(_giantBackdropPos);
+        outerRing.rotation.set(Math.PI * 0.44, 0.12, -0.1);
+        const innerRing = new THREE.Mesh(
+            new THREE.RingGeometry(205, 226, 64),
+            new THREE.MeshBasicMaterial({ color: 0xfef08a, transparent: true, opacity: 0.28, side: THREE.DoubleSide })
+        );
+        innerRing.position.copy(_giantBackdropPos);
+        innerRing.rotation.copy(outerRing.rotation);
+        _sectorBackdropGroup.add(sat, outerRing, innerRing);
+
+        // Saturn's giant hazy amber moon Titan (Landable!)
+        addSectorMoon('TITAN', 'Titan (Golden Dunes Moon)', new THREE.Vector3(-190, 44, -175), 42, 0xf59e0b, 'TITAN');
+
+        // Saturn Ring Grand Prix Portal Gate (East Ring Sector)
+        const gateGrp = new THREE.Group();
+        gateGrp.position.copy(SPACE_SATURN_RACE_GATE_POS);
+        const gateTorus = new THREE.Mesh(
+            new THREE.TorusGeometry(20, 1.8, 12, 36),
+            new THREE.MeshBasicMaterial({ color: 0xfacc15 })
+        );
+        const gateInner = new THREE.Mesh(
+            new THREE.TorusGeometry(15.5, 0.85, 8, 32),
+            new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+        );
+        const gateCore = new THREE.Mesh(
+            new THREE.CircleGeometry(14.5, 28),
+            new THREE.MeshBasicMaterial({ color: 0xfde047, transparent: true, opacity: 0.22, side: THREE.DoubleSide })
+        );
+        const gateBeam = new THREE.Mesh(
+            new THREE.CylinderGeometry(2.2, 4.5, 95, 12, 1, true),
+            new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+        );
+        gateBeam.position.y = 42;
+        gateGrp.add(gateTorus, gateInner, gateCore, gateBeam);
+        _sectorBackdropGroup.add(gateGrp);
+        _saturnRaceGateGroup = gateGrp;
+        _saturnRaceRingMesh = gateTorus;
     } else if (sectorId === 'URANUS') {
         // Tilted pale-cyan Uranus with dramatic vertical translucent rings
         _giantBackdropPos.set(0, -275, -110);
@@ -1028,6 +1097,13 @@ export function updateSpaceHUD() {
         moonLandBtn.classList.toggle('ring-2', Boolean(worldState.nearMoonLanding));
         moonLandBtn.classList.toggle('ring-cyan-300', Boolean(worldState.nearMoonLanding));
     }
+
+    const ringRaceBtn = document.getElementById('space-ring-race-btn');
+    if (ringRaceBtn) {
+        ringRaceBtn.classList.toggle('hidden', !(isSpace && _activeSectorId === 'SATURN'));
+        ringRaceBtn.classList.toggle('ring-2', _nearSaturnRaceGate);
+        ringRaceBtn.classList.toggle('ring-yellow-300', _nearSaturnRaceGate);
+    }
 }
 
 export function swapToSpace(fromMoon = false, sectorId: SpaceSectorId = 'MOON_ORBIT') {
@@ -1101,6 +1177,7 @@ export function swapToSpace(fromMoon = false, sectorId: SpaceSectorId = 'MOON_OR
     const zEl = document.getElementById('zone-label');
     if (zEl) {
         if (sectorId === 'JUPITER') zEl.textContent = 'JUPITER ORBIT — GALILEAN MOONS';
+        else if (sectorId === 'SATURN') zEl.textContent = 'SATURN ORBIT — RINGS & TITAN SECTOR';
         else if (sectorId === 'URANUS') zEl.textContent = 'URANUS ORBIT — VERTICAL RINGS';
         else if (sectorId === 'NEPTUNE') zEl.textContent = 'NEPTUNE ORBIT — TRITON SECTOR';
         else zEl.textContent = 'GRIFFIN ROCK ORBIT — THE MOON';
@@ -1115,6 +1192,11 @@ export function swapToSpace(fromMoon = false, sectorId: SpaceSectorId = 'MOON_OR
         showToast(
             'JUPITER ORBIT — GAS GIANT SECTOR!',
             'Explore Io, Europa, Ganymede & Callisto! Jupiter is a gas giant (no landing), but you can land on EUROPA!'
+        );
+    } else if (sectorId === 'SATURN') {
+        showToast(
+            'SATURN ORBIT — RING GRAND PRIX & TITAN!',
+            'Fly to the Golden Ring Gate (East) to race Saturn’s rings, or fly to TITAN (West) to land!'
         );
     } else if (sectorId === 'URANUS') {
         showToast(
@@ -1186,6 +1268,9 @@ export function setSpaceDestinationFromScreenPoint(clientX: number, clientY: num
         _sectorMoons.forEach(m => {
             considerTarget(m.beaconRing ? m.landingPos : m.pos, m.radius + 16);
         });
+        if (_activeSectorId === 'SATURN') {
+            considerTarget(SPACE_SATURN_RACE_GATE_POS, 46);
+        }
     }
     considerTarget(SPACE_STATION_POS, 42);
     const activeRing = _starRings[sigmaShip.activeRingIdx];
@@ -1732,6 +1817,24 @@ export function updateSpace(dt: number, now: number) {
                 return;
             }
         }
+        if (_activeSectorId === 'SATURN') {
+            if (_saturnRaceGateGroup) {
+                _saturnRaceGateGroup.rotation.y += dt * 0.7;
+            }
+            if (_saturnRaceRingMesh) {
+                _saturnRaceRingMesh.scale.setScalar(1.0 + Math.sin(nowSec * 3.5) * 0.08);
+            }
+            const distRace = sigmaShip.pos.distanceTo(SPACE_SATURN_RACE_GATE_POS);
+            const nearRace = distRace < 65;
+            if (_nearSaturnRaceGate !== nearRace) {
+                _nearSaturnRaceGate = nearRace;
+                updateSpaceHUD();
+            }
+            if (distRace < 22) {
+                swapToSaturnRace();
+                return;
+            }
+        }
         // Track Uranus moons visited when flying near Miranda or Titania
         if (_activeSectorId === 'URANUS') {
             _sectorMoons.forEach((m) => {
@@ -2023,6 +2126,7 @@ export function getSpaceMapData() {
         ship: sigmaShip,
         moonPos: SPACE_MOON_POS,
         moonLandingPos: SPACE_MOON_LANDING_POS,
+        saturnRaceGatePos: _activeSectorId === 'SATURN' ? SPACE_SATURN_RACE_GATE_POS : null,
         stationPos: SPACE_STATION_POS,
         moroccoStation: _moroccoStation,
         asteroids: _asteroids,

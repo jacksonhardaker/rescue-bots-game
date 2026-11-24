@@ -37,8 +37,7 @@ export function renderGalacticLogModal() {
         if (d.id === 'EARTH') statLine = 'Griffin Rock HQ';
         else if (d.id === 'MOON') statLine = `Relics: ${moonRelics.length}/5 • Caverns: ${cavRelics.includes('CAV_MOON_1') ? '1/1' : '0/1'}`;
         else if (d.id === 'JUPITER') statLine = `Moons: ${jupMoons.length}/4 • Europa Water: ${countRelicsFor('EUROPA')}/3`;
-        else if (d.id === 'SATURN') statLine = `Best Lap: ${bestLap} • Wins: ${saturnWins}`;
-        else if (d.id === 'TITAN') statLine = `Relics: ${countRelicsFor('TITAN')}/3 • Caverns: ${cavRelics.includes('CAV_TITAN_1') ? '1/1' : '0/1'}`;
+        else if (d.id === 'SATURN') statLine = `Titan: ${countRelicsFor('TITAN')}/3 • Best Lap: ${bestLap} • Wins: ${saturnWins}`;
         else if (d.id === 'URANUS') statLine = `Miranda: ${countRelicsFor('MIRANDA')}/3 • Titania: ${countRelicsFor('TITANIA')}/3`;
         else if (d.id === 'NEPTUNE') statLine = `Triton Relics: ${countRelicsFor('TRITON')}/3`;
         else statLine = `Relics: ${countRelicsFor(d.id)}/3 • Caverns: ${cavRelics.includes(`CAV_${d.id}_1`) ? '1/1' : '0/1'}`;
