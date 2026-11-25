@@ -215,12 +215,13 @@ export function initBuildings(scene?: THREE.Scene) {
     mergeStaticMeshesInGroup(hospitalGroup, [hospitalDropRing, ...hospitalBayStrobes, ...hospitalHelipadBeacons]);
     s.add(hospitalGroup);
     registerCullableObject(hospitalGroup, HOSPITAL_POS.x, hospY + 22, HOSPITAL_POS.z, 76);
-    // Wing colliders around main tower & Ambulance Bay outer walls — keeping Ambulance Bay & Drop-Off 100% open!
-    worldColliders.push({ x: HOSPITAL_POS.x + 2, z: HOSPITAL_POS.z - 2, r: 10.5 });
-    worldColliders.push({ x: HOSPITAL_POS.x + 15, z: HOSPITAL_POS.z - 2, r: 10.5 });
-    worldColliders.push({ x: HOSPITAL_POS.x - 24.5, z: HOSPITAL_POS.z, r: 2.2 });
-    worldColliders.push({ x: HOSPITAL_POS.x - 24.5, z: HOSPITAL_POS.z + 10, r: 2.2 });
-    worldColliders.push({ x: HOSPITAL_POS.x - 16, z: HOSPITAL_POS.z - 11.5, r: 3.0 });
+    // Solid gap-free AABB wall colliders around Main Hospital Wing, Ambulance Bay outer walls, and ER Canopy pillars —
+    // keeping the open-front Ambulance Bay (x = -16, z = +2) and ER Drop-Off Pad (x = +6, z = +22) 100% open & driveable!
+    worldColliders.push({ x: HOSPITAL_POS.x + 8, z: HOSPITAL_POS.z - 2, r: 16.5, halfW: 16.5, halfD: 13.5, type: 'BUILDING' });
+    worldColliders.push({ x: HOSPITAL_POS.x - 16, z: HOSPITAL_POS.z - 11.2, r: 8.4, halfW: 8.4, halfD: 1.1, type: 'BUILDING' });
+    worldColliders.push({ x: HOSPITAL_POS.x - 24.2, z: HOSPITAL_POS.z, r: 11.2, halfW: 1.1, halfD: 11.2, type: 'BUILDING' });
+    worldColliders.push({ x: HOSPITAL_POS.x - 0.6, z: HOSPITAL_POS.z + 16.2, r: 0.75, type: 'BUILDING' });
+    worldColliders.push({ x: HOSPITAL_POS.x + 12.6, z: HOSPITAL_POS.z + 16.2, r: 0.75, type: 'BUILDING' });
 
     // =========================================================================
     // 5A-2. FIREHOUSE ROBO-WASH (Interactive Drive-Through Car Wash Bay)

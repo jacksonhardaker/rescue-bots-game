@@ -111,7 +111,7 @@ import { humanNPCs, vehicleNPCs } from '../state/gameState.js';
 import { beacons, activeParticles } from '../world/emergencies.js';
 import { getBotScale } from '../bots/botRigs.js';
 import { getBotHiddenVehicleMode, isBotFlyingHiddenVehicle } from '../bots/botMeta.js';
-import { islandTrain } from '../world/railway.js';
+import { islandTrain, findNearestRailwayPoint, getRailwayPoseAtDist, railwayTotalDist } from '../world/railway.js';
 import { sunLight } from '../rendering/scene.js';
 import { speakClosestDisasterForNPC } from '../world/npcs.js';
 import { triggerPrimaryAction, checkHitMorBotWithSpecialAbility } from './player.js';
@@ -343,12 +343,27 @@ waypointGroup.add(wpArrowCone);
                 setUnderwaterDestinationFromScreenPoint(clientX, clientY, playChime);
                 return;
             }
+            if (worldState.activeArea === 'RAIL_TUNNEL') {
+                return;
+            }
             pointerNDC.x = (clientX / window.innerWidth) * 2 - 1;
             pointerNDC.y = -(clientY / window.innerHeight) * 2 + 1;
             raycaster.setFromCamera(pointerNDC, camera);
 
             const hitPoint = intersectRayWithTerrain(raycaster.ray, _rayHitPoint);
             if (!hitPoint) return;
+
+            // When Toreinbotto is clamped on Griffin Rock's railway tracks, project tap directly onto the track loop!
+            if (worldState.activeArea === 'SURFACE' && player.botType === 'TOREINBOTTO' && player.mode === 'VEHICLE' && player.onRailwayTrack) {
+                const nearestRail = findNearestRailwayPoint(hitPoint.x, hitPoint.z);
+                const railY = getSurfaceHeight(nearestRail.x, nearestRail.z) + 0.35;
+                player.waypoint.set(nearestRail.x, railY, nearestRail.z);
+                player.hasWaypoint = true;
+                waypointGroup.position.set(nearestRail.x, railY, nearestRail.z);
+                waypointGroup.visible = true;
+                if (playChime) sfx.playWaypointTap();
+                return;
+            }
 
             const isUndergroundTap = worldState.activeArea === 'UNDERGROUND' || worldState.activeArea === 'PLANET_CAVERN';
             const isPlanetTap = worldState.activeArea === 'PLANET_SURFACE' || worldState.activeArea === 'MOON';
@@ -502,6 +517,8 @@ waypointGroup.add(wpArrowCone);
                 target.closest('#planet-solar-btn') ||
                 target.closest('#sigma-action-btn') ||
                 target.closest('#patient-transport-hud') ||
+                target.closest('#rail-tunnel-hud') ||
+                target.closest('#btn-enter-tunnel') ||
                 target.closest('#minimap-container')
             );
         }
@@ -726,9 +743,17 @@ waypointGroup.add(wpArrowCone);
                 }
             }
 
+            if (player.railTunnelCooldown && player.railTunnelCooldown > 0) {
+                player.railTunnelCooldown = Math.max(0, player.railTunnelCooldown - dt);
+            }
+            if (player.railWhistleCooldown && player.railWhistleCooldown > 0) {
+                player.railWhistleCooldown = Math.max(0, player.railWhistleCooldown - dt);
+            }
+
+            const isToreinbottoOnRail = worldState.activeArea === 'SURFACE' && player.botType === 'TOREINBOTTO' && player.mode === 'VEHICLE' && Boolean(player.onRailwayTrack);
             const hiddenVehCfg = getBotHiddenVehicleMode(player.botType);
             const isHiddenVehicle = player.mode === 'HIDDEN_VEHICLE' && Boolean(hiddenVehCfg);
-            const isAmphibiousVehicle = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE');
+            const isAmphibiousVehicle = (player.botType !== 'HIGHTIDE' && !isToreinbottoOnRail && player.mode === 'VEHICLE');
             const isWaterBoat = isAmphibiousVehicle && ((player.boatMorph || 0) > 0.05 || (player.targetBoatMorph || 0) > 0.05 || isPointInWater(player.pos.x, player.pos.z));
             const isFlyingCopter = (
                 (player.botType === 'BLADES' && player.mode === 'DINO') ||
@@ -746,11 +771,12 @@ waypointGroup.add(wpArrowCone);
             if (isHiddenVehicle && hiddenVehCfg) {
                 maxSpeed = hasBoost ? hiddenVehCfg.boostSpeed : hiddenVehCfg.maxSpeed;
             } else if (player.mode === 'VEHICLE') {
-                const inBoatMode = (player.boatMorph || 0) > 0.3 || (player.targetBoatMorph || 0) > 0.5 || isPointInWater(player.pos.x, player.pos.z);
+                const inBoatMode = !isToreinbottoOnRail && ((player.boatMorph || 0) > 0.3 || (player.targetBoatMorph || 0) > 0.5 || isPointInWater(player.pos.x, player.pos.z));
                 if (inBoatMode) {
                     if (player.botType === 'BLURR') maxSpeed = hasBoost ? 92 : 76;
                     else if (player.botType === 'STARSPEED') maxSpeed = hasBoost ? 90 : 74; // Cosmic Jet Ski!
                     else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 88 : 72;
+                    else if (player.botType === 'TOREINBOTTO') maxSpeed = hasBoost ? 88 : 72; // Express Rail-Ferry Catamaran!
                     else if (player.botType === 'BUMBLEBEE') maxSpeed = hasBoost ? 86 : 70;
                     else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 82 : 66;
                     else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 80 : 64;
@@ -760,7 +786,8 @@ waypointGroup.add(wpArrowCone);
                     else if (player.botType === 'SALVAGE') maxSpeed = hasBoost ? 66 : 50;
                     else maxSpeed = hasBoost ? 64 : 48; // Boulder
                 } else {
-                    if (player.botType === 'BLURR') maxSpeed = hasBoost ? 88 : (onRoad ? 72 : 54);
+                    if (player.botType === 'TOREINBOTTO') maxSpeed = hasBoost ? 96 : 72; // Shinkansen Express Bullet Train!
+                    else if (player.botType === 'BLURR') maxSpeed = hasBoost ? 88 : (onRoad ? 72 : 54);
                     else if (player.botType === 'STARSPEED') maxSpeed = hasBoost ? 88 : (onRoad ? 68 : 64); // Dirt Bike shreds off-road!
                     else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 86 : (isFlyingCopter ? 74 : (onRoad ? 68 : 50));
                     else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 82 : 62; // Hydro-thruster submarine
@@ -778,6 +805,7 @@ waypointGroup.add(wpArrowCone);
                 if (player.botType === 'BLURR') maxSpeed = hasBoost ? 86 : 68; // Gallimimus supersonic sprint!
                 else if (player.botType === 'STARSPEED') maxSpeed = hasBoost ? 84 : 66; // Spinosaurus cosmic sprint!
                 else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 82 : 64; // Dilophosaur stealth sprint
+                else if (player.botType === 'TOREINBOTTO') maxSpeed = hasBoost ? 84 : 64; // Parasaurolophus sonic sprint!
                 else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 80 : 62; // Plesiosaur marine glide
                 else if (player.botType === 'SALVAGE') maxSpeed = hasBoost ? 62 : 44; // Ankylosaur armored march
                 else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 80 : 64; // Pterosaur flight
@@ -794,8 +822,30 @@ waypointGroup.add(wpArrowCone);
 
             const turnRate = isFlyingCopter ? 3.2 : (player.mode === 'VEHICLE' ? 3.0 : (player.mode === 'DINO' ? 3.5 : 4.2));
 
-            // Automatic Tap-to-Move Steering & Throttle
-            if (player.hasWaypoint) {
+            // Automatic Tap-to-Move Steering & Throttle (bypassed for rail-clamped Toreinbotto, who follows the shortest arc along ptsRailway!)
+            if (isToreinbottoOnRail) {
+                const curDist = ((player.trackDist ?? 0) % railwayTotalDist + railwayTotalDist) % railwayTotalDist;
+                const curDir = (player.trackDir ?? 1) >= 0 ? 1 : -1;
+                if (player.hasWaypoint) {
+                    const wpNearest = findNearestRailwayPoint(player.waypoint.x, player.waypoint.z);
+                    let arcDelta = wpNearest.distOnTrack - curDist;
+                    if (arcDelta > railwayTotalDist * 0.5) arcDelta -= railwayTotalDist;
+                    if (arcDelta < -railwayTotalDist * 0.5) arcDelta += railwayTotalDist;
+                    if (Math.abs(arcDelta) < 5.5) {
+                        player.hasWaypoint = false;
+                        waypointGroup.visible = false;
+                        moveY = 0;
+                    } else {
+                        const desiredDir = arcDelta >= 0 ? 1 : -1;
+                        if (desiredDir !== curDir) {
+                            player.trackDir = desiredDir;
+                            player.speed = Math.abs(player.speed) * 0.5;
+                        }
+                        const arrivalSlowdown = Math.min(1.0, Math.abs(arcDelta) / 22.0);
+                        moveY = Math.max(0.45, arrivalSlowdown);
+                    }
+                }
+            } else if (player.hasWaypoint) {
                 const dx = player.waypoint.x - player.pos.x;
                 const dz = player.waypoint.z - player.pos.z;
                 const distToWP = Math.hypot(dx, dz);
@@ -881,6 +931,52 @@ waypointGroup.add(wpArrowCone);
 
             if (player.inCrane) {
                 player.speed = 0;
+            } else if (isToreinbottoOnRail) {
+                // HARD RAIL-CLAMPED MOVEMENT along Griffin Rock Island Railway Circuit!
+                const curDir = (player.trackDir ?? 1) >= 0 ? 1 : -1;
+                const nextTrackDist = (((player.trackDist ?? 0) + player.speed * curDir * dt) % railwayTotalDist + railwayTotalDist) % railwayTotalDist;
+                player.trackDist = nextTrackDist;
+
+                const railPose = getRailwayPoseAtDist(nextTrackDist, curDir);
+
+                // Holographic Parallel Passing Siding around "The Griffin Rock Express" (islandTrain)
+                let nearExpressTrain = false;
+                if (moveTrain && moveTrain.cars.length > 0) {
+                    for (let i = 0; i < moveTrain.cars.length; i++) {
+                        const car = moveTrain.cars[i];
+                        if (Math.hypot(railPose.x - car.x, railPose.z - car.z) < 26.0) {
+                            nearExpressTrain = true;
+                            break;
+                        }
+                    }
+                }
+                const targetPassOffset = nearExpressTrain ? 4.6 : 0.0;
+                player.railPassingOffset = THREE.MathUtils.lerp(player.railPassingOffset || 0, targetPassOffset, Math.min(1, dt * 4.5));
+
+                if (nearExpressTrain) {
+                    if ((player.railWhistleCooldown || 0) <= 0) {
+                        player.railWhistleCooldown = 8.0;
+                        sfx.playTrainWhistle();
+                        showToast("HOLOGRAPHIC PASSING SIDING", "Gliding past the Griffin Rock Express on cyber-rails!");
+                    }
+                    if (Math.random() < 0.55) {
+                        spawnBurstParticles(player.pos.x, player.pos.y + 0.35, player.pos.z, 0x38bdf8, 2, 0.7);
+                    }
+                }
+
+                // Right-hand lateral normal vector for holographic passing siding
+                const rightX = Math.cos(railPose.heading);
+                const rightZ = -Math.sin(railPose.heading);
+                const passOff = player.railPassingOffset || 0;
+
+                player.pos.x = railPose.x + rightX * passOff;
+                player.pos.z = railPose.z + rightZ * passOff;
+                player.pos.y = getSurfaceHeight(player.pos.x, player.pos.z) + 0.22;
+                player.heading = railPose.heading;
+                pState.pitch = railPose.pitch;
+                pState.roll = 0;
+                player.vy = 0;
+                player.grounded = true;
             } else {
                 // Slick Road Drift Physics in Rainstorms
                 const isRainSlick = (window.currentWeatherId === 'RAIN') && onRoad && player.mode === 'VEHICLE';
@@ -1104,12 +1200,39 @@ waypointGroup.add(wpArrowCone);
                 resolveMoonCollisions(player.pos, 2.3, true);
             } else if (worldState.activeArea === 'PLANET_SURFACE') {
                 resolvePlanetSurfaceCollisions(player.pos, 2.3, true);
-            } else if (!player.inCrane && currentClearance < 12) {
+            } else if (!player.inCrane && !isToreinbottoOnRail && currentClearance < 12) {
                 const playerRadius = 2.4;
                 const nearbyColliders = queryNearbyColliders(player.pos.x, player.pos.z, playerRadius + 16, _playerNearbyColliders);
                 for (let i = 0; i < nearbyColliders.length; i++) {
                     const c = nearbyColliders[i];
-                    if (c.destroyed || c.r <= 0) continue;
+                    if (c.destroyed || (c.r <= 0 && !c.halfW)) continue;
+                    if (c.halfW && c.halfD) {
+                        const closestX = Math.max(c.x - c.halfW, Math.min(player.pos.x, c.x + c.halfW));
+                        const closestZ = Math.max(c.z - c.halfD, Math.min(player.pos.z, c.z + c.halfD));
+                        const dx = player.pos.x - closestX;
+                        const dz = player.pos.z - closestZ;
+                        const distSq = dx * dx + dz * dz;
+                        if (distSq < playerRadius * playerRadius) {
+                            if (distSq > 1e-6) {
+                                const dist = Math.sqrt(distSq);
+                                const overlap = playerRadius - dist;
+                                const nx = dx / dist;
+                                const nz = dz / dist;
+                                player.pos.x += nx * overlap;
+                                player.pos.z += nz * overlap;
+                                if (player.hasWaypoint) {
+                                    player.pos.x += -nz * dt * 8;
+                                    player.pos.z += nx * dt * 8;
+                                }
+                            } else {
+                                const penX = (c.halfW + playerRadius) - Math.abs(player.pos.x - c.x);
+                                const penZ = (c.halfD + playerRadius) - Math.abs(player.pos.z - c.z);
+                                if (penX < penZ) player.pos.x += (player.pos.x >= c.x ? penX : -penX);
+                                else player.pos.z += (player.pos.z >= c.z ? penZ : -penZ);
+                            }
+                        }
+                        continue;
+                    }
                     const dx = player.pos.x - c.x;
                     const dz = player.pos.z - c.z;
                     const minDist = playerRadius + c.r;

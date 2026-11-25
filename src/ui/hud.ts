@@ -35,6 +35,7 @@ import { closeUtilityMenu } from '../physics/movement.js';
 import { buildHazardSites } from '../world/emergencies.js';
 import { buildEnergonCubes } from '../world/collectibles.js';
 import { setWaypointToPatientDestination } from '../world/patients.js';
+import { enterRailTunnel, exitRailTunnel, setRailTunnelTouch, triggerRailTunnelBoost } from '../world/railTunnel.js';
         export function bindButton(id: string, fn: () => void) {
             const el = document.getElementById(id);
             if (!el) return;
@@ -149,6 +150,31 @@ import { setWaypointToPatientDestination } from '../world/patients.js';
         bindButton('saturn-transform-btn', () => triggerTransform());
         bindButton('saturn-boost-btn', () => triggerSaturnRaceBoost());
 
+        // Collapsible Bottom-Left Rescue Bots Roster & Buddy Drawer (Rescue Bots Logo Tab)
+        injectIcon('roster-logo-icon', SVG_ICONS.RESCUE_BOTS_LOGO);
+        injectIcon('enter-tunnel-icon', SVG_ICONS.RAIL_TUNNEL);
+        const setRosterDrawerOpen = (open: boolean) => {
+            const panel = document.getElementById('bot-roster-panel');
+            const toggleBtn = document.getElementById('btn-roster-toggle');
+            const chevron = document.getElementById('roster-chevron');
+            if (!panel) return;
+            panel.classList.toggle('hidden', !open);
+            if (toggleBtn) toggleBtn.setAttribute('aria-expanded', String(open));
+            if (chevron) chevron.textContent = open ? '▼' : '▲';
+            sfx.playWaypointTap();
+        };
+        bindButton('btn-roster-toggle', () => {
+            const panel = document.getElementById('bot-roster-panel');
+            const isCurrentlyHidden = panel ? panel.classList.contains('hidden') : true;
+            setRosterDrawerOpen(isCurrentlyHidden);
+        });
+        bindButton('btn-roster-close', () => setRosterDrawerOpen(false));
+
+        // Mainland Express Rail Tunnel Buttons
+        bindButton('btn-enter-tunnel', () => enterRailTunnel());
+        bindButton('tunnel-return-btn', () => exitRailTunnel(true));
+        bindButton('tunnel-boost-btn', () => triggerRailTunnelBoost());
+
         const bindHold = (id: string, onDown: () => void, onUp: () => void) => {
             const el = document.getElementById(id);
             if (!el) return;
@@ -166,6 +192,8 @@ import { setWaypointToPatientDestination } from '../world/patients.js';
         bindHold('uw-descend-btn', () => setUnderwaterTouchControl('descend', 1), () => setUnderwaterTouchControl('descend', 0));
         bindHold('saturn-left-btn', () => setSaturnRaceTouch('LEFT', true), () => setSaturnRaceTouch('LEFT', false));
         bindHold('saturn-right-btn', () => setSaturnRaceTouch('RIGHT', true), () => setSaturnRaceTouch('RIGHT', false));
+        bindHold('tunnel-fwd-btn', () => setRailTunnelTouch(1), () => setRailTunnelTouch(0));
+        bindHold('tunnel-rev-btn', () => setRailTunnelTouch(-1), () => setRailTunnelTouch(0));
         bindButton('btn-dock', () => {
             dockActiveBotMegabot();
         });
@@ -219,8 +247,10 @@ import { setWaypointToPatientDestination } from '../world/patients.js';
                 startSpaceTransition('TO_EARTH');
                 return;
             }
+            if (worldState.activeArea === 'RAIL_TUNNEL') exitRailTunnel(false);
             if (worldState.activeArea === 'UNDERGROUND') swapToSurface(true);
             if (worldState.activeArea === 'UNDERWATER') exitUnderwaterWorld();
+            player.onRailwayTrack = false;
             player.pos.set(HQ_SWAP_PAD.x, getTerrainHeight(HQ_SWAP_PAD.x, HQ_SWAP_PAD.z) + 0.5, HQ_SWAP_PAD.z);
             player.heading = 0;
             player.speed = 0;

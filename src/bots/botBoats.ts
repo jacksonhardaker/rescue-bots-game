@@ -43,6 +43,8 @@ interface BoatBotRig extends BotRig {
     ratchetMedCabin?: THREE.Object3D;
     ratchetBoatRedPod?: THREE.Object3D;
     ratchetBoatWhitePod?: THREE.Object3D;
+    toreinbottoBoatHulls?: THREE.Object3D;
+    toreinbottoBoatBridge?: THREE.Object3D;
 }
 
 // Reusable Shared Materials
@@ -1290,6 +1292,16 @@ export function animateBotBoatMorph(rig: BoatBotRig, boatMorph: number, now: num
             if (rig.ratchetBoatWhitePod) rig.ratchetBoatWhitePod.scale.setScalar(!flash ? 1.32 : 0.88);
             break;
         }
+
+        case 'TOREINBOTTO': {
+            if (rig.toreinbottoBoatHulls) {
+                rig.toreinbottoBoatHulls.scale.setScalar(THREE.MathUtils.lerp(0.01, 1.0, tDeploy));
+            }
+            if (rig.toreinbottoBoatBridge) {
+                rig.toreinbottoBoatBridge.scale.setScalar(THREE.MathUtils.lerp(0.01, 1.0, THREE.MathUtils.smoothstep(b, 0.18, 0.92)));
+            }
+            break;
+        }
     }
 }
 
@@ -1488,6 +1500,83 @@ export function buildRatchetBoat(parts: BotRig) {
     parts.ratchetBoatRedPod = boatRedPod;
     parts.ratchetBoatWhitePod = boatWhitePod;
     boatGroup.add(medCabin);
+
+    applyCartoonInkOutlines(boatGroup, 1.04, true);
+}
+
+// 11. TOREINBOTTO: EXPRESS RAIL-FERRY CATAMARAN (Twin White & Cobalt Shinkansen Hydro Hulls)
+export function buildToreinbottoBoat(parts: BotRig) {
+    const boatGroup = new THREE.Group();
+    boatGroup.userData.isBoatPart = true;
+    boatGroup.visible = false;
+    parts.boatGroup = boatGroup;
+    parts.chassis.add(boatGroup);
+
+    const matWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
+    const matCobalt = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad4 });
+    const matGold = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
+    const matCrimson = new THREE.MeshToonMaterial({ color: 0xef4444, gradientMap: toonGrad3 });
+    const matCyanGlow = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+
+    // Twin Streamlined Catamaran Pontoons + Cross-Deck
+    const hullsGroup = new THREE.Group();
+    [-1.48, 1.48].forEach(hx => {
+        const pontoon = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.92, 6.8), matWhite);
+        pontoon.position.set(hx, 0.25, 0);
+        pontoon.castShadow = true;
+        const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.10, 0.28, 6.85), matCobalt);
+        stripe.position.set(hx, 0.34, 0);
+        const bowNose = new THREE.Mesh(new THREE.ConeGeometry(0.62, 2.2, 8).rotateX(Math.PI * 0.5), matWhite);
+        bowNose.position.set(hx, 0.28, 4.45);
+        const bowTip = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 8), matGold);
+        bowTip.position.set(hx, 0.28, 5.45);
+        const sternJet = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, 0.7, 10).rotateX(Math.PI * 0.5), matDarkSteel);
+        sternJet.position.set(hx, 0.16, -3.55);
+        const jetGlow = new THREE.Mesh(new THREE.CircleGeometry(0.22, 10), matCyanGlow);
+        jetGlow.position.set(hx, 0.16, -3.92);
+        jetGlow.rotation.y = Math.PI;
+        jetGlow.userData.noOutline = true;
+        hullsGroup.add(pontoon, stripe, bowNose, bowTip, sternJet, jetGlow);
+    });
+
+    // Center Rail-Ferry Deck with Dual Mini Steel Rails!
+    const ferryDeck = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.32, 6.2), matDarkSteel);
+    ferryDeck.position.set(0, 0.78, -0.15);
+    const bowBridgeBeam = new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.24, 1.0), matCobalt);
+    bowBridgeBeam.position.set(0, 0.72, 3.1);
+    hullsGroup.add(ferryDeck, bowBridgeBeam);
+    [-0.65, 0.65].forEach(rx => {
+        const deckRail = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.10, 5.8), matChrome);
+        deckRail.position.set(rx, 0.98, -0.15);
+        hullsGroup.add(deckRail);
+    });
+
+    boatGroup.add(hullsGroup);
+    parts.toreinbottoBoatHulls = hullsGroup;
+
+    // Aerodynamic Shinkansen Ferry Bridge Cabin
+    const bridge = new THREE.Group();
+    bridge.position.set(0, 1.05, 0.35);
+
+    const cabinMain = new THREE.Mesh(new THREE.BoxGeometry(2.65, 1.35, 3.65), matWhite);
+    cabinMain.position.y = 0.68;
+    cabinMain.castShadow = true;
+    const cabinBand = new THREE.Mesh(new THREE.BoxGeometry(2.72, 0.38, 3.70), matCobalt);
+    cabinBand.position.y = 0.68;
+    const cabinRoof = new THREE.Mesh(new THREE.BoxGeometry(2.45, 0.24, 3.4), matWhite);
+    cabinRoof.position.y = 1.44;
+    const cabinWindshield = new THREE.Mesh(new THREE.BoxGeometry(2.38, 0.56, 0.20), matCyanGlow);
+    cabinWindshield.position.set(0, 0.96, 1.84);
+    cabinWindshield.rotation.x = -0.22;
+    cabinWindshield.userData.noOutline = true;
+    const roofBeacon = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.24, 0.38), matGold);
+    roofBeacon.position.set(0, 1.66, 0.85);
+    const sternFlag = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.95, 0.52), matCrimson);
+    sternFlag.position.set(0, 1.88, -1.25);
+    bridge.add(cabinMain, cabinBand, cabinRoof, cabinWindshield, roofBeacon, sternFlag);
+
+    boatGroup.add(bridge);
+    parts.toreinbottoBoatBridge = bridge;
 
     applyCartoonInkOutlines(boatGroup, 1.04, true);
 }

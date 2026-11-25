@@ -1082,7 +1082,28 @@ export interface LocalVehicleNPC extends VehicleNPCEntry {
                 const nearbyColliders = queryNearbyColliders(buddyBot.pos.x, buddyBot.pos.z, buddyRadius + 16, _buddyNearbyColliders);
                 for (let i = 0; i < nearbyColliders.length; i++) {
                     const c = nearbyColliders[i];
-                    if (c.destroyed || c.r <= 0) continue;
+                    if (c.destroyed || (c.r <= 0 && !c.halfW)) continue;
+                    if (c.halfW && c.halfD) {
+                        const closestX = Math.max(c.x - c.halfW, Math.min(buddyBot.pos.x, c.x + c.halfW));
+                        const closestZ = Math.max(c.z - c.halfD, Math.min(buddyBot.pos.z, c.z + c.halfD));
+                        const dx = buddyBot.pos.x - closestX;
+                        const dz = buddyBot.pos.z - closestZ;
+                        const distSq = dx * dx + dz * dz;
+                        if (distSq < buddyRadius * buddyRadius) {
+                            if (distSq > 1e-6) {
+                                const dist = Math.sqrt(distSq);
+                                const overlap = buddyRadius - dist;
+                                buddyBot.pos.x += (dx / dist) * overlap;
+                                buddyBot.pos.z += (dz / dist) * overlap;
+                            } else {
+                                const penX = (c.halfW + buddyRadius) - Math.abs(buddyBot.pos.x - c.x);
+                                const penZ = (c.halfD + buddyRadius) - Math.abs(buddyBot.pos.z - c.z);
+                                if (penX < penZ) buddyBot.pos.x += (buddyBot.pos.x >= c.x ? penX : -penX);
+                                else buddyBot.pos.z += (buddyBot.pos.z >= c.z ? penZ : -penZ);
+                            }
+                        }
+                        continue;
+                    }
                     const dx = buddyBot.pos.x - c.x;
                     const dz = buddyBot.pos.z - c.z;
                     const minDist = buddyRadius + c.r;

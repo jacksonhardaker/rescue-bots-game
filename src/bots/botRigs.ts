@@ -17,6 +17,7 @@ import { buildHighTide } from "./hightide.js";
 import { buildQuickshadow } from "./quickshadow.js";
 import { buildStarspeed } from "./starspeed.js";
 import { buildRatchet } from "./ratchet.js";
+import { buildToreinbotto } from "./toreinbotto.js";
 import { animateBotBoatMorph } from "./botBoats.js";
 import type { BotRig, LightbarAssembly } from "../types/game.js";
 
@@ -56,6 +57,7 @@ interface DetailedBotRig extends BotRig {
     starspeedJetThrustRings?: THREE.Mesh[];
     starspeedJetFlames?: THREE.Mesh[];
     ratchetAmbulanceShell?: THREE.Object3D;
+    toreinbottoTrainShell?: THREE.Object3D;
 }
 
 export const BOT_SCALES: Record<string, number> = {
@@ -80,7 +82,8 @@ export const BOT_SCALES: Record<string, number> = {
     QUICKSHADOW: 1.0,
     QUICKSHADOW_MEGA: 1.65,
     STARSPEED: 1.0,
-    RATCHET: 1.0
+    RATCHET: 1.0,
+    TOREINBOTTO: 1.0
 };
 
 export function getBotScale(botType: string): number {
@@ -229,6 +232,7 @@ export function buildRescueBotModel(botType: string): BotRig {
     else if (botType === "QUICKSHADOW") buildQuickshadow(parts);
     else if (botType === "STARSPEED") buildStarspeed(parts);
     else if (botType === "RATCHET") buildRatchet(parts);
+    else if (botType === "TOREINBOTTO") buildToreinbotto(parts);
 
     applyCartoonInkOutlines(root, 1.06, true);
     return parts;
@@ -393,6 +397,24 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                 rig.head.visible = !hideLimbs && d < 0.45;
                 rig.leftArm.visible = !hideLimbs;
                 rig.rightArm.visible = !hideLimbs;
+                rig.leftLeg.visible = !hideLimbs;
+                rig.rightLeg.visible = !hideLimbs;
+            }
+
+            // Toreinbotto Shinkansen Bullet Train shell unfold (replaces bot limbs in Train & Boat modes, keeps strong bipedal dino legs in Parasaurolophus Dino mode!)
+            if (rig.botType === 'TOREINBOTTO' && rig.toreinbottoTrainShell) {
+                const trainAlpha = Math.max(0, m - boatMorph);
+                const showTrain = trainAlpha > 0.06;
+                rig.toreinbottoTrainShell.visible = showTrain;
+                if (showTrain) {
+                    const s = THREE.MathUtils.lerp(0.18, 1.0, THREE.MathUtils.smoothstep(trainAlpha, 0.05, 0.85));
+                    rig.toreinbottoTrainShell.scale.setScalar(s);
+                }
+                const hideLimbs = (m > 0.52 || boatMorph > 0.35);
+                rig.torso.visible = !hideLimbs && d < 0.45;
+                rig.head.visible = !hideLimbs && d < 0.45;
+                rig.leftArm.visible = !hideLimbs && d < 0.45;
+                rig.rightArm.visible = !hideLimbs && d < 0.45;
                 rig.leftLeg.visible = !hideLimbs;
                 rig.rightLeg.visible = !hideLimbs;
             }
@@ -1312,7 +1334,8 @@ export function initBotRigs(scene?: THREE.Scene | null): Record<string, BotRig> 
         HIGHTIDE: buildRescueBotModel("HIGHTIDE"),
         QUICKSHADOW: buildRescueBotModel("QUICKSHADOW"),
         STARSPEED: buildRescueBotModel("STARSPEED"),
-        RATCHET: buildRescueBotModel("RATCHET")
+        RATCHET: buildRescueBotModel("RATCHET"),
+        TOREINBOTTO: buildRescueBotModel("TOREINBOTTO")
     };
 
     if (scene) {

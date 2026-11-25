@@ -15,7 +15,7 @@ import {
 import { spawnBurstParticles } from '../world/emergencies.js';
 import { showToast } from './dialogs.js';
 
-import { islandTrain } from '../world/railway.js';
+import { islandTrain, findNearestRailwayPoint, RAIL_TUNNEL_PORTAL_POS } from '../world/railway.js';
 import { HQ_SWAP_PAD, HOSPITAL_POS, HOSPITAL_DROPOFF_PAD, bwX, bwZ, testYard } from '../world/buildings.js';
 import { getPatientsMapData } from '../world/patients.js';
 import { visitingAutobots, WORLD_MEGA_LOCATIONS } from '../world/allies.js';
@@ -382,13 +382,25 @@ export function handleTacticalMapTap(clientX: number, clientY: number) {
                     }
                 }
                 let destLabel = `(${Math.round(worldX)}, ${Math.round(worldZ)})`;
-                if (Math.hypot(worldX - HOSPITAL_POS.x, worldZ - HOSPITAL_POS.z) < 85) {
+                if (player.botType === 'TOREINBOTTO' && player.mode === 'VEHICLE' && player.onRailwayTrack) {
+                    const nearestRail = findNearestRailwayPoint(worldX, worldZ);
+                    worldX = nearestRail.x;
+                    worldZ = nearestRail.z;
+                    ty = getSurfaceHeight(worldX, worldZ) + 0.35;
+                    if (Math.hypot(worldX - RAIL_TUNNEL_PORTAL_POS.x, worldZ - RAIL_TUNNEL_PORTAL_POS.z) < 75) {
+                        worldX = RAIL_TUNNEL_PORTAL_POS.x;
+                        worldZ = RAIL_TUNNEL_PORTAL_POS.z;
+                        destLabel = 'Mainland Express Rail Tunnel Portal';
+                    } else {
+                        destLabel = 'Griffin Rock Railway Track';
+                    }
+                } else if (Math.hypot(worldX - HOSPITAL_POS.x, worldZ - HOSPITAL_POS.z) < 85) {
                     worldX = HOSPITAL_DROPOFF_PAD.x;
                     worldZ = HOSPITAL_DROPOFF_PAD.z;
                     ty = getSurfaceHeight(worldX, worldZ);
                     destLabel = 'Griffin Rock General Hospital';
                 }
-                const markerY = (canTraverseWater && isWaterPoint) ? -0.45 : Math.max(0.0, ty);
+                const markerY = (canTraverseWater && isWaterPoint && !player.onRailwayTrack) ? -0.45 : Math.max(0.0, ty);
 
                 player.waypoint.set(worldX, markerY, worldZ);
                 player.hasWaypoint = true;

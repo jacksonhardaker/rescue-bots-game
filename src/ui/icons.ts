@@ -700,6 +700,55 @@ export const SVG_ICONS: Record<string, string> = {
                 <rect x="9.1" y="13.4" width="8" height="3.2" rx="0.6" fill="#dc2626"/>
                 <path d="M22 14L29 10" stroke="#e2e8f0" stroke-width="2.2" stroke-linecap="round"/>
                 <circle cx="20" cy="18" r="1.4" fill="#22d3ee"/>
+            </svg>`,
+            TOREINBOTTO: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 22V13C3 11.4 4.2 10 5.8 10H19.5C23.5 10 27.5 13 29.2 17.2C29.7 18.4 29 20.5 27.5 21.5L26 22H3Z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.7" stroke-linejoin="round"/>
+                <path d="M3.5 16.5H27.6C28.2 17.5 28.4 18.6 28.1 19.6H3.5V16.5Z" fill="#1d4ed8"/>
+                <path d="M18.5 11.5H22.8C24.8 12.2 26.2 13.7 26.9 15.3H18.5V11.5Z" fill="#38bdf8" stroke="#0f172a" stroke-width="1"/>
+                <rect x="5.5" y="12" width="3.2" height="3" rx="0.6" fill="#38bdf8"/>
+                <rect x="10.2" y="12" width="3.2" height="3" rx="0.6" fill="#38bdf8"/>
+                <rect x="14.8" y="12" width="2.4" height="3" rx="0.6" fill="#38bdf8"/>
+                <circle cx="26.2" cy="18.2" r="1.4" fill="#facc15"/>
+                <path d="M9 10L11.5 6.5H15.5L13 10" stroke="#94a3b8" stroke-width="1.4" stroke-linejoin="round"/>
+                <line x1="9.5" y1="6.5" x2="17.5" y2="6.5" stroke="#facc15" stroke-width="1.8" stroke-linecap="round"/>
+                <circle cx="8" cy="24" r="2.4" fill="#334155" stroke="#cbd5e1" stroke-width="1.2"/>
+                <circle cx="14" cy="24" r="2.4" fill="#334155" stroke="#cbd5e1" stroke-width="1.2"/>
+                <circle cx="22.5" cy="24" r="2.4" fill="#334155" stroke="#cbd5e1" stroke-width="1.2"/>
+                <line x1="2" y1="27" x2="30" y2="27" stroke="#64748b" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>`,
+            RESCUE_BOTS_LOGO: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 2.5L28 6.5V16.5C28 23.2 22.8 27.6 16 30C9.2 27.6 4 23.2 4 16.5V6.5L16 2.5Z" fill="#dc2626" stroke="#facc15" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M8.5 9.5L11.5 7.5L16 9.5L20.5 7.5L23.5 9.5L22.2 18.8L16 24.5L9.8 18.8L8.5 9.5Z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.3" stroke-linejoin="round"/>
+                <polygon points="10.8,13.2 14.8,14.6 14.5,16.5 11.2,15.6" fill="#0ea5e9"/>
+                <polygon points="21.2,13.2 17.2,14.6 17.5,16.5 20.8,15.6" fill="#0ea5e9"/>
+                <path d="M13 19.2H19L16 22.2L13 19.2Z" fill="#dc2626"/>
+                <path d="M16 9.5V14.2" stroke="#dc2626" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>`,
+            RAIL_TURBO: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 20H21C25 20 28 17 29 14C26 11 22 10 18 10H6L4 20Z" fill="#f8fafc" stroke="#1d4ed8" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M5 15.5H27.5" stroke="#1d4ed8" stroke-width="2.4"/>
+                <path d="M2 12H8M2 16H6M2 24H28" stroke="#facc15" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M14 5L19 5L16.5 9.5" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>`,
+            SONIC_WHISTLE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 18C5 14 8 11 12 11H19V16L16 17C16 21 13 24 9.5 24C7 24 5 21.5 5 18Z" fill="#facc15" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M21 10C23.5 11.5 25 13.8 25 16.5C25 19.2 23.5 21.5 21 23" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M24.5 7.5C27.5 9.8 29.2 13 29.2 16.5C29.2 20 27.5 23.2 24.5 25.5" stroke="#bae6fd" stroke-width="2" stroke-linecap="round"/>
+            </svg>`,
+            CREST_CHARGE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 10L18 11C23 11.5 27 14 28 18L22 21H12L10 25H6L9 16L5 10Z" fill="#f8fafc" stroke="#1d4ed8" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M6 10.5L16 11.5" stroke="#facc15" stroke-width="2.4" stroke-linecap="round"/>
+                <circle cx="20.5" cy="15.5" r="1.5" fill="#38bdf8"/>
+            </svg>`,
+            RAIL_FERRY_WAKE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 19L8 12H23L28 19L24 22H7L4 19Z" fill="#f8fafc" stroke="#1d4ed8" stroke-width="1.8" stroke-linejoin="round"/>
+                <rect x="10" y="13.5" width="11" height="3.5" rx="1" fill="#38bdf8"/>
+                <path d="M3 26c3-2 6-2 9 0s6 2 9 0 5-2 8 0" stroke="#38bdf8" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>`,
+            RAIL_TUNNEL: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 27V15C4 8.4 9.4 3 16 3C22.6 3 28 8.4 28 15V27H4Z" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+                <path d="M8.5 27V16C8.5 11.6 11.9 8 16 8C20.1 8 23.5 11.6 23.5 16V27" fill="#0f172a" stroke="#facc15" stroke-width="1.6"/>
+                <path d="M12.5 27L14.5 17M19.5 27L17.5 17M12.5 24H19.5M13.5 20.5H18.5" stroke="#cbd5e1" stroke-width="1.6" stroke-linecap="round"/>
             </svg>`
         };
 

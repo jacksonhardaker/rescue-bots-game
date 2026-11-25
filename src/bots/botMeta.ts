@@ -427,6 +427,25 @@ export const BOT_METADATA: Record<string, BotMetaEntry> = {
         boatActionLabel: 'HYDRO-MEDIC SURGE',
         dinoActionIcon: 'TRI_MED_CHARGE',
         dinoActionLabel: 'MED-FRILL CHARGE'
+    },
+    TOREINBOTTO: {
+        name: 'TOREINBOTTO',
+        role: 'Shinkansen Express Rail Hero',
+        voicePitch: 0.96,
+        vehName: 'BULLET TRAIN',
+        boatName: 'RAIL-FERRY CATAMARAN',
+        dinoName: 'PARASAUROLOPHUS',
+        colorClass: 'text-sky-200',
+        dotClass: 'bg-blue-500',
+        btnActionBg: 'from-blue-500 via-sky-600 to-indigo-800 border-sky-200',
+        botActionIcon: 'SONIC_WHISTLE',
+        botActionLabel: 'SONIC WHISTLE BLAST',
+        vehActionIcon: 'RAIL_TURBO',
+        vehActionLabel: 'SHINKANSEN TURBO',
+        boatActionIcon: 'RAIL_FERRY_WAKE',
+        boatActionLabel: 'EXPRESS WAKE SURGE',
+        dinoActionIcon: 'CREST_CHARGE',
+        dinoActionLabel: 'SONIC CREST CHARGE'
     }
 };
 
@@ -471,7 +490,8 @@ export const BOT_GROUND_OFFSETS: Record<string, GroundOffsetEntry> = {
     QUICKSHADOW:      { bot: 0.72, veh: 0.37, dino: 0.82, boat: 0.25 },
     QUICKSHADOW_MEGA: { bot: 0.72, veh: 0.37, dino: 0.82, boat: 0.25 },
     STARSPEED:        { bot: 0.72, veh: 1.55, dino: 0.82, boat: 0.28, hiddenVeh: 1.40 },
-    RATCHET:          { bot: 0.76, veh: 0.02, dino: 0.78, boat: 0.96 }
+    RATCHET:          { bot: 0.76, veh: 0.02, dino: 0.78, boat: 0.96 },
+    TOREINBOTTO:      { bot: 0.76, veh: 0.00, dino: 0.78, boat: 0.42 }
 };
 
 if (typeof window !== 'undefined') {

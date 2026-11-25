@@ -59,11 +59,17 @@ export const player: PlayerState = {
     knockbackVx: 0,
     knockbackVz: 0,
     trailerAngle: 0,
-    trailerArticAngle: 0
+    trailerArticAngle: 0,
+    onRailwayTrack: false,
+    trackDist: 0,
+    trackDir: 1,
+    railPassingOffset: 0,
+    railWhistleCooldown: 0,
+    railTunnelCooldown: 0,
 };
 
 export const worldState: WorldState = {
-    activeArea: 'SURFACE', // 'SURFACE' | 'UNDERGROUND' | 'SOLAR_HUB' | 'SPACE' | 'MOON' | 'PLANET_SURFACE' | 'SATURN_RING_RACE'
+    activeArea: 'SURFACE', // 'SURFACE' | 'UNDERGROUND' | 'SOLAR_HUB' | 'SPACE' | 'MOON' | 'PLANET_SURFACE' | 'SATURN_RING_RACE' | 'RAIL_TUNNEL'
     activePlanetId: 'MOON', // 'MOON' | 'MERCURY' | 'VENUS' | 'EARTH' | 'MARS' | 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE' | 'PLUTO' | 'EUROPA' | 'MIRANDA' | 'TRITON'
     activeSpaceSector: 'MOON_ORBIT', // 'MOON_ORBIT' | 'JUPITER' | 'SATURN' | 'URANUS' | 'NEPTUNE'
     planetReturnSector: null as string | null, // If landed on Europa/Miranda/Triton, returns to that giant's orbit
@@ -87,6 +93,7 @@ export const worldState: WorldState = {
     nearPlanetSigma: false,
     nearPlanetCaveEntrance: false,
     nearPlanetCavernExit: false,
+    nearRailTunnel: false,
     drillAnim: {
         active: false,
         direction: 'DOWN', // 'DOWN' | 'UP'
@@ -152,11 +159,12 @@ function _cellKey(cx: number, cz: number): number {
 
 function _indexCollider(c: ColliderItem) {
     if (!c) return;
-    const r = Math.max(c.r || 0, 1);
-    const minCx = Math.floor((c.x - r) / COLLIDER_CELL_SIZE);
-    const maxCx = Math.floor((c.x + r) / COLLIDER_CELL_SIZE);
-    const minCz = Math.floor((c.z - r) / COLLIDER_CELL_SIZE);
-    const maxCz = Math.floor((c.z + r) / COLLIDER_CELL_SIZE);
+    const rx = Math.max(c.halfW || c.r || 0, 1);
+    const rz = Math.max(c.halfD || c.r || 0, 1);
+    const minCx = Math.floor((c.x - rx) / COLLIDER_CELL_SIZE);
+    const maxCx = Math.floor((c.x + rx) / COLLIDER_CELL_SIZE);
+    const minCz = Math.floor((c.z - rz) / COLLIDER_CELL_SIZE);
+    const maxCz = Math.floor((c.z + rz) / COLLIDER_CELL_SIZE);
     for (let cx = minCx; cx <= maxCx; cx++) {
         for (let cz = minCz; cz <= maxCz; cz++) {
             const key = _cellKey(cx, cz);
@@ -191,7 +199,7 @@ export function queryNearbyColliders(x: number, z: number, radius: number, outLi
             if (!bucket) continue;
             for (let i = 0; i < bucket.length; i++) {
                 const c = bucket[i];
-                if (c._qStamp === _colliderQueryStamp || c.destroyed || c.r <= 0) continue;
+                if (c._qStamp === _colliderQueryStamp || c.destroyed || (c.r <= 0 && !c.halfW)) continue;
                 c._qStamp = _colliderQueryStamp;
                 outList.push(c);
             }
@@ -226,7 +234,8 @@ export const botPhraseCounters: Record<string, number> = {
     HIGHTIDE: 0,
     QUICKSHADOW: 0,
     STARSPEED: 0,
-    RATCHET: 0
+    RATCHET: 0,
+    TOREINBOTTO: 0
 };
 
 if (typeof window !== 'undefined') {

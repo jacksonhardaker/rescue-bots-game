@@ -218,6 +218,160 @@ export function getTrackPointAtDist(targetDist: number) {
     };
 }
 
+export interface NearestRailwayResult {
+    distOnTrack: number;
+    x: number;
+    z: number;
+    heading: number;
+    distanceToTrack: number;
+}
+
+export function findNearestRailwayPoint(wx: number, wz: number): NearestRailwayResult {
+    let bestDistSq = Infinity;
+    let bestArcDist = 0;
+    let bestX = 0;
+    let bestZ = 0;
+    let bestHeading = 0;
+
+    const n = ptsRailway.length;
+    for (let i = 0; i < n; i++) {
+        const p0 = ptsRailway[i];
+        const p1 = ptsRailway[(i + 1) % n];
+        const sx = p1.x - p0.x;
+        const sz = p1.z - p0.z;
+        const segLenSq = sx * sx + sz * sz || 1e-6;
+        const t = Math.max(0, Math.min(1, ((wx - p0.x) * sx + (wz - p0.z) * sz) / segLenSq));
+        const px = p0.x + sx * t;
+        const pz = p0.z + sz * t;
+        const dx = wx - px;
+        const dz = wz - pz;
+        const dSq = dx * dx + dz * dz;
+        if (dSq < bestDistSq) {
+            bestDistSq = dSq;
+            const segLen = Math.sqrt(segLenSq);
+            bestArcDist = (p0.dist + segLen * t) % railwayTotalDist;
+            bestX = px;
+            bestZ = pz;
+            bestHeading = Math.atan2(sx, sz);
+        }
+    }
+
+    return {
+        distOnTrack: bestArcDist,
+        x: bestX,
+        z: bestZ,
+        heading: bestHeading,
+        distanceToTrack: Math.sqrt(bestDistSq)
+    };
+}
+
+export function isNearRailwayTrack(wx: number, wz: number, maxDist = 26.0): boolean {
+    if (typeof window !== 'undefined' && window.worldState && window.worldState.activeArea !== 'SURFACE') {
+        return false;
+    }
+    return findNearestRailwayPoint(wx, wz).distanceToTrack <= maxDist;
+}
+
+export function getRailwayPoseAtDist(targetDist: number, dir = 1) {
+    const sign = dir >= 0 ? 1 : -1;
+    const p = getTrackPointAtDist(targetDist);
+    const pFwd = getTrackPointAtDist(targetDist + 2.5 * sign);
+    const pBwd = getTrackPointAtDist(targetDist - 2.5 * sign);
+    const heading = Math.atan2(pFwd.x - pBwd.x, pFwd.z - pBwd.z);
+    const groundY = getSurfaceHeight(p.x, p.z);
+    const yFwd = getSurfaceHeight(pFwd.x, pFwd.z);
+    const yBwd = getSurfaceHeight(pBwd.x, pBwd.z);
+    const pitch = Math.atan2(yFwd - yBwd, 5.0);
+    return {
+        x: p.x,
+        y: groundY + 0.22,
+        z: p.z,
+        heading,
+        pitch
+    };
+}
+
+// Mainland Express Rail Tunnel Portal location (scenic NW ridge curve along Griffin Rock Railway)
+export const RAIL_TUNNEL_PORTAL_DIST = railwayTotalDist * 0.58;
+const _portalPt = getTrackPointAtDist(RAIL_TUNNEL_PORTAL_DIST);
+const _portalFwd = getTrackPointAtDist(RAIL_TUNNEL_PORTAL_DIST + 3.0);
+export const RAIL_TUNNEL_PORTAL_POS = {
+    x: _portalPt.x,
+    z: _portalPt.z,
+    heading: Math.atan2(_portalFwd.x - _portalPt.x, _portalFwd.z - _portalPt.z),
+    dist: RAIL_TUNNEL_PORTAL_DIST
+};
+export let railTunnelPortalGroup: THREE.Group | null = null;
+
+export function buildRailTunnelPortal() {
+    const px = RAIL_TUNNEL_PORTAL_POS.x;
+    const pz = RAIL_TUNNEL_PORTAL_POS.z;
+    const py = getSurfaceHeight(px, pz);
+
+    const g = new THREE.Group();
+    const matConcrete = new THREE.MeshToonMaterial({ color: 0x475569, gradientMap: toonGrad3 });
+    const matCobalt = new THREE.MeshToonMaterial({ color: 0x1d4ed8, gradientMap: toonGrad3 });
+    const matGold = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
+    const matCyanGlow = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const matPortalCurtain = new THREE.MeshBasicMaterial({
+        color: 0x0ea5e9,
+        transparent: true,
+        opacity: 0.28,
+        side: THREE.DoubleSide
+    });
+
+    // Twin Heavy Concrete Portal Abutments flanking the 14.8m track bed (clear 9.6m center opening!)
+    [-5.8, 5.8].forEach(sx => {
+        const pillar = new THREE.Mesh(new THREE.BoxGeometry(2.6, 10.5, 6.2), matConcrete);
+        pillar.position.set(sx, 5.25, 0);
+        pillar.castShadow = true;
+        const stripe = new THREE.Mesh(new THREE.BoxGeometry(2.72, 1.1, 6.3), matCobalt);
+        stripe.position.set(sx, 8.6, 0);
+        const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.45, 10, 10), matCyanGlow);
+        lamp.position.set(sx, 10.8, 2.8);
+        lamp.userData.noOutline = true;
+        g.add(pillar, stripe, lamp);
+    });
+
+    // Grand Overhead Arch Header & Glowing Shinkansen Chevron Ring
+    const header = new THREE.Mesh(new THREE.BoxGeometry(14.6, 2.6, 6.4), matConcrete);
+    header.position.set(0, 10.6, 0);
+    header.castShadow = true;
+    const archTrim = new THREE.Mesh(new THREE.BoxGeometry(13.8, 0.55, 6.6), matGold);
+    archTrim.position.set(0, 9.25, 0);
+    const signBoard = new THREE.Mesh(new THREE.BoxGeometry(10.8, 1.65, 0.45), matCobalt);
+    signBoard.position.set(0, 10.7, 3.25);
+    const signGlowBar = new THREE.Mesh(new THREE.BoxGeometry(9.6, 0.42, 0.18), matGold);
+    signGlowBar.position.set(0, 10.7, 3.50);
+    signGlowBar.userData.noOutline = true;
+
+    const signBoardBack = signBoard.clone();
+    signBoardBack.position.z = -3.25;
+    const signGlowBack = signGlowBar.clone();
+    signGlowBack.position.z = -3.50;
+
+    // Holographic Cyan Express Tunnel Portal Shimmer Ring
+    const portalArch = new THREE.Mesh(
+        new THREE.TorusGeometry(4.6, 0.24, 10, 28, Math.PI),
+        matCyanGlow
+    );
+    portalArch.position.set(0, 4.4, 0);
+    portalArch.userData.noOutline = true;
+
+    const curtain = new THREE.Mesh(new THREE.PlaneGeometry(8.8, 8.6), matPortalCurtain);
+    curtain.position.set(0, 4.5, 0);
+    curtain.userData.noOutline = true;
+
+    g.add(header, archTrim, signBoard, signGlowBar, signBoardBack, signGlowBack, portalArch, curtain);
+    g.position.set(px, py, pz);
+    g.rotation.y = RAIL_TUNNEL_PORTAL_POS.heading;
+
+    scene.add(g);
+    registerCullableObject(g, px, py + 5, pz, 48);
+    railTunnelPortalGroup = g;
+    return g;
+}
+
         // 4 Grade Crossing Signals & Paved Rubber Flange Aprons (at NS & EW Highways)
         railroadCrossings = [];
 
@@ -463,7 +617,12 @@ export function getTrackPointAtDist(targetDist: number) {
                 const dotApproach = (rc.x - locoCar.x) * locoFwdX + (rc.z - locoCar.z) * locoFwdZ;
                 const isApproaching = (dotApproach > 0 && dLoco < 85.0);
 
-                const shouldBeActive = isTrainOnPad || isApproaching;
+                // Also activate crossing signals when Toreinbotto approaches in Train Mode on the rails!
+                const isToreinbottoOnRail = player.botType === 'TOREINBOTTO' && player.mode === 'VEHICLE' && Boolean(player.onRailwayTrack);
+                const dPlayer = isToreinbottoOnRail ? Math.hypot(player.pos.x - rc.x, player.pos.z - rc.z) : 9999;
+                const isToreinbottoApproaching = isToreinbottoOnRail && dPlayer < 85.0;
+
+                const shouldBeActive = isTrainOnPad || isApproaching || isToreinbottoApproaching;
                 rc.isFlashing = shouldBeActive;
 
                 if (rc.lamps) {
@@ -530,6 +689,7 @@ export function initRailway(scene?: THREE.Scene | null) {
         mergeStaticMeshesInGroup(centralStationGroup);
     }
 
+    buildRailTunnelPortal();
     buildIslandTrainSystem();
 
     if (typeof window !== 'undefined') {

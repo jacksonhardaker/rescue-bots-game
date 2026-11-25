@@ -20,7 +20,8 @@ export function startBotCheck(canvasEl?: HTMLCanvasElement | null) {
         'HIGHTIDE', 'HIGHTIDE_MEGA',
         'QUICKSHADOW', 'QUICKSHADOW_MEGA',
         'STARSPEED',
-        'RATCHET'
+        'RATCHET',
+        'TOREINBOTTO'
     ];
     const MODES = ['bot', 'vehicle', 'boat', 'dino', 'hidden'];
 

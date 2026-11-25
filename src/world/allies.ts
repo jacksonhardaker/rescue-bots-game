@@ -201,6 +201,22 @@ export function syncVisitingAutobotsVisibility() {
                     "Keep my med-bay tidy, Rescue Bots — I needed that! Switch to me anytime to transport patients straight to Griffin Rock General Hospital.",
                     "Medical scanners online! From sprained ankles to emergency maternity runs, no patient is too far for an Autobot Ambulance!"
                 ]
+            },
+            {
+                id: 'TOREINBOTTO',
+                name: 'TOREINBOTTO',
+                role: 'Shinkansen Express Rail Hero',
+                voicePitch: 0.96,
+                badgeColor: '#1d4ed8',
+                x: 755,
+                y: 4.5,
+                z: 75,
+                rotY: -1.57,
+                dialogues: [
+                    "All aboard! I'm Toreinbotto, Shinkansen Express Rail Hero! Switch to me near Griffin Rock's railway tracks to transform into Bullet Train Mode!",
+                    "My Train Mode locks right onto the steel rails — and if you spot the Mainland Express Tunnel Portal on the northern ridge, ride right inside for an undersea trip to Mainland Terminal!",
+                    "Need to leave the tracks? Transform into my Sonic-Crest Parasaurolophus Dino Mode or Robot Mode anytime!"
+                ]
             }
         ];
 

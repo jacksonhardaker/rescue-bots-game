@@ -384,7 +384,8 @@ function spawnSaturnRivals() {
         QUICKSHADOW: '#38bdf8',
         CHASE: '#3b82f6',
         HEATWAVE: '#ef4444',
-        RATCHET: '#dc2626'
+        RATCHET: '#dc2626',
+        TOREINBOTTO: '#1d4ed8'
     };
 
     chosen.forEach((botType, idx) => {

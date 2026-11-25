@@ -35,6 +35,8 @@ export interface ProgressionData {
     quickshadowDocked: boolean;
     starspeedDocked: boolean;
     ratchetDocked: boolean;
+    toreinbottoDocked: boolean;
+    mainlandTunnelVisited: boolean;
     totalPatientsDelivered: number;
     weatherMode: string;
     playerPosition: { x: number; y: number; z: number; heading: number } | null;
@@ -112,6 +114,8 @@ export const progression: ProgressionData = {
     quickshadowDocked: false,
     starspeedDocked: false,
     ratchetDocked: false,
+    toreinbottoDocked: false,
+    mainlandTunnelVisited: false,
     totalPatientsDelivered: 0,
     weatherMode: 'SUNNY',
     playerPosition: null,
@@ -147,7 +151,7 @@ export const progression: ProgressionData = {
     underwaterRingsCompleted: 0
 };
 
-export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET'];
+export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET', 'TOREINBOTTO'];
 
 export function getBotDockedKey(botType: string): string {
     if (botType === 'HIGHTIDE') return 'highTideDocked';
@@ -343,7 +347,7 @@ export function loadProgression(options: LoadProgressionOptions = {}) {
     if (typeof target.autoSpawnEmergencies === 'boolean') {
         progression.autoSpawnEmergencies = target.autoSpawnEmergencies;
     }
-    const VALID_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET'];
+    const VALID_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET', 'TOREINBOTTO'];
     if (typeof target.playerBotType === 'string' && (BOT_METADATA[target.playerBotType] || VALID_BOTS.includes(target.playerBotType))) {
         progression.playerBotType = target.playerBotType;
     }

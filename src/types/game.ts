@@ -12,7 +12,9 @@ export type BotType =
     | 'SALVAGE'
     | 'HIGHTIDE'
     | 'QUICKSHADOW'
-    | 'STARSPEED';
+    | 'STARSPEED'
+    | 'RATCHET'
+    | 'TOREINBOTTO';
 
 export type BotMode = 'BOT' | 'VEHICLE' | 'DINO' | 'HIDDEN_VEHICLE';
 
@@ -25,7 +27,8 @@ export type ActiveArea =
     | 'MOON'
     | 'PLANET_SURFACE'
     | 'PLANET_CAVERN'
-    | 'SATURN_RING_RACE';
+    | 'SATURN_RING_RACE'
+    | 'RAIL_TUNNEL';
 
 export interface HiddenVehicleModeConfig {
     name: string;
@@ -188,6 +191,12 @@ export interface PlayerState {
     knockbackVz: number;
     trailerAngle: number;
     trailerArticAngle: number;
+    onRailwayTrack?: boolean;
+    trackDist?: number;
+    trackDir?: number;
+    railPassingOffset?: number;
+    railWhistleCooldown?: number;
+    railTunnelCooldown?: number;
     _lastNearWater?: boolean;
     _lastNearDumpster?: boolean;
     _wasInWater?: boolean;
@@ -270,6 +279,7 @@ export interface WorldState {
     nearPlanetSigma: boolean;
     nearPlanetCaveEntrance: boolean;
     nearPlanetCavernExit: boolean;
+    nearRailTunnel?: boolean;
     drillAnim: DrillAnimState;
     spaceLaunch: SpaceLaunchState;
 }
@@ -313,6 +323,9 @@ export interface ProgressionState {
     salvageDocked: boolean;
     quickshadowDocked: boolean;
     starspeedDocked: boolean;
+    ratchetDocked?: boolean;
+    toreinbottoDocked?: boolean;
+    mainlandTunnelVisited?: boolean;
     weatherMode: string;
     playerPosition: { x: number; y: number; z: number; heading: number } | null;
     completedMissions: string[];
@@ -343,6 +356,8 @@ export interface ColliderItem {
     x: number;
     z: number;
     r: number;
+    halfW?: number;
+    halfD?: number;
     type?: string;
     target?: unknown;
     destroyed?: boolean;

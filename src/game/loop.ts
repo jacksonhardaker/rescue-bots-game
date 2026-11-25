@@ -42,9 +42,10 @@ import { solarHubScene, updateSolarHub } from '../world/solarSystem.js';
 import { planetSurfaceScene, updatePlanetSurface, getNearestPlanetDiscovery } from '../world/planetSurface.js';
 import { planetCavernScene, updatePlanetCavern, getNearestCavernDiscovery } from '../world/planetCaverns.js';
 import { saturnRaceScene, updateSaturnRace } from '../world/saturnRace.js';
+import { railTunnelScene, updateRailTunnel, enterRailTunnel } from '../world/railTunnel.js';
 import { updatePhysics, waypointGroup, wpOuterRing, wpArrowCone } from '../physics/movement.js';
 import { updateAllBotTransforms, speakBotCatchphrase, syncHUDToActiveBot } from '../physics/player.js';
-import { updateIslandTrain, islandTrain } from '../world/railway.js';
+import { updateIslandTrain, islandTrain, isNearRailwayTrack, RAIL_TUNNEL_PORTAL_POS } from '../world/railway.js';
 import {
     hqRadarPivot, swapPadRing, outpostPadRings, lhBeamPivot, observatoryDomePivot,
     windTurbineRotors, volcanoLavaPool, volcanoSmokePuffs,
@@ -326,6 +327,27 @@ function updateSpeechBubbleProjection(dt: number) {
                         syncHUDToActiveBot();
                     }
                 }
+                if (player && player.botType === 'TOREINBOTTO' && worldState.activeArea === 'SURFACE') {
+                    const nearRail = isNearRailwayTrack(player.pos.x, player.pos.z, 26.0);
+                    const nearWat = isNearWater(player.pos.x, player.pos.z, 22.0);
+                    const combinedRailFlag = nearRail || nearWat;
+                    if (player._lastNearWater !== combinedRailFlag) {
+                        player._lastNearWater = combinedRailFlag;
+                        syncHUDToActiveBot();
+                    }
+                    const dPortal = Math.hypot(player.pos.x - RAIL_TUNNEL_PORTAL_POS.x, player.pos.z - RAIL_TUNNEL_PORTAL_POS.z);
+                    const canEnterTunnel = player.mode === 'VEHICLE' && Boolean(player.onRailwayTrack) && dPortal < 42.0;
+                    worldState.nearRailTunnel = canEnterTunnel;
+                    const tunnelBtn = document.getElementById('btn-enter-tunnel');
+                    if (tunnelBtn) tunnelBtn.classList.toggle('hidden', !canEnterTunnel);
+                    if (canEnterTunnel && dPortal < 11.0 && (player.railTunnelCooldown || 0) <= 0) {
+                        enterRailTunnel();
+                    }
+                } else {
+                    const tunnelBtn = document.getElementById('btn-enter-tunnel');
+                    if (tunnelBtn && !tunnelBtn.classList.contains('hidden')) tunnelBtn.classList.add('hidden');
+                    worldState.nearRailTunnel = false;
+                }
             }
 
             minimapTimer += dt;
@@ -372,6 +394,14 @@ function updateSpeechBubbleProjection(dt: number) {
                 updateSaturnRace(dt, now);
                 updateSpeechBubbleProjection(dt);
                 if (renderer) renderer.render(saturnRaceScene, camera);
+                return;
+            }
+
+            if (worldState.activeArea === 'RAIL_TUNNEL') {
+                updatePlanetDiscoveryHUD(false);
+                updateRailTunnel(dt, now);
+                updateSpeechBubbleProjection(dt);
+                if (renderer && railTunnelScene) renderer.render(railTunnelScene, camera);
                 return;
             }
 

@@ -32,6 +32,8 @@ import { morbotBattle } from '../world/morbot.js';
 import { camera } from '../rendering/scene.js';
 import { renderMinimap } from '../ui/tacticalMap.js';
 import { triggerRatchetMedScannerPickup } from '../world/patients.js';
+import { findNearestRailwayPoint, isNearRailwayTrack, getRailwayPoseAtDist } from '../world/railway.js';
+import { triggerRailTunnelBoost } from '../world/railTunnel.js';
         export const BOT_CATCHPHRASES: Record<string, Record<string, string[]>> = {
             BOULDER: {
                 DEPLOY: [
@@ -588,11 +590,41 @@ import { triggerRatchetMedScannerPickup } from '../world/patients.js';
                     "Whoa! Careful with my medical equipment — I NEEDED THAT!",
                     "Airborne ambulance maneuver! Smooth landing!"
                 ]
+            },
+            TOREINBOTTO: {
+                DEPLOY: [
+                    "Toreinbotto on the express line! All aboard for Griffin Rock rescue!",
+                    "Shinkansen Express systems online! Right on schedule, Rescue Bots!"
+                ],
+                TO_VEHICLE: [
+                    "Toreinbotto, transform! Shinkansen Bullet Train locked onto the rails!",
+                    "All aboard! Express Train Mode engaged — full speed on the tracks!"
+                ],
+                TO_DINO: [
+                    "Toreinbotto, Dinobot mode! Sonic-Crest Parasaurolophus roar!",
+                    "Off the rails and into action! Parasaurolophus crest resonator active!"
+                ],
+                TO_BOT: [
+                    "Toreinbotto, transform! Robot mode, stepping off the rails!",
+                    "Back on two feet! Ready for off-track rescue!"
+                ],
+                RESCUE: [
+                    "Emergency cleared right on schedule! Express service guaranteed!",
+                    "Griffin Rock is safe! Next stop: heroic victory!"
+                ],
+                WASH: [
+                    "Gleaming white and cobalt! Fastest, cleanest train on the island!",
+                    "Shinkansen polish complete — ready for high-speed rail!"
+                ],
+                STUNT: [
+                    "Express air-time! Whoa, look at that crest!",
+                    "Right on track for an awesome stunt!"
+                ]
             }
         };
 
         // botPhraseCounters exported in gameState.js
-const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0, QUICKSHADOW: 0, STARSPEED: 0, RATCHET: 0 };
+const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0, QUICKSHADOW: 0, STARSPEED: 0, RATCHET: 0, TOREINBOTTO: 0 };
 
         export function speakBotCatchphrase(botType: string, eventKey: string) {
             const botLines = BOT_CATCHPHRASES[botType] && BOT_CATCHPHRASES[botType][eventKey];
@@ -640,7 +672,18 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             if (modeDotEl) modeDotEl.className = `w-2.5 h-2.5 rounded-full ${meta.dotClass}`;
 
             let nextTransformLabel = 'TO ROBOT';
-            if (player.botType !== 'HIGHTIDE') {
+            if (player.botType === 'TOREINBOTTO') {
+                const nearRail = isNearRailwayTrack(player.pos.x, player.pos.z, 26.0);
+                const nearWater = isNearWater(player.pos.x, player.pos.z, 22.0);
+                if (player.mode === 'BOT') {
+                    nextTransformLabel = nearRail ? `TO ${meta.vehName}` : (nearWater ? `TO ${meta.boatName}` : `TO ${meta.dinoName}`);
+                } else if (player.mode === 'VEHICLE') {
+                    const inDeepWater = !player.onRailwayTrack && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0);
+                    nextTransformLabel = inDeepWater ? 'RETURN TO SHORE' : `TO ${meta.dinoName}`;
+                } else {
+                    nextTransformLabel = 'TO ROBOT';
+                }
+            } else if (player.botType !== 'HIGHTIDE') {
                 if (player.mode === 'BOT') {
                     nextTransformLabel = `TO ${meta.vehName}`;
                 } else if (player.mode === 'VEHICLE') {
@@ -665,6 +708,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
             const transformSubEl = document.getElementById('transform-sub');
             if (transformSubEl) transformSubEl.textContent = nextTransformLabel;
+            const rosterActiveLabel = document.getElementById('roster-active-bot-label');
+            if (rosterActiveLabel && meta) rosterActiveLabel.textContent = meta.name;
 
             let actionKey = isHiddenVeh && hiddenCfg
                 ? hiddenCfg.actionIcon
@@ -821,7 +866,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         export function getUnlockedPlayableBots() {
             const base = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES'];
             const allies = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies : [];
-            const validAllies = ['OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET'].filter(id => allies.includes(id));
+            const validAllies = ['OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET', 'TOREINBOTTO'].filter(id => allies.includes(id));
             return [...base, ...validAllies];
         }
 
@@ -839,6 +884,10 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
         export function cycleBuddyBot() {
+            if (worldState.activeArea === 'RAIL_TUNNEL') {
+                showToast("TUNNEL LOCK ACTIVE", "Bot switching is locked inside the Mainland Express Tunnel!");
+                return;
+            }
             const allBots = getUnlockedPlayableBots();
             const candidateBots = allBots.filter(b => b !== player.botType);
             if (candidateBots.length === 0) return;
@@ -903,12 +952,17 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
         export function switchRescueBot(newBotType: string) {
+            if (worldState.activeArea === 'RAIL_TUNNEL') {
+                showToast("TUNNEL LOCK ACTIVE", "Bot switching is locked inside the Mainland Express Tunnel!");
+                return;
+            }
             if (newBotType === player.botType) {
                 speakBotCatchphrase(newBotType, 'DEPLOY');
                 return;
             }
             const oldBotType = player.botType;
             player.botType = newBotType;
+            player.onRailwayTrack = false;
             player.hasWaypoint = false;
             waypointGroup.visible = false;
             if (newBotType !== 'HEATWAVE' && newBotType !== 'CHASE' && newBotType !== 'RATCHET') {
@@ -950,6 +1004,26 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.targetDinoMorph = 0.0;
                 player.morph = 0.0;
                 player.dinoMorph = 0.0;
+            }
+
+            // Toreinbotto Train Mode requires railway tracks (or water for Boat Mode); if deployed off-track on dry land, revert to Bot mode
+            if (newBotType === 'TOREINBOTTO' && player.mode === 'VEHICLE') {
+                if (isNearRailwayTrack(player.pos.x, player.pos.z, 26.0)) {
+                    const nearest = findNearestRailwayPoint(player.pos.x, player.pos.z);
+                    const dotDir = Math.sin(player.heading) * Math.sin(nearest.heading) + Math.cos(player.heading) * Math.cos(nearest.heading);
+                    player.trackDir = dotDir >= 0 ? 1 : -1;
+                    player.trackDist = nearest.distOnTrack;
+                    player.onRailwayTrack = true;
+                    const pose = getRailwayPoseAtDist(player.trackDist, player.trackDir);
+                    player.pos.set(pose.x, pose.y, pose.z);
+                    player.heading = pose.heading;
+                } else if (!isNearWater(player.pos.x, player.pos.z, 22.0)) {
+                    player.mode = 'BOT';
+                    player.targetMorph = 0.0;
+                    player.targetDinoMorph = 0.0;
+                    player.morph = 0.0;
+                    player.dinoMorph = 0.0;
+                }
             }
 
             // If player is out in deep water and tries to switch bot modes, ensure they are in vehicle (boat) mode or High Tide
@@ -1014,8 +1088,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             if (player.boatMorph === undefined) player.boatMorph = 0;
             if (player.targetBoatMorph === undefined) player.targetBoatMorph = 0;
 
-            // All bots in vehicle mode (except High Tide who is already oceanic) automatically update targetBoatMorph based on whether they're in water
-            const canHaveBoat = player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE';
+            // All bots in vehicle mode (except High Tide who is already oceanic, and Toreinbotto while clamped on railway tracks) automatically update targetBoatMorph based on whether they're in water
+            const canHaveBoat = player.botType !== 'HIGHTIDE' && !(player.botType === 'TOREINBOTTO' && player.onRailwayTrack) && player.mode === 'VEHICLE';
             const waterThresh = getWaterSurfaceY() + 0.7;
             if (canHaveBoat) {
                 const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < waterThresh;
@@ -1052,9 +1126,15 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.hiddenMorph = Math.max(player.targetHiddenMorph, player.hiddenMorph - dt * morphSpeed);
             }
 
-            // Buddy Bot mirrors player mode & morphs
+            // Buddy Bot mirrors player mode & morphs (Toreinbotto stays in Bot/Dino mode as wingman so he never turns into an off-track train!)
             const isPlayerVehOrBoat = (player.mode === 'VEHICLE' || player.mode === 'HIDDEN_VEHICLE');
-            if (isPlayerVehOrBoat) {
+            if (buddyBot.botType === 'TOREINBOTTO' && isPlayerVehOrBoat) {
+                bExt.mode = 'DINO';
+                buddyBot.targetMorph = 0.0;
+                buddyBot.targetDinoMorph = 1.0;
+                buddyBot.targetHiddenMorph = 0.0;
+                buddyBot.targetBoatMorph = 0.0;
+            } else if (isPlayerVehOrBoat) {
                 bExt.mode = 'VEHICLE';
                 buddyBot.targetMorph = 1.0;
                 buddyBot.targetDinoMorph = 0.0;
@@ -1198,9 +1278,15 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
 
         export function setPlayerMode(nextMode: string) {
+            if (worldState.activeArea === 'RAIL_TUNNEL') {
+                showToast("TUNNEL LOCK ACTIVE", "Transforming is locked inside the Mainland Express Tunnel!");
+                sfx.playSpeechPop();
+                return;
+            }
             if (nextMode === 'HIDDEN_VEHICLE') {
                 const hiddenCfg = getBotHiddenVehicleMode(player.botType);
                 if (!hiddenCfg) return;
+                player.onRailwayTrack = false;
                 player.mode = 'HIDDEN_VEHICLE';
                 player.targetMorph = 1.0;
                 player.targetBoatMorph = 0.0;
@@ -1226,11 +1312,62 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             }
             if (nextMode === 'VEHICLE') {
                 if (player.botType === 'HIGHTIDE' && !isNearWater(player.pos.x, player.pos.z, 22.0)) {
-                    showToast("🌊 WATER REQUIRED TO SUBMERGE", "High Tide's submarine mode requires water! Head to the harbor or shoreline!");
+                    showToast("WATER REQUIRED TO SUBMERGE", "High Tide's submarine mode requires water! Head to the harbor or shoreline!");
                     sfx.playSpeechPop();
                     return;
                 }
+                if (player.botType === 'TOREINBOTTO') {
+                    const nearRail = isNearRailwayTrack(player.pos.x, player.pos.z, 26.0);
+                    const nearWat = isNearWater(player.pos.x, player.pos.z, 22.0);
+                    if (nearRail) {
+                        const nearest = findNearestRailwayPoint(player.pos.x, player.pos.z);
+                        const dotDir = Math.sin(player.heading) * Math.sin(nearest.heading) + Math.cos(player.heading) * Math.cos(nearest.heading);
+                        player.trackDir = dotDir >= 0 ? 1 : -1;
+                        player.trackDist = nearest.distOnTrack;
+                        player.onRailwayTrack = true;
+                        player.railPassingOffset = 0;
+                        player.hasWaypoint = false;
+                        waypointGroup.visible = false;
+                        const pose = getRailwayPoseAtDist(player.trackDist, player.trackDir);
+                        player.pos.set(pose.x, pose.y, pose.z);
+                        player.heading = pose.heading;
+                        player.mode = 'VEHICLE';
+                        player.targetMorph = 1.0;
+                        player.targetBoatMorph = 0.0;
+                        player.targetDinoMorph = 0.0;
+                        player.targetHiddenMorph = 0.0;
+                        player.flightAlt = 0;
+                        sfx.playTransform(true);
+                        sfx.playTrainWhistle();
+                        showToast("ALL ABOARD! • SHINKANSEN RAIL MODE", "Toreinbotto is locked onto the Griffin Rock Railway tracks!");
+                        speakBotCatchphrase('TOREINBOTTO', 'TO_VEHICLE');
+                        syncHUDToActiveBot();
+                        progression.playerMode = player.mode;
+                        saveProgression();
+                        return;
+                    } else if (nearWat) {
+                        player.onRailwayTrack = false;
+                        player.mode = 'VEHICLE';
+                        player.targetMorph = 1.0;
+                        player.targetBoatMorph = 1.0;
+                        player.targetDinoMorph = 0.0;
+                        player.targetHiddenMorph = 0.0;
+                        player.flightAlt = 0;
+                        sfx.playTransform(true);
+                        showToast("RAIL-FERRY CATAMARAN!", "Toreinbotto transformed into Express Rail-Ferry Boat Mode!");
+                        speakBotCatchphrase('TOREINBOTTO', 'TO_VEHICLE');
+                        syncHUDToActiveBot();
+                        progression.playerMode = player.mode;
+                        saveProgression();
+                        return;
+                    } else {
+                        showToast("RAILWAY TRACKS REQUIRED", "Head to Griffin Rock's train tracks or Central Station to enter Train Mode!");
+                        sfx.playSpeechPop();
+                        return;
+                    }
+                }
                 const inWater = isPointInWater(player.pos.x, player.pos.z) || getSurfaceHeight(player.pos.x, player.pos.z) < getWaterSurfaceY() + 0.7;
+                player.onRailwayTrack = false;
                 player.mode = 'VEHICLE';
                 player.targetMorph = 1.0;
                 player.targetBoatMorph = (player.botType !== 'HIGHTIDE' && inWater) ? 1.0 : 0.0;
@@ -1251,11 +1388,12 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             } else if (nextMode === 'DINO') {
                 // High Tide's Plesiosaur / Titan Mosasaur Dino Mode is fully amphibious (works on land AND water!).
                 // Other bots in deep open water must steer back to shore before leaving Boat Mode.
-                if (player.botType !== 'HIGHTIDE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
+                if (player.botType !== 'HIGHTIDE' && !player.onRailwayTrack && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
                     showToast("RETURN TO SHORE", `${BOT_METADATA[player.botType].name} must steer to the beach or harbor dock before transforming out of Boat Mode!`);
                     sfx.playSpeechPop();
                     return;
                 }
+                player.onRailwayTrack = false;
                 player.mode = 'DINO';
                 player.targetMorph = 0.0;
                 player.targetBoatMorph = 0.0;
@@ -1277,11 +1415,12 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 showToast("DINOBOT MODE!", `${meta.name} • ${meta.dinoName}!`);
                 speakBotCatchphrase(player.botType, 'TO_DINO');
             } else {
-                if (player.botType !== 'HIGHTIDE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
+                if (player.botType !== 'HIGHTIDE' && !player.onRailwayTrack && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
                     showToast("RETURN TO SHORE", `${BOT_METADATA[player.botType].name} must steer to the beach or harbor dock before transforming into Robot Mode!`);
                     sfx.playSpeechPop();
                     return;
                 }
+                player.onRailwayTrack = false;
                 player.mode = 'BOT';
                 player.targetMorph = 0.0;
                 player.targetBoatMorph = 0.0;
@@ -1297,6 +1436,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         }
 
         export function toggleHiddenVehicleMode() {
+            if (worldState.activeArea === 'RAIL_TUNNEL') return;
             const hiddenCfg = getBotHiddenVehicleMode(player.botType);
             if (!hiddenCfg) return;
             if (player.mode === 'HIDDEN_VEHICLE') {
@@ -1520,7 +1660,28 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
         // Transform Cycle (Robot -> Vehicle -> Dinobot -> Robot)
         export function triggerTransform() {
+            if (worldState.activeArea === 'RAIL_TUNNEL') {
+                showToast("TUNNEL LOCK ACTIVE", "Transforming is locked inside the Mainland Express Tunnel!");
+                sfx.playSpeechPop();
+                return;
+            }
             const hasDino = BOT_METADATA[player.botType] && BOT_METADATA[player.botType].dinoName;
+            if (player.botType === 'TOREINBOTTO') {
+                const nearRail = isNearRailwayTrack(player.pos.x, player.pos.z, 26.0);
+                const nearWater = isNearWater(player.pos.x, player.pos.z, 22.0);
+                if (player.mode === 'BOT') {
+                    if (nearRail || nearWater) {
+                        setPlayerMode('VEHICLE');
+                    } else {
+                        setPlayerMode('DINO');
+                    }
+                } else if (player.mode === 'VEHICLE') {
+                    setPlayerMode('DINO');
+                } else {
+                    setPlayerMode('BOT');
+                }
+                return;
+            }
             if (player.botType === 'HEATWAVE') {
                 if (player.mode === 'BOT') {
                     setPlayerMode('VEHICLE');
@@ -1592,6 +1753,10 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
         // Bot-Specific Special Action (Adapts across Bot, Vehicle, and Dinobot Modes!)
         export function triggerPrimaryAction() {
+            if (worldState.activeArea === 'RAIL_TUNNEL') {
+                triggerRailTunnelBoost();
+                return;
+            }
             const isUnderground = worldState.activeArea === 'UNDERGROUND';
             if (isUnderground) {
                 triggerNearbyDinoReaction(player.pos.x, player.pos.z);
@@ -2153,6 +2318,52 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 beacons.forEach(beacon => {
                     beacon.nodes.forEach(n => {
                         if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
+                            clearHazardNode(beacon, n, 'HEAVY');
+                        }
+                    });
+                });
+                return;
+            }
+
+            if (player.botType === 'TOREINBOTTO') {
+                const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+                if (isBoat) {
+                    player.boostTimer = 2.4;
+                    player.speed = Math.max(player.speed + 24, 80);
+                    sfx.playTrainWhistle();
+                    checkHitMorBotWithSpecialAbility(34.0, "EXPRESS WAKE SURGE");
+                    spawnBurstParticles(player.pos.x, 0.2, player.pos.z, 0x38bdf8, 22, 1.8);
+                    spawnSparkleGlints(player.pos.x, 0.8, player.pos.z, 18);
+                    showToast("EXPRESS WAKE SURGE!", "Rail-Ferry Catamaran twin jets surged across the waves!");
+                } else if (player.mode === 'VEHICLE') {
+                    player.boostTimer = 2.6;
+                    player.speed = Math.max(player.speed + 26, 86);
+                    sfx.playTrainWhistle();
+                    checkHitMorBotWithSpecialAbility(42.0, "SHINKANSEN TURBO SURGE");
+                    spawnBurstParticles(player.pos.x, player.pos.y + 1.4, player.pos.z, 0x38bdf8, 24, 1.9);
+                    spawnBurstParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 0xfacc15, 16, 1.6);
+                    showToast("SHINKANSEN TURBO SURGE!", "Full express power along the Griffin Rock Railway!");
+                } else if (player.mode === 'DINO') {
+                    player.boostTimer = 2.2;
+                    player.smashTimer = 0.55;
+                    player.speed = Math.max(player.speed + 18, 62);
+                    sfx.playDinoRoar('TOREINBOTTO');
+                    sfx.playTrainWhistle();
+                    checkHitMorBotWithSpecialAbility(36.0, "SONIC CREST CHARGE");
+                    spawnBurstParticles(player.pos.x, player.pos.y + 1.8, player.pos.z, 0x38bdf8, 22, 1.7);
+                    showToast("SONIC CREST CHARGE!", "Parasaurolophus acoustic crest unleashed a shockwave!");
+                } else {
+                    player.smashTimer = 0.48;
+                    player.sonarTimer = 1.6;
+                    sfx.playTrainWhistle();
+                    checkHitMorBotWithSpecialAbility(36.0, "SONIC WHISTLE BLAST");
+                    spawnBurstParticles(player.pos.x, player.pos.y + 1.8, player.pos.z, 0xfacc15, 20, 1.6);
+                    spawnSparkleGlints(player.pos.x, player.pos.y + 2.0, player.pos.z, 18);
+                    showToast("SONIC WHISTLE BLAST!", "Express acoustic pulse cleared nearby hazards!");
+                }
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 25.0) {
                             clearHazardNode(beacon, n, 'HEAVY');
                         }
                     });
