@@ -693,13 +693,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     nextTransformLabel = 'TO ROBOT';
                 }
             } else if (player.botType === 'HIGHTIDE') {
+                const inWaterNow = worldState.activeArea === 'SURFACE' && isPointInWater(player.pos.x, player.pos.z);
                 const nearWater = isNearWater(player.pos.x, player.pos.z, 24.0);
                 if (player.mode === 'BOT') {
                     nextTransformLabel = nearWater ? `TO ${meta.vehName}` : `TO ${meta.dinoName}`;
                 } else if (player.mode === 'VEHICLE') {
                     nextTransformLabel = `TO ${meta.dinoName}`;
                 } else {
-                    nextTransformLabel = 'TO ROBOT';
+                    nextTransformLabel = inWaterNow ? `TO ${meta.vehName}` : 'TO ROBOT';
                 }
             } else {
                 nextTransformLabel = player.mode === 'BOT'
@@ -1510,8 +1511,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 showToast("DINOBOT MODE!", `${meta.name} • ${meta.dinoName}!`);
                 speakBotCatchphrase(player.botType, 'TO_DINO');
             } else {
-                if (player.botType !== 'HIGHTIDE' && !player.onRailwayTrack && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0)) {
-                    showToast("RETURN TO SHORE", `${BOT_METADATA[player.botType].name} must steer to the beach or harbor dock before transforming into Robot Mode!`);
+                const inSurfaceWater = worldState.activeArea === 'SURFACE' && !player.onRailwayTrack && isPointInWater(player.pos.x, player.pos.z);
+                if (inSurfaceWater) {
+                    showToast("RETURN TO SHORE", `${BOT_METADATA[player.botType].name} must steer onto dry land before transforming into Robot Mode!`);
                     sfx.playSpeechPop();
                     return;
                 }
@@ -1788,6 +1790,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 return;
             }
             if (player.botType === 'HIGHTIDE') {
+                const inWaterNow = worldState.activeArea === 'SURFACE' && isPointInWater(player.pos.x, player.pos.z);
                 const nearWater = isNearWater(player.pos.x, player.pos.z, 24.0);
                 if (player.mode === 'BOT') {
                     if (nearWater) {
@@ -1799,7 +1802,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 } else if (player.mode === 'VEHICLE') {
                     setPlayerMode('DINO');
                 } else {
-                    setPlayerMode('BOT');
+                    // In water, cycle directly back to Submarine Mode instead of Robot Mode!
+                    setPlayerMode(inWaterNow ? 'VEHICLE' : 'BOT');
                 }
                 return;
             }
