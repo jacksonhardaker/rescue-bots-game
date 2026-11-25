@@ -1006,8 +1006,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.dinoMorph = 0.0;
             }
 
-            // If player is out in deep water and tries to switch bot modes, ensure they are in vehicle (boat) mode or High Tide
-            const inDeepWater = isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0);
+            // If player is out in deep water, automatically engage Boat Mode (or Submarine for High Tide) instead of leaving a bot stranded in Bot/Dino mode
+            const inDeepWater = worldState.activeArea === 'SURFACE' && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0);
+            const isAirborneFlight = isNewBotFlying && player.pos.y > 4.0;
 
             // Toreinbotto Train Mode is strictly track-only: switching to him while in another bot's Vehicle Mode
             // automatically transforms him back to Robot Mode (unless floating in deep water, where Boat Mode engages).
@@ -1028,15 +1029,25 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 }
             }
 
-            if (inDeepWater) {
-                if (player.mode !== 'VEHICLE' && newBotType !== 'HIGHTIDE') {
-                    showToast("RETURN TO SHORE", "Steer to the beach or harbor before switching to a land rescue bot!");
-                    return;
+            if (inDeepWater && !isAirborneFlight) {
+                const isAmphibiousHighTide = (newBotType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+                if (!isAmphibiousHighTide) {
+                    player.mode = 'VEHICLE';
+                    player.targetMorph = 1.0;
+                    player.morph = 1.0;
+                    player.targetDinoMorph = 0.0;
+                    player.dinoMorph = 0.0;
+                    player.targetHiddenMorph = 0.0;
+                    player.hiddenMorph = 0.0;
+                    player.onRailwayTrack = false;
+                    if (newBotType === 'HIGHTIDE') {
+                        player.boatMorph = 0.0;
+                        player.targetBoatMorph = 0.0;
+                    } else {
+                        player.boatMorph = 1.0;
+                        player.targetBoatMorph = 1.0;
+                    }
                 }
-            }
-            if (player.mode === 'VEHICLE' && inDeepWater && newBotType !== 'HIGHTIDE') {
-                player.boatMorph = 1.0;
-                player.targetBoatMorph = 1.0;
             } else if (newBotType === 'HIGHTIDE' || !inDeepWater) {
                 player.boatMorph = 0.0;
                 player.targetBoatMorph = 0.0;
@@ -1074,9 +1085,93 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             speakBotCatchphrase(newBotType, 'DEPLOY');
         }
 
+        // Centralized Environment & Transform Mode Invariant Guard
+        // Guarantees no scene transition, session restore, or bot switch ever leaves a bot in an illegal mode
+        // (e.g., Bot Mode stranded in deep ocean water, High Tide Submarine on dry land/planets, or unclamped Toreinbotto Train off-track).
+        export function enforceEnvironmentModeRules(immediate = false) {
+            const area = worldState.activeArea;
+            if (area === 'RAIL_TUNNEL' || area === 'UNDERWATER' || area === 'SPACE' || area === 'SOLAR_HUB' || area === 'SATURN_RING_RACE') {
+                return;
+            }
+
+            const isSurface = area === 'SURFACE';
+            const inDeepWater = isSurface && isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0);
+            const nearAnyWater = isSurface && (isPointInWater(player.pos.x, player.pos.z) || isNearWater(player.pos.x, player.pos.z, 10.0));
+            const isAirborneFlyer = (
+                (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||
+                (player.botType === 'QUICKSHADOW' && player.mode === 'VEHICLE' && isBotDocked('QUICKSHADOW')) ||
+                isBotFlyingHiddenVehicle(player.botType, player.mode)
+            ) && player.pos.y > 4.0;
+
+            let changed = false;
+
+            // Rule 1: Any bot positioned in deep ocean water on SURFACE (unless airborne flyer or amphibious High Tide Dino)
+            // must be in Boat / Submarine VEHICLE mode — never stranded in BOT or non-amphibious DINO mode!
+            if (inDeepWater && !isAirborneFlyer) {
+                const isHighTideWaterSafe = (player.botType === 'HIGHTIDE' && (player.mode === 'VEHICLE' || player.mode === 'DINO'));
+                const isAlreadyBoat = (player.botType !== 'HIGHTIDE' && player.mode === 'VEHICLE' && (player.targetBoatMorph ?? 0) > 0.5);
+                if (!isHighTideWaterSafe && !isAlreadyBoat) {
+                    player.mode = 'VEHICLE';
+                    player.onRailwayTrack = false;
+                    player.targetMorph = 1.0;
+                    player.targetDinoMorph = 0.0;
+                    player.targetHiddenMorph = 0.0;
+                    player.targetBoatMorph = player.botType === 'HIGHTIDE' ? 0.0 : 1.0;
+                    if (immediate) {
+                        player.morph = 1.0;
+                        player.dinoMorph = 0.0;
+                        player.hiddenMorph = 0.0;
+                        player.boatMorph = player.targetBoatMorph;
+                    }
+                    changed = true;
+                }
+            }
+
+            // Rule 2: High Tide Submarine (VEHICLE) requires water — on dry land or off-world scenes, auto-revert to BOT mode!
+            if (player.botType === 'HIGHTIDE' && player.mode === 'VEHICLE' && !nearAnyWater) {
+                player.mode = 'BOT';
+                player.targetMorph = 0.0;
+                player.targetBoatMorph = 0.0;
+                player.targetDinoMorph = 0.0;
+                player.targetHiddenMorph = 0.0;
+                if (immediate) {
+                    player.morph = 0.0;
+                    player.boatMorph = 0.0;
+                    player.dinoMorph = 0.0;
+                    player.hiddenMorph = 0.0;
+                }
+                changed = true;
+            }
+
+            // Rule 3: Toreinbotto Train Mode (VEHICLE) requires railway tracks (or water for Rail-Ferry Boat Mode) —
+            // off-track on dry land or in any off-world/underground scene, auto-revert to BOT mode!
+            if (player.botType === 'TOREINBOTTO' && player.mode === 'VEHICLE' && !player.onRailwayTrack && !nearAnyWater) {
+                player.mode = 'BOT';
+                player.targetMorph = 0.0;
+                player.targetBoatMorph = 0.0;
+                player.targetDinoMorph = 0.0;
+                player.targetHiddenMorph = 0.0;
+                if (immediate) {
+                    player.morph = 0.0;
+                    player.boatMorph = 0.0;
+                    player.dinoMorph = 0.0;
+                    player.hiddenMorph = 0.0;
+                }
+                changed = true;
+            }
+
+            if (changed) {
+                syncHUDToActiveBot();
+            }
+        }
+
         export function updateAllBotTransforms(dt: number, now: number) {
             const pExt = player as PlayerStateExt;
             const bExt = buddyBot as BuddyStateExt;
+
+            // Enforce environment/mode safety invariants continuously
+            enforceEnvironmentModeRules(false);
+
             // Smoothly interpolate active player vehicle & dino morphs (~0.95s duration matching the 5-step transformation sound!)
             const morphSpeed = 1.05;
             if (player.morph < player.targetMorph) {
@@ -1087,21 +1182,6 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             if (player.boatMorph === undefined) player.boatMorph = 0;
             if (player.targetBoatMorph === undefined) player.targetBoatMorph = 0;
-
-            // Safety invariant: Toreinbotto can never stay in unclamped Train Mode off the tracks on dry land
-            if (
-                player.botType === 'TOREINBOTTO' &&
-                player.mode === 'VEHICLE' &&
-                !player.onRailwayTrack &&
-                worldState.activeArea !== 'RAIL_TUNNEL' &&
-                !isPointInWater(player.pos.x, player.pos.z) &&
-                !isNearWater(player.pos.x, player.pos.z, 8.0)
-            ) {
-                player.mode = 'BOT';
-                player.targetMorph = 0.0;
-                player.targetBoatMorph = 0.0;
-                syncHUDToActiveBot();
-            }
 
             // All bots in vehicle mode (except High Tide who is already oceanic, and Toreinbotto while clamped on railway tracks) automatically update targetBoatMorph based on whether they're in water
             const canHaveBoat = player.botType !== 'HIGHTIDE' && !(player.botType === 'TOREINBOTTO' && player.onRailwayTrack) && player.mode === 'VEHICLE';
@@ -2662,6 +2742,9 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 }
             }
 
+            // 5B. Enforce environment/mode safety invariants (e.g., no Submarine/Train on dry land or Bot stranded in deep water)
+            enforceEnvironmentModeRules(true);
+
             // 6. Update bot rigs visual transforms immediately
             const now = performance.now();
             const rig = botRigs?.[player.botType];
@@ -2688,6 +2771,7 @@ if (typeof window !== 'undefined') {
     window.unlockAndSwitchBot = unlockAndSwitchBot;
     window.setBuddyBot = setBuddyBot;
     window.switchRescueBot = switchRescueBot;
+    window.enforceEnvironmentModeRules = enforceEnvironmentModeRules;
     window.updateAllBotTransforms = updateAllBotTransforms;
     window.setPlayerMode = setPlayerMode;
     window.dockHighTideMegabot = dockHighTideMegabot;

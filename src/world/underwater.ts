@@ -774,6 +774,20 @@ export function exitUnderwaterWorld() {
     player.speed = 0;
     player.vy = 0;
     player.hasWaypoint = false;
+    player.onRailwayTrack = false;
+
+    // Never surface into open ocean stranded in Bot Mode — auto-transform into Submarine / Boat Mode!
+    if (player.mode === 'BOT' || (player.botType !== 'HIGHTIDE' && player.mode !== 'VEHICLE')) {
+        player.mode = 'VEHICLE';
+        player.targetMorph = 1.0;
+        player.morph = 1.0;
+        player.targetDinoMorph = 0.0;
+        player.dinoMorph = 0.0;
+        player.targetHiddenMorph = 0.0;
+        player.hiddenMorph = 0.0;
+        player.targetBoatMorph = player.botType === 'HIGHTIDE' ? 0.0 : 1.0;
+        player.boatMorph = player.targetBoatMorph;
+    }
 
     const botControls = document.getElementById('bottom-controls-bar');
     if (botControls) botControls.classList.remove('hidden');

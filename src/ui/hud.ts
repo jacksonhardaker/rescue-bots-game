@@ -255,6 +255,7 @@ import { enterRailTunnel, exitRailTunnel, setRailTunnelTouch, triggerRailTunnelB
             player.heading = 0;
             player.speed = 0;
             player.hasWaypoint = false;
+            if (typeof window.enforceEnvironmentModeRules === 'function') (window.enforceEnvironmentModeRules as (imm?: boolean) => void)(true);
             const wg = waypointGroup as unknown as { visible: boolean } | null;
             if (wg) wg.visible = false;
             const isFlying = (player.botType === 'BLADES' && (player.mode === 'VEHICLE' || player.mode === 'DINO')) ||

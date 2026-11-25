@@ -692,6 +692,8 @@ export function swapToMoon() {
     player.hasWaypoint = false;
     player.boatMorph = 0;
     player.targetBoatMorph = 0;
+    player.onRailwayTrack = false;
+    if (typeof window.enforceEnvironmentModeRules === 'function') (window.enforceEnvironmentModeRules as (imm?: boolean) => void)(true);
 
     if (buddyBot && buddyBot.pos) {
         const by = getMoonSurfaceHeight(spawnX + 6, spawnZ + 4);

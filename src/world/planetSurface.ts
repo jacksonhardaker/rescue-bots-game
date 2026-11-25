@@ -1520,6 +1520,10 @@ export function swapToPlanetSurface(planetId: LandablePlanetId, returnSector: st
     player.flightAlt = 0;
     player.grounded = true;
     player.hasWaypoint = false;
+    player.onRailwayTrack = false;
+    player.boatMorph = 0;
+    player.targetBoatMorph = 0;
+    if (typeof window.enforceEnvironmentModeRules === 'function') (window.enforceEnvironmentModeRules as (imm?: boolean) => void)(true);
     buddyBot.pos.set(-7, getPlanetSurfaceHeight(-7, 10), 10);
     buddyBot.heading = 0;
 

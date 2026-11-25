@@ -2491,8 +2491,10 @@ export function swapToUnderground() {
     player.hasWaypoint = false;
     player.boatMorph = 0;
     player.targetBoatMorph = 0;
+    player.onRailwayTrack = false;
     player.knockbackVx = 0;
     player.knockbackVz = 0;
+    if (typeof window.enforceEnvironmentModeRules === 'function') (window.enforceEnvironmentModeRules as (imm?: boolean) => void)(true);
 
     if (buddyBot && buddyBot.pos) {
         buddyBot.pos.set(6, 1.0, 10);
@@ -2543,8 +2545,10 @@ export function swapToSurface(immediate = false) {
     player.hasWaypoint = false;
     player.boatMorph = 0;
     player.targetBoatMorph = 0;
+    player.onRailwayTrack = false;
     player.knockbackVx = 0;
     player.knockbackVz = 0;
+    if (typeof window.enforceEnvironmentModeRules === 'function') (window.enforceEnvironmentModeRules as (imm?: boolean) => void)(true);
 
     if (buddyBot && buddyBot.pos) {
         buddyBot.pos.set(sx - 6, sy, sz - 6);
