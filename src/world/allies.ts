@@ -208,10 +208,10 @@ export function syncVisitingAutobotsVisibility() {
                 role: 'Shinkansen Express Rail Hero',
                 voicePitch: 0.96,
                 badgeColor: '#1d4ed8',
-                x: 755,
+                x: 764,
                 y: 4.5,
-                z: 75,
-                rotY: -1.57,
+                z: 72,
+                rotY: 1.57,
                 dialogues: [
                     "All aboard! I'm Toreinbotto, Shinkansen Express Rail Hero! Switch to me near Griffin Rock's railway tracks to transform into Bullet Train Mode!",
                     "My Train Mode locks right onto the steel rails — and if you spot the Mainland Express Tunnel Portal on the northern ridge, ride right inside for an undersea trip to Mainland Terminal!",

@@ -1006,31 +1006,31 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 player.dinoMorph = 0.0;
             }
 
-            // Toreinbotto Train Mode requires railway tracks (or water for Boat Mode); if deployed off-track on dry land, revert to Bot mode
+            // If player is out in deep water and tries to switch bot modes, ensure they are in vehicle (boat) mode or High Tide
+            const inDeepWater = isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0);
+
+            // Toreinbotto Train Mode is strictly track-only: switching to him while in another bot's Vehicle Mode
+            // automatically transforms him back to Robot Mode (unless floating in deep water, where Boat Mode engages).
             if (newBotType === 'TOREINBOTTO' && player.mode === 'VEHICLE') {
-                if (isNearRailwayTrack(player.pos.x, player.pos.z, 26.0)) {
-                    const nearest = findNearestRailwayPoint(player.pos.x, player.pos.z);
-                    const dotDir = Math.sin(player.heading) * Math.sin(nearest.heading) + Math.cos(player.heading) * Math.cos(nearest.heading);
-                    player.trackDir = dotDir >= 0 ? 1 : -1;
-                    player.trackDist = nearest.distOnTrack;
-                    player.onRailwayTrack = true;
-                    const pose = getRailwayPoseAtDist(player.trackDist, player.trackDir);
-                    player.pos.set(pose.x, pose.y, pose.z);
-                    player.heading = pose.heading;
-                } else if (!isNearWater(player.pos.x, player.pos.z, 22.0)) {
+                if (inDeepWater) {
+                    player.onRailwayTrack = false;
+                    player.boatMorph = 1.0;
+                    player.targetBoatMorph = 1.0;
+                } else {
+                    player.onRailwayTrack = false;
                     player.mode = 'BOT';
                     player.targetMorph = 0.0;
                     player.targetDinoMorph = 0.0;
+                    player.targetBoatMorph = 0.0;
                     player.morph = 0.0;
                     player.dinoMorph = 0.0;
+                    player.boatMorph = 0.0;
                 }
             }
 
-            // If player is out in deep water and tries to switch bot modes, ensure they are in vehicle (boat) mode or High Tide
-            const inDeepWater = isPointInWater(player.pos.x, player.pos.z) && !isNearWater(player.pos.x, player.pos.z, 6.0);
             if (inDeepWater) {
                 if (player.mode !== 'VEHICLE' && newBotType !== 'HIGHTIDE') {
-                    showToast("🌊 RETURN TO SHORE", "Steer to the beach or harbor before switching to a land rescue bot!");
+                    showToast("RETURN TO SHORE", "Steer to the beach or harbor before switching to a land rescue bot!");
                     return;
                 }
             }
@@ -1087,6 +1087,21 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
 
             if (player.boatMorph === undefined) player.boatMorph = 0;
             if (player.targetBoatMorph === undefined) player.targetBoatMorph = 0;
+
+            // Safety invariant: Toreinbotto can never stay in unclamped Train Mode off the tracks on dry land
+            if (
+                player.botType === 'TOREINBOTTO' &&
+                player.mode === 'VEHICLE' &&
+                !player.onRailwayTrack &&
+                worldState.activeArea !== 'RAIL_TUNNEL' &&
+                !isPointInWater(player.pos.x, player.pos.z) &&
+                !isNearWater(player.pos.x, player.pos.z, 8.0)
+            ) {
+                player.mode = 'BOT';
+                player.targetMorph = 0.0;
+                player.targetBoatMorph = 0.0;
+                syncHUDToActiveBot();
+            }
 
             // All bots in vehicle mode (except High Tide who is already oceanic, and Toreinbotto while clamped on railway tracks) automatically update targetBoatMorph based on whether they're in water
             const canHaveBoat = player.botType !== 'HIGHTIDE' && !(player.botType === 'TOREINBOTTO' && player.onRailwayTrack) && player.mode === 'VEHICLE';

@@ -388,12 +388,15 @@ export function buildRailTunnelPortal() {
             return crossingData;
         }
 
-        // Griffin Rock Central Passenger Railway Station (at X = 765, Z = 75, near East Highway crossing)
+        // Griffin Rock Central Passenger Railway Station (aligned cleanly beside & tangent to the East Railway spline!)
         export function buildCentralRailwayStation() {
-            const stX = 765, stZ = 75;
+            const nearest = findNearestRailwayPoint(765, 75);
+            const stX = nearest.x;
+            const stZ = nearest.z;
             const stY = getSurfaceHeight(stX, stZ);
             const { root: stationG } = buildCentralRailwayStationMesh();
             stationG.position.set(stX, stY, stZ);
+            stationG.rotation.y = nearest.heading;
 
             scene.add(stationG);
             registerCullableObject(stationG, stX, stY + 3, stZ, 45);
@@ -672,12 +675,14 @@ export function initRailway(scene?: THREE.Scene | null) {
     freezeStaticHierarchy(railwayLoopMesh);
     s.add(railwayLoopMesh);
 
-    // 4 Grade Crossings
+    // 4 Grade Crossings (snapped to exact railway spline centerlines)
     railroadCrossings.length = 0;
-    createRailroadCrossing(0, 620, true);       // South NS Highway Crossing
-    createRailroadCrossing(0, -730, true);      // North NS Highway Crossing
-    createRailroadCrossing(765, 25, false);     // East EW Highway Crossing
-    createRailroadCrossing(-765, 25, false);    // West EW Highway Crossing
+    const eastCross = findNearestRailwayPoint(770, 25);
+    const westCross = findNearestRailwayPoint(-770, 25);
+    createRailroadCrossing(0, 620, true);                        // South NS Highway Crossing
+    createRailroadCrossing(0, -730, true);                       // North NS Highway Crossing
+    createRailroadCrossing(eastCross.x, eastCross.z, false);     // East EW Highway Crossing
+    createRailroadCrossing(westCross.x, westCross.z, false);     // West EW Highway Crossing
     railroadCrossings.forEach((cr) => {
         if (cr.group) {
             mergeStaticMeshesInGroup(cr.group, (cr.lamps || []).map((l) => l.mesh));
