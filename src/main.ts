@@ -31,6 +31,7 @@ import { buildEnergonCubes, initGoldenCrests } from './world/collectibles.js';
 import { initEmergentRescues } from './world/emergencies.js';
 import { initVisitingAutobots, syncVisitingAutobotsVisibility } from './world/allies.js';
 import { buildLivingWorldNPCs } from './world/npcs.js';
+import { initSurfacePatients } from './world/patients.js';
 
 // Bot Rigs & Player Controls
 import { initBotRigs } from './bots/botRigs.js';
@@ -107,6 +108,7 @@ export function initGame() {
     initEmergentRescues(scene);
     initVisitingAutobots(scene);
     buildLivingWorldNPCs(scene);
+    initSurfacePatients(scene);
 
     // 6. Initialize UI & Event Handlers
     initHUDButtons();

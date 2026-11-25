@@ -2088,6 +2088,226 @@ export function makeHazardStripeTexture() {
             return new THREE.CanvasTexture(c);
         }
 
+        export function makeRatchetFaceTexture() {
+            const c = document.createElement('canvas');
+            c.width = 256; c.height = 256;
+            const ctx = c.getContext('2d')!;
+
+            // Brushed silver-titanium medic faceplate
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, 256);
+            bgGrad.addColorStop(0, '#e2e8f0');
+            bgGrad.addColorStop(0.55, '#cbd5e1');
+            bgGrad.addColorStop(1, '#94a3b8');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Red helmet brow shadow & crisp V-crest overhang
+            ctx.fillStyle = '#b91c1c';
+            ctx.fillRect(0, 0, 256, 48);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 44, 256, 8);
+
+            // White central V-crest brow notch
+            ctx.fillStyle = '#f8fafc';
+            ctx.beginPath();
+            ctx.moveTo(100, 0); ctx.lineTo(156, 0);
+            ctx.lineTo(140, 46); ctx.lineTo(116, 46);
+            ctx.closePath();
+            ctx.fill();
+
+            // Cheek panel contour lines (classic veteran medic look)
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(28, 128); ctx.lineTo(54, 162); ctx.lineTo(54, 214);
+            ctx.moveTo(228, 128); ctx.lineTo(202, 162); ctx.lineTo(202, 214);
+            ctx.stroke();
+
+            // Expressive Focused Medic Eyebrow Ridges
+            ctx.fillStyle = '#0f172a';
+            ctx.beginPath();
+            ctx.moveTo(30, 74); ctx.lineTo(110, 86); ctx.lineTo(106, 100); ctx.lineTo(28, 92);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(226, 74); ctx.lineTo(146, 86); ctx.lineTo(150, 100); ctx.lineTo(228, 92);
+            ctx.closePath();
+            ctx.fill();
+
+            // Glowing Autobot Cyan Optics
+            [
+                { x: 40, y: 92, w: 66, h: 32 },
+                { x: 150, y: 92, w: 66, h: 32 }
+            ].forEach(eye => {
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(eye.x - 4, eye.y - 4, eye.w + 8, eye.h + 8);
+                const eGrad = ctx.createLinearGradient(0, eye.y, 0, eye.y + eye.h);
+                eGrad.addColorStop(0, '#67e8f9');
+                eGrad.addColorStop(0.55, '#06b6d4');
+                eGrad.addColorStop(1, '#0284c7');
+                ctx.fillStyle = eGrad;
+                ctx.fillRect(eye.x, eye.y, eye.w, eye.h);
+                // Crisp specular glint
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(eye.x + 10, eye.y + 5, 16, 8);
+            });
+
+            // Sculpted Nasal Bridge
+            ctx.fillStyle = '#94a3b8';
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(118, 90); ctx.lineTo(138, 90);
+            ctx.lineTo(144, 152); ctx.lineTo(112, 152);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Confident Warm-Yet-Focused Medic Mouth
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(82, 184);
+            ctx.quadraticCurveTo(128, 198, 174, 180);
+            ctx.stroke();
+
+            // Red chin-guard accent plate
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(96, 214, 64, 34);
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 5;
+            ctx.strokeRect(96, 214, 64, 34);
+
+            // Outer Ink Border
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, 246, 246);
+            return new THREE.CanvasTexture(c);
+        }
+
+        export function makeRatchetMedPanelTexture() {
+            const c = document.createElement('canvas');
+            c.width = 512; c.height = 256;
+            const ctx = c.getContext('2d')!;
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(0, 0, 512, 256);
+
+            // Bold emergency red lower band
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(0, 148, 512, 54);
+            ctx.fillStyle = '#facc15';
+            ctx.fillRect(0, 140, 512, 8);
+            ctx.fillRect(0, 202, 512, 8);
+
+            // White ECG heartbeat cardiogram pulse line across the red stripe
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(16, 175);
+            ctx.lineTo(150, 175);
+            ctx.lineTo(175, 142);
+            ctx.lineTo(200, 206);
+            ctx.lineTo(224, 152);
+            ctx.lineTo(244, 175);
+            ctx.lineTo(496, 175);
+            ctx.stroke();
+
+            // Crisp Red Medical Cross inside White Shield Badge (upper center-left)
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = 7;
+            ctx.beginPath();
+            ctx.arc(100, 74, 52, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(86, 40, 28, 68);
+            ctx.fillRect(66, 60, 68, 28);
+
+            // Bold "RESCUE MEDIC" lettering
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '900 44px system-ui, -apple-system, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('AMBULANCE', 176, 64);
+            ctx.fillStyle = '#dc2626';
+            ctx.font = '900 28px system-ui, -apple-system, sans-serif';
+            ctx.fillText('AUTOBOT MEDIC • 01', 178, 108);
+
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, 504, 248);
+            return new THREE.CanvasTexture(c);
+        }
+
+        export function makeHospitalSignTexture(title = 'GRIFFIN ROCK HOSPITAL', subtitle = 'EMERGENCY • 24HR MEDICAL CENTER') {
+            const c = document.createElement('canvas');
+            c.width = 512; c.height = 160;
+            const ctx = c.getContext('2d')!;
+
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, 512, 160);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(8, 8, 496, 144);
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(8, 104, 496, 48);
+
+            // Left Red Medical Cross Icon
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(42, 24, 22, 64);
+            ctx.fillRect(21, 45, 64, 22);
+
+            // Right Red Medical Cross Icon
+            ctx.fillRect(448, 24, 22, 64);
+            ctx.fillRect(427, 45, 64, 22);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '900 30px system-ui, -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(title, 256, 56);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 22px system-ui, -apple-system, sans-serif';
+            ctx.fillText(subtitle, 256, 128);
+
+            return new THREE.CanvasTexture(c);
+        }
+
+        export function makeAmbulanceBaySignTexture() {
+            const c = document.createElement('canvas');
+            c.width = 512; c.height = 128;
+            const ctx = c.getContext('2d')!;
+
+            ctx.fillStyle = '#dc2626';
+            ctx.fillRect(0, 0, 512, 128);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(8, 8, 496, 112);
+
+            // White Medical Cross on left
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(42, 30, 20, 68);
+            ctx.fillRect(18, 54, 68, 20);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 38px system-ui, -apple-system, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('AMBULANCE BAY', 284, 52);
+
+            ctx.fillStyle = '#fde047';
+            ctx.font = '800 22px system-ui, -apple-system, sans-serif';
+            ctx.fillText('RATCHET EMERGENCY UNIT', 284, 92);
+
+            return new THREE.CanvasTexture(c);
+        }
+
         export const texHazard = makeHazardStripeTexture();
         export const texGrille = makeGrilleTexture();
         export const texEmblem = makeRescueEmblemTexture();
@@ -2121,6 +2341,10 @@ export function makeHazardStripeTexture() {
         export const texMegaShipHull = makeMegaShipHullTexture();
         export const texFaceQuickshadow = makeQuickshadowFaceTexture();
         export const texChestQuickshadow = makeQuickshadowChestTexture();
+        export const texFaceRatchet = makeRatchetFaceTexture();
+        export const texRatchetMedPanel = makeRatchetMedPanelTexture();
+        export const texHospitalSign = makeHospitalSignTexture('GRIFFIN ROCK HOSPITAL', 'EMERGENCY • 24HR MEDICAL CENTER');
+        export const texAmbulanceBaySign = makeAmbulanceBaySignTexture();
 
 if (typeof window !== 'undefined') {
     Object.assign(window, {
@@ -2130,6 +2354,7 @@ if (typeof window !== 'undefined') {
         texFaceBlurr, texBlurrChest, texBlurrShoulder, texBlurrShin, texBlurrTurbine,
         texFaceSalvage, texSalvageChest, texFaceHighTide, texChestHighTide, texShoulderHighTide,
         texMegaBotChest, texMegaShoulderChevron, texMegaShipHull,
-        texFaceQuickshadow, texChestQuickshadow
+        texFaceQuickshadow, texChestQuickshadow,
+        texFaceRatchet, texRatchetMedPanel, texHospitalSign, texAmbulanceBaySign
     });
 }

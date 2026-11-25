@@ -96,10 +96,10 @@ import type { RampItem } from "../types/game.js";
                 h = h * flatFactor + 14.5 * (1 - flatFactor);
             }
 
-            // 4. Flatten Rescue Bots HQ & Griffin Town Central Plaza (around 0, 0)
+            // 4. Flatten Rescue Bots HQ, Griffin Rock General Hospital & Town Central Plaza (around 0, 0)
             const distTown = Math.hypot(x, z);
-            if (distTown < 210) {
-                const flatFactor = Math.max(0, Math.min(1, (distTown - 145) / 65));
+            if (distTown < 230) {
+                const flatFactor = Math.max(0, Math.min(1, (distTown - 168) / 62));
                 h = h * flatFactor + 4.5 * (1 - flatFactor);
             }
 
@@ -540,6 +540,7 @@ import type { RampItem } from "../types/game.js";
             if (Math.hypot(x + 1250, z - 65) < 55) return "DOC GREENE'S TESTING YARD";
             if (Math.hypot(x - 36, z - (-45)) < 24) return "HQ LAUNCH CATAPULT";
             if (Math.hypot(x - (-92), z - (-15)) < 26) return "FIREHOUSE ROBO-WASH";
+            if (Math.hypot(x - 96, z - (-86)) < 48) return "GRIFFIN ROCK GENERAL HOSPITAL";
             if (Math.hypot(x - 78, z + 15) < 26) return "GRIFFIN ROCK DINER";
             if (Math.hypot(x - (-1110), z - (-42)) < 32) return "ENERGON TURBO-CHARGER";
             if (Math.hypot(x - (-1085), z - 62) < 28) return "WEST GROUNDBRIDGE";

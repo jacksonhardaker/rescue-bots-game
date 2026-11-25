@@ -16,7 +16,8 @@ import { spawnBurstParticles } from '../world/emergencies.js';
 import { showToast } from './dialogs.js';
 
 import { islandTrain } from '../world/railway.js';
-import { HQ_SWAP_PAD, bwX, bwZ, testYard } from '../world/buildings.js';
+import { HQ_SWAP_PAD, HOSPITAL_POS, HOSPITAL_DROPOFF_PAD, bwX, bwZ, testYard } from '../world/buildings.js';
+import { getPatientsMapData } from '../world/patients.js';
 import { visitingAutobots, WORLD_MEGA_LOCATIONS } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
 import { isBotDocked } from '../progression/progression.js';
@@ -380,6 +381,13 @@ export function handleTacticalMapTap(clientX: number, clientY: number) {
                         }
                     }
                 }
+                let destLabel = `(${Math.round(worldX)}, ${Math.round(worldZ)})`;
+                if (Math.hypot(worldX - HOSPITAL_POS.x, worldZ - HOSPITAL_POS.z) < 85) {
+                    worldX = HOSPITAL_DROPOFF_PAD.x;
+                    worldZ = HOSPITAL_DROPOFF_PAD.z;
+                    ty = getSurfaceHeight(worldX, worldZ);
+                    destLabel = 'Griffin Rock General Hospital';
+                }
                 const markerY = (canTraverseWater && isWaterPoint) ? -0.45 : Math.max(0.0, ty);
 
                 player.waypoint.set(worldX, markerY, worldZ);
@@ -388,7 +396,7 @@ export function handleTacticalMapTap(clientX: number, clientY: number) {
 
                 if (typeof sfx !== 'undefined' && sfx.playWaypointTap) sfx.playWaypointTap();
                 spawnBurstParticles(worldX, markerY + 0.5, worldZ, 0xfacc15, 6, 0.8);
-                showToast("AUTOPILOT SET", `Navigating to (${Math.round(worldX)}, ${Math.round(worldZ)})`);
+                showToast("AUTOPILOT SET", `Navigating to ${destLabel}`);
                 closeTacticalMap();
             }
 
@@ -611,6 +619,36 @@ function ensureMinimapBgCache(w: number, h: number) {
                     ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
                     ctx.textAlign = 'center';
                     ctx.fillText('EXIT SHAFT', sx, sz + 17);
+                }
+            });
+
+            // Underground Hurt Citizens (Pulsing White & Red Medical Cross Markers)
+            const ugPatients = getPatientsMapData().underground;
+            ugPatients.forEach(pt => {
+                const px = cx + pt.x * mapScale;
+                const pz = cy + pt.z * mapScale;
+                const r = isFullMap ? 6.5 : 3.8;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(px, pz, r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = pt.category === 'MATERNITY' ? '#ec4899' : '#dc2626';
+                ctx.lineWidth = isFullMap ? 1.8 : 1.1;
+                ctx.stroke();
+                ctx.fillStyle = pt.category === 'MATERNITY' ? '#ec4899' : '#dc2626';
+                const arm = r * 0.62;
+                const thick = r * 0.32;
+                ctx.fillRect(px - thick * 0.5, pz - arm, thick, arm * 2);
+                ctx.fillRect(px - arm, pz - thick * 0.5, arm * 2, thick);
+                if (isFullMap) {
+                    ctx.font = 'bold 8px Fredoka, sans-serif';
+                    const lbl = pt.shortLabel.toUpperCase();
+                    const tw = ctx.measureText(lbl).width;
+                    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                    ctx.fillRect(px - tw / 2 - 3, pz - 19, tw + 6, 12);
+                    ctx.fillStyle = '#fecaca';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(lbl, px, pz - 10);
                 }
             });
 
@@ -1204,6 +1242,37 @@ function ensureMinimapBgCache(w: number, h: number) {
                     ctx.lineWidth = 0.9;
                     ctx.stroke();
                 }
+            }
+
+            // Draw Griffin Rock General Hospital (+ Medical Emblem) & Waiting Hurt Citizens on Surface Minimap
+            {
+                const pData = getPatientsMapData();
+                const hx = cx + pData.hospitalPos.x * mapScale;
+                const hz = cy + pData.hospitalPos.z * mapScale;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(hx - 4.2, hz - 4.2, 8.4, 8.4);
+                ctx.strokeStyle = '#dc2626';
+                ctx.lineWidth = 1.2;
+                ctx.strokeRect(hx - 4.2, hz - 4.2, 8.4, 8.4);
+                ctx.fillStyle = '#dc2626';
+                ctx.fillRect(hx - 1.1, hz - 2.9, 2.2, 5.8);
+                ctx.fillRect(hx - 2.9, hz - 1.1, 5.8, 2.2);
+
+                pData.surface.forEach(pt => {
+                    const px = cx + pt.x * mapScale;
+                    const pz = cy + pt.z * mapScale;
+                    const col = pt.category === 'MATERNITY' ? '#ec4899' : '#ef4444';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(px, pz, 3.2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = col;
+                    ctx.lineWidth = 1.0;
+                    ctx.stroke();
+                    ctx.fillStyle = col;
+                    ctx.fillRect(px - 0.7, pz - 2.0, 1.4, 4.0);
+                    ctx.fillRect(px - 2.0, pz - 0.7, 4.0, 1.4);
+                });
             }
 
             // Draw Buddy Bot Arrow (Cyan Wingman Chevron)
@@ -2069,6 +2138,7 @@ function ensureMinimapBgCache(w: number, h: number) {
             // Layer 6: Key Island Landmarks with Badges
             const landmarks = [
                 { name: "RESCUE BOTS HQ", x: HQ_SWAP_PAD.x, z: HQ_SWAP_PAD.z, color: '#06b6d4' },
+                { name: "GRIFFIN HOSPITAL", x: HOSPITAL_POS.x, z: HOSPITAL_POS.z, color: '#dc2626' },
                 { name: "DINO RIDGE", x: -750, z: -750, color: '#22c55e' },
                 { name: "BOARDWALK", x: bwX, z: bwZ, color: '#f59e0b' },
                 { name: "DR. GREENE'S LAB", x: testYard?.baseX ?? 0, z: testYard?.baseZ ?? 0, color: '#38bdf8' },
@@ -2081,25 +2151,63 @@ function ensureMinimapBgCache(w: number, h: number) {
                 const lx = cx + lm.x * mapScale;
                 const lz = cy + lm.z * mapScale;
 
-                ctx.fillStyle = lm.color;
-                ctx.beginPath();
-                ctx.arc(lx, lz, 5.0, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 1.4;
-                ctx.stroke();
+                if (lm.name === 'GRIFFIN HOSPITAL') {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(lx - 6.5, lz - 6.5, 13, 13);
+                    ctx.strokeStyle = '#dc2626';
+                    ctx.lineWidth = 1.8;
+                    ctx.strokeRect(lx - 6.5, lz - 6.5, 13, 13);
+                    ctx.fillStyle = '#dc2626';
+                    ctx.fillRect(lx - 1.7, lz - 4.4, 3.4, 8.8);
+                    ctx.fillRect(lx - 4.4, lz - 1.7, 8.8, 3.4);
+                } else {
+                    ctx.fillStyle = lm.color;
+                    ctx.beginPath();
+                    ctx.arc(lx, lz, 5.0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1.4;
+                    ctx.stroke();
+                }
 
                 // Labeled Pill
                 ctx.font = 'bold 9px Fredoka, sans-serif';
                 const textW = ctx.measureText(lm.name).width;
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-                ctx.fillRect(lx - textW / 2 - 4, lz + 7, textW + 8, 14);
+                ctx.fillRect(lx - textW / 2 - 4, lz + 8, textW + 8, 14);
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
                 ctx.lineWidth = 0.8;
-                ctx.strokeRect(lx - textW / 2 - 4, lz + 7, textW + 8, 14);
+                ctx.strokeRect(lx - textW / 2 - 4, lz + 8, textW + 8, 14);
                 ctx.fillStyle = '#f8fafc';
                 ctx.textAlign = 'center';
-                ctx.fillText(lm.name, lx, lz + 17);
+                ctx.fillText(lm.name, lx, lz + 18);
+            });
+
+            // Layer 6.5: Active Hurt Citizens Needing Ratchet Ambulance Transport
+            const surfPatients = getPatientsMapData().surface;
+            surfPatients.forEach(pt => {
+                const px = cx + pt.x * mapScale;
+                const pz = cy + pt.z * mapScale;
+                const col = pt.category === 'MATERNITY' ? '#ec4899' : '#ef4444';
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(px, pz, 5.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = col;
+                ctx.lineWidth = 1.6;
+                ctx.stroke();
+                ctx.fillStyle = col;
+                ctx.fillRect(px - 1.2, pz - 3.4, 2.4, 6.8);
+                ctx.fillRect(px - 3.4, pz - 1.2, 6.8, 2.4);
+
+                ctx.font = 'bold 7.5px Fredoka, sans-serif';
+                const lbl = pt.shortLabel.toUpperCase();
+                const tw = ctx.measureText(lbl).width;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.fillRect(px - tw / 2 - 3, pz - 18, tw + 6, 11);
+                ctx.fillStyle = '#fecaca';
+                ctx.textAlign = 'center';
+                ctx.fillText(lbl, px, pz - 10);
             });
 
             // Layer 7: Discovered Visiting Autobots

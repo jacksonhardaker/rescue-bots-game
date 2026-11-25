@@ -648,6 +648,58 @@ export const SVG_ICONS: Record<string, string> = {
                 <circle cx="16" cy="16" r="4" fill="#22d3ee" stroke="#0f172a" stroke-width="1.6"/>
                 <circle cx="16" cy="16" r="8.5" stroke="#38bdf8" stroke-width="2" stroke-dasharray="4 3"/>
                 <circle cx="16" cy="16" r="13" stroke="#7dd3fc" stroke-width="1.8" stroke-opacity="0.8"/>
+            </svg>`,
+            RATCHET: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="11" width="18" height="13" rx="2" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5"/>
+                <path d="M21 13H26L29 18V24H21V13Z" fill="#f8fafc" stroke="#0f172a" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M22.5 14.5H25.5L27.5 18H22.5V14.5Z" fill="#38bdf8"/>
+                <rect x="3.5" y="19.5" width="25" height="2.8" fill="#dc2626"/>
+                <rect x="10.2" y="12.6" width="3.6" height="6.4" rx="0.5" fill="#dc2626"/>
+                <rect x="8.8" y="14" width="6.4" height="3.6" rx="0.5" fill="#dc2626"/>
+                <rect x="14" y="8.5" width="7" height="2.6" rx="1" fill="#ef4444" stroke="#0f172a" stroke-width="1"/>
+                <rect x="16.4" y="8.9" width="2.2" height="1.8" fill="#f8fafc"/>
+                <circle cx="9" cy="24.5" r="3" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.4"/>
+                <circle cx="24" cy="24.5" r="3" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.4"/>
+            </svg>`,
+            HOSPITAL: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="7" width="22" height="21" rx="2.5" fill="#f8fafc" stroke="#0f172a" stroke-width="1.8"/>
+                <rect x="9" y="3" width="14" height="5" rx="1.2" fill="#e2e8f0" stroke="#0f172a" stroke-width="1.5"/>
+                <rect x="14" y="10" width="4" height="10" rx="0.8" fill="#dc2626"/>
+                <rect x="11" y="13" width="10" height="4" rx="0.8" fill="#dc2626"/>
+                <rect x="12.5" y="22" width="7" height="6" rx="1" fill="#38bdf8" stroke="#0f172a" stroke-width="1.2"/>
+                <rect x="7.5" y="21" width="3" height="3" rx="0.5" fill="#38bdf8"/>
+                <rect x="21.5" y="21" width="3" height="3" rx="0.5" fill="#38bdf8"/>
+            </svg>`,
+            MED_CROSS: `<svg viewBox="0 0 24 24" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10.5" fill="#f8fafc" stroke="#dc2626" stroke-width="2.2"/>
+                <rect x="9.5" y="5.5" width="5" height="13" rx="1.2" fill="#dc2626"/>
+                <rect x="5.5" y="9.5" width="13" height="5" rx="1.2" fill="#dc2626"/>
+            </svg>`,
+            MED_SCANNER: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="12" stroke="#22d3ee" stroke-width="2" stroke-dasharray="4 3"/>
+                <circle cx="16" cy="16" r="8" fill="#f8fafc" stroke="#dc2626" stroke-width="1.8"/>
+                <rect x="14.2" y="11" width="3.6" height="10" rx="0.8" fill="#dc2626"/>
+                <rect x="11" y="14.2" width="10" height="3.6" rx="0.8" fill="#dc2626"/>
+                <path d="M4 16h3M25 16h3M16 4v3M16 25v3" stroke="#67e8f9" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>`,
+            SIREN_BOOST: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 22V14C9 10.1 12.1 7 16 7C19.9 7 23 10.1 23 14V22H9Z" fill="#ef4444" stroke="#0f172a" stroke-width="1.8"/>
+                <rect x="6" y="22" width="20" height="4.5" rx="1.5" fill="#e2e8f0" stroke="#0f172a" stroke-width="1.6"/>
+                <path d="M16 11V19M12 15H20" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"/>
+                <path d="M16 2.5V5M6 6L8.2 8.2M26 6L23.8 8.2M3 14H6M26 14H29" stroke="#fde047" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>`,
+            HYDRO_MEDIC: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 20L8 12H22L28 19L24 23H7L4 20Z" fill="#f8fafc" stroke="#dc2626" stroke-width="1.8" stroke-linejoin="round"/>
+                <rect x="13" y="13.5" width="3" height="7" rx="0.6" fill="#dc2626"/>
+                <rect x="11" y="15.5" width="7" height="3" rx="0.6" fill="#dc2626"/>
+                <path d="M3 26c3-2 6-2 9 0s6 2 9 0 5-2 8 0" stroke="#38bdf8" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>`,
+            TRI_MED_CHARGE: `<svg viewBox="0 0 32 32" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 19C6 11 11 6 17 7C21 7.6 23 11 23 15L29 13L24 19L29 22L21 24H8L6 19Z" fill="#f8fafc" stroke="#dc2626" stroke-width="1.8" stroke-linejoin="round"/>
+                <rect x="11.5" y="11" width="3.2" height="8" rx="0.6" fill="#dc2626"/>
+                <rect x="9.1" y="13.4" width="8" height="3.2" rx="0.6" fill="#dc2626"/>
+                <path d="M22 14L29 10" stroke="#e2e8f0" stroke-width="2.2" stroke-linecap="round"/>
+                <circle cx="20" cy="18" r="1.4" fill="#22d3ee"/>
             </svg>`
         };
 

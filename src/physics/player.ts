@@ -31,6 +31,7 @@ import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
 import { morbotBattle } from '../world/morbot.js';
 import { camera } from '../rendering/scene.js';
 import { renderMinimap } from '../ui/tacticalMap.js';
+import { triggerRatchetMedScannerPickup } from '../world/patients.js';
         export const BOT_CATCHPHRASES: Record<string, Record<string, string[]>> = {
             BOULDER: {
                 DEPLOY: [
@@ -557,11 +558,41 @@ import { renderMinimap } from '../ui/tacticalMap.js';
                     "Catching cosmic air on two wheels!",
                     "WOOHOO! Now THAT'S a motocross launch!"
                 ]
+            },
+            RATCHET: {
+                DEPLOY: [
+                    "Chief Medical Officer Ratchet reporting in! Hold still and let me scan your vitals!",
+                    "Ratchet on duty! If anyone on Griffin Rock needs a doctor, point me their way!"
+                ],
+                TO_VEHICLE: [
+                    "Ratchet, transform! Emergency Ambulance mode — sirens on, clear the road!",
+                    "Ambulance mode engaged! Rolling straight to Griffin Rock General Hospital!"
+                ],
+                TO_DINO: [
+                    "Ratchet, Dinobot mode! Medic Triceratops frill shield online!",
+                    "Transforming to Triceratops! Stand clear, citizens — emergency medical charge!"
+                ],
+                TO_BOT: [
+                    "Ratchet, robot mode! Med-Scanner calibrated and ready to help!",
+                    "Back on two feet — and please don't touch my diagnostic console, I needed that!"
+                ],
+                RESCUE: [
+                    "Area stabilized and patients safe! Excellent teamwork, Rescue Bots!",
+                    "Emergency resolved — and not a single scratch on my ambulance bay!"
+                ],
+                WASH: [
+                    "Hospital-grade sterile shine! Now that's proper medical hygiene!",
+                    "Squeaky clean from bumper to lightbar!"
+                ],
+                STUNT: [
+                    "Whoa! Careful with my medical equipment — I NEEDED THAT!",
+                    "Airborne ambulance maneuver! Smooth landing!"
+                ]
             }
         };
 
         // botPhraseCounters exported in gameState.js
-const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0, QUICKSHADOW: 0, STARSPEED: 0 };
+const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPTIMUS: 0, BUMBLEBEE: 0, BLURR: 0, SALVAGE: 0, HIGHTIDE: 0, QUICKSHADOW: 0, STARSPEED: 0, RATCHET: 0 };
 
         export function speakBotCatchphrase(botType: string, eventKey: string) {
             const botLines = BOT_CATCHPHRASES[botType] && BOT_CATCHPHRASES[botType][eventKey];
@@ -675,8 +706,8 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                 }
             }
 
-            // Optional Emergency Siren Toggle Button (Shown for Heatwave & Chase)
-            const hasSiren = (player.botType === 'HEATWAVE' || player.botType === 'CHASE');
+            // Optional Emergency Siren Toggle Button (Shown for Heatwave, Chase & Ratchet)
+            const hasSiren = (player.botType === 'HEATWAVE' || player.botType === 'CHASE' || player.botType === 'RATCHET');
             const btnSiren = document.getElementById('btn-siren');
             const sirenLabel = document.getElementById('siren-label');
             if (btnSiren) {
@@ -790,7 +821,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
         export function getUnlockedPlayableBots() {
             const base = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES'];
             const allies = Array.isArray(progression.discoveredAllies) ? progression.discoveredAllies : [];
-            const validAllies = ['OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED'].filter(id => allies.includes(id));
+            const validAllies = ['OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET'].filter(id => allies.includes(id));
             return [...base, ...validAllies];
         }
 
@@ -880,7 +911,7 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
             player.botType = newBotType;
             player.hasWaypoint = false;
             waypointGroup.visible = false;
-            if (newBotType !== 'HEATWAVE' && newBotType !== 'CHASE') {
+            if (newBotType !== 'HEATWAVE' && newBotType !== 'CHASE' && newBotType !== 'RATCHET') {
                 player.sirenActive = false;
             }
             sfx.playBotSwitch();
@@ -2066,6 +2097,66 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     });
                 });
                 spawnBurstParticles(player.pos.x, player.pos.y + 1.4, player.pos.z, 0x06b6d4, 18, 1.4);
+                return;
+            }
+
+            if (player.botType === 'RATCHET') {
+                const isBoat = player.mode === 'VEHICLE' && ((player.targetBoatMorph ?? 0) > 0.5 || (player.boatMorph ?? 0) > 0.4);
+                // Any Ratchet action also runs his extended-range Med-Scanner pickup sweep!
+                const pickedUp = triggerRatchetMedScannerPickup(18.5);
+                if (isBoat) {
+                    player.boostTimer = 2.4;
+                    player.speed = Math.max(player.speed + 24, 82);
+                    sfx.playWarpWhoosh();
+                    sfx.playMedScan();
+                    checkHitMorBotWithSpecialAbility(34.0, "HYDRO-MEDIC SURGE");
+                    spawnBurstParticles(player.pos.x, 0.25, player.pos.z, 0x22d3ee, 20, 1.7);
+                    spawnSparkleGlints(player.pos.x, 0.9, player.pos.z, 18);
+                    if (pickedUp === 0) {
+                        showToast("HYDRO-MEDIC SURGE!", "Ratchet's Water Ambulance rocketed across the waves!");
+                    }
+                    return;
+                }
+                if (player.mode === 'DINO') {
+                    player.boostTimer = 2.0;
+                    player.smashTimer = 0.55;
+                    player.speed = Math.max(player.speed, 54.0);
+                    sfx.playDinoRoar('BOULDER');
+                    sfx.playMedScan();
+                    checkHitMorBotWithSpecialAbility(38.0, "MED-FRILL CHARGE");
+                    spawnBurstParticles(player.pos.x, player.pos.y + 1.4, player.pos.z, 0xef4444, 18, 1.5);
+                    if (pickedUp === 0) {
+                        showToast("MED-FRILL CHARGE!", "Ratchet charged forward with his armored Triceratops shield!");
+                    }
+                } else if (player.mode === 'VEHICLE') {
+                    player.boostTimer = 2.5;
+                    player.speed = Math.max(player.speed + 22, 76);
+                    sfx.playSirenPulse();
+                    sfx.playMedScan();
+                    checkHitMorBotWithSpecialAbility(34.0, "AMBULANCE SIREN BOOST");
+                    spawnBurstParticles(player.pos.x, player.pos.y + 1.2, player.pos.z, 0xef4444, 14, 1.3);
+                    spawnSparkleGlints(player.pos.x, player.pos.y + 1.8, player.pos.z, 16);
+                    if (pickedUp === 0) {
+                        showToast("AMBULANCE SIREN BOOST!", "Emergency strobes active — civilian traffic clearing the road!");
+                    }
+                } else {
+                    player.smashTimer = 0.45;
+                    player.sonarTimer = 1.6;
+                    sfx.playMedScan();
+                    checkHitMorBotWithSpecialAbility(36.0, "MED-SCANNER PULSE");
+                    spawnBurstParticles(player.pos.x, player.pos.y + 1.8, player.pos.z, 0x22d3ee, 22, 1.6);
+                    spawnSparkleGlints(player.pos.x, player.pos.y + 2.0, player.pos.z, 20);
+                    if (pickedUp === 0) {
+                        showToast("MED-SCANNER PULSE!", "Medical vitals scan complete — check the red cross pips on radar!");
+                    }
+                }
+                beacons.forEach(beacon => {
+                    beacon.nodes.forEach(n => {
+                        if (!n.cleared && Math.hypot(player.pos.x - n.x, player.pos.z - n.z) < 24.0) {
+                            clearHazardNode(beacon, n, 'HEAVY');
+                        }
+                    });
+                });
                 return;
             }
 

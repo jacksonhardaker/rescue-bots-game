@@ -198,6 +198,12 @@ export interface LocalVehicleNPC extends VehicleNPCEntry {
                 vehicle: { halfWidth: 1.75, halfLength: 3.4 },
                 dino: { halfWidth: 1.6, halfLength: 3.2 },
                 bot: { halfWidth: 1.5, halfLength: 1.5 }
+            },
+            RATCHET: {
+                mass: 7200, // 7.2 tons - Emergency Ambulance / Medic Triceratops
+                vehicle: { halfWidth: 1.9, halfLength: 3.7 },
+                dino: { halfWidth: 1.95, halfLength: 3.5 },
+                bot: { halfWidth: 1.65, halfLength: 1.65 }
             }
         };
 

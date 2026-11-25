@@ -10,7 +10,7 @@ import {
     matHazardYellow,
     applyCartoonInkOutlines
 } from '../rendering/materials.js';
-import { texWindshieldCyan, texHelipad, texEmblem, texHazard } from '../rendering/textures.js';
+import { texWindshieldCyan, texHelipad, texEmblem, texHazard, texHospitalSign, texAmbulanceBaySign } from '../rendering/textures.js';
 
 const matCraneYellow = new THREE.MeshToonMaterial({ color: 0xfacc15, gradientMap: toonGrad3 });
 const matContainerRed = new THREE.MeshToonMaterial({ color: 0xe11d48, gradientMap: toonGrad3 });
@@ -2176,4 +2176,320 @@ export function buildSkyStuntHoopMesh(radius = 6.5, color = 0x38bdf8) {
     hGroup.add(starPivot);
 
     return { root: hGroup, torusMesh, haloMesh, starPivot };
+}
+
+// 30. GRIFFIN ROCK GENERAL HOSPITAL (Multi-Stage Medical Complex + Open Ambulance Bay + Rooftop Helipad)
+export function buildHospitalMesh() {
+    const root = new THREE.Group();
+
+    const matWallWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad3 });
+    const matTrimGray = new THREE.MeshToonMaterial({ color: 0xcbd5e1, gradientMap: toonGrad3 });
+    const matMedRed = new THREE.MeshToonMaterial({ color: 0xdc2626, gradientMap: toonGrad3 });
+    const matDarkAsphalt = new THREE.MeshToonMaterial({
+        color: 0x334155,
+        gradientMap: toonGrad3,
+        polygonOffset: true,
+        polygonOffsetFactor: -1.2,
+        polygonOffsetUnits: -5.0
+    });
+    const matBayFloor = new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 });
+    const matWinGlass = new THREE.MeshBasicMaterial({ map: texWindshieldCyan });
+    const matRedGlow = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const matCyanGlow = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+    const matEmeraldGlow = new THREE.MeshBasicMaterial({ color: 0x34d399, side: THREE.DoubleSide });
+    const matWhiteGlow = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const matGoldGlow = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+
+    const bayStrobes: THREE.Mesh[] = [];
+    const helipadBeacons: THREE.Mesh[] = [];
+
+    // -------------------------------------------------------------------------
+    // A. PAVED MEDICAL PLAZA APRON, AMBULANCE DRIVE LANE & PATIENT DROP-OFF ZONE
+    // -------------------------------------------------------------------------
+    const apron = new THREE.Mesh(new THREE.BoxGeometry(66, 0.45, 56), matDarkAsphalt);
+    apron.position.set(0, 0.22, 8);
+    apron.receiveShadow = true;
+    root.add(apron);
+
+    // Crisp White & Red Curb Borders along Apron Sides
+    [-32.5, 32.5].forEach(cx => {
+        const curb = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.65, 56), matTrimGray);
+        curb.position.set(cx, 0.34, 8);
+        root.add(curb);
+    });
+
+    // Red-and-White Ambulance Approach Lane Lines leading straight into Ambulance Bay (local x = -16)
+    [-22.2, -9.8].forEach(lx => {
+        const laneLine = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.08, 22), matRedGlow);
+        laneLine.position.set(lx, 0.48, 22);
+        laneLine.userData.noOutline = true;
+        root.add(laneLine);
+    });
+
+    // Illuminated Emergency Patient Drop-Off Pad right in front of the ER Entrance (local x = 6, z = 22)
+    const dropPadBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(8.2, 8.6, 0.14, 24),
+        new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3 })
+    );
+    dropPadBase.position.set(6, 0.48, 22);
+    root.add(dropPadBase);
+
+    const dropCrossV = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.08, 6.2), matRedGlow);
+    dropCrossV.position.set(6, 0.57, 22);
+    dropCrossV.userData.noOutline = true;
+    const dropCrossH = new THREE.Mesh(new THREE.BoxGeometry(6.2, 0.08, 2.0), matRedGlow);
+    dropCrossH.position.set(6, 0.57, 22);
+    dropCrossH.userData.noOutline = true;
+    root.add(dropCrossV, dropCrossH);
+
+    const hospitalDropRing = new THREE.Mesh(
+        new THREE.RingGeometry(6.8, 8.1, 32).rotateX(-Math.PI / 2),
+        matEmeraldGlow
+    );
+    hospitalDropRing.position.set(6, 0.59, 22);
+    hospitalDropRing.userData.noOutline = true;
+    root.add(hospitalDropRing);
+
+    // -------------------------------------------------------------------------
+    // STAGE 1: GROUND FLOOR EMERGENCY DEPARTMENT + OPEN COVERED AMBULANCE BAY
+    // -------------------------------------------------------------------------
+    // 1A. Main Emergency Department Ground Wing (local x = +8, width 32, height 12, depth 26)
+    const stage1Main = new THREE.Mesh(new THREE.BoxGeometry(32, 12, 26), matWallWhite);
+    stage1Main.position.set(8, 6.0, -2);
+    stage1Main.castShadow = true;
+    stage1Main.receiveShadow = true;
+    root.add(stage1Main);
+
+    // Bold Emergency Red Horizontal Belt Stripe & Base Plinth
+    const stage1Plinth = new THREE.Mesh(new THREE.BoxGeometry(33, 1.4, 27), matTrimGray);
+    stage1Plinth.position.set(8, 0.7, -2);
+    const stage1RedBand = new THREE.Mesh(new THREE.BoxGeometry(32.5, 1.35, 26.5), matMedRed);
+    stage1RedBand.position.set(8, 10.6, -2);
+    root.add(stage1Plinth, stage1RedBand);
+
+    // Emergency Department Double Glass Entrance Doors + Overhanging Red Canopy (at local x = 6, z = +11)
+    const erDoorFrame = new THREE.Mesh(new THREE.BoxGeometry(10.5, 6.8, 0.8), matSteel);
+    erDoorFrame.position.set(6, 3.6, 11.1);
+    const erDoorGlass = new THREE.Mesh(new THREE.BoxGeometry(9.2, 5.8, 0.4), matWinGlass);
+    erDoorGlass.position.set(6, 3.4, 11.4);
+    erDoorGlass.userData.noOutline = true;
+    const erCanopy = new THREE.Mesh(new THREE.BoxGeometry(14.5, 1.35, 6.5), matMedRed);
+    erCanopy.position.set(6, 7.6, 13.8);
+    erCanopy.castShadow = true;
+    const erCanopyTrim = new THREE.Mesh(new THREE.BoxGeometry(14.8, 0.32, 6.8), matWhiteGlow);
+    erCanopyTrim.position.set(6, 6.85, 13.8);
+    erCanopyTrim.userData.noOutline = true;
+    [-0.6, 12.6].forEach(px => {
+        const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.5, 7.2, 10), matChrome);
+        pillar.position.set(px, 3.6, 16.2);
+        root.add(pillar);
+    });
+    root.add(erDoorFrame, erDoorGlass, erCanopy, erCanopyTrim);
+
+    // Ground Floor Triage Windows flanking ER Entrance & Side Facades
+    [-4.5, 16.5, 21.5].forEach(wx => {
+        const gWin = new THREE.Mesh(new THREE.BoxGeometry(3.6, 4.2, 0.3), matWinGlass);
+        gWin.position.set(wx, 5.4, 11.15);
+        gWin.userData.noOutline = true;
+        root.add(gWin);
+    });
+    [-10, -2, 6].forEach(wz => {
+        const sideWin = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.2, 5.2), matWinGlass);
+        sideWin.position.set(24.15, 5.4, wz);
+        sideWin.userData.noOutline = true;
+        root.add(sideWin);
+    });
+
+    // 1B. OPEN-FRONT COVERED AMBULANCE BAY (local x = -16, z = 2 -> World x = 80, z = -84 where Ratchet hangs out!)
+    const bayFloor = new THREE.Mesh(new THREE.BoxGeometry(16, 0.36, 22), matBayFloor);
+    bayFloor.position.set(-16, 0.36, 0);
+    bayFloor.receiveShadow = true;
+    root.add(bayFloor);
+
+    // Glowing White & Red Ambulance Parking Box Outline inside Bay
+    const bayPadBorder = new THREE.Mesh(
+        new THREE.RingGeometry(4.4, 5.2, 24).rotateX(-Math.PI / 2),
+        matCyanGlow
+    );
+    bayPadBorder.position.set(-16, 0.58, 2);
+    bayPadBorder.userData.noOutline = true;
+    root.add(bayPadBorder);
+
+    // Back Wall & Left Wall of Ambulance Bay (Right side connects cleanly to Stage 1 ER Wing; Front is 100% OPEN!)
+    const bayBackWall = new THREE.Mesh(new THREE.BoxGeometry(16.4, 11.5, 1.4), matWallWhite);
+    bayBackWall.position.set(-16, 5.75, -11.2);
+    bayBackWall.castShadow = true;
+    const bayLeftWall = new THREE.Mesh(new THREE.BoxGeometry(1.4, 11.5, 22.8), matWallWhite);
+    bayLeftWall.position.set(-24.2, 5.75, 0);
+    bayLeftWall.castShadow = true;
+    const bayRoof = new THREE.Mesh(new THREE.BoxGeometry(17.6, 1.6, 23.8), matWallWhite);
+    bayRoof.position.set(-16, 11.2, 0.4);
+    bayRoof.castShadow = true;
+    const bayRoofRedRim = new THREE.Mesh(new THREE.BoxGeometry(18.0, 0.75, 24.2), matMedRed);
+    bayRoofRedRim.position.set(-16, 12.15, 0.4);
+    root.add(bayBackWall, bayLeftWall, bayRoof, bayRoofRedRim);
+
+    // Front Left Structural Column + Overhead "AMBULANCE BAY" Illuminated Signboard
+    const bayFrontColL = new THREE.Mesh(new THREE.BoxGeometry(1.8, 10.6, 1.8), matWallWhite);
+    bayFrontColL.position.set(-24.0, 5.3, 11.2);
+    const bayFrontColBand = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.4, 2.0), matMedRed);
+    bayFrontColBand.position.set(-24.0, 2.2, 11.2);
+    root.add(bayFrontColL, bayFrontColBand);
+
+    const baySignBoard = new THREE.Mesh(
+        new THREE.BoxGeometry(14.8, 3.2, 0.5),
+        new THREE.MeshBasicMaterial({ map: texAmbulanceBaySign })
+    );
+    baySignBoard.position.set(-16, 11.4, 12.6);
+    baySignBoard.userData.noOutline = true;
+    root.add(baySignBoard);
+
+    // Warm Interior Overhead Bay Strip Lights & Diagnostic Wall Console behind Ratchet
+    [-19, -13].forEach(lx => {
+        const stripLight = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.22, 14.0), matWhiteGlow);
+        stripLight.position.set(lx, 10.3, 0);
+        stripLight.userData.noOutline = true;
+        root.add(stripLight);
+    });
+    const medConsole = new THREE.Mesh(new THREE.BoxGeometry(7.2, 4.4, 1.2), matDarkSteel);
+    medConsole.position.set(-16, 2.4, -9.8);
+    const medScreen = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 2.6), matCyanGlow);
+    medScreen.position.set(-16, 3.0, -9.16);
+    medScreen.userData.noOutline = true;
+    root.add(medConsole, medScreen);
+
+    // Pulsing Red & Cyan Ambulance Bay Pillar Strobe Beacons
+    [-24.0, -8.4].forEach((sx, idx) => {
+        const strobe = new THREE.Mesh(
+            new THREE.SphereGeometry(0.65, 10, 10),
+            idx === 0 ? matRedGlow : matCyanGlow
+        );
+        strobe.position.set(sx, 10.2, 12.3);
+        strobe.userData.noOutline = true;
+        root.add(strobe);
+        bayStrobes.push(strobe);
+    });
+
+    // -------------------------------------------------------------------------
+    // STAGE 2: MID-RISE INPATIENT WARD WING (Stories 2-4, y = 12..26)
+    // -------------------------------------------------------------------------
+    const stage2Core = new THREE.Mesh(new THREE.BoxGeometry(36, 14, 22), matWallWhite);
+    stage2Core.position.set(2, 19.0, -3);
+    stage2Core.castShadow = true;
+    stage2Core.receiveShadow = true;
+    root.add(stage2Core);
+
+    const stage2Cornice = new THREE.Mesh(new THREE.BoxGeometry(37.6, 1.4, 23.6), matMedRed);
+    stage2Cornice.position.set(2, 26.2, -3);
+    root.add(stage2Cornice);
+
+    // Panoramic Wrap-Around Hospital Ward Window Bands (2 Stories of Bright Cyan Glass)
+    [16.2, 21.6].forEach(wy => {
+        const frontBand = new THREE.Mesh(new THREE.BoxGeometry(33.2, 3.1, 0.32), matWinGlass);
+        frontBand.position.set(2, wy, 8.15);
+        frontBand.userData.noOutline = true;
+        const backBand = new THREE.Mesh(new THREE.BoxGeometry(33.2, 3.1, 0.32), matWinGlass);
+        backBand.position.set(2, wy, -14.15);
+        backBand.userData.noOutline = true;
+        const leftBand = new THREE.Mesh(new THREE.BoxGeometry(0.32, 3.1, 18.8), matWinGlass);
+        leftBand.position.set(-16.15, wy, -3);
+        leftBand.userData.noOutline = true;
+        const rightBand = new THREE.Mesh(new THREE.BoxGeometry(0.32, 3.1, 18.8), matWinGlass);
+        rightBand.position.set(20.15, wy, -3);
+        rightBand.userData.noOutline = true;
+        root.add(frontBand, backBand, leftBand, rightBand);
+    });
+
+    // Vertical Architectural White Facade Fins across Stage 2
+    [-12, -5, 9, 16].forEach(fx => {
+        const fin = new THREE.Mesh(new THREE.BoxGeometry(1.1, 13.6, 0.9), matTrimGray);
+        fin.position.set(fx, 19.0, 8.2);
+        root.add(fin);
+    });
+
+    // Large Illuminated "GRIFFIN ROCK HOSPITAL" Facade Banner on Stage 2 Front
+    const mainSign = new THREE.Mesh(
+        new THREE.BoxGeometry(20.5, 4.8, 0.65),
+        new THREE.MeshBasicMaterial({ map: texHospitalSign })
+    );
+    mainSign.position.set(2, 26.4, 9.0);
+    mainSign.userData.noOutline = true;
+    root.add(mainSign);
+
+    // -------------------------------------------------------------------------
+    // STAGE 3: UPPER MEDICAL TOWER & ROOFTOP MEDEVAC HELIPAD (y = 26..38)
+    // -------------------------------------------------------------------------
+    const stage3Tower = new THREE.Mesh(new THREE.BoxGeometry(22, 12, 17), matWallWhite);
+    stage3Tower.position.set(4, 32.5, -4);
+    stage3Tower.castShadow = true;
+    stage3Tower.receiveShadow = true;
+    root.add(stage3Tower);
+
+    // Upper Tower Panoramic Observation Glass & Red Crown Cap
+    const towerGlassFront = new THREE.Mesh(new THREE.BoxGeometry(19.2, 3.4, 0.32), matWinGlass);
+    towerGlassFront.position.set(4, 33.2, 4.65);
+    towerGlassFront.userData.noOutline = true;
+    const towerGlassLeft = new THREE.Mesh(new THREE.BoxGeometry(0.32, 3.4, 14.0), matWinGlass);
+    towerGlassLeft.position.set(-7.15, 33.2, -4);
+    towerGlassLeft.userData.noOutline = true;
+    const towerGlassRight = new THREE.Mesh(new THREE.BoxGeometry(0.32, 3.4, 14.0), matWinGlass);
+    towerGlassRight.position.set(15.15, 33.2, -4);
+    towerGlassRight.userData.noOutline = true;
+    const stage3Cap = new THREE.Mesh(new THREE.BoxGeometry(23.6, 1.3, 18.6), matTrimGray);
+    stage3Cap.position.set(4, 38.8, -4);
+    root.add(towerGlassFront, towerGlassLeft, towerGlassRight, stage3Cap);
+
+    // Giant Glowing 3D Red Medical Cross Emblem Mounted High on Stage 3 Front Facade
+    const emblemBack = new THREE.Mesh(new THREE.BoxGeometry(7.6, 7.6, 0.5), matWhiteGlow);
+    emblemBack.position.set(4, 33.2, 5.0);
+    emblemBack.userData.noOutline = true;
+    const crossV = new THREE.Mesh(new THREE.BoxGeometry(2.1, 5.8, 0.72), matRedGlow);
+    crossV.position.set(4, 33.2, 5.25);
+    crossV.userData.noOutline = true;
+    const crossH = new THREE.Mesh(new THREE.BoxGeometry(5.8, 2.1, 0.72), matRedGlow);
+    crossH.position.set(4, 33.2, 5.25);
+    crossH.userData.noOutline = true;
+    root.add(emblemBack, crossV, crossH);
+
+    // Rooftop Medevac Helipad Deck (y = 39.8) + Red Perimeter Ring + 4 Blinking Approach Beacons
+    const helipadPedestal = new THREE.Mesh(new THREE.CylinderGeometry(8.6, 7.6, 1.2, 24), matDarkSteel);
+    helipadPedestal.position.set(4, 39.8, -4);
+    const helipadTop = new THREE.Mesh(
+        new THREE.CylinderGeometry(8.2, 8.2, 0.16, 24),
+        new THREE.MeshBasicMaterial({ map: texHelipad })
+    );
+    helipadTop.position.set(4, 40.48, -4);
+    helipadTop.userData.noOutline = true;
+    const helipadRedRing = new THREE.Mesh(
+        new THREE.TorusGeometry(8.4, 0.34, 8, 28).rotateX(Math.PI / 2),
+        matMedRed
+    );
+    helipadRedRing.position.set(4, 40.42, -4);
+    root.add(helipadPedestal, helipadTop, helipadRedRing);
+
+    for (let i = 0; i < 4; i++) {
+        const ang = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        const bx = 4 + Math.cos(ang) * 8.4;
+        const bz = -4 + Math.sin(ang) * 8.4;
+        const beacon = new THREE.Mesh(
+            new THREE.SphereGeometry(0.55, 8, 8),
+            i % 2 === 0 ? matRedGlow : matGoldGlow
+        );
+        beacon.position.set(bx, 41.05, bz);
+        beacon.userData.noOutline = true;
+        root.add(beacon);
+        helipadBeacons.push(beacon);
+    }
+
+    // Rooftop Communications Spire & High Red Aviation Beacon
+    const spireMast = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.55, 11.0, 8), matChrome);
+    spireMast.position.set(-4.5, 44.5, -10.5);
+    const spireTip = new THREE.Mesh(new THREE.SphereGeometry(0.72, 10, 10), matRedGlow);
+    spireTip.position.set(-4.5, 50.2, -10.5);
+    spireTip.userData.noOutline = true;
+    helipadBeacons.push(spireTip);
+    root.add(spireMast, spireTip);
+
+    applyCartoonInkOutlines(root, 1.02, true);
+    return { root, hospitalDropRing, bayStrobes, helipadBeacons };
 }

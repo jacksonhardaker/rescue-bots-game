@@ -21,6 +21,7 @@ import {
     buildEnergonCacheMesh, buildMagmaBridgeMesh, buildDinobotShrineMesh,
     buildMoroccoMineMesh, buildBoulderGalleryMesh, createCavernDinoMesh
 } from './cavernModels.js';
+import { initUndergroundPatients } from './patients.js';
 
 export const GRID_SIZE = 13;
 export const CELL_SIZE = 36;
@@ -1877,6 +1878,7 @@ function ensureBuilt() {
     buildHiddenDiscoveries();
     buildGemsAndBoulders(rand);
     buildRoamingDinos(rand);
+    initUndergroundPatients(cavernWorldGroup);
 }
 
 export function initUnderground(

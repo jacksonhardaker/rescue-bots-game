@@ -78,6 +78,8 @@ export interface LightbarAssembly {
     blue: THREE.Mesh;
     redMat: THREE.MeshBasicMaterial;
     blueMat: THREE.MeshBasicMaterial;
+    redPod?: THREE.Object3D;
+    bluePod?: THREE.Object3D;
 }
 
 export interface BotRig {

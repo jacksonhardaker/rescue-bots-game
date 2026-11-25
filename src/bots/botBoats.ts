@@ -39,6 +39,10 @@ interface BoatBotRig extends BotRig {
     quickshadowExhaust?: THREE.Object3D;
     starspeedJetSkiHull?: THREE.Object3D;
     starspeedJetSkiBars?: THREE.Object3D;
+    ratchetBoatHull?: THREE.Object3D;
+    ratchetMedCabin?: THREE.Object3D;
+    ratchetBoatRedPod?: THREE.Object3D;
+    ratchetBoatWhitePod?: THREE.Object3D;
 }
 
 // Reusable Shared Materials
@@ -1273,6 +1277,19 @@ export function animateBotBoatMorph(rig: BoatBotRig, boatMorph: number, now: num
             }
             break;
         }
+
+        case 'RATCHET': {
+            if (rig.ratchetBoatHull) {
+                rig.ratchetBoatHull.scale.setScalar(THREE.MathUtils.lerp(0.01, 1.0, tDeploy));
+            }
+            if (rig.ratchetMedCabin) {
+                rig.ratchetMedCabin.scale.setScalar(THREE.MathUtils.lerp(0.01, 1.0, THREE.MathUtils.smoothstep(b, 0.18, 0.92)));
+            }
+            const flash = Math.floor(now / 110) % 2 === 0;
+            if (rig.ratchetBoatRedPod) rig.ratchetBoatRedPod.scale.setScalar(flash ? 1.32 : 0.88);
+            if (rig.ratchetBoatWhitePod) rig.ratchetBoatWhitePod.scale.setScalar(!flash ? 1.32 : 0.88);
+            break;
+        }
     }
 }
 
@@ -1340,6 +1357,137 @@ export function buildStarspeedBoat(parts: BotRig) {
     barsGroup.add(cowl, windScreen, stem, handlebar);
     parts.starspeedJetSkiBars = barsGroup;
     boatGroup.add(barsGroup);
+
+    applyCartoonInkOutlines(boatGroup, 1.04, true);
+}
+
+// 10. RATCHET: WATER AMBULANCE / MARINE EMERGENCY RESCUE CRAFT
+export function buildRatchetBoat(parts: BotRig) {
+    const boatGroup = new THREE.Group();
+    boatGroup.userData.isBoatPart = true;
+    boatGroup.visible = false;
+    parts.boatGroup = boatGroup;
+    parts.chassis.add(boatGroup);
+
+    const matMedWhite = new THREE.MeshToonMaterial({ color: 0xf8fafc, gradientMap: toonGrad4 });
+    const matMedRed = new THREE.MeshToonMaterial({ color: 0xdc2626, gradientMap: toonGrad4 });
+    const matBeaconWhite = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+    // 1. High-Buoyancy RIB Medical Rescue Hull with Bright Red Inflatable Rescue Tubes
+    const hullGroup = new THREE.Group();
+    hullGroup.position.set(0, 0.48, 0.1);
+
+    const lowerKeel = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.68, 5.7), matDarkSteel);
+    lowerKeel.castShadow = true;
+    hullGroup.add(lowerKeel);
+
+    const whiteHull = new THREE.Mesh(new THREE.BoxGeometry(3.15, 0.72, 5.5), matMedWhite);
+    whiteHull.position.y = 0.28;
+    whiteHull.castShadow = true;
+    hullGroup.add(whiteHull);
+
+    // Pointed Rescue Bow Wedge + Boarding Platform
+    const bowWedge = new THREE.Mesh(new THREE.ConeGeometry(1.55, 2.25, 4), matMedWhite);
+    bowWedge.rotation.x = Math.PI * 0.5;
+    bowWedge.rotation.y = Math.PI * 0.25;
+    bowWedge.scale.set(1.02, 1.0, 0.60);
+    bowWedge.position.set(0, 0.34, 3.25);
+    hullGroup.add(bowWedge);
+
+    // Bright Emergency Red Inflatable Perimeter Rescue Collar
+    [-1.66, 1.66].forEach(sx => {
+        const sideTube = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.36, 0.36, 5.55, 10).rotateX(Math.PI * 0.5),
+            matMedRed
+        );
+        sideTube.position.set(sx, 0.64, 0.05);
+        hullGroup.add(sideTube);
+
+        const bowTube = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.34, 0.35, 2.35, 10).rotateX(Math.PI * 0.5).rotateY(sx < 0 ? 0.58 : -0.58),
+            matMedRed
+        );
+        bowTube.position.set(sx * 0.58, 0.64, 3.45);
+        hullGroup.add(bowTube);
+    });
+    const bowNoseCap = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 10), matMedRed);
+    bowNoseCap.position.set(0, 0.64, 4.38);
+    hullGroup.add(bowNoseCap);
+
+    // Twin Stern Marine Hydro-Jet Nozzles
+    [-0.78, 0.78].forEach(jx => {
+        const jetHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.85, 10).rotateX(Math.PI * 0.5), matDarkSteel);
+        jetHousing.position.set(jx, 0.14, -3.12);
+        const jetCore = new THREE.Mesh(new THREE.CircleGeometry(0.24, 10), matCyanGlow);
+        jetCore.position.z = -0.44;
+        jetCore.rotation.y = Math.PI;
+        jetCore.userData.noOutline = true;
+        jetHousing.add(jetCore);
+        hullGroup.add(jetHousing);
+    });
+
+    boatGroup.add(hullGroup);
+    parts.ratchetBoatHull = hullGroup;
+
+    // 2. Enclosed White & Red Water-Ambulance Triage Cabin + Flashing Strobe Lightbar
+    const medCabin = new THREE.Group();
+    medCabin.position.set(0, 1.24, -0.35);
+
+    const cabinBox = new THREE.Mesh(new THREE.BoxGeometry(2.68, 1.56, 3.45), matMedWhite);
+    cabinBox.position.y = 0.78;
+    cabinBox.castShadow = true;
+    const cabinRedBelt = new THREE.Mesh(new THREE.BoxGeometry(2.74, 0.36, 3.50), matMedRed);
+    cabinRedBelt.position.y = 0.42;
+    const cabinRoof = new THREE.Mesh(new THREE.BoxGeometry(2.58, 0.20, 3.32), matMedRed);
+    cabinRoof.position.y = 1.62;
+    medCabin.add(cabinBox, cabinRedBelt, cabinRoof);
+
+    // Forward Canted Marine Bridge Windscreen & Side Triage Windows
+    const frontGlass = new THREE.Mesh(new THREE.BoxGeometry(2.34, 0.66, 0.16), matCyanGlow);
+    frontGlass.position.set(0, 1.08, 1.74);
+    frontGlass.rotation.x = -0.22;
+    frontGlass.userData.noOutline = true;
+    medCabin.add(frontGlass);
+
+    // Red Medical Crosses on Cabin Roof and Both Flanks
+    const roofCrossV = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.08, 1.18), matMedWhite);
+    roofCrossV.position.set(0, 1.75, -0.28);
+    roofCrossV.userData.noOutline = true;
+    const roofCrossH = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.08, 0.38), matMedWhite);
+    roofCrossH.position.set(0, 1.75, -0.28);
+    roofCrossH.userData.noOutline = true;
+    medCabin.add(roofCrossV, roofCrossH);
+
+    [-1.38, 1.38].forEach(fx => {
+        const sV = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.72, 0.24), matMedRed);
+        sV.position.set(fx, 1.05, -0.35);
+        sV.userData.noOutline = true;
+        const sH = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.72), matMedRed);
+        sH.position.set(fx, 1.05, -0.35);
+        sH.userData.noOutline = true;
+        medCabin.add(sV, sH);
+
+        // Orange Rescue Life-Ring Mounted on Aft Cabin Bulkhead
+        const lifeRing = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.10, 8, 14).rotateY(Math.PI / 2), matOrangeSafety);
+        lifeRing.position.set(fx * 1.02, 0.92, -1.32);
+        medCabin.add(lifeRing);
+    });
+
+    // Flashing Marine Emergency Strobe Bar on Cabin Roof
+    const barBase = new THREE.Mesh(new THREE.BoxGeometry(1.96, 0.14, 0.36), matDarkSteel);
+    barBase.position.set(0, 1.78, 1.05);
+    const boatRedPod = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.28, 0.34), matSirenRed);
+    boatRedPod.position.set(-0.56, 1.94, 1.05);
+    boatRedPod.userData.noOutline = true;
+    const boatWhitePod = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.28, 0.34), matBeaconWhite);
+    boatWhitePod.position.set(0.56, 1.94, 1.05);
+    boatWhitePod.userData.noOutline = true;
+    medCabin.add(barBase, boatRedPod, boatWhitePod);
+
+    parts.ratchetMedCabin = medCabin;
+    parts.ratchetBoatRedPod = boatRedPod;
+    parts.ratchetBoatWhitePod = boatWhitePod;
+    boatGroup.add(medCabin);
 
     applyCartoonInkOutlines(boatGroup, 1.04, true);
 }

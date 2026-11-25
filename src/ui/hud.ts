@@ -34,6 +34,7 @@ import { applyWeatherMode, currentWeatherIdx, cycleWeatherMode } from '../world/
 import { closeUtilityMenu } from '../physics/movement.js';
 import { buildHazardSites } from '../world/emergencies.js';
 import { buildEnergonCubes } from '../world/collectibles.js';
+import { setWaypointToPatientDestination } from '../world/patients.js';
         export function bindButton(id: string, fn: () => void) {
             const el = document.getElementById(id);
             if (!el) return;
@@ -59,6 +60,7 @@ import { buildEnergonCubes } from '../world/collectibles.js';
         bindButton('btn-siren', toggleSiren);
         bindButton('btn-drill', triggerBoulderDrillTransition);
         bindButton('btn-dive', enterUnderwaterWorld);
+        bindButton('patient-transport-hud', setWaypointToPatientDestination);
         bindButton('uw-sonar-btn', triggerUnderwaterSonar);
         bindButton('uw-boost-btn', triggerUnderwaterBoost);
         bindButton('uw-transform-btn', triggerTransform);

@@ -224,7 +224,8 @@ export const goldenCrests: GoldenCrestEntry[] = [];
             { id: "pine_campground", name: "Pine Valley Campsite", x: -350, z: -350, r: 65 },
             { id: "coastal_beach", name: "Sandy Cove Beach", x: 450, z: -450, r: 65 },
             { id: "ferry_terminal", name: "Ferry Slip Terminal", x: 0, z: 1230, r: 65 },
-            { id: "morocco_lair", name: "Dr. Morocco's Airship Lair", x: -820, z: -1180, r: 75 }
+            { id: "morocco_lair", name: "Dr. Morocco's Airship Lair", x: -820, z: -1180, r: 75 },
+            { id: "griffin_hospital", name: "Griffin Rock General Hospital", x: 96, z: -86, r: 65 }
         ];
 
         let landmarkCheckCooldown = 0;

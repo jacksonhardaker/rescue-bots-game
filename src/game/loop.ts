@@ -54,7 +54,8 @@ import {
     CHARGER_POS, chargerY, energonCoilRings, energonOrbs,
     groundBridgePortals, harborFerryGroup, ferryController,
     craneInteractive, testYard, stuntHoopRigs,
-    ferrisWheelPivot, ferrisGondolas, bwX, bwZ, babyDinos, amberSpire, drX, drZ, waywardEnergonShard
+    ferrisWheelPivot, ferrisGondolas, bwX, bwZ, babyDinos, amberSpire, drX, drZ, waywardEnergonShard,
+    hospitalDropRing, hospitalBayStrobes, hospitalHelipadBeacons
 } from '../world/buildings.js';
 import { getTerrainHeight, isNearWater, isPointInWater } from '../world/terrain.js';
 import { triggerNPCSpeech, showToast, activeSpeech } from '../ui/dialogs.js';
@@ -71,6 +72,7 @@ import { updateDumpsters, isDumpsterNearPlayer } from '../world/dumpsters.js';
 import { beacons, updateEmergentRescues, activeParticles } from '../world/emergencies.js';
 import { updateEnergonCubes, updateGoldenCrests, updateLandmarkDiscovery } from '../world/collectibles.js';
 import { updateVisitingAutobots } from '../world/allies.js';
+import { updatePatients } from '../world/patients.js';
 import { updateMorBotBattle } from '../world/morbot.js';
 import { updateViewportCulling } from './culling.js';
 import { renderMinimap, renderTacticalMap } from '../ui/tacticalMap.js';
@@ -432,6 +434,7 @@ function updateSpeechBubbleProjection(dt: number) {
                 updateBuddyBotAI(dt, now);
                 updateAllBotTransforms(dt, now);
                 updateUnderground(dt, now);
+                updatePatients(dt, now);
                 updateSpeechBubbleProjection(dt);
                 if (renderer) renderer.render(undergroundScene, camera);
                 return;
@@ -1325,6 +1328,24 @@ function updateSpeechBubbleProjection(dt: number) {
             updateDumpsters(dt, now);
             updateEmergentRescues(dt, now);
             updateVisitingAutobots(dt, now);
+            updatePatients(dt, now);
+            if (hospitalDropRing) {
+                hospitalDropRing.rotation.y = nowSec * 0.85;
+                const dScale = 1.0 + Math.sin(nowSec * 3.8) * 0.06;
+                hospitalDropRing.scale.setScalar(dScale);
+            }
+            if (hospitalBayStrobes.length > 0) {
+                const bayFlash = Math.floor(now / 260) % 2 === 0;
+                hospitalBayStrobes.forEach((s, idx) => {
+                    s.scale.setScalar((idx % 2 === 0 ? bayFlash : !bayFlash) ? 1.32 : 0.78);
+                });
+            }
+            if (hospitalHelipadBeacons.length > 0) {
+                const heliPulse = 0.82 + Math.sin(nowSec * 4.2) * 0.28;
+                hospitalHelipadBeacons.forEach((b, idx) => {
+                    b.scale.setScalar(idx === hospitalHelipadBeacons.length - 1 ? (0.85 + Math.sin(nowSec * 5.0) * 0.35) : heliPulse);
+                });
+            }
             updateLandmarkDiscovery(player.pos.x, player.pos.z);
             updateAllBotTransforms(dt, now);
 

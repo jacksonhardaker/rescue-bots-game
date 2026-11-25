@@ -18,6 +18,8 @@ export const SPEAKER_AVATARS: Record<string, string> = {
     'HIGHTIDE': SVG_ICONS.HIGHTIDE,
     'QUICKSHADOW': SVG_ICONS.QUICKSHADOW,
     'STARSPEED': SVG_ICONS.STARSPEED,
+    'RATCHET': SVG_ICONS.RATCHET,
+    'HOSPITAL': SVG_ICONS.HOSPITAL,
     'ENERGON': SVG_ICONS.BOLT,
     'CATAPULT': SVG_ICONS.ROCKET,
     'SIGMA': SVG_ICONS.ROCKET,
@@ -29,6 +31,7 @@ export function getSpeakerAvatar(name: string, role: string): string {
     for (const key in SPEAKER_AVATARS) {
         if (upper.includes(key) && SPEAKER_AVATARS[key]) return SPEAKER_AVATARS[key];
     }
+    if (/PATIENT|MEDICAL|MATERNITY|INJURED|HOSPITAL/i.test(role)) return SVG_ICONS.MED_CROSS;
     if (/RESCUE|BOT|AUTOBOT|COMMANDER/i.test(role)) return SVG_ICONS.STAR;
     if (/SCIENTIST|TECH|ENGINEER/i.test(role)) return SVG_ICONS.BOLT;
     return SVG_ICONS.PEOPLE;

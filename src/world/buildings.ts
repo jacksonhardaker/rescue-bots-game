@@ -32,7 +32,8 @@ import {
     buildWaywardGrottoMesh,
     buildWaywardPierMesh,
     buildStuntRampMesh,
-    buildSkyStuntHoopMesh
+    buildSkyStuntHoopMesh,
+    buildHospitalMesh
 } from './buildingModels.js';
 
 export interface GroundBridgePortalEntry {
@@ -121,7 +122,14 @@ export interface BabyDinoEntry {
 
 export const HQ_POS = { x: -48, z: -45 };
 export const HQ_SWAP_PAD = { x: -48, z: -15, r: 12.5 };
+export const HOSPITAL_POS = { x: 96, z: -86 };
+export const HOSPITAL_AMBULANCE_BAY_POS = { x: 80, z: -84 };
+export const HOSPITAL_DROPOFF_PAD = { x: 102, z: -64, r: 16.0 };
 export let hqGroup: THREE.Group | null = null;
+export let hospitalGroup: THREE.Group | null = null;
+export let hospitalDropRing: THREE.Mesh | null = null;
+export const hospitalBayStrobes: THREE.Mesh[] = [];
+export const hospitalHelipadBeacons: THREE.Mesh[] = [];
 export let roboWashGroup: THREE.Group | null = null;
 export let launchPadGroup: THREE.Group | null = null;
 export let dinerGroup: THREE.Group | null = null;
@@ -191,6 +199,28 @@ export function initBuildings(scene?: THREE.Scene) {
     s.add(hqGroup);
     registerCullableObject(hqGroup, HQ_POS.x, hqY + 12, HQ_POS.z, 55);
     worldColliders.push({ x: HQ_POS.x, z: HQ_POS.z, r: 19.5 });
+
+    // =========================================================================
+    // 5A-1B. GRIFFIN ROCK GENERAL HOSPITAL (Multi-Stage Medical Center + Ratchet Ambulance Bay)
+    // =========================================================================
+    const hospRes = buildHospitalMesh();
+    hospitalGroup = hospRes.root;
+    hospitalDropRing = hospRes.hospitalDropRing;
+    hospitalBayStrobes.length = 0;
+    hospitalBayStrobes.push(...hospRes.bayStrobes);
+    hospitalHelipadBeacons.length = 0;
+    hospitalHelipadBeacons.push(...hospRes.helipadBeacons);
+    const hospY = getTerrainHeight(HOSPITAL_POS.x, HOSPITAL_POS.z);
+    hospitalGroup.position.set(HOSPITAL_POS.x, hospY, HOSPITAL_POS.z);
+    mergeStaticMeshesInGroup(hospitalGroup, [hospitalDropRing, ...hospitalBayStrobes, ...hospitalHelipadBeacons]);
+    s.add(hospitalGroup);
+    registerCullableObject(hospitalGroup, HOSPITAL_POS.x, hospY + 22, HOSPITAL_POS.z, 76);
+    // Wing colliders around main tower & Ambulance Bay outer walls — keeping Ambulance Bay & Drop-Off 100% open!
+    worldColliders.push({ x: HOSPITAL_POS.x + 2, z: HOSPITAL_POS.z - 2, r: 10.5 });
+    worldColliders.push({ x: HOSPITAL_POS.x + 15, z: HOSPITAL_POS.z - 2, r: 10.5 });
+    worldColliders.push({ x: HOSPITAL_POS.x - 24.5, z: HOSPITAL_POS.z, r: 2.2 });
+    worldColliders.push({ x: HOSPITAL_POS.x - 24.5, z: HOSPITAL_POS.z + 10, r: 2.2 });
+    worldColliders.push({ x: HOSPITAL_POS.x - 16, z: HOSPITAL_POS.z - 11.5, r: 3.0 });
 
     // =========================================================================
     // 5A-2. FIREHOUSE ROBO-WASH (Interactive Drive-Through Car Wash Bay)

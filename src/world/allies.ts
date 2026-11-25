@@ -185,6 +185,22 @@ export function syncVisitingAutobotsVisibility() {
                     "Discretion and precision are everything. When a mission requires high stealth and surgical speed, I take the wheel.",
                     "Impressive reflexes, darling! A skilled agent knows that true strength lies in knowing exactly when and where to strike."
                 ]
+            },
+            {
+                id: 'RATCHET',
+                name: 'RATCHET',
+                role: 'Autobot Chief Medical Officer',
+                voicePitch: 0.90,
+                badgeColor: '#dc2626',
+                x: 80,
+                y: 4.88,
+                z: -84,
+                rotY: 0,
+                dialogues: [
+                    "Chief Medical Officer Ratchet, on standby in the Ambulance Bay! If anyone on Griffin Rock or in the caverns gets hurt — or needs a rush ride for a new baby — switch to me!",
+                    "Keep my med-bay tidy, Rescue Bots — I needed that! Switch to me anytime to transport patients straight to Griffin Rock General Hospital.",
+                    "Medical scanners online! From sprained ankles to emergency maternity runs, no patient is too far for an Autobot Ambulance!"
+                ]
             }
         ];
 

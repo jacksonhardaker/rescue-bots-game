@@ -16,6 +16,7 @@ import { buildSalvage } from "./salvage.js";
 import { buildHighTide } from "./hightide.js";
 import { buildQuickshadow } from "./quickshadow.js";
 import { buildStarspeed } from "./starspeed.js";
+import { buildRatchet } from "./ratchet.js";
 import { animateBotBoatMorph } from "./botBoats.js";
 import type { BotRig, LightbarAssembly } from "../types/game.js";
 
@@ -54,6 +55,7 @@ interface DetailedBotRig extends BotRig {
     starspeedRearWheelPivot?: THREE.Group;
     starspeedJetThrustRings?: THREE.Mesh[];
     starspeedJetFlames?: THREE.Mesh[];
+    ratchetAmbulanceShell?: THREE.Object3D;
 }
 
 export const BOT_SCALES: Record<string, number> = {
@@ -77,7 +79,8 @@ export const BOT_SCALES: Record<string, number> = {
     HIGHTIDE_MEGA: 3.85,
     QUICKSHADOW: 1.0,
     QUICKSHADOW_MEGA: 1.65,
-    STARSPEED: 1.0
+    STARSPEED: 1.0,
+    RATCHET: 1.0
 };
 
 export function getBotScale(botType: string): number {
@@ -225,6 +228,7 @@ export function buildRescueBotModel(botType: string): BotRig {
     else if (botType === "HIGHTIDE") buildHighTide(parts);
     else if (botType === "QUICKSHADOW") buildQuickshadow(parts);
     else if (botType === "STARSPEED") buildStarspeed(parts);
+    else if (botType === "RATCHET") buildRatchet(parts);
 
     applyCartoonInkOutlines(root, 1.06, true);
     return parts;
@@ -371,6 +375,24 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                 rig.head.visible = !hideLimbs && d < 0.45;
                 rig.leftArm.visible = !hideLimbs && d < 0.45;
                 rig.rightArm.visible = !hideLimbs && d < 0.45;
+                rig.leftLeg.visible = !hideLimbs;
+                rig.rightLeg.visible = !hideLimbs;
+            }
+
+            // Ratchet Emergency Ambulance shell unfold (cleanly replaces bot limbs in Ambulance & Boat modes, keeps quadruped limbs in Medic Triceratops Dino mode!)
+            if (rig.botType === 'RATCHET' && rig.ratchetAmbulanceShell) {
+                const ambAlpha = Math.max(0, m - boatMorph);
+                const showAmb = ambAlpha > 0.06;
+                rig.ratchetAmbulanceShell.visible = showAmb;
+                if (showAmb) {
+                    const s = THREE.MathUtils.lerp(0.18, 1.0, THREE.MathUtils.smoothstep(ambAlpha, 0.05, 0.85));
+                    rig.ratchetAmbulanceShell.scale.setScalar(s);
+                }
+                const hideLimbs = (m > 0.52 || boatMorph > 0.35);
+                rig.torso.visible = !hideLimbs;
+                rig.head.visible = !hideLimbs && d < 0.45;
+                rig.leftArm.visible = !hideLimbs;
+                rig.rightArm.visible = !hideLimbs;
                 rig.leftLeg.visible = !hideLimbs;
                 rig.rightLeg.visible = !hideLimbs;
             }
@@ -816,7 +838,7 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                 const dScale = Math.max(0.001, d);
                 rig.dinoGroup.scale.setScalar(dScale);
 
-                if (rig.botType === 'BOULDER') {
+                if (rig.botType === 'BOULDER' || rig.botType === 'RATCHET') {
                     rig.dinoHead.position.set(0, 2.25 - smashOffset * 0.45, 1.55 + smashOffset * 0.95);
                     rig.dinoHead.rotation.x = smashOffset * 0.38 + (isMoving ? Math.sin(walkCycle * 2) * 0.06 : 0);
                     rig.dinoTail.position.set(0, 2.25, -1.55);
@@ -1289,7 +1311,8 @@ export function initBotRigs(scene?: THREE.Scene | null): Record<string, BotRig> 
         SALVAGE: buildRescueBotModel("SALVAGE"),
         HIGHTIDE: buildRescueBotModel("HIGHTIDE"),
         QUICKSHADOW: buildRescueBotModel("QUICKSHADOW"),
-        STARSPEED: buildRescueBotModel("STARSPEED")
+        STARSPEED: buildRescueBotModel("STARSPEED"),
+        RATCHET: buildRescueBotModel("RATCHET")
     };
 
     if (scene) {

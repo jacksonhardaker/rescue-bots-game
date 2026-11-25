@@ -50,8 +50,10 @@ import {
     buildWaywardGrottoMesh,
     buildWaywardPierMesh,
     buildStuntRampMesh,
-    buildSkyStuntHoopMesh
+    buildSkyStuntHoopMesh,
+    buildHospitalMesh
 } from '../world/buildingModels.js';
+import { createPatientNPCMesh } from '../world/patients.js';
 import {
     buildServoPupModel,
     createHighTideShipMesh,
@@ -478,6 +480,27 @@ export const MODEL_CATALOG: ModelCatalogEntry[] = [
                 onAnimate: (dt, nowSec) => {
                     res.hqRadarPivot.rotation.y += dt * 1.4;
                     res.swapPadRing.rotation.y = nowSec * 0.6;
+                }
+            };
+        }
+    },
+    {
+        id: 'GRIFFIN_HOSPITAL',
+        name: 'Griffin Rock General Hospital',
+        category: 'Town & HQ Landmarks',
+        defaultYawDeg: 32,
+        defaultPitch: 0.30,
+        gridSpanX: 70,
+        gridSpanZ: 62,
+        build: () => {
+            const res = buildHospitalMesh();
+            return {
+                root: res.root,
+                animatedEntries: [],
+                onAnimate: (_dt, nowSec) => {
+                    res.hospitalDropRing.rotation.y = nowSec * 0.85;
+                    const flash = Math.floor(nowSec * 3.5) % 2 === 0;
+                    res.bayStrobes.forEach((s, idx) => s.scale.setScalar((idx % 2 === 0 ? flash : !flash) ? 1.32 : 0.78));
                 }
             };
         }
@@ -1426,6 +1449,54 @@ export const MODEL_CATALOG: ModelCatalogEntry[] = [
                     res.rightArmPivot.rotation.x = -s;
                     res.leftLegPivot.rotation.x = -s;
                     res.rightLegPivot.rotation.x = s;
+                }
+            };
+        }
+    },
+    {
+        id: 'NPC_PATIENT_INJURED',
+        name: 'Medical Patient — Injured Citizen',
+        category: 'Citizens & Traffic',
+        defaultYawDeg: 32,
+        defaultPitch: 0.22,
+        gridSpanX: 8,
+        gridSpanZ: 8,
+        build: () => {
+            const res = createPatientNPCMesh('INJURY', 2);
+            return {
+                root: res.root,
+                animatedEntries: [],
+                onAnimate: (dt, nowSec) => {
+                    res.crossPivot.rotation.y += dt * 2.1;
+                    const wave = Math.sin(nowSec * 10.0) * 0.4;
+                    res.rig.leftArmPivot.rotation.x = -Math.PI * 0.82;
+                    res.rig.rightArmPivot.rotation.x = -Math.PI * 0.82;
+                    res.rig.leftArmPivot.rotation.z = wave + 0.22;
+                    res.rig.rightArmPivot.rotation.z = -wave - 0.22;
+                }
+            };
+        }
+    },
+    {
+        id: 'NPC_PATIENT_MATERNITY',
+        name: 'Medical Patient — Expecting Mom',
+        category: 'Citizens & Traffic',
+        defaultYawDeg: 32,
+        defaultPitch: 0.22,
+        gridSpanX: 8,
+        gridSpanZ: 8,
+        build: () => {
+            const res = createPatientNPCMesh('MATERNITY', 1);
+            return {
+                root: res.root,
+                animatedEntries: [],
+                onAnimate: (dt, nowSec) => {
+                    res.crossPivot.rotation.y += dt * 2.1;
+                    const wave = Math.sin(nowSec * 9.0) * 0.35;
+                    res.rig.leftArmPivot.rotation.x = -Math.PI * 0.8;
+                    res.rig.rightArmPivot.rotation.x = -Math.PI * 0.8;
+                    res.rig.leftArmPivot.rotation.z = wave + 0.2;
+                    res.rig.rightArmPivot.rotation.z = -wave - 0.2;
                 }
             };
         }

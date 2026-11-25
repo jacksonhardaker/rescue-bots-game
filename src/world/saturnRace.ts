@@ -383,7 +383,8 @@ function spawnSaturnRivals() {
         BUMBLEBEE: '#facc15',
         QUICKSHADOW: '#38bdf8',
         CHASE: '#3b82f6',
-        HEATWAVE: '#ef4444'
+        HEATWAVE: '#ef4444',
+        RATCHET: '#dc2626'
     };
 
     chosen.forEach((botType, idx) => {

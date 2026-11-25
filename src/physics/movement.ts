@@ -501,6 +501,7 @@ waypointGroup.add(wpArrowCone);
                 target.closest('#saturn-race-hud') ||
                 target.closest('#planet-solar-btn') ||
                 target.closest('#sigma-action-btn') ||
+                target.closest('#patient-transport-hud') ||
                 target.closest('#minimap-container')
             );
         }
@@ -753,6 +754,7 @@ waypointGroup.add(wpArrowCone);
                     else if (player.botType === 'BUMBLEBEE') maxSpeed = hasBoost ? 86 : 70;
                     else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 82 : 66;
                     else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 80 : 64;
+                    else if (player.botType === 'RATCHET') maxSpeed = hasBoost ? 84 : 66; // Water Ambulance emergency craft!
                     else if (player.botType === 'OPTIMUS') maxSpeed = hasBoost ? 74 : 58;
                     else if (player.botType === 'HEATWAVE') maxSpeed = hasBoost ? 70 : 54;
                     else if (player.botType === 'SALVAGE') maxSpeed = hasBoost ? 66 : 50;
@@ -762,6 +764,7 @@ waypointGroup.add(wpArrowCone);
                     else if (player.botType === 'STARSPEED') maxSpeed = hasBoost ? 88 : (onRoad ? 68 : 64); // Dirt Bike shreds off-road!
                     else if (player.botType === 'QUICKSHADOW') maxSpeed = hasBoost ? 86 : (isFlyingCopter ? 74 : (onRoad ? 68 : 50));
                     else if (player.botType === 'HIGHTIDE') maxSpeed = hasBoost ? 82 : 62; // Hydro-thruster submarine
+                    else if (player.botType === 'RATCHET') maxSpeed = hasBoost ? 82 : (onRoad ? 64 : 48); // Emergency Ambulance!
                     else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 74 : (onRoad ? 58 : 44);
                     else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 78 : 62;
                     else if (player.botType === 'BUMBLEBEE') maxSpeed = hasBoost ? 76 : (onRoad ? 62 : 46);
@@ -780,6 +783,7 @@ waypointGroup.add(wpArrowCone);
                 else if (player.botType === 'BLADES') maxSpeed = hasBoost ? 80 : 64; // Pterosaur flight
                 else if (player.botType === 'OPTIMUS') maxSpeed = hasBoost ? 82 : 60; // T-Rex primal charge
                 else if (player.botType === 'BUMBLEBEE') maxSpeed = hasBoost ? 78 : 58; // Velociraptor sprint
+                else if (player.botType === 'RATCHET') maxSpeed = hasBoost ? 76 : 56; // Medic Triceratops charge
                 else if (player.botType === 'CHASE') maxSpeed = hasBoost ? 68 : 48; // Stegosaurus charge
                 else if (player.botType === 'BOULDER') maxSpeed = hasBoost ? 64 : 45; // Triceratops stampede
                 else maxSpeed = hasBoost ? 58 : 42; // Heatwave Brachiosaurus stride

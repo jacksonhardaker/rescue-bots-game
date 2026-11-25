@@ -1445,8 +1445,8 @@ class RescueSoundFX {
                     this.rotorGain.gain.setTargetAtTime(0.0001, t, 0.08);
                 }
 
-                // B. Optional Siren Loop for Heatwave & Chase (Active when Siren Toggle is ON or during Emergency Boost in Vehicle Mode)
-                const canSiren = (botType === 'HEATWAVE' || botType === 'CHASE');
+                // B. Optional Siren Loop for Heatwave, Chase & Ratchet (Active when Siren Toggle is ON or during Emergency Boost in Vehicle Mode)
+                const canSiren = (botType === 'HEATWAVE' || botType === 'CHASE' || botType === 'RATCHET');
                 const shouldPlaySiren = canSiren && (sirenActive || (boostTimer > 0 && mode === 'VEHICLE'));
 
                 if (shouldPlaySiren) {
@@ -1456,6 +1456,10 @@ class RescueSoundFX {
                         // Classic Fire Engine Rising & Falling Wail (520Hz <-> 870Hz)
                         const wailWave = 0.5 + 0.5 * Math.sin(nowSec * Math.PI * 1.35);
                         sirenFreq = 520 + wailWave * 350;
+                    } else if (botType === 'RATCHET') {
+                        // Classic Ambulance Alternating Hi-Lo Two-Tone Emergency Siren (660Hz <-> 880Hz)
+                        const hiLoStep = Math.floor(nowSec * 2.6) % 2 === 0;
+                        sirenFreq = hiLoStep ? 880 : 660;
                     } else {
                         // Chase Police Cruiser Urgent Yelp / Two-Tone Sweep (630Hz <-> 960Hz)
                         const yelpWave = 0.5 + 0.5 * Math.sin(nowSec * Math.PI * 3.4);
@@ -1466,6 +1470,50 @@ class RescueSoundFX {
                 } else {
                     this.sirenGain.gain.setTargetAtTime(0.0001, t, 0.06);
                 }
+            }
+
+            // Medical Scanner Pulse & Hospital Patient Delivery Chimes
+            playMedScan() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
+                    osc.type = 'sine';
+                    const t0 = now + idx * 0.055;
+                    osc.frequency.setValueAtTime(f, t0);
+                    osc.frequency.exponentialRampToValueAtTime(f * 1.08, t0 + 0.14);
+                    gain.gain.setValueAtTime(0.001, t0);
+                    gain.gain.linearRampToValueAtTime(0.11, t0 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.getSfxDest());
+                    osc.start(t0);
+                    osc.stop(t0 + 0.2);
+                });
+            }
+
+            playHospitalDelivery() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, idx) => {
+                    const osc = this.ctx!.createOscillator();
+                    const gain = this.ctx!.createGain();
+                    osc.type = 'triangle';
+                    const t0 = now + idx * 0.075;
+                    osc.frequency.setValueAtTime(f, t0);
+                    gain.gain.setValueAtTime(0.001, t0);
+                    gain.gain.linearRampToValueAtTime(0.14, t0 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.34);
+                    osc.connect(gain);
+                    gain.connect(this.getSfxDest());
+                    osc.start(t0);
+                    osc.stop(t0 + 0.36);
+                });
             }
 
             // Dr. Morocco & MorBot Villain SFX

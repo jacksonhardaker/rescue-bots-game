@@ -34,6 +34,8 @@ export interface ProgressionData {
     salvageDocked: boolean;
     quickshadowDocked: boolean;
     starspeedDocked: boolean;
+    ratchetDocked: boolean;
+    totalPatientsDelivered: number;
     weatherMode: string;
     playerPosition: { x: number; y: number; z: number; heading: number } | null;
     completedMissions: number[];
@@ -109,6 +111,8 @@ export const progression: ProgressionData = {
     salvageDocked: false,
     quickshadowDocked: false,
     starspeedDocked: false,
+    ratchetDocked: false,
+    totalPatientsDelivered: 0,
     weatherMode: 'SUNNY',
     playerPosition: null,
     completedMissions: [],
@@ -143,7 +147,7 @@ export const progression: ProgressionData = {
     underwaterRingsCompleted: 0
 };
 
-export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED'];
+export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET'];
 
 export function getBotDockedKey(botType: string): string {
     if (botType === 'HIGHTIDE') return 'highTideDocked';
@@ -200,7 +204,8 @@ export function getHeroPoints(prog = progression) {
         + (Array.isArray(prog.planetRelicsFound) ? prog.planetRelicsFound.length * 5 : 0)
         + (Array.isArray(prog.jupiterMoonsVisited) ? prog.jupiterMoonsVisited.length * 3 : 0)
         + (prog.saturnRacesCompleted || 0) * 10;
-    return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts + cavernLandmarkPts + cavernGemPts + sigmaPts + spacePts + moonPts + solarPts;
+    const hospitalPts = (prog.totalPatientsDelivered || 0) * 5;
+    return (prog.totalEnergonCubes || 0) + (prog.totalEmergenciesResolved || 0) * 3 + (prog.totalStuntsCompleted || 0) + landmarkPts + crestPts + allyPts + cavernLandmarkPts + cavernGemPts + sigmaPts + spacePts + moonPts + solarPts + hospitalPts;
 }
 
 export function getRescueStarRank(prog = progression) {
@@ -338,7 +343,7 @@ export function loadProgression(options: LoadProgressionOptions = {}) {
     if (typeof target.autoSpawnEmergencies === 'boolean') {
         progression.autoSpawnEmergencies = target.autoSpawnEmergencies;
     }
-    const VALID_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED'];
+    const VALID_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET'];
     if (typeof target.playerBotType === 'string' && (BOT_METADATA[target.playerBotType] || VALID_BOTS.includes(target.playerBotType))) {
         progression.playerBotType = target.playerBotType;
     }

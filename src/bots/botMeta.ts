@@ -408,6 +408,25 @@ export const BOT_METADATA: Record<string, BotMetaEntry> = {
             toastTitle: 'HOVER FIGHTER JET ENGAGED!',
             toastSubtitle: 'Wheels rotated into VTOL wing lift-fans — soar over Griffin Rock!'
         }
+    },
+    RATCHET: {
+        name: 'RATCHET',
+        role: 'Autobot Chief Medical Officer',
+        voicePitch: 0.90,
+        vehName: 'AMBULANCE',
+        boatName: 'WATER AMBULANCE',
+        dinoName: 'TRICERATOPS',
+        colorClass: 'text-rose-200',
+        dotClass: 'bg-red-500',
+        btnActionBg: 'from-rose-500 via-red-600 to-slate-800 border-red-300',
+        botActionIcon: 'MED_SCANNER',
+        botActionLabel: 'MED-SCANNER PULSE',
+        vehActionIcon: 'SIREN_BOOST',
+        vehActionLabel: 'AMBULANCE SIREN BOOST',
+        boatActionIcon: 'HYDRO_MEDIC',
+        boatActionLabel: 'HYDRO-MEDIC SURGE',
+        dinoActionIcon: 'TRI_MED_CHARGE',
+        dinoActionLabel: 'MED-FRILL CHARGE'
     }
 };
 
@@ -451,7 +470,8 @@ export const BOT_GROUND_OFFSETS: Record<string, GroundOffsetEntry> = {
     HIGHTIDE_MEGA:    { bot: 0.00, veh: 1.226, dino: 1.405 },
     QUICKSHADOW:      { bot: 0.72, veh: 0.37, dino: 0.82, boat: 0.25 },
     QUICKSHADOW_MEGA: { bot: 0.72, veh: 0.37, dino: 0.82, boat: 0.25 },
-    STARSPEED:        { bot: 0.72, veh: 1.55, dino: 0.82, boat: 0.28, hiddenVeh: 1.40 }
+    STARSPEED:        { bot: 0.72, veh: 1.55, dino: 0.82, boat: 0.28, hiddenVeh: 1.40 },
+    RATCHET:          { bot: 0.76, veh: 0.02, dino: 0.78, boat: 0.96 }
 };
 
 if (typeof window !== 'undefined') {

@@ -225,7 +225,8 @@ export const botPhraseCounters: Record<string, number> = {
     SALVAGE: 0,
     HIGHTIDE: 0,
     QUICKSHADOW: 0,
-    STARSPEED: 0
+    STARSPEED: 0,
+    RATCHET: 0
 };
 
 if (typeof window !== 'undefined') {
