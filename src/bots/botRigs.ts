@@ -255,7 +255,7 @@ export function buildRescueBotModel(botType: string): BotRig {
     return parts;
 }
 
-export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCycle: number, speed: number, smashTimer: number, now: number, scoopTimer = 0, boatMorph = 0, drillAmount = 0, hiddenMorph = 0) {
+export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCycle: number, speed: number, smashTimer: number, now: number, scoopTimer = 0, boatMorph = 0, drillAmount = 0, hiddenMorph = 0, airBlend = 0, vy = 0, landTimer = 0) {
             const rig = rigInput as DetailedBotRig;
             // Boat Mode or Hidden Vehicle Mode: folds limbs into vehicle aerodynamic layout
             if (rig.botType !== 'HIGHTIDE' && boatMorph > 0) {
@@ -292,6 +292,12 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
             const breath = Math.sin(now * 0.0032);
             const botWeight = Math.max(0, 1 - m - d) * (1 - boatMorph);
             const dinoWeight = Math.max(0, d) * (1 - boatMorph);
+            const jumpAir = Math.max(0, Math.min(1, airBlend));
+            const jumpPhase = THREE.MathUtils.clamp(vy / 16, -1, 1);
+            const jumpRise = Math.max(0, jumpPhase);
+            const jumpFall = Math.max(0, -jumpPhase);
+            const jumpApex = 1 - Math.abs(jumpPhase);
+            const landSquash = landTimer > 0 ? Math.sin(Math.min(1, landTimer / 0.24) * Math.PI) : 0;
             const smashOffset = smashTimer > 0 ? Math.sin((smashTimer / 0.45) * Math.PI) : 0;
             // Bulldozer Scoop Wave: dips blade low in first 30%, then lifts hydraulic arms & curls blade high!
             const scoopProgress = scoopTimer > 0 ? (1.0 - scoopTimer / 0.85) : 0;
@@ -307,8 +313,8 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
             );
 
             // 1. Torso (Upright in Bot, Low Chassis in Vehicle, Horizontal Dinosaur Core in Dinobot)
-            const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : breath * 0.045) - smashOffset * 0.5;
-            const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE' || rig.botType === 'HIGHTIDE' ? 2.45 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.18 : breath * 0.035);
+            const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 * (1 - jumpAir) : breath * 0.045) - smashOffset * 0.5 - landSquash * 0.42;
+            const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE' || rig.botType === 'HIGHTIDE' ? 2.45 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.18 * (1 - jumpAir) : breath * 0.035) - landSquash * 0.34;
             const vehTorsoY = (rig.botType === 'BOULDER') ? 1.56
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.78
                 : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') ? 1.35
@@ -327,8 +333,11 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
             );
             const vehTorsoRotX = (rig.botType === 'CHASE' || rig.botType === 'BLADES') ? (Math.PI / 2) * m : 0;
             const dinoTorsoRotX = (rig.botType === 'OPTIMUS' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'STARSPEED') ? (Math.PI * 0.22) : (Math.PI * 0.48);
-            rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + vehTorsoRotX + dinoTorsoRotX * d;
-            rig.torso.rotation.y = (isMoving ? -walkSin * 0.11 * speedRatio : 0) * botWeight;
+            const botJumpTorsoX = jumpAir * (0.14 * jumpRise + 0.08 * jumpApex - 0.06 * jumpFall) + landSquash * 0.22;
+            const dinoJumpTorsoX = isPtero ? 0 : (jumpAir * (-0.24 * jumpRise + 0.16 * jumpFall) + landSquash * 0.14);
+            rig.torso.rotation.x = (smashOffset * 0.4 + botJumpTorsoX) * (1 - m - d) + vehTorsoRotX + (dinoTorsoRotX + dinoJumpTorsoX) * d;
+            const walkTwistY = isMoving ? -walkSin * 0.11 * speedRatio : 0;
+            rig.torso.rotation.y = THREE.MathUtils.lerp(walkTwistY, -0.14 * jumpRise, jumpAir) * botWeight;
 
             // Generic Hidden Vehicle Shell unfold (works for any bot that defines a hiddenVehicleShell)
             if (rig.hiddenVehicleShell) {
@@ -692,8 +701,16 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                 4.2 * (1 - m - d) + vehArmY * m + dinoArmY * d,
                 vehArmZ * m + dinoArmZ * d
             );
-            rig.leftArm.rotation.x = (armSwingL - smashOffset * 1.4) * (1 - m - d) + (Math.PI / 2) * m + dinoArmRotL * d;
-            rig.rightArm.rotation.x = (armSwingR - smashOffset * 1.4) * (1 - m - d) + (Math.PI / 2) * m + dinoArmRotR * d;
+            const botArmL = THREE.MathUtils.lerp(armSwingL, 0.42 * jumpRise - 0.72 * jumpApex - 0.56 * jumpFall, jumpAir) + landSquash * 0.34 - smashOffset * 1.4;
+            const botArmR = THREE.MathUtils.lerp(armSwingR, -1.68 * jumpRise - 0.92 * jumpApex - 0.62 * jumpFall, jumpAir) + landSquash * 0.34 - smashOffset * 1.4;
+            const dinoJumpArm = isPtero ? 0 : (-0.72 * jumpRise - 0.48 * jumpApex - 0.52 * jumpFall);
+            const finalDinoArmL = isPtero ? dinoArmRotL : (THREE.MathUtils.lerp(dinoArmRotL, dinoJumpArm, jumpAir) - landSquash * 0.24);
+            const finalDinoArmR = isPtero ? dinoArmRotR : (THREE.MathUtils.lerp(dinoArmRotR, dinoJumpArm, jumpAir) - landSquash * 0.24);
+            rig.leftArm.rotation.x = botArmL * (1 - m - d) + (Math.PI / 2) * m + finalDinoArmL * d;
+            rig.rightArm.rotation.x = botArmR * (1 - m - d) + (Math.PI / 2) * m + finalDinoArmR * d;
+            const armFlareZ = (jumpAir * (0.16 * jumpRise + 0.24 * jumpApex + 0.28 * jumpFall) + landSquash * 0.16) * botWeight;
+            rig.leftArm.rotation.z = -armFlareZ;
+            rig.rightArm.rotation.z = armFlareZ;
 
             if (rig.leftDoorWing && rig.rightDoorWing) {
                 if (rig.botType === 'BUMBLEBEE') {
@@ -758,31 +775,39 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
             }
 
             // 5b. Articulated Elbows & Wrists (blends cleanly to 0 in Vehicle & Boat modes!)
-            const botElbowL = -0.16 - (isMoving
+            const walkElbowL = -0.16 - (isMoving
                 ? (Math.max(0, -walkSin) * 0.64 + Math.max(0, walkSin) * 0.12) * speedRatio
-                : breath * 0.04) - smashOffset * 0.55;
-            const botElbowR = -0.16 - (isMoving
+                : breath * 0.04);
+            const walkElbowR = -0.16 - (isMoving
                 ? (Math.max(0, walkSin) * 0.64 + Math.max(0, -walkSin) * 0.12) * speedRatio
-                : breath * 0.04) - smashOffset * 0.55;
-            // Quadruped Dino front legs: knee/carpus lifts backward (+X) on forward reach
-            const quadFrontKneeL = isQuadrupedDino
+                : breath * 0.04);
+            const botElbowL = THREE.MathUtils.lerp(walkElbowL, -0.88 * jumpRise - 0.62 * jumpApex - 0.34 * jumpFall, jumpAir) - landSquash * 0.48 - smashOffset * 0.55;
+            const botElbowR = THREE.MathUtils.lerp(walkElbowR, -0.44 * jumpRise - 0.62 * jumpApex - 0.34 * jumpFall, jumpAir) - landSquash * 0.48 - smashOffset * 0.55;
+            // Quadruped Dino front legs: knee/carpus lifts backward (+X) on forward reach & tucks tightly during leap!
+            const walkQuadKneeL = isQuadrupedDino
                 ? (0.06 + (isMoving ? Math.max(0, Math.sin(walkCycle + Math.PI + 0.85)) * 0.58 * speedRatio : 0))
                 : 0;
-            const quadFrontKneeR = isQuadrupedDino
+            const walkQuadKneeR = isQuadrupedDino
                 ? (0.06 + (isMoving ? Math.max(0, Math.sin(walkCycle + 0.85)) * 0.58 * speedRatio : 0))
                 : 0;
+            const jumpQuadKnee = isQuadrupedDino ? (0.95 * jumpRise + 0.72 * jumpApex + 0.22 * jumpFall) : 0;
+            const quadFrontKneeL = isQuadrupedDino ? (THREE.MathUtils.lerp(walkQuadKneeL, jumpQuadKnee, jumpAir) + landSquash * 0.55) : 0;
+            const quadFrontKneeR = isQuadrupedDino ? (THREE.MathUtils.lerp(walkQuadKneeR, jumpQuadKnee, jumpAir) + landSquash * 0.55) : 0;
             if (rig.leftForearm && rig.rightForearm) {
                 rig.leftForearm.rotation.x = botElbowL * botWeight + quadFrontKneeL * dinoWeight;
                 rig.rightForearm.rotation.x = botElbowR * botWeight + quadFrontKneeR * dinoWeight;
             }
             if (rig.leftHand && rig.rightHand) {
-                const botWristXL = -0.06 - (isMoving ? Math.max(0, -walkSin) * 0.22 * speedRatio : breath * 0.03) - smashOffset * 0.35;
-                const botWristXR = -0.06 - (isMoving ? Math.max(0, walkSin) * 0.22 * speedRatio : breath * 0.03) - smashOffset * 0.35;
-                const quadPawXL = isQuadrupedDino ? (-dinoArmRotL * 0.35 - quadFrontKneeL * 0.55) : 0;
-                const quadPawXR = isQuadrupedDino ? (-dinoArmRotR * 0.35 - quadFrontKneeR * 0.55) : 0;
+                const walkWristXL = -0.06 - (isMoving ? Math.max(0, -walkSin) * 0.22 * speedRatio : breath * 0.03);
+                const walkWristXR = -0.06 - (isMoving ? Math.max(0, walkSin) * 0.22 * speedRatio : breath * 0.03);
+                const jumpWristX = -0.28 * jumpRise - 0.18 * jumpApex - 0.08 * jumpFall;
+                const botWristXL = THREE.MathUtils.lerp(walkWristXL, jumpWristX, jumpAir) - smashOffset * 0.35;
+                const botWristXR = THREE.MathUtils.lerp(walkWristXR, jumpWristX, jumpAir) - smashOffset * 0.35;
+                const quadPawXL = isQuadrupedDino ? (-finalDinoArmL * 0.35 - quadFrontKneeL * 0.55) : 0;
+                const quadPawXR = isQuadrupedDino ? (-finalDinoArmR * 0.35 - quadFrontKneeR * 0.55) : 0;
                 rig.leftHand.rotation.x = botWristXL * botWeight + quadPawXL * dinoWeight;
                 rig.rightHand.rotation.x = botWristXR * botWeight + quadPawXR * dinoWeight;
-                const wristCurlZ = (0.06 + smashOffset * 0.16) * botWeight;
+                const wristCurlZ = (0.06 + smashOffset * 0.16 + jumpAir * 0.14) * botWeight;
                 rig.leftHand.rotation.z = wristCurlZ;
                 rig.rightHand.rotation.z = -wristCurlZ;
             }
@@ -791,8 +816,14 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
             const dinoLegX = isPtero ? 0.72 : 1.18;
             const dinoLegY = isPtero ? 1.85 : 2.25;
             const dinoLegZ = isPtero ? -1.05 : -1.18;
-            const dinoLegRotL = isPtero ? -Math.PI * 0.36 : -armSwingL * 0.75;
-            const dinoLegRotR = isPtero ? -Math.PI * 0.36 : -armSwingR * 0.75;
+            const botHipL = THREE.MathUtils.lerp(-armSwingL * 0.85, -0.78 * jumpRise - 0.68 * jumpApex - 0.24 * jumpFall, jumpAir) - landSquash * 0.42;
+            const botHipR = THREE.MathUtils.lerp(-armSwingR * 0.85, 0.34 * jumpRise - 0.56 * jumpApex - 0.18 * jumpFall, jumpAir) - landSquash * 0.42;
+            const dinoJumpLeg = isPtero ? 0
+                : (isQuadrupedDino
+                    ? (0.62 * jumpRise + 0.24 * jumpApex - 0.18 * jumpFall)
+                    : (-0.68 * jumpRise - 0.58 * jumpApex - 0.22 * jumpFall));
+            const dinoLegRotL = isPtero ? -Math.PI * 0.36 : (THREE.MathUtils.lerp(-armSwingL * 0.75, dinoJumpLeg, jumpAir) - landSquash * 0.35);
+            const dinoLegRotR = isPtero ? -Math.PI * 0.36 : (THREE.MathUtils.lerp(-armSwingR * 0.75, dinoJumpLeg, jumpAir) - landSquash * 0.35);
 
             if (rig.botType === 'BOULDER') {
                 const dozerLiftY = (smashOffset * 0.38 + scoopLift * 0.78) * m;
@@ -807,8 +838,8 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                     (0.72 + scoopLift * 0.25) * m + dinoLegZ * d
                 );
                 const legScoopPitch = (smashOffset * 0.25 + scoopLift * 0.38) * m;
-                rig.leftLeg.rotation.x = (-armSwingL * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - legScoopPitch) * m + dinoLegRotL * d;
-                rig.rightLeg.rotation.x = (-armSwingR * 0.85 - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - legScoopPitch) * m + dinoLegRotR * d;
+                rig.leftLeg.rotation.x = (botHipL - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - legScoopPitch) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = (botHipR - smashOffset * 0.45) * (1 - m - d) - (Math.PI / 2 - legScoopPitch) * m + dinoLegRotR * d;
 
                 if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
                     const linkageShiftZ = (-0.18 - scoopLift * 0.28) * m;
@@ -832,8 +863,8 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                     2.35 * (1 - m - d) + 1.12 * m + dinoLegY * d,
                     -0.42 * m + dinoLegZ * d
                 );
-                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
-                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
+                rig.leftLeg.rotation.x = botHipL * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = botHipR * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
 
                 if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
                     const wheelGroundShiftZ = -0.05 * (1 - m) + 0.36 * m;
@@ -851,8 +882,8 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                     2.35 * (1 - m - d) + 0.95 * m + dinoLegY * d,
                     -0.85 * m + dinoLegZ * d
                 );
-                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
-                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
+                rig.leftLeg.rotation.x = botHipL * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = botHipR * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
 
                 if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
                     const wheelGroundShiftZ = -0.05 * (1 - m) + 0.38 * m;
@@ -871,8 +902,8 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                     2.35 * (1 - m - d) + 0.86 * m + dinoLegY * d,
                     -0.05 * m + dinoLegZ * d
                 );
-                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + legPitchVeh * m + dinoLegRotL * d;
-                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + legPitchVeh * m + dinoLegRotR * d;
+                rig.leftLeg.rotation.x = botHipL * (1 - m - d) + legPitchVeh * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = botHipR * (1 - m - d) + legPitchVeh * m + dinoLegRotR * d;
 
                 if (rig.leftLegWheelMount && rig.rightLegWheelMount) {
                     const wheelZ = 0.05 * (1 - m) - 0.16 * m;
@@ -890,8 +921,8 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                     2.35 * (1 - m - d) + 0.95 * m + dinoLegY * d,
                     -0.15 * m + dinoLegZ * d
                 );
-                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
-                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
+                rig.leftLeg.rotation.x = botHipL * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = botHipR * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
             } else {
                 // BLADES: In Helicopter mode, legs fold backward (+PI/2) and press tightly together into a single unified Tail Boom!
                 rig.leftLeg.position.set(
@@ -904,8 +935,8 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                     2.35 * (1 - m - d) + 1.55 * m + dinoLegY * d,
                     -0.25 * m + dinoLegZ * d
                 );
-                rig.leftLeg.rotation.x = (-armSwingL * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
-                rig.rightLeg.rotation.x = (-armSwingR * 0.85) * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
+                rig.leftLeg.rotation.x = botHipL * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotL * d;
+                rig.rightLeg.rotation.x = botHipR * (1 - m - d) + (Math.PI / 2) * m + dinoLegRotR * d;
 
                 if (rig.leftSkidMount && rig.rightSkidMount) {
                     rig.leftSkidMount.position.set(-0.56 * (1 - m) - 0.72 * m, -1.55 * (1 - m) + 0.85 * m, 0.25 * (1 - m) + 1.25 * m);
@@ -913,16 +944,25 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                 }
             }
 
-            // 6b. Articulated Knees & Ankles (phase-shifted stride lift + flat foot plant; resets to 0 in Vehicle/Boat Mode)
+            // 6b. Articulated Knees & Ankles (phase-shifted stride lift, mid-air tuck, & landing cushion; resets to 0 in Vehicle/Boat Mode)
             const leftSwingLift = isMoving ? Math.max(0, Math.sin(walkCycle + 0.95)) : 0;
             const rightSwingLift = isMoving ? Math.max(0, -Math.sin(walkCycle + 0.95)) : 0;
             const leftStanceFlex = isMoving ? Math.max(0, -walkSin) * 0.14 : 0;
             const rightStanceFlex = isMoving ? Math.max(0, walkSin) * 0.14 : 0;
 
-            const botKneeL = 0.06 + (leftSwingLift * 0.76 + leftStanceFlex) * speedRatio + (isMoving ? 0 : breath * 0.025) + smashOffset * 0.26;
-            const botKneeR = 0.06 + (rightSwingLift * 0.76 + rightStanceFlex) * speedRatio + (isMoving ? 0 : breath * 0.025) + smashOffset * 0.26;
-            const dinoKneeL = isPtero ? 0.35 : (0.14 + leftSwingLift * 0.68 * speedRatio + smashOffset * 0.2);
-            const dinoKneeR = isPtero ? 0.35 : (0.14 + rightSwingLift * 0.68 * speedRatio + smashOffset * 0.2);
+            const walkKneeL = 0.06 + (leftSwingLift * 0.76 + leftStanceFlex) * speedRatio + (isMoving ? 0 : breath * 0.025);
+            const walkKneeR = 0.06 + (rightSwingLift * 0.76 + rightStanceFlex) * speedRatio + (isMoving ? 0 : breath * 0.025);
+            const botKneeL = THREE.MathUtils.lerp(walkKneeL, 1.18 * jumpRise + 0.94 * jumpApex + 0.30 * jumpFall, jumpAir) + landSquash * 0.85 + smashOffset * 0.26;
+            const botKneeR = THREE.MathUtils.lerp(walkKneeR, 0.24 * jumpRise + 0.88 * jumpApex + 0.26 * jumpFall, jumpAir) + landSquash * 0.85 + smashOffset * 0.26;
+
+            const walkDinoKneeL = isPtero ? 0.35 : (0.14 + leftSwingLift * 0.68 * speedRatio);
+            const walkDinoKneeR = isPtero ? 0.35 : (0.14 + rightSwingLift * 0.68 * speedRatio);
+            const jumpDinoKnee = isPtero ? 0.35
+                : (isQuadrupedDino
+                    ? (0.22 * jumpRise + 0.56 * jumpApex + 0.38 * jumpFall)
+                    : (1.05 * jumpRise + 0.88 * jumpApex + 0.28 * jumpFall));
+            const dinoKneeL = isPtero ? 0.35 : (THREE.MathUtils.lerp(walkDinoKneeL, jumpDinoKnee, jumpAir) + landSquash * 0.72 + smashOffset * 0.2);
+            const dinoKneeR = isPtero ? 0.35 : (THREE.MathUtils.lerp(walkDinoKneeR, jumpDinoKnee, jumpAir) + landSquash * 0.72 + smashOffset * 0.2);
 
             if (rig.leftLowerLeg && rig.rightLowerLeg) {
                 rig.leftLowerLeg.rotation.x = botKneeL * botWeight + dinoKneeL * dinoWeight;
@@ -930,15 +970,18 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
             }
 
             if (rig.leftFoot && rig.rightFoot) {
-                const hipL = (-armSwingL * 0.85) * botWeight + dinoLegRotL * dinoWeight;
-                const hipR = (-armSwingR * 0.85) * botWeight + dinoLegRotR * dinoWeight;
+                const hipL = botHipL * botWeight + dinoLegRotL * dinoWeight;
+                const hipR = botHipR * botWeight + dinoLegRotR * dinoWeight;
                 const kneeL = botKneeL * botWeight + dinoKneeL * dinoWeight;
                 const kneeR = botKneeR * botWeight + dinoKneeR * dinoWeight;
-                // Counter-pitch ankle so foot stays level during stance and rolls smoothly through toe-off
+                // Counter-pitch ankle during stance & landing; point toes on jump launch and flex ready on descent
                 const toeOffL = isMoving ? Math.max(0, -walkSin) * 0.22 * speedRatio : 0;
                 const toeOffR = isMoving ? Math.max(0, walkSin) * 0.22 * speedRatio : 0;
-                const anklePitchL = (-(hipL * 0.42 + kneeL * 0.48) + toeOffL) * (botWeight + dinoWeight);
-                const anklePitchR = (-(hipR * 0.42 + kneeR * 0.48) + toeOffR) * (botWeight + dinoWeight);
+                const walkAnkleL = -(hipL * 0.42 + kneeL * 0.48) + toeOffL;
+                const walkAnkleR = -(hipR * 0.42 + kneeR * 0.48) + toeOffR;
+                const jumpAnkle = 0.42 * jumpRise + 0.24 * jumpApex - 0.22 * jumpFall;
+                const anklePitchL = THREE.MathUtils.lerp(walkAnkleL, jumpAnkle, jumpAir) * (botWeight + dinoWeight);
+                const anklePitchR = THREE.MathUtils.lerp(walkAnkleR, jumpAnkle, jumpAir) * (botWeight + dinoWeight);
 
                 if (rig.botType === 'BOULDER') {
                     // Preserve Boulder's bulldozer blade bucketTilt in Vehicle Mode & scoop curl!
@@ -1139,6 +1182,26 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                         rig.dinoLeftHand.rotation.x = 0.28 + smashOffset * 0.38;
                         rig.dinoRightHand.rotation.x = 0.28 + smashOffset * 0.38;
                     }
+                }
+
+                // Universal Dino Jump & Landing Cushion Overlay (Head lift/bob, tail pitch, mid-air roar, bipedal pounce arms!)
+                if (!isPtero && (jumpAir > 0.005 || landSquash > 0.005)) {
+                    rig.dinoHead.rotation.x += (-0.22 * jumpRise + 0.14 * jumpFall) * jumpAir + 0.16 * landSquash;
+                    rig.dinoTail.rotation.x = (0.24 * jumpRise - 0.18 * jumpFall) * jumpAir - 0.12 * landSquash;
+                    if (rig.dinoLowerJaw) {
+                        rig.dinoLowerJaw.rotation.x += 0.28 * jumpAir;
+                    }
+                    if (!isQuadrupedDino && rig.dinoLeftArm && rig.dinoRightArm) {
+                        const pounceArm = (-0.52 * jumpRise - 0.35 * jumpApex - 0.18 * jumpFall) * jumpAir;
+                        rig.dinoLeftArm.rotation.x += pounceArm;
+                        rig.dinoRightArm.rotation.x += pounceArm;
+                        if (rig.dinoLeftForearm && rig.dinoRightForearm) {
+                            rig.dinoLeftForearm.rotation.x -= 0.35 * jumpAir;
+                            rig.dinoRightForearm.rotation.x -= 0.35 * jumpAir;
+                        }
+                    }
+                } else if (!isPtero && rig.botType !== 'OPTIMUS') {
+                    rig.dinoTail.rotation.x = 0;
                 }
             }
 

@@ -163,6 +163,8 @@ export interface PlayerState {
     flightAlt: number;
     ascendInput: number;
     grounded: boolean;
+    airBlend?: number;
+    landTimer?: number;
     walkCycle: number;
     smashTimer: number;
     scoopTimer: number;

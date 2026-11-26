@@ -1311,7 +1311,10 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                         botKey === 'BOULDER' && ((player.drillEquipTimer || 0) > 0 || worldState.drillAnim?.active)
                             ? (worldState.drillAnim?.active ? 1.0 : Math.min(1.0, (player.drillEquipTimer || 0) / 0.25))
                             : 0,
-                        player.hiddenMorph || 0
+                        player.hiddenMorph || 0,
+                        player.airBlend || 0,
+                        player.vy || 0,
+                        player.landTimer || 0
                     );
                     // Articulate Toreinbotto's trailing Shinkansen cars smoothly along ANY switched track & passing siding!
                     if (botKey === 'TOREINBOTTO' && rig.toreinbottoTrainCars && rig.toreinbottoTrainCars.length > 0) {

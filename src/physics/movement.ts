@@ -1586,9 +1586,13 @@ waypointGroup.add(wpArrowCone);
                     player.vy -= gravAccel * dt;
                     player.pos.y += player.vy * dt;
                     if (player.pos.y <= targetGroundY) {
+                        const impactSpeed = -player.vy;
                         player.pos.y = targetGroundY;
                         player.vy = 0;
                         player.grounded = true;
+                        if (impactSpeed > 4.5) {
+                            player.landTimer = 0.24;
+                        }
                     }
                 } else {
                     // Gradual level adjustment as car drives up a hill or over a bump
@@ -1597,6 +1601,13 @@ waypointGroup.add(wpArrowCone);
                     player.vy = 0;
                     player.grounded = true;
                 }
+            }
+
+            // Smooth jump air-blend & landing-cushion timers for 6-joint Bot/Dino jump animation
+            const isAirborneJump = !player.grounded && !isFlyingCopter && !player.inCrane;
+            player.airBlend = THREE.MathUtils.lerp(player.airBlend || 0, isAirborneJump ? 1.0 : 0.0, Math.min(1, dt * (isAirborneJump ? 14 : 18)));
+            if ((player.landTimer || 0) > 0) {
+                player.landTimer = Math.max(0, (player.landTimer || 0) - dt);
             }
 
             // High Tide & Heatwave Fireboat twin water spray & foaming wake (when actively floating in water!)

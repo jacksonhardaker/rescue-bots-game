@@ -66,6 +66,8 @@ export const player: PlayerState = {
     railPassingOffset: 0,
     railWhistleCooldown: 0,
     railTunnelCooldown: 0,
+    airBlend: 0,
+    landTimer: 0,
 };
 
 export const worldState: WorldState = {
