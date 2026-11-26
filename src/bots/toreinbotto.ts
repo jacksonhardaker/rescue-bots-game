@@ -115,9 +115,9 @@ export function buildToreinbotto(parts: BotRig) {
     parts.head.add(facePlate, visor, mouthGuard);
 
     // =========================================================================
-    // 3. ARMS & RAIL-COUPLER FOREARMS
+    // 3. ARMS & ARTICULATED RAIL-COUPLER FOREARMS + WRISTS
     // =========================================================================
-    const buildArm = (armGroup: THREE.Group, forearmGroup: THREE.Group, side: number) => {
+    const buildArm = (armGroup: THREE.Group, forearmGroup: THREE.Group, handGroup: THREE.Group, side: number) => {
         const pauldron = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.12, 1.32), matWhite);
         pauldron.position.set(side * 0.12, 0.18, 0);
         pauldron.castShadow = true;
@@ -127,34 +127,49 @@ export function buildToreinbotto(parts: BotRig) {
         upperArm.position.set(0, -0.78, 0);
         armGroup.add(pauldron, pauldronStripe, upperArm);
 
+        forearmGroup.position.set(0, -1.25, 0);
+        armGroup.add(forearmGroup);
+
         const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.48, 0.96), matCobalt);
         forearm.position.set(0, -0.68, 0.04);
         forearm.castShadow = true;
         const wristGuard = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.42, 1.04), matWhite);
         wristGuard.position.set(0, -1.12, 0.08);
+        forearmGroup.add(forearm, wristGuard);
+
+        handGroup.position.set(0, -1.36, 0.04);
+        forearmGroup.add(handGroup);
         const railFist = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.56, 0.68), matDarkSteel);
-        railFist.position.set(0, -1.58, 0.04);
-        forearmGroup.add(forearm, wristGuard, railFist);
+        railFist.position.set(0, -0.22, 0);
+        handGroup.add(railFist);
     };
-    buildArm(parts.leftArm, parts.leftForearm, -1);
-    buildArm(parts.rightArm, parts.rightForearm, 1);
+    buildArm(parts.leftArm, parts.leftForearm, parts.leftHand, -1);
+    buildArm(parts.rightArm, parts.rightForearm, parts.rightHand, 1);
 
     // =========================================================================
-    // 4. LOCOMOTIVE LEG GREAVES & FLANGED ANKLE WHEELS
+    // 4. LOCOMOTIVE LEG GREAVES, ARTICULATED KNEES & ANKLES + FLANGED WHEELS
     // =========================================================================
-    const buildLeg = (legGroup: THREE.Group, footGroup: THREE.Group, side: number) => {
+    const buildLeg = (legGroup: THREE.Group, lowerLegGroup: THREE.Group, footGroup: THREE.Group, side: number) => {
         const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.25, 0.96), matDarkSteel);
         thigh.position.set(0, -0.58, 0);
+        legGroup.add(thigh);
+
+        lowerLegGroup.position.set(0, -1.16, 0);
+        legGroup.add(lowerLegGroup);
+
         const kneeCap = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.56, 0.48), matGold);
-        kneeCap.position.set(0, -1.16, 0.44);
+        kneeCap.position.set(0, 0, 0.44);
         const shin = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.65, 1.28), matWhite);
-        shin.position.set(0, -1.85, 0.05);
+        shin.position.set(0, -0.69, 0.05);
         shin.castShadow = true;
         const shinStripe = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.34, 1.32), matCobalt);
-        shinStripe.position.set(0, -1.65, 0.05);
+        shinStripe.position.set(0, -0.49, 0.05);
         const ankleWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.22, 12).rotateZ(Math.PI / 2), matChrome);
-        ankleWheel.position.set(side * 0.64, -2.32, -0.08);
-        legGroup.add(thigh, kneeCap, shin, shinStripe, ankleWheel);
+        ankleWheel.position.set(side * 0.64, -1.16, -0.08);
+        lowerLegGroup.add(kneeCap, shin, shinStripe, ankleWheel);
+
+        footGroup.position.set(0, -1.48, 0);
+        lowerLegGroup.add(footGroup);
 
         const foot = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.52, 1.78), matCobalt);
         foot.position.set(0, -0.18, 0.28);
@@ -162,8 +177,8 @@ export function buildToreinbotto(parts: BotRig) {
         toeGuard.position.set(0, -0.22, 1.05);
         footGroup.add(foot, toeGuard);
     };
-    buildLeg(parts.leftLeg, parts.leftFoot, -1);
-    buildLeg(parts.rightLeg, parts.rightFoot, 1);
+    buildLeg(parts.leftLeg, parts.leftLowerLeg, parts.leftFoot, -1);
+    buildLeg(parts.rightLeg, parts.rightLowerLeg, parts.rightFoot, 1);
 
     // =========================================================================
     // 5. VEHICLE MODE: SHINKANSEN 0-SERIES BULLET TRAIN (Track-Only Shell!)
@@ -460,16 +475,27 @@ export function buildToreinbotto(parts: BotRig) {
     tailTip.position.set(0, -0.26, -3.55);
     parts.dinoTail.add(tailSeg1, tailSeg2, tailTip);
 
-    // Compact Parasaurolophus Forearms
+    // Compact Articulated Parasaurolophus Forearms (Shoulder -> Elbow -> Wrist)
     [-1, 1].forEach(side => {
         const dArm = side < 0 ? parts.dinoLeftArm : parts.dinoRightArm;
+        const dForearm = side < 0 ? parts.dinoLeftForearm : parts.dinoRightForearm;
+        const dHand = side < 0 ? parts.dinoLeftHand : parts.dinoRightHand;
         dArm.position.set(side * 1.28, 1.95, 1.15);
-        const foreLimb = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.15, 0.58), matSkyBlue);
-        foreLimb.position.set(0, -0.48, 0.18);
-        foreLimb.rotation.x = -0.35;
+        const upperLimb = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.62, 0.58), matSkyBlue);
+        upperLimb.position.set(0, -0.26, 0.08);
+        upperLimb.rotation.x = -0.25;
+        dArm.add(upperLimb);
+
+        dForearm.position.set(0, -0.52, 0.16);
+        const lowerLimb = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.54, 0.48), matWhite);
+        lowerLimb.position.set(0, -0.22, 0.10);
+        lowerLimb.rotation.x = -0.18;
+        dForearm.add(lowerLimb);
+
+        dHand.position.set(0, -0.48, 0.20);
         const claw = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.28, 0.62), matDarkSteel);
-        claw.position.set(0, -1.02, 0.38);
-        dArm.add(foreLimb, claw);
+        claw.position.set(0, -0.04, 0.06);
+        dHand.add(claw);
     });
 
     // =========================================================================

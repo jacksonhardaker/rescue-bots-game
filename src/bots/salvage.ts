@@ -160,47 +160,60 @@ export function buildSalvage(parts: BotRig, _materials: Record<string, unknown> 
                     vent.position.set(side * 0.68, 0, 0);
                     armG.add(vent);
 
-                    forearmG.position.set(0, -1.15, 0);
-                    armG.add(forearmG);
-
                     // Steel Bicep Joint
                     const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.75, 10), matSalvageSteel);
-                    bicep.position.set(0, 0.25, 0);
+                    bicep.position.set(0, -0.90, 0);
+                    armG.add(bicep);
+
+                    forearmG.position.set(0, -1.15, 0);
+                    armG.add(forearmG);
 
                     // Heavy Royal Blue Forearm Gauntlet
                     const gauntlet = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.35, 1.18), matSalvageBlue);
                     gauntlet.position.set(0, -0.48, 0.05);
                     gauntlet.castShadow = true;
+                    forearmG.add(gauntlet);
 
-                    // Charcoal Steel Fist
+                    // Articulated Charcoal Steel Fist / Wrist
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
+                    handG.position.set(0, -0.96, 0.05);
+                    forearmG.add(handG);
+
                     const fist = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.58, 0.82), matSalvageSteel);
-                    fist.position.set(0, -1.18, 0.05);
-
-                    forearmG.add(bicep, gauntlet, fist);
+                    fist.position.set(0, -0.22, 0);
+                    handG.add(fist);
                 });
 
-                // 5. Legs: STACKED DUAL BLACK TIRES ON THIGHS & SHINS + LIME-GREEN BOOTS (Exact Image 1)
+                // 5. Legs: STACKED DUAL BLACK TIRES ON THIGHS & SHINS + ARTICULATED KNEES & ANKLES + LIME-GREEN BOOTS (Exact Image 1)
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
+                    const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
 
                     // Charcoal Heavy Structural Leg Frame
                     const thighFrame = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.35, 1.15), matSalvageSteel);
                     thighFrame.position.set(-side * 0.05, -0.48, -0.15);
                     legG.add(thighFrame);
 
-                    const shinFrame = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.35, 1.25), matSalvageSteel);
-                    shinFrame.position.set(-side * 0.08, -1.45, -0.15);
-                    shinFrame.castShadow = true;
-                    legG.add(shinFrame);
+                    lowerLegG.position.set(0, -0.96, 0);
+                    legG.add(lowerLegG);
 
-                    // Bright Electric Lime-Green Boots (Image 1) with Grooved Toecaps
+                    const shinFrame = new THREE.Mesh(new THREE.BoxGeometry(1.35, 2.35, 1.25), matSalvageSteel);
+                    shinFrame.position.set(-side * 0.08, -0.49, -0.15);
+                    shinFrame.castShadow = true;
+                    lowerLegG.add(shinFrame);
+
+                    // Articulated Ankle -> Bright Electric Lime-Green Boots (Image 1) with Grooved Toecaps
+                    footG.position.set(0, -1.32, 0);
+                    lowerLegG.add(footG);
+
                     const boot = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.58, 1.95), matSalvageLime);
-                    boot.position.set(-side * 0.08, -2.52, 0.22);
+                    boot.position.set(-side * 0.08, -0.24, 0.22);
                     boot.castShadow = true;
 
                     const toeGroove = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.45, 0.65), matSalvageLime);
-                    toeGroove.position.set(-side * 0.08, -2.48, 0.95);
-                    legG.add(boot, toeGroove);
+                    toeGroove.position.set(-side * 0.08, -0.20, 0.95);
+                    footG.add(boot, toeGroove);
 
                     // Wheel Mount carrying the stacked tires
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;

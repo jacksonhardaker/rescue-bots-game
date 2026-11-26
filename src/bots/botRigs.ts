@@ -173,8 +173,12 @@ export function buildRescueBotModel(botType: string): BotRig {
                 rightArm: new THREE.Group(),
                 leftForearm: new THREE.Group(),
                 rightForearm: new THREE.Group(),
+                leftHand: new THREE.Group(),
+                rightHand: new THREE.Group(),
                 leftLeg: new THREE.Group(),
                 rightLeg: new THREE.Group(),
+                leftLowerLeg: new THREE.Group(),
+                rightLowerLeg: new THREE.Group(),
                 leftFoot: new THREE.Group(),
                 rightFoot: new THREE.Group(),
                 leftLegWheelMount: new THREE.Group(),
@@ -194,8 +198,14 @@ export function buildRescueBotModel(botType: string): BotRig {
                 dinoTail: new THREE.Group(),
                 dinoLeftWing: new THREE.Group(),
                 dinoRightWing: new THREE.Group(),
+                dinoLeftWingTip: new THREE.Group(),
+                dinoRightWingTip: new THREE.Group(),
                 dinoLeftArm: new THREE.Group(),
                 dinoRightArm: new THREE.Group(),
+                dinoLeftForearm: new THREE.Group(),
+                dinoRightForearm: new THREE.Group(),
+                dinoLeftHand: new THREE.Group(),
+                dinoRightHand: new THREE.Group(),
                 dinoLowerJaw: null,
                 wheels: [],
                 rotors: null,
@@ -218,8 +228,14 @@ export function buildRescueBotModel(botType: string): BotRig {
             parts.dinoGroup.add(parts.dinoTail);
             parts.dinoGroup.add(parts.dinoLeftWing);
             parts.dinoGroup.add(parts.dinoRightWing);
+            parts.dinoLeftWing.add(parts.dinoLeftWingTip);
+            parts.dinoRightWing.add(parts.dinoRightWingTip);
             parts.dinoGroup.add(parts.dinoLeftArm);
             parts.dinoGroup.add(parts.dinoRightArm);
+            parts.dinoLeftArm.add(parts.dinoLeftForearm);
+            parts.dinoLeftForearm.add(parts.dinoLeftHand);
+            parts.dinoRightArm.add(parts.dinoRightForearm);
+            parts.dinoRightForearm.add(parts.dinoRightHand);
 
     if (botType === "BOULDER") buildBoulder(parts);
     else if (botType === "HEATWAVE") buildHeatwave(parts);
@@ -272,16 +288,27 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
 
             const walkSin = Math.sin(walkCycle);
             const isMoving = Math.abs(speed) > 0.5;
+            const speedRatio = isMoving ? Math.min(1.0, Math.abs(speed) / 26) : 0;
+            const breath = Math.sin(now * 0.0032);
+            const botWeight = Math.max(0, 1 - m - d) * (1 - boatMorph);
+            const dinoWeight = Math.max(0, d) * (1 - boatMorph);
             const smashOffset = smashTimer > 0 ? Math.sin((smashTimer / 0.45) * Math.PI) : 0;
             // Bulldozer Scoop Wave: dips blade low in first 30%, then lifts hydraulic arms & curls blade high!
             const scoopProgress = scoopTimer > 0 ? (1.0 - scoopTimer / 0.85) : 0;
             const scoopLift = scoopTimer > 0 ? Math.sin(scoopProgress * Math.PI) : 0;
             const scoopCurl = scoopTimer > 0 ? Math.sin((scoopProgress - 0.18) * Math.PI * 1.2) : 0;
             const isPtero = rig.botType === 'BLADES';
+            const isQuadrupedDino = (
+                rig.botType === 'BOULDER' ||
+                rig.botType === 'HEATWAVE' ||
+                rig.botType === 'CHASE' ||
+                rig.botType === 'SALVAGE' ||
+                rig.botType === 'RATCHET'
+            );
 
             // 1. Torso (Upright in Bot, Low Chassis in Vehicle, Horizontal Dinosaur Core in Dinobot)
-            const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : 0) - smashOffset * 0.5;
-            const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE' || rig.botType === 'HIGHTIDE' ? 2.45 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.18 : 0);
+            const botTorsoY = 3.65 + (isMoving ? Math.abs(walkSin) * 0.22 : breath * 0.045) - smashOffset * 0.5;
+            const dinoTorsoY = (rig.botType === 'HEATWAVE' || rig.botType === 'BUMBLEBEE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE' || rig.botType === 'HIGHTIDE' ? 2.45 : 2.15) + (isMoving && !isPtero ? Math.abs(walkSin) * 0.18 : breath * 0.035);
             const vehTorsoY = (rig.botType === 'BOULDER') ? 1.56
                 : (rig.botType === 'HEATWAVE' || rig.botType === 'OPTIMUS' || rig.botType === 'SALVAGE') ? 1.78
                 : (rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'BUMBLEBEE') ? 1.35
@@ -301,6 +328,7 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
             const vehTorsoRotX = (rig.botType === 'CHASE' || rig.botType === 'BLADES') ? (Math.PI / 2) * m : 0;
             const dinoTorsoRotX = (rig.botType === 'OPTIMUS' || rig.botType === 'BLURR' || rig.botType === 'QUICKSHADOW' || rig.botType === 'STARSPEED') ? (Math.PI * 0.22) : (Math.PI * 0.48);
             rig.torso.rotation.x = smashOffset * 0.4 * (1 - m - d) + vehTorsoRotX + dinoTorsoRotX * d;
+            rig.torso.rotation.y = (isMoving ? -walkSin * 0.11 * speedRatio : 0) * botWeight;
 
             // Generic Hidden Vehicle Shell unfold (works for any bot that defines a hiddenVehicleShell)
             if (rig.hiddenVehicleShell) {
@@ -729,6 +757,36 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                 }
             }
 
+            // 5b. Articulated Elbows & Wrists (blends cleanly to 0 in Vehicle & Boat modes!)
+            const botElbowL = -0.16 - (isMoving
+                ? (Math.max(0, -walkSin) * 0.64 + Math.max(0, walkSin) * 0.12) * speedRatio
+                : breath * 0.04) - smashOffset * 0.55;
+            const botElbowR = -0.16 - (isMoving
+                ? (Math.max(0, walkSin) * 0.64 + Math.max(0, -walkSin) * 0.12) * speedRatio
+                : breath * 0.04) - smashOffset * 0.55;
+            // Quadruped Dino front legs: knee/carpus lifts backward (+X) on forward reach
+            const quadFrontKneeL = isQuadrupedDino
+                ? (0.06 + (isMoving ? Math.max(0, Math.sin(walkCycle + Math.PI + 0.85)) * 0.58 * speedRatio : 0))
+                : 0;
+            const quadFrontKneeR = isQuadrupedDino
+                ? (0.06 + (isMoving ? Math.max(0, Math.sin(walkCycle + 0.85)) * 0.58 * speedRatio : 0))
+                : 0;
+            if (rig.leftForearm && rig.rightForearm) {
+                rig.leftForearm.rotation.x = botElbowL * botWeight + quadFrontKneeL * dinoWeight;
+                rig.rightForearm.rotation.x = botElbowR * botWeight + quadFrontKneeR * dinoWeight;
+            }
+            if (rig.leftHand && rig.rightHand) {
+                const botWristXL = -0.06 - (isMoving ? Math.max(0, -walkSin) * 0.22 * speedRatio : breath * 0.03) - smashOffset * 0.35;
+                const botWristXR = -0.06 - (isMoving ? Math.max(0, walkSin) * 0.22 * speedRatio : breath * 0.03) - smashOffset * 0.35;
+                const quadPawXL = isQuadrupedDino ? (-dinoArmRotL * 0.35 - quadFrontKneeL * 0.55) : 0;
+                const quadPawXR = isQuadrupedDino ? (-dinoArmRotR * 0.35 - quadFrontKneeR * 0.55) : 0;
+                rig.leftHand.rotation.x = botWristXL * botWeight + quadPawXL * dinoWeight;
+                rig.rightHand.rotation.x = botWristXR * botWeight + quadPawXR * dinoWeight;
+                const wristCurlZ = (0.06 + smashOffset * 0.16) * botWeight;
+                rig.leftHand.rotation.z = wristCurlZ;
+                rig.rightHand.rotation.z = -wristCurlZ;
+            }
+
             // 6. Left & Right Legs
             const dinoLegX = isPtero ? 0.72 : 1.18;
             const dinoLegY = isPtero ? 1.85 : 2.25;
@@ -855,6 +913,43 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                 }
             }
 
+            // 6b. Articulated Knees & Ankles (phase-shifted stride lift + flat foot plant; resets to 0 in Vehicle/Boat Mode)
+            const leftSwingLift = isMoving ? Math.max(0, Math.sin(walkCycle + 0.95)) : 0;
+            const rightSwingLift = isMoving ? Math.max(0, -Math.sin(walkCycle + 0.95)) : 0;
+            const leftStanceFlex = isMoving ? Math.max(0, -walkSin) * 0.14 : 0;
+            const rightStanceFlex = isMoving ? Math.max(0, walkSin) * 0.14 : 0;
+
+            const botKneeL = 0.06 + (leftSwingLift * 0.76 + leftStanceFlex) * speedRatio + (isMoving ? 0 : breath * 0.025) + smashOffset * 0.26;
+            const botKneeR = 0.06 + (rightSwingLift * 0.76 + rightStanceFlex) * speedRatio + (isMoving ? 0 : breath * 0.025) + smashOffset * 0.26;
+            const dinoKneeL = isPtero ? 0.35 : (0.14 + leftSwingLift * 0.68 * speedRatio + smashOffset * 0.2);
+            const dinoKneeR = isPtero ? 0.35 : (0.14 + rightSwingLift * 0.68 * speedRatio + smashOffset * 0.2);
+
+            if (rig.leftLowerLeg && rig.rightLowerLeg) {
+                rig.leftLowerLeg.rotation.x = botKneeL * botWeight + dinoKneeL * dinoWeight;
+                rig.rightLowerLeg.rotation.x = botKneeR * botWeight + dinoKneeR * dinoWeight;
+            }
+
+            if (rig.leftFoot && rig.rightFoot) {
+                const hipL = (-armSwingL * 0.85) * botWeight + dinoLegRotL * dinoWeight;
+                const hipR = (-armSwingR * 0.85) * botWeight + dinoLegRotR * dinoWeight;
+                const kneeL = botKneeL * botWeight + dinoKneeL * dinoWeight;
+                const kneeR = botKneeR * botWeight + dinoKneeR * dinoWeight;
+                // Counter-pitch ankle so foot stays level during stance and rolls smoothly through toe-off
+                const toeOffL = isMoving ? Math.max(0, -walkSin) * 0.22 * speedRatio : 0;
+                const toeOffR = isMoving ? Math.max(0, walkSin) * 0.22 * speedRatio : 0;
+                const anklePitchL = (-(hipL * 0.42 + kneeL * 0.48) + toeOffL) * (botWeight + dinoWeight);
+                const anklePitchR = (-(hipR * 0.42 + kneeR * 0.48) + toeOffR) * (botWeight + dinoWeight);
+
+                if (rig.botType === 'BOULDER') {
+                    // Preserve Boulder's bulldozer blade bucketTilt in Vehicle Mode & scoop curl!
+                    rig.leftFoot.rotation.x += anklePitchL;
+                    rig.rightFoot.rotation.x += anklePitchR;
+                } else {
+                    rig.leftFoot.rotation.x = anklePitchL;
+                    rig.rightFoot.rotation.x = anklePitchR;
+                }
+            }
+
             // 7. Dinobot Anatomy Group (Triceratops, Brachiosaurus, Stegosaurus, Pterosaur, Velociraptor)
             if (rig.dinoGroup) {
                 rig.dinoGroup.visible = d > 0.02;
@@ -881,15 +976,34 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                     rig.dinoHead.rotation.x = (isMoving ? Math.sin(walkCycle) * 0.12 : 0) + smashOffset * 0.35;
                     rig.dinoTail.position.set(0, 2.15, -1.55);
                     rig.dinoTail.rotation.y = isMoving ? walkSin * 0.38 : Math.sin(now * 0.003) * 0.15;
+                    if (rig.dinoLeftArm && rig.dinoRightArm) {
+                        const raptorSlash = smashOffset * 0.65;
+                        rig.dinoLeftArm.rotation.x = 0.25 + (isMoving ? -walkSin * 0.28 : Math.sin(now * 0.004) * 0.08) - raptorSlash;
+                        rig.dinoRightArm.rotation.x = 0.25 + (isMoving ? walkSin * 0.28 : -Math.sin(now * 0.004) * 0.08) - raptorSlash;
+                    }
+                    if (rig.dinoLeftForearm && rig.dinoRightForearm) {
+                        rig.dinoLeftForearm.rotation.x = -0.45 - (isMoving ? Math.max(0, -walkSin) * 0.32 : 0) - smashOffset * 0.35;
+                        rig.dinoRightForearm.rotation.x = -0.45 - (isMoving ? Math.max(0, walkSin) * 0.32 : 0) - smashOffset * 0.35;
+                    }
+                    if (rig.dinoLeftHand && rig.dinoRightHand) {
+                        rig.dinoLeftHand.rotation.x = 0.32 + smashOffset * 0.45;
+                        rig.dinoRightHand.rotation.x = 0.32 + smashOffset * 0.45;
+                    }
                 } else if (rig.botType === 'BLADES') {
                     rig.dinoHead.position.set(0, 2.35, 1.35);
                     rig.dinoHead.rotation.x = isMoving ? 0.12 : 0;
                     rig.dinoTail.position.set(0, 2.25, -1.45);
                     rig.dinoLeftWing.position.set(-1.15, 2.45, 0.15);
                     rig.dinoRightWing.position.set(1.15, 2.45, 0.15);
-                    const flapAngle = Math.sin(now * (isMoving ? 0.015 : 0.008)) * (isMoving ? 0.52 : 0.28);
+                    const flapFreq = isMoving ? 0.015 : 0.008;
+                    const flapAngle = Math.sin(now * flapFreq) * (isMoving ? 0.52 : 0.28);
                     rig.dinoLeftWing.rotation.z = flapAngle;
                     rig.dinoRightWing.rotation.z = -flapAngle;
+                    if (rig.dinoLeftWingTip && rig.dinoRightWingTip) {
+                        const tipLag = Math.sin(now * flapFreq - 0.85) * (isMoving ? 0.58 : 0.30);
+                        rig.dinoLeftWingTip.rotation.z = tipLag;
+                        rig.dinoRightWingTip.rotation.z = -tipLag;
+                    }
                 } else if (rig.botType === 'OPTIMUS') {
                     // Optimus Prime T-Rex: Predatory head, articulated jaw chomp, small arms, and heavy counterbalance tail
                     const chompAngle = smashOffset * 0.52;
@@ -905,6 +1019,14 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                         rig.dinoLeftArm.rotation.z = -0.15;
                         rig.dinoRightArm.rotation.z = 0.15;
                     }
+                    if (rig.dinoLeftForearm && rig.dinoRightForearm) {
+                        rig.dinoLeftForearm.rotation.x = -0.42 - smashOffset * 0.35;
+                        rig.dinoRightForearm.rotation.x = -0.42 - smashOffset * 0.35;
+                    }
+                    if (rig.dinoLeftHand && rig.dinoRightHand) {
+                        rig.dinoLeftHand.rotation.x = 0.28 + Math.sin(now * 0.006) * 0.12 + smashOffset * 0.4;
+                        rig.dinoRightHand.rotation.x = 0.28 - Math.sin(now * 0.006) * 0.12 + smashOffset * 0.4;
+                    }
                     rig.dinoTail.position.set(0, 2.15, -1.65);
                     rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.38 : Math.sin(now * 0.003) * 0.14) + smashOffset * 0.15;
                     rig.dinoTail.rotation.x = -0.12 + Math.sin(now * 0.002) * 0.04;
@@ -915,6 +1037,14 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                     if (rig.dinoLeftArm && rig.dinoRightArm) {
                         rig.dinoLeftArm.rotation.x = isMoving ? -walkSin * 0.35 : 0;
                         rig.dinoRightArm.rotation.x = isMoving ? walkSin * 0.35 : 0;
+                    }
+                    if (rig.dinoLeftForearm && rig.dinoRightForearm) {
+                        rig.dinoLeftForearm.rotation.x = -0.52 - (isMoving ? Math.max(0, -walkSin) * 0.35 : 0);
+                        rig.dinoRightForearm.rotation.x = -0.52 - (isMoving ? Math.max(0, walkSin) * 0.35 : 0);
+                    }
+                    if (rig.dinoLeftHand && rig.dinoRightHand) {
+                        rig.dinoLeftHand.rotation.x = 0.35 + (isMoving ? Math.sin(walkCycle) * 0.18 : 0);
+                        rig.dinoRightHand.rotation.x = 0.35 - (isMoving ? Math.sin(walkCycle) * 0.18 : 0);
                     }
                     rig.dinoTail.position.set(0, 2.15, -1.55);
                     rig.dinoTail.rotation.y = isMoving ? walkSin * 0.42 : Math.sin(now * 0.003) * 0.12;
@@ -939,11 +1069,17 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                             rig.dinoLowerJaw.rotation.x = chompAngle + Math.sin(now * 0.004) * 0.06;
                         }
                         if (rig.dinoLeftWing && rig.dinoRightWing) {
-                            const paddleSweep = Math.sin(now * (isMoving ? 0.007 : 0.003)) * (isMoving ? 0.48 : 0.25);
+                            const paddleFreq = isMoving ? 0.007 : 0.003;
+                            const paddleSweep = Math.sin(now * paddleFreq) * (isMoving ? 0.48 : 0.25);
                             rig.dinoLeftWing.rotation.z = paddleSweep;
                             rig.dinoRightWing.rotation.z = -paddleSweep;
                             rig.dinoLeftWing.rotation.y = -paddleSweep * 0.45;
                             rig.dinoRightWing.rotation.y = paddleSweep * 0.45;
+                            if (rig.dinoLeftWingTip && rig.dinoRightWingTip) {
+                                const tipWave = Math.sin(now * paddleFreq - 0.9) * (isMoving ? 0.48 : 0.24);
+                                rig.dinoLeftWingTip.rotation.z = tipWave;
+                                rig.dinoRightWingTip.rotation.z = -tipWave;
+                            }
                         }
                         rig.dinoTail.position.set(0, 1.85, -1.65);
                         rig.dinoTail.rotation.y = (isMoving ? Math.sin(now * 0.007) * 0.48 : Math.sin(now * 0.0025) * 0.18) + smashOffset * 0.22;
@@ -953,11 +1089,17 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                         rig.dinoHead.rotation.x = Math.sin(now * 0.002) * 0.08 + (isMoving ? 0.12 : 0);
                         rig.dinoHead.rotation.y = Math.sin(now * 0.0015) * 0.14;
                         if (rig.dinoLeftWing && rig.dinoRightWing) {
-                            const paddleAngle = Math.sin(now * (isMoving ? 0.008 : 0.003)) * 0.45;
+                            const paddleFreq = isMoving ? 0.008 : 0.003;
+                            const paddleAngle = Math.sin(now * paddleFreq) * 0.45;
                             rig.dinoLeftWing.rotation.z = paddleAngle;
                             rig.dinoRightWing.rotation.z = -paddleAngle;
                             rig.dinoLeftWing.rotation.y = -paddleAngle * 0.5;
                             rig.dinoRightWing.rotation.y = paddleAngle * 0.5;
+                            if (rig.dinoLeftWingTip && rig.dinoRightWingTip) {
+                                const tipWave = Math.sin(now * paddleFreq - 0.9) * (isMoving ? 0.46 : 0.24);
+                                rig.dinoLeftWingTip.rotation.z = tipWave;
+                                rig.dinoRightWingTip.rotation.z = -tipWave;
+                            }
                         }
                         rig.dinoTail.position.set(0, 2.15, -1.55);
                         rig.dinoTail.rotation.y = isMoving ? Math.sin(now * 0.006) * 0.35 : Math.sin(now * 0.002) * 0.12;
@@ -970,8 +1112,33 @@ export function applyBotRigMorph(rigInput: BotRig, m: number, d: number, walkCyc
                         rig.dinoLeftArm.rotation.x = 0.45 + smashOffset * 0.7;
                         rig.dinoRightArm.rotation.x = 0.45 + smashOffset * 0.7;
                     }
+                    if (rig.dinoLeftForearm && rig.dinoRightForearm) {
+                        rig.dinoLeftForearm.rotation.x = -0.45 - smashOffset * 0.35;
+                        rig.dinoRightForearm.rotation.x = -0.45 - smashOffset * 0.35;
+                    }
+                    if (rig.dinoLeftHand && rig.dinoRightHand) {
+                        rig.dinoLeftHand.rotation.x = 0.32 + smashOffset * 0.42;
+                        rig.dinoRightHand.rotation.x = 0.32 + smashOffset * 0.42;
+                    }
                     rig.dinoTail.position.set(0, 2.15, -1.55);
                     rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.42 : Math.sin(now * 0.003) * 0.14) + smashOffset * 0.6;
+                } else if (rig.botType === 'STARSPEED' || rig.botType === 'TOREINBOTTO') {
+                    // Bipedal Spinosaurus (Starspeed) & Parasaurolophus (Toreinbotto): articulated head bob, tail counterbalance, and 3-joint forearms!
+                    rig.dinoHead.rotation.x = (isMoving ? Math.sin(walkCycle * 2) * 0.09 : Math.sin(now * 0.0028) * 0.04) - smashOffset * 0.25;
+                    rig.dinoTail.rotation.y = (isMoving ? walkSin * 0.40 : Math.sin(now * 0.003) * 0.14) + smashOffset * 0.25;
+                    if (rig.dinoLeftArm && rig.dinoRightArm) {
+                        const armSwing = isMoving ? walkSin * 0.28 : Math.sin(now * 0.004) * 0.08;
+                        rig.dinoLeftArm.rotation.x = 0.22 - armSwing - smashOffset * 0.55;
+                        rig.dinoRightArm.rotation.x = 0.22 + armSwing - smashOffset * 0.55;
+                    }
+                    if (rig.dinoLeftForearm && rig.dinoRightForearm) {
+                        rig.dinoLeftForearm.rotation.x = -0.42 - (isMoving ? Math.max(0, -walkSin) * 0.28 : 0) - smashOffset * 0.32;
+                        rig.dinoRightForearm.rotation.x = -0.42 - (isMoving ? Math.max(0, walkSin) * 0.28 : 0) - smashOffset * 0.32;
+                    }
+                    if (rig.dinoLeftHand && rig.dinoRightHand) {
+                        rig.dinoLeftHand.rotation.x = 0.28 + smashOffset * 0.38;
+                        rig.dinoRightHand.rotation.x = 0.28 + smashOffset * 0.38;
+                    }
                 }
             }
 

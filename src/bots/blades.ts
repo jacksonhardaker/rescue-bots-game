@@ -171,22 +171,36 @@ export function buildBlades(parts: BotRig, _materials: Record<string, unknown> =
                     turbine.position.set(side * 0.48, 0.22, -0.08);
                     armG.add(turbine);
 
-                    // Sculpted White & Orange Side Pontoon / Sponson Fairing on Outer Forearm
+                    // Sculpted White & Orange Side Pontoon / Sponson Fairing on Articulated Forearm & Wrist
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
+                    forearmG.position.set(0, -0.78, 0);
+                    armG.add(forearmG);
+
                     const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.96, 1.44, 1.16), matWhite);
-                    forearm.position.set(0, -1.28, 0.08);
+                    forearm.position.set(0, -0.50, 0.08);
                     forearm.castShadow = true;
-                    armG.add(forearm);
+                    forearmG.add(forearm);
 
                     const pontoonPod = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.68, 0.88), matOrange);
-                    pontoonPod.position.set(side * 0.48, -1.18, 0.12);
+                    pontoonPod.position.set(side * 0.48, -0.40, 0.12);
                     pontoonPod.castShadow = true;
-                    armG.add(pontoonPod);
+                    forearmG.add(pontoonPod);
+
+                    handG.position.set(0, -1.16, 0.08);
+                    forearmG.add(handG);
+
+                    const fist = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.42, 0.72), matTire);
+                    fist.position.set(0, -0.14, 0);
+                    handG.add(fist);
                 });
 
                 // 5. Legs: Split Helicopter Tail Boom, Vertical Fin, Tail Rotor & Sliding Landing Skids!
                 // (In Bot mode: split down the middle as two legs; in Helicopter mode: fold back +90° & zip together into a unified Tail Boom!)
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
+                    const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
                     const skidMount = side === -1 ? parts.leftSkidMount : parts.rightSkidMount;
 
                     // Upper Leg / Forward Tail Boom Half (Offset slightly inward so left & right halves fuse seamlessly in Helicopter mode!)
@@ -195,32 +209,39 @@ export function buildBlades(parts: BotRig, _materials: Record<string, unknown> =
                     thigh.castShadow = true;
                     legG.add(thigh);
 
+                    // Articulated Knee Joint -> Shin -> Ankle
+                    lowerLegG.position.set(0, -1.08, 0);
+                    legG.add(lowerLegG);
+
                     // Lower Leg / Tapered Rear Tail Boom Half
                     const shin = new THREE.Mesh(new THREE.BoxGeometry(0.84, 1.88, 1.02), matOrange);
-                    shin.position.set(-side * 0.22, -1.62, 0.04);
+                    shin.position.set(-side * 0.22, -0.54, 0.04);
                     shin.castShadow = true;
-                    legG.add(shin);
+                    lowerLegG.add(shin);
 
                     const tailStripe = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.42, 1.06), matWhite);
-                    tailStripe.position.set(-side * 0.22, -1.45, 0.04);
-                    legG.add(tailStripe);
+                    tailStripe.position.set(-side * 0.22, -0.37, 0.04);
+                    lowerLegG.add(tailStripe);
 
-                    // Rear Stabilizer Boot & Split Vertical Tail Fin (Stands upright when legs rotate +90° backward!)
+                    // Rear Stabilizer Boot & Split Vertical Tail Fin (Articulated Ankle)
+                    footG.position.set(0, -1.18, 0);
+                    lowerLegG.add(footG);
+
                     const boot = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.62, 1.38), matWhite);
-                    boot.position.set(-side * 0.24, -2.52, -0.18);
+                    boot.position.set(-side * 0.24, -0.26, -0.18);
                     boot.castShadow = true;
-                    legG.add(boot);
+                    footG.add(boot);
 
                     const verticalFinHalf = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.78, 1.46), matOrange);
-                    verticalFinHalf.position.set(-side * 0.42, -2.68, -0.48);
+                    verticalFinHalf.position.set(-side * 0.42, -0.42, -0.48);
                     verticalFinHalf.rotation.x = 0.26;
                     verticalFinHalf.castShadow = true;
-                    legG.add(verticalFinHalf);
+                    footG.add(verticalFinHalf);
 
                     // Horizontal Tail Stabilizer Winglet on each Ankle
                     const horizStabilizer = new THREE.Mesh(new THREE.BoxGeometry(0.88, 0.36, 0.16), matWhite);
-                    horizStabilizer.position.set(side * 0.22, -2.35, -0.12);
-                    legG.add(horizStabilizer);
+                    horizStabilizer.position.set(side * 0.22, -0.09, -0.12);
+                    footG.add(horizStabilizer);
 
                     // Helicopter Landing Skids on Sliding Mount (Shifts forward & downward under the Fuselage in Helicopter mode!)
                     skidMount.position.set(side * 0.56, -1.55, 0.25);
@@ -238,13 +259,13 @@ export function buildBlades(parts: BotRig, _materials: Record<string, unknown> =
                     // Spinning 4-Blade Tail Rotor on the Rear Fin Tip
                     if (side === 1) {
                         const tailRotorGroup = new THREE.Group();
-                        tailRotorGroup.position.set(0.05, -2.75, -0.72);
+                        tailRotorGroup.position.set(0.05, -0.49, -0.72);
                         const trHub = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.24, 8).rotateZ(Math.PI / 2), matChrome);
                         tailRotorGroup.add(trHub);
                         const trBlade1 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.75, 0.24), matTire);
                         const trBlade2 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.24, 1.75), matTire);
                         tailRotorGroup.add(trBlade1, trBlade2);
-                        legG.add(tailRotorGroup);
+                        footG.add(tailRotorGroup);
                         parts.tailRotor = tailRotorGroup;
                     }
                 });
@@ -291,26 +312,40 @@ export function buildBlades(parts: BotRig, _materials: Record<string, unknown> =
                 pteroLowerJaw.position.set(0, -0.22, 2.05);
                 parts.dinoHead.add(pteroLowerJaw);
 
-                // Articulated Left & Right Pterosaur Wings (11-unit total wingspan)
+                // Articulated Left & Right Pterosaur Wings (11-unit total wingspan with mid-wing wrist joint!)
                 [-1, 1].forEach(side => {
                     const wingG = side === -1 ? parts.dinoLeftWing : parts.dinoRightWing;
-                    const spar = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.24, 0.46), matOrange);
-                    spar.position.set(side * 2.6, 0, 0.45);
-                    spar.castShadow = true;
-                    wingG.add(spar);
+                    const wingTipG = side === -1 ? parts.dinoLeftWingTip : parts.dinoRightWingTip;
 
-                    const membrane = new THREE.Mesh(new THREE.BoxGeometry(5.0, 0.12, 2.25), matWhite);
-                    membrane.position.set(side * 2.5, -0.04, -0.55);
-                    membrane.castShadow = true;
-                    wingG.add(membrane);
+                    const innerSpar = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.24, 0.46), matOrange);
+                    innerSpar.position.set(side * 1.3, 0, 0.45);
+                    innerSpar.castShadow = true;
+                    wingG.add(innerSpar);
 
-                    const wingTip = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.16, 2.3), matOrange);
-                    wingTip.position.set(side * 4.45, 0, -0.55);
-                    wingG.add(wingTip);
+                    const innerMembrane = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.12, 2.25), matWhite);
+                    innerMembrane.position.set(side * 1.3, -0.04, -0.55);
+                    innerMembrane.castShadow = true;
+                    wingG.add(innerMembrane);
 
                     const wingClaw = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.65, 6).rotateX(Math.PI / 2), matChrome);
                     wingClaw.position.set(side * 2.6, 0.1, 0.85);
                     wingG.add(wingClaw);
+
+                    wingTipG.position.set(side * 2.6, 0, 0);
+
+                    const outerSpar = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.22, 0.42), matOrange);
+                    outerSpar.position.set(side * 1.3, 0, 0.45);
+                    outerSpar.castShadow = true;
+                    wingTipG.add(outerSpar);
+
+                    const outerMembrane = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 2.25), matWhite);
+                    outerMembrane.position.set(side * 1.2, -0.04, -0.55);
+                    outerMembrane.castShadow = true;
+                    wingTipG.add(outerMembrane);
+
+                    const wingTip = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.16, 2.3), matOrange);
+                    wingTip.position.set(side * 1.85, 0, -0.55);
+                    wingTipG.add(wingTip);
                 });
 
                 // Pterosaur Rudder Tail Vane

@@ -187,17 +187,24 @@ export function buildQuickshadow(parts: BotRig, _materials: Record<string, unkno
                     const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.20, 0.78), matQuickCyan);
                     cuff.position.set(0, -0.16, 0.04);
 
-                    // Slender Charcoal Hand with Delicate Fingers
-                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.42, 0.36), matQuickDark);
-                    hand.position.set(0, -1.02, 0.04);
+                    forearmG.add(gauntlet, cuff);
 
-                    forearmG.add(gauntlet, cuff, hand);
+                    // Articulated Slender Charcoal Hand with Delicate Fingers
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
+                    handG.position.set(0, -0.84, 0.04);
+                    forearmG.add(handG);
+
+                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.42, 0.36), matQuickDark);
+                    hand.position.set(0, -0.18, 0);
+                    handG.add(hand);
                 });
 
-                // 5. Legs: Slender Silver Thighs, Prominent Circular Knee Discs, Dramatically Flared White Shins,
-                // Signature Sky-Blue Turbine Pods & Sleek Wedge Racing Boots
+                // 5. Legs: Slender Silver Thighs, Articulated Circular Knee Discs, Dramatically Flared White Shins,
+                // Signature Sky-Blue Turbine Pods & Articulated Sleek Wedge Racing Boots
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
+                    const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
 
                     // Slender, Elongated Silver Thigh
                     const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.24, 1.45, 12), matQuickSilver);
@@ -218,22 +225,25 @@ export function buildQuickshadow(parts: BotRig, _materials: Record<string, unkno
                     kneeJewel.position.set(side * 0.26, -1.22, 0.08);
                     legG.add(kneeDisc, kneeJewel);
 
+                    lowerLegG.position.set(0, -1.22, 0);
+                    legG.add(lowerLegG);
+
                     // Beautifully Flared White Bell-Bottom Shin
                     const shin = new THREE.Mesh(new THREE.BoxGeometry(1.05, 2.35, 1.35), matQuickWhite);
-                    shin.position.set(-side * 0.08, -1.82, 0.05);
+                    shin.position.set(-side * 0.08, -0.60, 0.05);
                     shin.castShadow = true;
 
                     // Flared Lower Ankle Flare Over Boots
                     const ankleCuff = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.48, 1.45), matQuickWhite);
-                    ankleCuff.position.set(-side * 0.08, -2.62, 0.08);
-                    legG.add(shin, ankleCuff);
+                    ankleCuff.position.set(-side * 0.08, -1.40, 0.08);
+                    lowerLegG.add(shin, ankleCuff);
 
                     // Signature Large Sky-Blue Turbine / Air Intake Pod on Outer Calf
                     const intakePod = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 0.18, 18).rotateZ(Math.PI / 2), matQuickCyan);
-                    intakePod.position.set(side * 0.58, -1.65, 0.05);
+                    intakePod.position.set(side * 0.58, -0.43, 0.05);
                     const intakeVents = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.20, 12).rotateZ(Math.PI / 2), matQuickDark);
-                    intakeVents.position.set(side * 0.58, -1.65, 0.05);
-                    legG.add(intakePod, intakeVents);
+                    intakeVents.position.set(side * 0.58, -0.43, 0.05);
+                    lowerLegG.add(intakePod, intakeVents);
 
                     // Rear Sports Wheel Mount (Outer lower shin)
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
@@ -245,19 +255,22 @@ export function buildQuickshadow(parts: BotRig, _materials: Record<string, unkno
                     wheelMount.add(rw);
                     parts.wheels.push(rw);
 
-                    // Sleek Feminine Racing Boot: Charcoal Wedge Heel + Sloped Sky-Blue Toe Guard
+                    // Articulated Ankle -> Sleek Feminine Racing Boot: Charcoal Wedge Heel + Sloped Sky-Blue Toe Guard
+                    footG.position.set(0, -1.48, 0);
+                    lowerLegG.add(footG);
+
                     const boot = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.38, 1.45), matQuickDark);
-                    boot.position.set(-side * 0.08, -2.88, 0.12);
+                    boot.position.set(-side * 0.08, -0.18, 0.12);
                     boot.castShadow = true;
 
                     // Wedge Heel Riser
                     const heelWedge = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.25, 0.55), matQuickDark);
-                    heelWedge.position.set(-side * 0.08, -2.82, -0.32);
+                    heelWedge.position.set(-side * 0.08, -0.12, -0.32);
 
                     const toeAccent = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.20, 0.52), matQuickCyan);
-                    toeAccent.position.set(-side * 0.08, -2.84, 0.58);
+                    toeAccent.position.set(-side * 0.08, -0.14, 0.58);
 
-                    legG.add(boot, heelWedge, toeAccent);
+                    footG.add(boot, heelWedge, toeAccent);
                 });
 
                 // 6. Dilophosaurus Dinobot Mode (Twin Aerodynamic Crests, Predatory Head, Raptor Arms & Whip Tail)
@@ -290,14 +303,23 @@ export function buildQuickshadow(parts: BotRig, _materials: Record<string, unkno
 
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.dinoLeftArm : parts.dinoRightArm;
+                    const dForearm = side === -1 ? parts.dinoLeftForearm : parts.dinoRightForearm;
+                    const dHand = side === -1 ? parts.dinoLeftHand : parts.dinoRightHand;
                     armG.position.set(side * 0.72, 2.05, 0.65);
 
-                    const armUpper = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.68, 0.24).rotateX(0.42), matQuickWhite);
-                    armUpper.position.set(0, -0.28, 0);
+                    const armUpper = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.48, 0.24).rotateX(0.38), matQuickWhite);
+                    armUpper.position.set(0, -0.22, 0);
+                    armG.add(armUpper);
 
+                    dForearm.position.set(0, -0.40, 0.10);
+                    const armLower = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.36, 0.20), matQuickCyan);
+                    armLower.position.set(0, -0.14, 0.06);
+                    dForearm.add(armLower);
+
+                    dHand.position.set(0, -0.28, 0.12);
                     const claw = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.45, 4).rotateX(Math.PI / 2), matQuickSilver);
-                    claw.position.set(0, -0.58, 0.18);
-                    armG.add(armUpper, claw);
+                    claw.position.set(0, -0.02, 0.12);
+                    dHand.add(claw);
                 });
 
                 let prevDiloTail = parts.dinoTail;

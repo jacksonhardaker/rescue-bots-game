@@ -140,9 +140,14 @@ export function buildRatchet(parts: BotRig) {
         gauntlet.castShadow = true;
         const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.28, 1.00), matWhite);
         cuff.position.y = 0.36;
+        forearmG.add(gauntlet, cuff);
+
+        const handG = side === -1 ? parts.leftHand : parts.rightHand;
+        handG.position.set(0, -0.58, 0.02);
+        forearmG.add(handG);
         const fist = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.56, 0.76), matDarkSteel);
-        fist.position.set(0, -0.78, 0.02);
-        forearmG.add(gauntlet, cuff, fist);
+        fist.position.set(0, -0.20, 0);
+        handG.add(fist);
 
         // Right Wrist Glowing Cyan Med-Scanner Projector
         if (side === 1) {
@@ -156,31 +161,36 @@ export function buildRatchet(parts: BotRig) {
     });
 
     // =========================================================================
-    // 4. STURDY MEDIC LEGS (White Greaves, Red Knee Guards, Chrome Trims)
+    // 4. STURDY MEDIC LEGS (White Greaves, Articulated Knees & Ankles, Chrome Trims)
     // =========================================================================
     [-1, 1].forEach(side => {
         const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+        const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
         const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
 
         const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.96, 1.38, 1.12), matDarkSteel);
         thigh.position.y = -0.52;
+        legG.add(thigh);
+
+        lowerLegG.position.set(0, -0.96, 0);
+        legG.add(lowerLegG);
+
         const shin = new THREE.Mesh(new THREE.BoxGeometry(1.16, 1.56, 1.32), matWhite);
-        shin.position.set(0, -1.52, 0.06);
+        shin.position.set(0, -0.56, 0.06);
         shin.castShadow = true;
         const kneeGuard = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.54, 0.42), matRed);
-        kneeGuard.position.set(0, -0.92, 0.62);
+        kneeGuard.position.set(0, 0.04, 0.62);
         const shinStripe = new THREE.Mesh(new THREE.BoxGeometry(1.20, 0.30, 1.36), matRed);
-        shinStripe.position.set(0, -1.78, 0.06);
+        shinStripe.position.set(0, -0.82, 0.06);
+        lowerLegG.add(shin, kneeGuard, shinStripe);
 
-        legG.add(thigh, shin, kneeGuard, shinStripe);
-
-        footG.position.set(0, -2.42, 0.24);
+        footG.position.set(0, -1.46, 0.24);
         const boot = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.56, 1.82), matCrimson);
         boot.castShadow = true;
         const toeCap = new THREE.Mesh(new THREE.BoxGeometry(1.14, 0.36, 0.42), matChrome);
         toeCap.position.set(0, -0.06, 0.84);
         footG.add(boot, toeCap);
-        legG.add(footG);
+        lowerLegG.add(footG);
     });
 
     // =========================================================================

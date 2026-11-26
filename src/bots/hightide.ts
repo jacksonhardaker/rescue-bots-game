@@ -183,16 +183,23 @@ export function buildHighTide(parts: BotRig, _materials: Record<string, unknown>
                     const cuff = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.35, 1.15), matHighTideGold);
                     cuff.position.set(0, -0.88, 0.04);
 
-                    // Dark Charcoal Hand
-                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.52, 0.58), matHighTideDark);
-                    hand.position.set(0, -1.22, 0.04);
+                    forearmG.add(gauntlet, armFin, cuff);
 
-                    forearmG.add(gauntlet, armFin, cuff, hand);
+                    // Articulated Dark Charcoal Hand / Wrist
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
+                    handG.position.set(0, -1.00, 0.04);
+                    forearmG.add(handG);
+
+                    const hand = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.52, 0.58), matHighTideDark);
+                    hand.position.set(0, -0.22, 0);
+                    handG.add(hand);
                 });
 
-                // 5. Legs: Charcoal Thighs, White Knees & Upper Shins, Flared Blue Calves with Hydro Ports, & Massive Flipper Feet!
+                // 5. Legs: Charcoal Thighs, Articulated Knees, White Upper Shins, Flared Blue Calves, & Articulated Flipper Feet!
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
+                    const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
 
                     // Charcoal Upper Thigh Cylinder
                     const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.15, 12), matHighTideDark);
@@ -200,35 +207,41 @@ export function buildHighTide(parts: BotRig, _materials: Record<string, unknown>
                     thigh.castShadow = true;
                     legG.add(thigh);
 
+                    lowerLegG.position.set(0, -1.02, 0);
+                    legG.add(lowerLegG);
+
                     // White Knee Armor Cap & Upper Shin
                     const knee = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.95, 1.25), matHighTideWhite);
-                    knee.position.set(-side * 0.06, -1.02, 0.06);
+                    knee.position.set(-side * 0.06, 0, 0.06);
                     knee.castShadow = true;
-                    legG.add(knee);
+                    lowerLegG.add(knee);
 
                     // Flared Royal Blue Lower Shin / Calf Armor
                     const shin = new THREE.Mesh(new THREE.BoxGeometry(1.38, 1.85, 1.55), matHighTideBlue);
-                    shin.position.set(-side * 0.08, -1.82, 0.05);
+                    shin.position.set(-side * 0.08, -0.80, 0.05);
                     shin.castShadow = true;
-                    legG.add(shin);
+                    lowerLegG.add(shin);
 
                     // Outer Cylindrical Hydro-Thruster Port / Intake Nacelle
                     const portRing = new THREE.Mesh(
                         new THREE.CylinderGeometry(0.38, 0.38, 0.18, 16).rotateZ(Math.PI / 2),
                         matHighTideGold
                     );
-                    portRing.position.set(side * 0.68, -1.82, 0.05);
+                    portRing.position.set(side * 0.68, -0.80, 0.05);
                     const portCore = new THREE.Mesh(
                         new THREE.CylinderGeometry(0.28, 0.28, 0.22, 16).rotateZ(Math.PI / 2),
                         matHighTideDark
                     );
-                    portCore.position.set(side * 0.68, -1.82, 0.05);
+                    portCore.position.set(side * 0.68, -0.80, 0.05);
                     portCore.userData.noOutline = true;
-                    legG.add(portRing, portCore);
+                    lowerLegG.add(portRing, portCore);
 
-                    // Iconic Massive White Nautical Flipper / Webbed Diving Foot with 3 Toe Claws
+                    // Articulated Ankle -> Iconic Massive White Nautical Flipper / Webbed Diving Foot with 3 Toe Claws
+                    footG.position.set(0, -1.56, 0);
+                    lowerLegG.add(footG);
+
                     const flipperBoot = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.45, 2.15), matHighTideWhite);
-                    flipperBoot.position.set(-side * 0.08, -2.82, 0.28);
+                    flipperBoot.position.set(-side * 0.08, -0.24, 0.28);
                     flipperBoot.castShadow = true;
 
                     // 3 Clawed Toe Prongs / Diving Flukes on front of flipper
@@ -240,9 +253,9 @@ export function buildHighTide(parts: BotRig, _materials: Record<string, unknown>
 
                     // Side Hydrofoil Stabilizer Fin on outer heel
                     const heelFin = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.55, 0.85), matHighTideGold);
-                    heelFin.position.set(side * 0.75, -2.75, -0.35);
+                    heelFin.position.set(side * 0.75, -0.17, -0.35);
 
-                    legG.add(flipperBoot, heelFin);
+                    footG.add(flipperBoot, heelFin);
                 });
 
                 // 5. Plesiosaur Dinobot Mode (Graceful Marine Neck, Hydrofoil Flippers & Rudder Tail)
@@ -281,17 +294,30 @@ export function buildHighTide(parts: BotRig, _materials: Record<string, unknown>
 
                 [-1, 1].forEach(side => {
                     const wingG = side === -1 ? parts.dinoLeftWing : parts.dinoRightWing;
+                    const wingTipG = side === -1 ? parts.dinoLeftWingTip : parts.dinoRightWingTip;
                     wingG.position.set(side * 1.65, 2.0, 0.25);
 
-                    const flipper = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.16, 0.88), matHighTideBlue);
-                    flipper.position.set(side * 0.95, 0, 0);
-                    flipper.rotation.y = side * 0.22;
+                    const innerFlipper = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.16, 0.88), matHighTideBlue);
+                    innerFlipper.position.set(side * 0.52, 0, 0);
+                    innerFlipper.rotation.y = side * 0.18;
 
-                    const flipperTrim = new THREE.Mesh(new THREE.BoxGeometry(2.18, 0.18, 0.22), matHighTideWhite);
-                    flipperTrim.position.set(side * 0.95, 0, 0.35);
-                    flipperTrim.rotation.y = side * 0.22;
+                    const innerTrim = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.18, 0.22), matHighTideWhite);
+                    innerTrim.position.set(side * 0.52, 0, 0.35);
+                    innerTrim.rotation.y = side * 0.18;
 
-                    wingG.add(flipper, flipperTrim);
+                    wingG.add(innerFlipper, innerTrim);
+
+                    wingTipG.position.set(side * 1.08, 0, -0.10);
+
+                    const outerFlipper = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.14, 0.76), matHighTideBlue);
+                    outerFlipper.position.set(side * 0.48, 0, -0.04);
+                    outerFlipper.rotation.y = side * 0.26;
+
+                    const outerTrim = new THREE.Mesh(new THREE.BoxGeometry(1.10, 0.16, 0.18), matHighTideWhite);
+                    outerTrim.position.set(side * 0.48, 0, 0.26);
+                    outerTrim.rotation.y = side * 0.26;
+
+                    wingTipG.add(outerFlipper, outerTrim);
                 });
 
                 [-1, 1].forEach(side => {
@@ -324,7 +350,7 @@ export function buildHighTide(parts: BotRig, _materials: Record<string, unknown>
                 const rigJointSet = new Set<THREE.Object3D>(
                     Object.values(parts).filter((v): v is THREE.Object3D => v instanceof THREE.Object3D)
                 );
-                [parts.torso, parts.head, parts.frontAttachment, parts.backAttachment, parts.leftArm, parts.rightArm, parts.leftForearm, parts.rightForearm, parts.leftLeg, parts.rightLeg, parts.dinoHead, parts.dinoLeftWing, parts.dinoRightWing, parts.dinoGroup, parts.dinoTail].forEach(grp => {
+                [parts.torso, parts.head, parts.frontAttachment, parts.backAttachment, parts.leftArm, parts.rightArm, parts.leftForearm, parts.rightForearm, parts.leftHand, parts.rightHand, parts.leftLeg, parts.rightLeg, parts.leftLowerLeg, parts.rightLowerLeg, parts.leftFoot, parts.rightFoot, parts.dinoHead, parts.dinoLeftWing, parts.dinoRightWing, parts.dinoLeftWingTip, parts.dinoRightWingTip, parts.dinoGroup, parts.dinoTail].forEach(grp => {
                     grp.children.forEach((child: THREE.Object3D) => {
                         if (rigJointSet.has(child)) return;
                         child.userData.isStandardPart = true;
@@ -640,17 +666,24 @@ export function buildHighTide(parts: BotRig, _materials: Record<string, unknown>
                     const cuff = new THREE.Mesh(new THREE.BoxGeometry(1.54, 0.32, 1.54), matHighTideGold);
                     cuff.position.set(0, -1.08, 0.04);
 
-                    // Massive Royal Blue Hydraulic Claw Hand (Images 2, 3, 4)
+                    megaForearm.add(redGauntlet, whiteGauntlet, heatSink, cuff);
+
+                    // Massive Royal Blue Hydraulic Claw Hand on Articulated Wrist (Images 2, 3, 4)
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
+                    const megaHand = new THREE.Group();
+                    megaHand.userData.isMegaPart = true;
+                    handG.add(megaHand);
+
                     const handBlock = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.48, 0.85), matHighTideBlue);
-                    handBlock.position.set(0, -1.38, 0.04);
+                    handBlock.position.set(0, -0.38, 0);
 
                     const palmLens = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.1, 16), matHighTideCyanGlow);
-                    palmLens.position.set(0, -1.62, 0.04);
+                    palmLens.position.set(0, -0.62, 0);
                     palmLens.userData.noOutline = true;
 
                     // 3 Hydraulic Claws
                     const claws = new THREE.Group();
-                    claws.position.set(0, -1.45, 0.04);
+                    claws.position.set(0, -0.45, 0);
                     [-0.32, 0, 0.32].forEach((cx, cIdx) => {
                         const clawF = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.85, 0.35), matHighTideBlue);
                         clawF.position.set(cx, -0.45, cIdx === 1 ? -0.28 : 0.28);
@@ -658,12 +691,14 @@ export function buildHighTide(parts: BotRig, _materials: Record<string, unknown>
                         claws.add(clawF);
                     });
 
-                    megaForearm.add(redGauntlet, whiteGauntlet, heatSink, cuff, handBlock, palmLens, claws);
+                    megaHand.add(handBlock, palmLens, claws);
                 });
 
-                // 5. Megabot Legs: Charcoal Thighs, Yellow Knee Discs with Cyan Lenses, Flared White Shins & Blue Boots (Images 2, 3, 4)
+                // 5. Megabot Legs: Charcoal Thighs, Articulated Yellow Knee Discs with Cyan Lenses, Flared White Shins & Articulated Blue Boots (Images 2, 3, 4)
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
+                    const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
 
                     const megaLeg = new THREE.Group();
                     megaLeg.userData.isMegaPart = true;
@@ -675,30 +710,43 @@ export function buildHighTide(parts: BotRig, _materials: Record<string, unknown>
                     const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 1.35, 12), matHighTideDark);
                     thigh.position.set(-side * 0.05, -0.5, 0);
                     thigh.castShadow = true;
+                    megaLeg.add(thigh);
+
+                    // Articulated Mega Lower Leg
+                    const megaLowerLeg = new THREE.Group();
+                    megaLowerLeg.userData.isMegaPart = true;
+                    megaLowerLeg.position.y = 0.88;
+                    lowerLegG.add(megaLowerLeg);
 
                     // Iconic Round Yellow Knee Disc with Cyan Glass Dome Lens (Images 2, 3, 4)
                     const kneeDisc = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.28, 20).rotateX(Math.PI / 2), matMegaKneeGold);
-                    kneeDisc.position.set(-side * 0.06, -1.15, 0.72);
+                    kneeDisc.position.set(-side * 0.06, -0.13, 0.72);
 
                     const kneeLens = new THREE.Mesh(
                         new THREE.SphereGeometry(0.44, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.5).rotateX(Math.PI / 2),
                         matMegaKneeLens
                     );
-                    kneeLens.position.set(-side * 0.06, -1.15, 0.86);
+                    kneeLens.position.set(-side * 0.06, -0.13, 0.86);
                     kneeLens.userData.noOutline = true;
 
                     // Flared White Heavy Shin Armor
                     const shin = new THREE.Mesh(new THREE.BoxGeometry(1.68, 2.15, 1.85), matMegaHullWhite);
-                    shin.position.set(-side * 0.08, -1.95, 0.05);
+                    shin.position.set(-side * 0.08, -0.93, 0.05);
                     shin.castShadow = true;
 
                     // Red Inner Calf Scoop Channel
                     const calfScoop = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1.75, 0.95), matMegaDeckRed);
-                    calfScoop.position.set(side * 0.72, -1.95, 0.08);
+                    calfScoop.position.set(side * 0.72, -0.93, 0.08);
+                    megaLowerLeg.add(kneeDisc, kneeLens, shin, calfScoop);
 
-                    // Massive Royal Blue Naval Boots
+                    // Articulated Mega Ankle -> Massive Royal Blue Naval Boots
+                    const megaFoot = new THREE.Group();
+                    megaFoot.userData.isMegaPart = true;
+                    megaFoot.position.y = 0.88;
+                    footG.add(megaFoot);
+
                     const boot = new THREE.Mesh(new THREE.BoxGeometry(1.78, 0.55, 2.65), matHighTideBlue);
-                    boot.position.set(-side * 0.08, -2.95, 0.35);
+                    boot.position.set(-side * 0.08, -0.37, 0.35);
                     boot.castShadow = true;
 
                     // Diving Fluke Claws on boot front
@@ -708,7 +756,7 @@ export function buildHighTide(parts: BotRig, _materials: Record<string, unknown>
                         boot.add(claw);
                     });
 
-                    megaLeg.add(thigh, kneeDisc, kneeLens, shin, calfScoop, boot);
+                    megaFoot.add(boot);
                 });
 
                 // 6. Megabot Dino Mode: True Prehistoric Mosasaur Apex Predator

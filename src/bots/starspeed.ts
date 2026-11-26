@@ -120,26 +120,44 @@ export function buildStarspeed(parts: BotRig) {
         gauntlet.position.set(0, -0.45, 0.04);
         const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.24, 0.9), matGold);
         cuff.position.set(0, -0.22, 0.04);
+        forearmG.add(gauntlet, cuff);
+
+        const handG = side === -1 ? parts.leftHand : parts.rightHand;
+        handG.position.set(0, -0.94, 0.04);
+        forearmG.add(handG);
         const hand = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.48, 0.48), matDarkSteel);
-        hand.position.set(0, -1.14, 0.04);
-        forearmG.add(gauntlet, cuff, hand);
+        hand.position.set(0, -0.20, 0);
+        handG.add(hand);
     });
 
-    // 4. Legs: Tall Agile Shins & Motocross Boots
+    // 4. Legs: Tall Agile Shins, Articulated Knees & Ankles, & Motocross Boots
     [-1, 1].forEach(side => {
         const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+        const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
+        const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
+
         const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 1.1, 10), matDarkSteel);
         thigh.position.set(-side * 0.04, -0.48, 0);
+        legG.add(thigh);
+
+        lowerLegG.position.set(0, -0.95, 0);
+        legG.add(lowerLegG);
+
         const shin = new THREE.Mesh(new THREE.BoxGeometry(1.12, 2.25, 1.38), matTeal);
-        shin.position.set(-side * 0.06, -1.72, 0.04);
+        shin.position.set(-side * 0.06, -0.77, 0.04);
         shin.castShadow = true;
         const kneeGuard = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.62, 0.34), matGold);
-        kneeGuard.position.set(-side * 0.06, -0.95, 0.72);
-        const boot = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.48, 1.75), matWhite);
-        boot.position.set(-side * 0.06, -2.85, 0.28);
+        kneeGuard.position.set(-side * 0.06, 0, 0.72);
         const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.16, 1.45), matCoral);
-        stripe.position.set(-side * 0.06, -2.25, 0.04);
-        legG.add(thigh, shin, kneeGuard, boot, stripe);
+        stripe.position.set(-side * 0.06, -1.30, 0.04);
+        lowerLegG.add(shin, kneeGuard, stripe);
+
+        footG.position.set(0, -1.66, 0);
+        lowerLegG.add(footG);
+
+        const boot = new THREE.Mesh(new THREE.BoxGeometry(1.18, 0.48, 1.75), matWhite);
+        boot.position.set(-side * 0.06, -0.24, 0.28);
+        footG.add(boot);
     });
 
     // 5. VEHICLE MODE: SLEEK OFF-ROAD DIRT BIKE SHELL (Morphs smoothly when morph > 0!)
@@ -441,15 +459,25 @@ export function buildStarspeed(parts: BotRig) {
     }
     parts.dinoGroup.add(sailGroup);
 
-    // Clawed Spinosaurus Forelimbs
+    // Articulated Clawed Spinosaurus Forelimbs (Shoulder -> Elbow -> Wrist)
     [-1, 1].forEach(side => {
         const armG = side === -1 ? parts.dinoLeftArm : parts.dinoRightArm;
+        const dForearm = side === -1 ? parts.dinoLeftForearm : parts.dinoRightForearm;
+        const dHand = side === -1 ? parts.dinoLeftHand : parts.dinoRightHand;
         armG.position.set(side * 0.82, 1.85, 0.75);
-        const upper = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.82, 0.28).rotateX(0.45), matTeal);
-        upper.position.set(0, -0.35, 0);
+        const upper = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.56, 0.28).rotateX(0.38), matTeal);
+        upper.position.set(0, -0.26, 0);
+        armG.add(upper);
+
+        dForearm.position.set(0, -0.48, 0.12);
+        const lower = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.44, 0.24), matWhite);
+        lower.position.set(0, -0.18, 0.08);
+        dForearm.add(lower);
+
+        dHand.position.set(0, -0.34, 0.14);
         const claw = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.48, 4).rotateX(Math.PI / 2), matGold);
-        claw.position.set(0, -0.72, 0.24);
-        armG.add(upper, claw);
+        claw.position.set(0, -0.02, 0.12);
+        dHand.add(claw);
     });
 
     // Long Articulated Spinosaurus Paddle Tail

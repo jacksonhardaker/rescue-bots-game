@@ -173,6 +173,7 @@ export function buildBoulder(parts: BotRig, _materials: Record<string, unknown> 
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.leftArm : parts.rightArm;
                     const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
                     const treadMount = side === -1 ? parts.leftArmWheelMount : parts.rightArmWheelMount;
 
                     const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.18, 1.18, 1.24), matGreen);
@@ -225,15 +226,19 @@ export function buildBoulder(parts: BotRig, _materials: Record<string, unknown> 
                     forearm.castShadow = true;
                     forearmG.add(forearm);
 
+                    handG.position.set(0, -0.56, 0.04);
+                    forearmG.add(handG);
+
                     const fist = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.65, 0.84), matDarkSteel);
-                    fist.position.set(0, -0.78, 0.04);
-                    forearmG.add(fist);
+                    fist.position.set(0, -0.22, 0);
+                    handG.add(fist);
                 });
 
                 // 7. Heavy Legs with Articulated Bulldozer Blade Linkage (`leftLegWheelMount` / `rightLegWheelMount`)
                 //    & Interlocking Split Front Bulldozer Blade (`leftFoot` / `rightFoot`)!
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
                     const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
                     const bladeLinkage = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
 
@@ -241,10 +246,14 @@ export function buildBoulder(parts: BotRig, _materials: Record<string, unknown> 
                     thigh.position.y = -0.55;
                     legG.add(thigh);
 
+                    // Articulated Knee Joint -> Shin -> Ankle
+                    lowerLegG.position.set(0, -1.08, 0);
+                    legG.add(lowerLegG);
+
                     const shin = new THREE.Mesh(new THREE.BoxGeometry(1.24, 1.48, 1.48), matGreen);
-                    shin.position.set(0, -1.45, 0.08);
+                    shin.position.set(0, -0.37, 0.08);
                     shin.castShadow = true;
-                    legG.add(shin);
+                    lowerLegG.add(shin);
 
                     // Articulated Hydraulic Lift Cylinder & Yellow C-Frame Push-Arm Linkage
                     legG.add(bladeLinkage);
@@ -263,8 +272,8 @@ export function buildBoulder(parts: BotRig, _materials: Record<string, unknown> 
 
                     // Articulated Foot / Half-Bulldozer Curved Moldboard Blade Assembly
                     // (When legs slide together to X = ±0.88 in Bulldozer mode, the two 1.82m halves lock flush at X = 0!)
-                    footG.position.set(0, -2.12, 0.24);
-                    legG.add(footG);
+                    footG.position.set(0, -1.04, 0.24);
+                    lowerLegG.add(footG);
 
                     const inwardOffset = -side * 0.03;
                     const bucketFootBase = new THREE.Mesh(new THREE.BoxGeometry(1.82, 0.74, 1.84), matYellow);

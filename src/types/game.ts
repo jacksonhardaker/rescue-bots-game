@@ -98,8 +98,12 @@ export interface BotRig {
     rightArm: THREE.Group;
     leftForearm: THREE.Group;
     rightForearm: THREE.Group;
+    leftHand: THREE.Group;
+    rightHand: THREE.Group;
     leftLeg: THREE.Group;
     rightLeg: THREE.Group;
+    leftLowerLeg: THREE.Group;
+    rightLowerLeg: THREE.Group;
     leftFoot: THREE.Group;
     rightFoot: THREE.Group;
     leftLegWheelMount: THREE.Group;
@@ -119,8 +123,14 @@ export interface BotRig {
     dinoTail: THREE.Group;
     dinoLeftWing: THREE.Group;
     dinoRightWing: THREE.Group;
+    dinoLeftWingTip: THREE.Group;
+    dinoRightWingTip: THREE.Group;
     dinoLeftArm: THREE.Group;
     dinoRightArm: THREE.Group;
+    dinoLeftForearm: THREE.Group;
+    dinoRightForearm: THREE.Group;
+    dinoLeftHand: THREE.Group;
+    dinoRightHand: THREE.Group;
     toreinbottoTrainCars?: Array<{ group: THREE.Group; offset: number }>;
     dinoLowerJaw: THREE.Object3D | null;
     wheels: THREE.Object3D[];

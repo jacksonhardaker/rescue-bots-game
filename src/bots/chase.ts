@@ -153,20 +153,29 @@ export function buildChase(parts: BotRig, _materials: Record<string, unknown> = 
                     armWheelMount.add(rearWheel);
                     parts.wheels.push(rearWheel);
 
-                    // White Forearm & Police Gauntlet
+                    // White Forearm & Articulated Police Gauntlet / Wrist
+                    const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
+                    forearmG.position.set(0, -0.82, 0);
+                    armG.add(forearmG);
+
                     const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.92, 1.32, 1.12), matWhite);
-                    forearm.position.set(0, -1.32, 0.06);
+                    forearm.position.set(0, -0.50, 0.06);
                     forearm.castShadow = true;
-                    armG.add(forearm);
+                    forearmG.add(forearm);
+
+                    handG.position.set(0, -0.88, 0);
+                    forearmG.add(handG);
 
                     const cuff = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.42, 1.16), matBlack);
-                    cuff.position.set(0, -1.85, 0.06);
-                    armG.add(cuff);
+                    cuff.position.set(0, -0.15, 0.06);
+                    handG.add(cuff);
                 });
 
                 // 4. Legs & Headlight Feet (Extend & Press Together in Front to Form the Front Hood, Fenders, Front Wheels & Bullbar Bumper!)
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
                     const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
                     const legWheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
 
@@ -175,20 +184,24 @@ export function buildChase(parts: BotRig, _materials: Record<string, unknown> = 
                     thigh.position.set(-side * 0.06, -0.52, 0);
                     legG.add(thigh);
 
+                    // Articulated Knee Joint -> Shin -> Ankle
+                    lowerLegG.position.set(0, -1.05, 0);
+                    legG.add(lowerLegG);
+
                     // Cobalt Blue Lower Leg / Split Front Cruiser Hood & Front Fender Half
                     const shin = new THREE.Mesh(new THREE.BoxGeometry(1.32, 1.62, 1.56), matBlue);
-                    shin.position.set(-side * 0.08, -1.42, 0.12);
+                    shin.position.set(-side * 0.08, -0.37, 0.12);
                     shin.castShadow = true;
-                    legG.add(shin);
+                    lowerLegG.add(shin);
 
                     // White Hood Stripe & Center Intake Scoop on Front of Shins (Forms the Police Hood when legs swing forward!)
                     const hoodStripe = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.48, 0.34), matWhite);
-                    hoodStripe.position.set(-side * 0.08, -1.42, 0.76);
-                    legG.add(hoodStripe);
+                    hoodStripe.position.set(-side * 0.08, -0.37, 0.76);
+                    lowerLegG.add(hoodStripe);
 
                     const hoodGoldTrim = new THREE.Mesh(new THREE.BoxGeometry(0.42, 1.42, 0.38), matGold);
-                    hoodGoldTrim.position.set(-side * 0.48, -1.42, 0.78);
-                    legG.add(hoodGoldTrim);
+                    hoodGoldTrim.position.set(-side * 0.48, -0.37, 0.78);
+                    lowerLegG.add(hoodGoldTrim);
 
                     // Front Cruiser Wheel on Sliding Shin Mount (Shifts downward in Vehicle mode so Front Tires touch the ground!)
                     legWheelMount.position.set(side * 0.56, -1.48, 0.05);
@@ -199,8 +212,8 @@ export function buildChase(parts: BotRig, _materials: Record<string, unknown> = 
                     parts.wheels.push(frontWheel);
 
                     // Articulated Police Foot with Headlights & Push-Bar Bullbar Bumper right on his Feet!
-                    footG.position.set(-side * 0.08, -2.18, 0.22);
-                    legG.add(footG);
+                    footG.position.set(-side * 0.08, -1.13, 0.22);
+                    lowerLegG.add(footG);
 
                     const boot = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.62, 1.82), matBlack);
                     boot.castShadow = true;

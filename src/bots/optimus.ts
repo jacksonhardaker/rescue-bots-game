@@ -80,10 +80,11 @@ export function buildOptimus(parts: BotRig, _materials: Record<string, unknown> 
                     parts.backAttachment.add(stack);
                 });
 
-                // Arms: Red Shoulders, Blue Forearms + Front Wheels
+                // Arms: Red Shoulders, Blue Forearms + Front Wheels + Articulated Wrists
                 [-1, 1].forEach(side => {
                     const armG = side === -1 ? parts.leftArm : parts.rightArm;
                     const forearmG = side === -1 ? parts.leftForearm : parts.rightForearm;
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
 
                     const shoulder = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.25, 1.25), matOptimusRed);
                     shoulder.castShadow = true;
@@ -94,39 +95,56 @@ export function buildOptimus(parts: BotRig, _materials: Record<string, unknown> 
                     armG.add(wheel);
                     parts.wheels.push(wheel);
 
+                    const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.82, 0.72), matChrome);
+                    bicep.position.set(0, -0.90, 0);
+                    armG.add(bicep);
+
                     forearmG.position.set(0, -1.15, 0);
                     armG.add(forearmG);
 
-                    const bicep = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.82, 0.72), matChrome);
-                    bicep.position.set(0, 0.25, 0);
                     const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.96, 1.25, 0.96), matOptimusBlue);
                     forearm.position.set(0, -0.48, 0.08);
                     forearm.castShadow = true;
-                    forearmG.add(bicep, forearm);
+                    forearmG.add(forearm);
+
+                    handG.position.set(0, -1.06, 0.08);
+                    forearmG.add(handG);
+
+                    const fist = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.42, 0.68), matOptimusBlue);
+                    fist.position.set(0, -0.14, 0);
+                    handG.add(fist);
                 });
 
-                // Legs: Chrome Thighs, Blue Shins + Dual Tandem Rear Wheels
+                // Legs: Chrome Thighs, Articulated Knees, Blue Shins, Articulated Ankles + Dual Tandem Rear Wheels
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
+                    const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
 
                     const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.22, 1.35, 1.25), matChrome);
                     thigh.position.set(-side * 0.05, -0.48, 0);
                     thigh.castShadow = true;
                     legG.add(thigh);
 
+                    lowerLegG.position.set(0, -0.96, 0);
+                    legG.add(lowerLegG);
+
                     const shin = new THREE.Mesh(new THREE.BoxGeometry(1.48, 2.35, 1.75), matOptimusBlue);
-                    shin.position.set(-side * 0.08, -1.45, 0.08);
+                    shin.position.set(-side * 0.08, -0.49, 0.08);
                     shin.castShadow = true;
-                    legG.add(shin);
+                    lowerLegG.add(shin);
 
                     const kneeCap = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.44, 0.36), matChrome);
-                    kneeCap.position.set(-side * 0.08, -0.85, 0.96);
-                    legG.add(kneeCap);
+                    kneeCap.position.set(-side * 0.08, 0.11, 0.96);
+                    lowerLegG.add(kneeCap);
+
+                    footG.position.set(0, -1.32, 0);
+                    lowerLegG.add(footG);
 
                     const boot = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.56, 1.95), matOptimusBlue);
-                    boot.position.set(-side * 0.08, -2.52, 0.18);
+                    boot.position.set(-side * 0.08, -0.24, 0.18);
                     boot.castShadow = true;
-                    legG.add(boot);
+                    footG.add(boot);
 
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
                     wheelMount.position.set(side * 0.58, 0, -0.05);
@@ -178,9 +196,11 @@ export function buildOptimus(parts: BotRig, _materials: Record<string, unknown> 
                 }
                 parts.dinoGroup.add(underbellyGroup);
 
-                // 2. Small T-Rex Forearms on Upper Chest Sides
+                // 2. Small T-Rex Forearms on Upper Chest Sides (Shoulder -> Elbow -> Wrist!)
                 [-1, 1].forEach(side => {
                     const arm = side === -1 ? parts.dinoLeftArm : parts.dinoRightArm;
+                    const dinoForearm = side === -1 ? parts.dinoLeftForearm : parts.dinoRightForearm;
+                    const dinoHand = side === -1 ? parts.dinoLeftHand : parts.dinoRightHand;
                     arm.position.set(side * 1.32, 2.35, 1.35);
 
                     // Red Ball Shoulder Joint
@@ -198,22 +218,23 @@ export function buildOptimus(parts: BotRig, _materials: Record<string, unknown> 
                     elbow.position.set(0, -0.48, 0.28);
                     arm.add(elbow);
 
-                    // Silver Forearm Strut
+                    // Articulated T-Rex Forearm
+                    dinoForearm.position.set(0, -0.48, 0.28);
                     const forearm = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.48, 0.24), matChrome);
-                    forearm.position.set(0, -0.68, 0.42);
+                    forearm.position.set(0, -0.20, 0.14);
                     forearm.rotation.x = -0.55;
-                    arm.add(forearm);
+                    dinoForearm.add(forearm);
 
-                    // Blue Two-Clawed Mechanical T-Rex Hand
+                    // Articulated Blue Two-Clawed Mechanical T-Rex Hand
+                    dinoHand.position.set(0, -0.40, 0.30);
                     const handBase = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.28), matOptimusBlue);
-                    handBase.position.set(0, -0.88, 0.58);
-                    arm.add(handBase);
+                    dinoHand.add(handBase);
 
                     [-0.1, 0.1].forEach(cx => {
                         const claw = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.32, 0.16), matOptimusBlue);
-                        claw.position.set(cx, -1.02, 0.68);
+                        claw.position.set(cx, -0.14, 0.10);
                         claw.rotation.x = 0.45;
-                        arm.add(claw);
+                        dinoHand.add(claw);
                     });
                 });
 

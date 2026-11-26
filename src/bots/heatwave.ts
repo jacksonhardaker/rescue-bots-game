@@ -147,28 +147,34 @@ export function buildHeatwave(parts: BotRig, _materials: Record<string, unknown>
                     forearmG.add(forearm);
 
                     // Chrome Hand & Interlocking Finger Bars that form Half of the Front Fire Bumper!
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
+                    handG.position.set(0, -0.96, 0);
+                    forearmG.add(handG);
+
                     const bumperPalm = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.68, 0.82), matChrome);
-                    bumperPalm.position.set(-side * 0.18, -1.12, 0.06);
+                    bumperPalm.position.set(-side * 0.18, -0.16, 0.06);
                     bumperPalm.castShadow = true;
-                    forearmG.add(bumperPalm);
+                    handG.add(bumperPalm);
 
                     // 3 Sculpted Chrome Fingers (Interlock at the centerline to form the full front chrome bumper)
                     [-0.22, 0, 0.22].forEach(fz => {
                         const fingerBar = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.62, 0.19), matChrome);
-                        fingerBar.position.set(-side * 0.14, -1.46, fz + 0.06);
+                        fingerBar.position.set(-side * 0.14, -0.50, fz + 0.06);
                         fingerBar.castShadow = true;
-                        forearmG.add(fingerBar);
+                        handG.add(fingerBar);
                     });
 
                     // Yellow & Black Hazard Fog-Light Strip on the Bumper Knuckles
                     const bumperAmber = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.34, 0.86), matGold);
-                    bumperAmber.position.set(side * 0.22, -1.18, 0.06);
-                    forearmG.add(bumperAmber);
+                    bumperAmber.position.set(side * 0.22, -0.22, 0.06);
+                    handG.add(bumperAmber);
                 });
 
                 // Legs that Fold Up Behind the Cab to Form the Rear Fire Truck Body & Provide Two Wheels on Each Side!
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
+                    const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
 
                     // Upper Leg / Chrome Equipment Locker Deck
                     const thigh = new THREE.Mesh(new THREE.BoxGeometry(1.36, 1.42, 1.48), matChrome);
@@ -176,20 +182,24 @@ export function buildHeatwave(parts: BotRig, _materials: Record<string, unknown>
                     thigh.castShadow = true;
                     legG.add(thigh);
 
+                    // Articulated Knee Joint -> Shin -> Ankle
+                    lowerLegG.position.set(0, -1.05, 0);
+                    legG.add(lowerLegG);
+
                     // Lower Leg / Full Rear Fire Engine Tanker Half-Body (Joins flush with opposite leg in Vehicle Mode)
                     const shin = new THREE.Mesh(new THREE.BoxGeometry(1.52, 2.38, 1.88), matRed);
-                    shin.position.set(-side * 0.12, -1.48, 0.08);
+                    shin.position.set(-side * 0.12, -0.43, 0.08);
                     shin.castShadow = true;
-                    legG.add(shin);
+                    lowerLegG.add(shin);
 
                     // Roll-up Silver Equipment Compartment Shutters & Gold Fire Trim along Rear Body
                     const lockerShutter = new THREE.Mesh(new THREE.BoxGeometry(1.58, 1.56, 0.92), matChrome);
-                    lockerShutter.position.set(-side * 0.12, -1.42, 0.36);
-                    legG.add(lockerShutter);
+                    lockerShutter.position.set(-side * 0.12, -0.37, 0.36);
+                    lowerLegG.add(lockerShutter);
 
                     const rearGoldStripe = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.98, 0.32), matGold);
-                    rearGoldStripe.position.set(-side * 0.12, -1.48, -0.32);
-                    legG.add(rearGoldStripe);
+                    rearGoldStripe.position.set(-side * 0.12, -0.43, -0.32);
+                    lowerLegG.add(rearGoldStripe);
 
                     // Two Rear Tandem Fire-Engine Wheels on a Sliding Mount (Shifts during transformation so both wheels sit flush on the ground!)
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
@@ -203,16 +213,19 @@ export function buildHeatwave(parts: BotRig, _materials: Record<string, unknown>
                         parts.wheels.push(w);
                     });
 
-                    // Rear Tailgate Boot & Taillights
+                    // Rear Tailgate Boot & Taillights (Articulated Ankle)
+                    footG.position.set(0, -1.25, 0);
+                    lowerLegG.add(footG);
+
                     const boot = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.56, 1.96), matCrimson);
-                    boot.position.set(-side * 0.12, -2.52, 0.18);
+                    boot.position.set(-side * 0.12, -0.22, 0.18);
                     boot.castShadow = true;
-                    legG.add(boot);
+                    footG.add(boot);
 
                     const tailLight = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.24, 0.36), matVisorGold);
-                    tailLight.position.set(side * 0.24, -2.62, 0.55);
+                    tailLight.position.set(side * 0.24, -0.32, 0.55);
                     tailLight.userData.noOutline = true;
-                    legG.add(tailLight);
+                    footG.add(tailLight);
                 });
 
                 // DINOBOT MODE: HEATWAVE BRACHIOSAURUS (Towering Articulated Neck, Crested Head & Water-Cannon Snout)

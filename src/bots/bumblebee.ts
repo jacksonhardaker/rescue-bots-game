@@ -307,14 +307,20 @@ export function buildBumblebee(parts: BotRig, _materials: Record<string, unknown
                     wristFin.position.set(side * 0.58, -0.32, -0.18);
                     forearmG.add(wristFin);
 
+                    const handG = side === -1 ? parts.leftHand : parts.rightHand;
+                    handG.position.set(0, -0.96, 0.05);
+                    forearmG.add(handG);
+
                     const hand = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.52, 0.58), matBeeBlack);
-                    hand.position.set(0, -1.12, 0.05);
-                    forearmG.add(hand);
+                    hand.position.set(0, -0.16, 0);
+                    handG.add(hand);
                 });
 
-                // 7. Legs: Cylindrical Silver Thighs, Knee Hubs, 3-Louver Shin Vents & Boots + Outer Rear Wheels
+                // 7. Legs: Cylindrical Silver Thighs, Articulated Knees, 3-Louver Shin Vents & Articulated Boots + Outer Rear Wheels
                 [-1, 1].forEach(side => {
                     const legG = side === -1 ? parts.leftLeg : parts.rightLeg;
+                    const lowerLegG = side === -1 ? parts.leftLowerLeg : parts.rightLowerLeg;
+                    const footG = side === -1 ? parts.leftFoot : parts.rightFoot;
 
                     const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.44, 0.44, 1.25, 12), matBeeGrey);
                     thigh.position.set(-side * 0.05, -0.48, 0);
@@ -324,20 +330,26 @@ export function buildBumblebee(parts: BotRig, _materials: Record<string, unknown
                     knee.position.set(-side * 0.05, -0.92, 0.45);
                     legG.add(knee);
 
+                    lowerLegG.position.set(0, -0.96, 0);
+                    legG.add(lowerLegG);
+
                     const shinMats = [matBeeYellow, matBeeYellow, matBeeYellow, matBeeYellow, matBeeShin, matBeeYellow];
                     const shin = new THREE.Mesh(new THREE.BoxGeometry(1.42, 2.35, 1.55), shinMats);
-                    shin.position.set(-side * 0.08, -1.45, 0.05);
+                    shin.position.set(-side * 0.08, -0.49, 0.05);
                     shin.castShadow = true;
-                    legG.add(shin);
+                    lowerLegG.add(shin);
+
+                    footG.position.set(0, -1.28, 0);
+                    lowerLegG.add(footG);
 
                     const boot = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.55, 1.95), matBeeYellow);
-                    boot.position.set(-side * 0.08, -2.48, 0.22);
+                    boot.position.set(-side * 0.08, -0.24, 0.22);
                     boot.castShadow = true;
-                    legG.add(boot);
+                    footG.add(boot);
 
                     const sole = new THREE.Mesh(new THREE.BoxGeometry(1.48, 0.22, 0.65), matBeeBlack);
-                    sole.position.set(-side * 0.08, -2.65, 0.85);
-                    legG.add(sole);
+                    sole.position.set(-side * 0.08, -0.41, 0.85);
+                    footG.add(sole);
 
                     const wheelMount = side === -1 ? parts.leftLegWheelMount : parts.rightLegWheelMount;
                     wheelMount.position.set(side * 0.72, 0, -0.05);
@@ -349,7 +361,29 @@ export function buildBumblebee(parts: BotRig, _materials: Record<string, unknown
                     parts.wheels.push(w);
                 });
 
-                // 8. Velociraptor Dinosaur Head & Segmented Tail
+                // 8. Velociraptor Dinosaur Head, Articulated 3-Joint Raptor Forearms & Segmented Tail
+                [-1, 1].forEach(side => {
+                    const armG = side === -1 ? parts.dinoLeftArm : parts.dinoRightArm;
+                    const dForearm = side === -1 ? parts.dinoLeftForearm : parts.dinoRightForearm;
+                    const dHand = side === -1 ? parts.dinoLeftHand : parts.dinoRightHand;
+                    armG.position.set(side * 0.85, 2.15, 0.85);
+
+                    const upper = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.55, 0.24), matBeeYellow);
+                    upper.position.set(0, -0.24, 0.08);
+                    armG.add(upper);
+
+                    dForearm.position.set(0, -0.48, 0.14);
+                    const foreMesh = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.48, 0.20), matBeeBlack);
+                    foreMesh.position.set(0, -0.20, 0.12);
+                    dForearm.add(foreMesh);
+
+                    dHand.position.set(0, -0.42, 0.24);
+                    [-0.07, 0.07].forEach(cx => {
+                        const claw = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.34, 4).rotateX(Math.PI * 0.65), matChrome);
+                        claw.position.set(cx, -0.10, 0.12);
+                        dHand.add(claw);
+                    });
+                });
                 const raptorSkull = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.1, 1.9), matBeeYellow);
                 raptorSkull.position.set(0, 0.35, 0.6);
                 parts.dinoHead.add(raptorSkull);
