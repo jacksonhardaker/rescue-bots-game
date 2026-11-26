@@ -10,6 +10,7 @@ import { isActionActive } from '../settings/settings.js';
 import { showToast, triggerNPCSpeech } from '../ui/dialogs.js';
 import { progression, saveProgression, syncProgressionHUD } from '../progression/progression.js';
 import { setActiveParticleScene, spawnBurstParticles } from './emergencies.js';
+import { createHumanNPCMesh } from './npcModels.js';
 import {
     makeProceduralRailTrackTexture,
     RAIL_TUNNEL_PORTAL_DIST,
@@ -40,7 +41,7 @@ interface SeaCreature {
 }
 
 interface TerminalCitizen {
-    group: THREE.Group;
+    rig: ReturnType<typeof createHumanNPCMesh>;
     baseY: number;
     phase: number;
 }
@@ -313,27 +314,27 @@ function buildRailTunnelScene() {
     _terminalPadRing.position.set(0, 0.25, TERMINAL_Z);
     railTunnelScene.add(_terminalPadRing);
 
-    // Cheering Mainland Terminal Citizens!
+    // Cheering Mainland Terminal Citizens (using the standard Griffin Rock citizen rig!)
     _citizens.length = 0;
+    const skinColors = [0xfde047, 0xfcd34d, 0xfdba74, 0xfef08a];
     const shirtColors = [0xef4444, 0x3b82f6, 0x22c55e, 0xf59e0b, 0xa855f7, 0xec4899];
+    const pantsColors = [0x1e293b, 0x334155, 0x1d4ed8, 0x3f3f46];
+    const hairColors = [0x78350f, 0x1e293b, 0x92400e, 0xb45309, 0x0f172a];
     for (let i = 0; i < 12; i++) {
-        const side = i % 2 === 0 ? -7.8 : 7.8;
+        const side = i % 2 === 0 ? -8.4 : 8.4;
         const cz = 1690 + Math.floor(i / 2) * 15;
-        const cg = new THREE.Group();
-        const body = new THREE.Mesh(
-            new THREE.BoxGeometry(0.95, 1.35, 0.65),
-            new THREE.MeshToonMaterial({ color: shirtColors[i % shirtColors.length], gradientMap: toonGrad3 })
-        );
-        body.position.y = 1.25;
-        const head = new THREE.Mesh(
-            new THREE.SphereGeometry(0.45, 10, 10),
-            new THREE.MeshToonMaterial({ color: 0xfde68a, gradientMap: toonGrad3 })
-        );
-        head.position.y = 2.35;
-        cg.add(body, head);
-        cg.position.set(side, 2.2, cz);
-        railTunnelScene.add(cg);
-        _citizens.push({ group: cg, baseY: 2.2, phase: i * 0.7 });
+        const rig = createHumanNPCMesh({
+            skinColor: skinColors[i % skinColors.length],
+            shirtColor: shirtColors[i % shirtColors.length],
+            pantsColor: pantsColors[i % pantsColors.length],
+            hairColor: hairColors[i % hairColors.length],
+            hasVisorHat: i % 3 === 0
+        });
+        rig.radioGem.visible = false;
+        rig.root.position.set(side, 2.2, cz);
+        rig.root.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
+        railTunnelScene.add(rig.root);
+        _citizens.push({ rig, baseY: 2.2, phase: i * 0.7 });
     }
 
     // =========================================================================
@@ -568,7 +569,10 @@ export function updateRailTunnel(dt: number, now: number) {
     // Animate Cheering Terminal Citizens & Turnaround Pad
     for (let i = 0; i < _citizens.length; i++) {
         const ct = _citizens[i];
-        ct.group.position.y = ct.baseY + Math.abs(Math.sin(now * 0.006 + ct.phase)) * 0.55;
+        const wave = Math.sin(now * 0.008 + ct.phase);
+        ct.rig.root.position.y = ct.baseY + Math.abs(Math.sin(now * 0.006 + ct.phase)) * 0.55;
+        ct.rig.leftArmPivot.rotation.x = -Math.PI * 0.78 + wave * 0.35;
+        ct.rig.rightArmPivot.rotation.x = -Math.PI * 0.78 - wave * 0.35;
     }
     if (_terminalPadRing) {
         const s = 1.0 + Math.sin(now * 0.005) * 0.08;
