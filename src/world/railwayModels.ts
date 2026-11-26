@@ -84,10 +84,10 @@ export function buildRailroadCrossingMesh(isNSHighway = true) {
     const padW = isNSHighway ? 20.0 : 16.0;
     const padL = isNSHighway ? 16.0 : 20.0;
     const padMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(padW, 0.40, padL),
-        new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3, polygonOffset: true, polygonOffsetFactor: -1.2, polygonOffsetUnits: -5.0 })
+        new THREE.BoxGeometry(padW, 0.22, padL),
+        new THREE.MeshToonMaterial({ color: 0x1e293b, gradientMap: toonGrad3, polygonOffset: true, polygonOffsetFactor: -0.6, polygonOffsetUnits: -2.0 })
     );
-    padMesh.position.set(0, 0.18, 0);
+    padMesh.position.set(0, 0.08, 0);
     padMesh.receiveShadow = true;
     crossG.add(padMesh);
 
@@ -140,12 +140,12 @@ export function buildCentralRailwayStationMesh() {
     const platGeo = new THREE.BoxGeometry(7.5, 1.25, 46.0);
     const matPlat = new THREE.MeshToonMaterial({ color: 0x94a3b8, gradientMap: toonGrad3 });
     const platform = new THREE.Mesh(platGeo, matPlat);
-    platform.position.set(7.5, 0.62, 0);
+    platform.position.set(11.3, 0.62, 0);
     platform.receiveShadow = true;
     stationG.add(platform);
 
     const edgeStrip = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.04, 46.0), matHazardYellow);
-    edgeStrip.position.set(3.9, 1.27, 0);
+    edgeStrip.position.set(7.7, 1.27, 0);
     stationG.add(edgeStrip);
 
     const matCanopyRoof = new THREE.MeshToonMaterial({ color: 0x166534, gradientMap: toonGrad4 });
@@ -155,29 +155,29 @@ export function buildCentralRailwayStationMesh() {
 
     [-16, 0, 16].forEach(pz => {
         const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.45, 4.4, 0.45), matWoodPillar);
-        pillar.position.set(9.0, 2.8, pz);
+        pillar.position.set(12.8, 2.8, pz);
         stationG.add(pillar);
     });
 
     const roofLeft = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.28, 42.0).rotateZ(0.24), matCanopyRoof);
-    roofLeft.position.set(8.5, 5.2, 0);
+    roofLeft.position.set(12.3, 5.2, 0);
     stationG.add(roofLeft);
 
     const signBoard = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.1, 14.5), matNavySign);
-    signBoard.position.set(4.8, 4.2, 0);
+    signBoard.position.set(8.6, 4.2, 0);
     const signText = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.6, 13.8), matGoldLetter);
-    signText.position.set(4.8, 4.2, 0);
+    signText.position.set(8.6, 4.2, 0);
     stationG.add(signBoard, signText);
 
     const clockTower = new THREE.Mesh(new THREE.BoxGeometry(1.6, 3.2, 1.6), matWoodPillar);
-    clockTower.position.set(10.5, 6.2, 0);
+    clockTower.position.set(14.3, 6.2, 0);
     const clockFace = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.25, 16).rotateZ(Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    clockFace.position.set(9.65, 6.8, 0);
+    clockFace.position.set(13.45, 6.8, 0);
     stationG.add(clockTower, clockFace);
 
     [-10, 10].forEach(bz => {
         const bench = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.65, 3.8), matWoodPillar);
-        bench.position.set(9.2, 1.55, bz);
+        bench.position.set(13.0, 1.55, bz);
         stationG.add(bench);
     });
 

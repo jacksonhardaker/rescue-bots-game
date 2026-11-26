@@ -287,6 +287,11 @@ import type { RampItem } from "../types/game.js";
             _planetCavernHooks = hooks;
         }
 
+        let _railBridgeHeightHook: ((x: number, z: number) => number | null) | null = null;
+        export function setRailwayBridgeHeightHook(fn: ((x: number, z: number) => number | null) | null) {
+            _railBridgeHeightHook = fn;
+        }
+
         export function getSurfaceHeight(x: number, z: number): number {
             if (_ugHooks && _ugHooks.isActive()) {
                 return _ugHooks.getSurfaceHeight(x, z);
@@ -384,7 +389,14 @@ import type { RampItem } from "../types/game.js";
                     }
                 }
             }
-            return getTerrainHeight(x, z);
+            const terrainH = getTerrainHeight(x, z);
+            if (_railBridgeHeightHook) {
+                const bridgeH = _railBridgeHeightHook(x, z);
+                if (bridgeH !== null && bridgeH > terrainH) {
+                    return bridgeH;
+                }
+            }
+            return terrainH;
         }
 
         export function isPointOnRoad(x: number, z: number): boolean {

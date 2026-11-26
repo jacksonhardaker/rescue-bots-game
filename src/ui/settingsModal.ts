@@ -21,6 +21,7 @@ import { toggleBumblebeeMorph } from '../world/allies.js';
 import { triggerBoulderDrillTransition } from '../world/underground.js';
 import { enterUnderwaterWorld, exitUnderwaterWorld, triggerUnderwaterSonar } from '../world/underwater.js';
 import { isPointInWater } from '../world/terrain.js';
+import { getUpcomingRailSwitch, toggleRailSwitch, type RailTrackId } from '../world/railway.js';
 import { worldState } from '../state/gameState.js';
 import { morbotBattle } from '../world/morbot.js';
 import { highTideWorldShip, optimusWorldTrailer } from '../world/allies.js';
@@ -518,6 +519,18 @@ function _localReset() {
             }
             if (matchesAction(e.code, 'siren') && !e.repeat) {
                 toggleSiren();
+            }
+            if ((e.code === 'KeyE' || e.code === 'KeyA' || e.code === 'KeyD' || e.code === 'ArrowLeft' || e.code === 'ArrowRight') && !e.repeat && worldState.activeArea === 'SURFACE' && player.botType === 'TOREINBOTTO' && player.mode === 'VEHICLE' && player.onRailwayTrack) {
+                const up = getUpcomingRailSwitch((player.trackId as RailTrackId) || 'MAIN_LOOP', player.trackDist ?? 0, player.trackDir ?? 1, Infinity);
+                if (up) {
+                    const sw = toggleRailSwitch(up.sw.id);
+                    if (sw) {
+                        showToast(
+                            sw.divert ? `SWITCHED TO ${sw.branchLabel}` : 'SWITCHED TO MAIN LINE',
+                            sw.divert ? `Next junction (${Math.round(up.distAhead)}m) will divert onto ${sw.branchLabel}!` : 'Next junction set to Griffin Rock Grand Circuit!'
+                        );
+                    }
+                }
             }
             if (e.code === 'KeyH' && !e.repeat) {
                 toggleHiddenVehicleMode();

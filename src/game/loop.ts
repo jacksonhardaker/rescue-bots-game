@@ -45,7 +45,10 @@ import { saturnRaceScene, updateSaturnRace } from '../world/saturnRace.js';
 import { railTunnelScene, updateRailTunnel, enterRailTunnel } from '../world/railTunnel.js';
 import { updatePhysics, waypointGroup, wpOuterRing, wpArrowCone } from '../physics/movement.js';
 import { updateAllBotTransforms, speakBotCatchphrase, syncHUDToActiveBot } from '../physics/player.js';
-import { updateIslandTrain, islandTrain, isNearRailwayTrack, RAIL_TUNNEL_PORTAL_POS } from '../world/railway.js';
+import {
+    updateIslandTrain, islandTrain, isNearRailwayTrack, RAIL_TUNNEL_PORTAL_POS,
+    getUpcomingRailSwitch, type RailTrackId
+} from '../world/railway.js';
 import {
     hqRadarPivot, swapPadRing, outpostPadRings, lhBeamPivot, observatoryDomePivot,
     windTurbineRotors, volcanoLavaPool, volcanoSmokePuffs,
@@ -343,9 +346,32 @@ function updateSpeechBubbleProjection(dt: number) {
                     if (canEnterTunnel && dPortal < 11.0 && (player.railTunnelCooldown || 0) <= 0) {
                         enterRailTunnel();
                     }
+                    const switchBtn = document.getElementById('btn-rail-switch') as HTMLButtonElement | null;
+                    const switchLbl = document.getElementById('rail-switch-label');
+                    if (switchBtn) {
+                        const upcoming = (player.mode === 'VEHICLE' && Boolean(player.onRailwayTrack))
+                            ? getUpcomingRailSwitch((player.trackId as RailTrackId) || 'MAIN_LOOP', player.trackDist ?? 0, player.trackDir ?? 1, Infinity)
+                            : null;
+                        switchBtn.classList.toggle('hidden', !upcoming);
+                        if (upcoming) {
+                            switchBtn.dataset.switchId = upcoming.sw.id;
+                            const distTag = upcoming.distAhead < 220 ? ` (${Math.round(upcoming.distAhead)}m)` : '';
+                            if (switchLbl) {
+                                switchLbl.textContent = upcoming.sw.divert
+                                    ? `-> ${upcoming.sw.branchLabel}${distTag}`
+                                    : `MAIN • ${upcoming.sw.branchLabel}${distTag}`;
+                            }
+                            switchBtn.style.background = upcoming.sw.divert
+                                ? 'linear-gradient(180deg, #eab308 0%, #a16207 100%)'
+                                : 'linear-gradient(180deg, #059669 0%, #064e3b 100%)';
+                            switchBtn.style.color = upcoming.sw.divert ? '#0f172a' : '#ffffff';
+                        }
+                    }
                 } else {
                     const tunnelBtn = document.getElementById('btn-enter-tunnel');
                     if (tunnelBtn && !tunnelBtn.classList.contains('hidden')) tunnelBtn.classList.add('hidden');
+                    const switchBtn = document.getElementById('btn-rail-switch');
+                    if (switchBtn && !switchBtn.classList.contains('hidden')) switchBtn.classList.add('hidden');
                     worldState.nearRailTunnel = false;
                 }
             }

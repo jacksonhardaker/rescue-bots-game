@@ -14,8 +14,7 @@ import { createHumanNPCMesh } from './npcModels.js';
 import {
     makeProceduralRailTrackTexture,
     RAIL_TUNNEL_PORTAL_DIST,
-    getRailwayPoseAtDist,
-    railwayTotalDist
+    getTrackPoseOnTrack
 } from './railway.js';
 
 export const RAIL_TUNNEL_LENGTH = 1800;
@@ -355,7 +354,7 @@ function setSurfaceHUDForTunnel(inTunnel: boolean) {
     const hideIds = [
         'bot-roster', 'bottom-controls-bar', 'btn-transform', 'btn-hidden-veh', 'btn-action',
         'btn-jump-scan', 'btn-descend', 'btn-siren', 'btn-drill',
-        'btn-dive', 'btn-undock', 'btn-enter-tunnel', 'patient-transport-hud'
+        'btn-dive', 'btn-undock', 'btn-enter-tunnel', 'btn-rail-switch', 'patient-transport-hud'
     ];
     hideIds.forEach(id => {
         const el = document.getElementById(id);
@@ -441,15 +440,15 @@ export function exitRailTunnel(fromMainland = false) {
     const restoreVisible = ['bot-roster', 'bottom-controls-bar', 'btn-transform', 'btn-action', 'btn-jump-scan'];
     restoreVisible.forEach(id => document.getElementById(id)?.classList.remove('hidden'));
 
-    // Place Toreinbotto smoothly back on Griffin Rock railway tracks just clear of the portal
-    const exitDir = fromMainland ? 1 : -1;
-    const exitDist = ((RAIL_TUNNEL_PORTAL_DIST + exitDir * 44) % railwayTotalDist + railwayTotalDist) % railwayTotalDist;
-    const pose = getRailwayPoseAtDist(exitDist, exitDir);
+    // Emerge smoothly out of the mountain tunnel portal back down MAINLAND_SPUR toward the main switch!
+    const exitDist = Math.max(24, RAIL_TUNNEL_PORTAL_DIST - 34);
+    const pose = getTrackPoseOnTrack('MAINLAND_SPUR', exitDist, -1);
     player.pos.set(pose.x, pose.y, pose.z);
     player.heading = pose.heading;
     player.onRailwayTrack = true;
+    player.trackId = 'MAINLAND_SPUR';
     player.trackDist = exitDist;
-    player.trackDir = exitDir;
+    player.trackDir = -1;
     player.speed = 24;
     player.railTunnelCooldown = 6.5;
     player.hasWaypoint = false;

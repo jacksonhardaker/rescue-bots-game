@@ -8,7 +8,7 @@
     "build": "vite build && vite build --mode botcheck && vite build --mode modelcheck",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/*.test.ts"
   },
   "keywords": [
     "transformers",

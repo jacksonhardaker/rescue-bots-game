@@ -32,7 +32,10 @@ import { morbotBattle } from '../world/morbot.js';
 import { camera } from '../rendering/scene.js';
 import { renderMinimap } from '../ui/tacticalMap.js';
 import { triggerRatchetMedScannerPickup } from '../world/patients.js';
-import { findNearestRailwayPoint, isNearRailwayTrack, getRailwayPoseAtDist, railwayTotalDist } from '../world/railway.js';
+import {
+    findNearestRailwayPoint, isNearRailwayTrack, getRailwayPoseAtDist, railwayTotalDist,
+    RAIL_TRACKS, getTrackPoseOnTrack, type RailTrackId
+} from '../world/railway.js';
 import { triggerRailTunnelBoost } from '../world/railTunnel.js';
         export const BOT_CATCHPHRASES: Record<string, Record<string, string[]>> = {
             BOULDER: {
@@ -1310,30 +1313,42 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                             : 0,
                         player.hiddenMorph || 0
                     );
-                    // Articulate Toreinbotto's trailing Shinkansen cars smoothly along Griffin Rock's curved railway spline
+                    // Articulate Toreinbotto's trailing Shinkansen cars smoothly along ANY switched track & passing siding!
                     if (botKey === 'TOREINBOTTO' && rig.toreinbottoTrainCars && rig.toreinbottoTrainCars.length > 0) {
                         const onSurfaceRail = worldState.activeArea === 'SURFACE' && player.mode === 'VEHICLE' && Boolean(player.onRailwayTrack);
+                        const curTrackId: RailTrackId = (player.trackId as RailTrackId) || 'MAIN_LOOP';
+                        const curTrack = RAIL_TRACKS[curTrackId] || RAIL_TRACKS.MAIN_LOOP;
                         const dir = (player.trackDir ?? 1) >= 0 ? 1 : -1;
-                        const passOff = player.railPassingOffset || 0;
+                        const passOff = curTrackId === 'MAIN_LOOP' ? (player.railPassingOffset || 0) : 0;
                         const cosH = Math.cos(player.heading);
                         const sinH = Math.sin(player.heading);
+                        const chPitch = rig.chassis.rotation.x || 0;
+                        const cosP = Math.cos(-chPitch);
+                        const sinP = Math.sin(-chPitch);
                         for (let ci = 0; ci < rig.toreinbottoTrainCars.length; ci++) {
                             const tc = rig.toreinbottoTrainCars[ci];
-                            if (onSurfaceRail && railwayTotalDist > 0) {
-                                const cDist = (((player.trackDist ?? 0) - dir * tc.offset) % railwayTotalDist + railwayTotalDist) % railwayTotalDist;
-                                const pose = getRailwayPoseAtDist(cDist, dir);
+                            if (onSurfaceRail && curTrack.totalDist > 0) {
+                                const rawDist = (player.trackDist ?? 0) - dir * tc.offset;
+                                const cDist = curTrack.closed
+                                    ? ((rawDist % curTrack.totalDist) + curTrack.totalDist) % curTrack.totalDist
+                                    : Math.max(0, Math.min(curTrack.totalDist, rawDist));
+                                const pose = getTrackPoseOnTrack(curTrackId, cDist, dir);
                                 const cRightX = Math.cos(pose.heading);
                                 const cRightZ = -Math.sin(pose.heading);
                                 const wx = pose.x + cRightX * passOff;
                                 const wz = pose.z + cRightZ * passOff;
-                                const wy = getSurfaceHeight(wx, wz) + 0.22;
+                                const wy = passOff > 0.1 ? Math.max(pose.y, getSurfaceHeight(wx, wz) + 0.22) : pose.y;
                                 const dx = wx - player.pos.x;
                                 const dy = wy - player.pos.y;
                                 const dz = wz - player.pos.z;
+                                // Transform world offset into rig.root space (undo yaw), then into rig.chassis space (undo pitch)
                                 const lx = dx * cosH - dz * sinH;
-                                const lz = dx * sinH + dz * cosH;
-                                tc.group.position.set(lx, dy, lz);
-                                tc.group.rotation.set(0, pose.heading - player.heading, 0);
+                                const lzRoot = dx * sinH + dz * cosH;
+                                const ly = dy * cosP - lzRoot * sinP;
+                                const lz = dy * sinP + lzRoot * cosP;
+                                tc.group.position.set(lx, ly, lz);
+                                tc.group.rotation.order = 'YXZ';
+                                tc.group.rotation.set(-pose.pitch - chPitch, pose.heading - player.heading, 0);
                             } else {
                                 tc.group.position.set(0, 0, -tc.offset);
                                 tc.group.rotation.set(0, 0, 0);
@@ -1448,13 +1463,14 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                     if (nearRail) {
                         const nearest = findNearestRailwayPoint(player.pos.x, player.pos.z);
                         const dotDir = Math.sin(player.heading) * Math.sin(nearest.heading) + Math.cos(player.heading) * Math.cos(nearest.heading);
+                        player.trackId = nearest.trackId;
                         player.trackDir = dotDir >= 0 ? 1 : -1;
                         player.trackDist = nearest.distOnTrack;
                         player.onRailwayTrack = true;
                         player.railPassingOffset = 0;
                         player.hasWaypoint = false;
                         waypointGroup.visible = false;
-                        const pose = getRailwayPoseAtDist(player.trackDist, player.trackDir);
+                        const pose = getTrackPoseOnTrack(nearest.trackId, player.trackDist, player.trackDir);
                         player.pos.set(pose.x, pose.y, pose.z);
                         player.heading = pose.heading;
                         player.mode = 'VEHICLE';

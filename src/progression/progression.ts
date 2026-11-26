@@ -88,70 +88,240 @@ export interface SaveProgressionOptions {
     triggerNPCSpeech?: (speakerName: string, speakerRole: string, speechText: string, targetOrPitch?: number | object | null, isDirectPlayerLine?: boolean, isEmergencyCall?: boolean) => void;
 }
 
-export const progression: ProgressionData = {
-    saveVersion: CURRENT_SAVE_VERSION,
-    releaseVersion: RELEASE_VERSION,
-    totalEmergenciesResolved: 0,
-    totalCitizensRescued: 0,
-    totalEnergonCubes: 0,
-    totalStuntsCompleted: 0,
-    discoveredLandmarks: [],
-    collectedCrests: [],
-    discoveredAllies: [],
-    autoSpawnEmergencies: true,
-    playerBotType: 'BOULDER',
-    buddyBotType: 'HEATWAVE',
-    playerMode: 'BOT',
-    highTideDocked: false,
-    optimusDocked: false,
-    boulderDocked: false,
-    heatwaveDocked: false,
-    chaseDocked: false,
-    bladesDocked: false,
-    bumblebeeDocked: false,
-    blurrDocked: false,
-    salvageDocked: false,
-    quickshadowDocked: false,
-    starspeedDocked: false,
-    ratchetDocked: false,
-    toreinbottoDocked: false,
-    mainlandTunnelVisited: false,
-    totalPatientsDelivered: 0,
-    weatherMode: 'SUNNY',
-    playerPosition: null,
-    completedMissions: [],
-    discoveredCavernLandmarks: [],
-    cavernGemsCollected: 0,
-    exploredCavernCells: [],
-    brokenCavernWalls: [],
-    sigmaPartsFound: [],
-    sigmaInstalledParts: [],
-    sigmaRepaired: false,
-    spaceAsteroidsCleared: 0,
-    spaceRescuesDone: 0,
-    spaceRingsCompleted: 0,
-    spaceMoroccoDefeated: false,
-    moonRelicsFound: [],
-    moonFlagPlanted: false,
-    moonHoopsCleared: 0,
-    visitedPlanets: [],
-    planetRelicsFound: [],
-    planetCavernRelicsFound: [],
-    planetMonolithsScanned: [],
-    planetCoursesCompleted: [],
-    jupiterMoonsVisited: [],
-    uranusMoonsVisited: [],
-    spaceCometsCaught: 0,
-    saturnBestLapSec: null,
-    saturnRacesCompleted: 0,
-    saturnWins: 0,
-    underwaterLandmarksFound: [],
-    underwaterRelicsFound: [],
-    underwaterMoroccoCalmed: false,
-    underwaterRingsCompleted: 0
-};
+export function createDefaultProgression(): ProgressionData {
+    return {
+        saveVersion: CURRENT_SAVE_VERSION,
+        releaseVersion: RELEASE_VERSION,
+        totalEmergenciesResolved: 0,
+        totalCitizensRescued: 0,
+        totalEnergonCubes: 0,
+        totalStuntsCompleted: 0,
+        discoveredLandmarks: [],
+        collectedCrests: [],
+        discoveredAllies: [],
+        autoSpawnEmergencies: true,
+        playerBotType: 'BOULDER',
+        buddyBotType: 'HEATWAVE',
+        playerMode: 'BOT',
+        highTideDocked: false,
+        optimusDocked: false,
+        boulderDocked: false,
+        heatwaveDocked: false,
+        chaseDocked: false,
+        bladesDocked: false,
+        bumblebeeDocked: false,
+        blurrDocked: false,
+        salvageDocked: false,
+        quickshadowDocked: false,
+        starspeedDocked: false,
+        ratchetDocked: false,
+        toreinbottoDocked: false,
+        mainlandTunnelVisited: false,
+        totalPatientsDelivered: 0,
+        weatherMode: 'SUNNY',
+        playerPosition: null,
+        completedMissions: [],
+        discoveredCavernLandmarks: [],
+        cavernGemsCollected: 0,
+        exploredCavernCells: [],
+        brokenCavernWalls: [],
+        sigmaPartsFound: [],
+        sigmaInstalledParts: [],
+        sigmaRepaired: false,
+        spaceAsteroidsCleared: 0,
+        spaceRescuesDone: 0,
+        spaceRingsCompleted: 0,
+        spaceMoroccoDefeated: false,
+        moonRelicsFound: [],
+        moonFlagPlanted: false,
+        moonHoopsCleared: 0,
+        visitedPlanets: [],
+        planetRelicsFound: [],
+        planetCavernRelicsFound: [],
+        planetMonolithsScanned: [],
+        planetCoursesCompleted: [],
+        jupiterMoonsVisited: [],
+        uranusMoonsVisited: [],
+        spaceCometsCaught: 0,
+        saturnBestLapSec: null,
+        saturnRacesCompleted: 0,
+        saturnWins: 0,
+        underwaterLandmarksFound: [],
+        underwaterRelicsFound: [],
+        underwaterMoroccoCalmed: false,
+        underwaterRingsCompleted: 0
+    };
+}
+
+export const progression: ProgressionData = createDefaultProgression();
 
 export const ALL_PLAYABLE_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET', 'TOREINBOTTO'];
+export const VALID_PLAYER_MODES = ['BOT', 'VEHICLE', 'DINO', 'HIDDEN_VEHICLE'] as const;
+
+export type ProgressionMigrationFn = (data: Record<string, unknown>) => Record<string, unknown>;
+
+/**
+ * Sequential schema migration registry.
+ * Key `v` migrates a save object from schema version `v` to `v + 1`.
+ * Whenever `CURRENT_SAVE_VERSION` is bumped, a corresponding `PROGRESSION_MIGRATIONS[N]`
+ * entry MUST be added (enforced by tests/progression.test.ts).
+ */
+export const PROGRESSION_MIGRATIONS: Record<number, ProgressionMigrationFn> = {
+    // v1 -> v2: Core island progression, allies, weather & missions
+    1: (data) => {
+        const next: Record<string, unknown> = { ...data };
+        if (!Array.isArray(next.discoveredLandmarks)) next.discoveredLandmarks = [];
+        if (!Array.isArray(next.collectedCrests)) next.collectedCrests = [];
+        if (!Array.isArray(next.discoveredAllies)) next.discoveredAllies = [];
+        if (!Array.isArray(next.completedMissions)) next.completedMissions = [];
+        if (typeof next.autoSpawnEmergencies !== 'boolean') next.autoSpawnEmergencies = true;
+        if (typeof next.weatherMode !== 'string') next.weatherMode = 'SUNNY';
+        next.saveVersion = 2;
+        return next;
+    },
+    // v2 -> v3: Underground Caverns, Starship Sigma repair quest & megabot dock states
+    2: (data) => {
+        const next: Record<string, unknown> = { ...data };
+        if (!Array.isArray(next.discoveredCavernLandmarks)) next.discoveredCavernLandmarks = [];
+        if (typeof next.cavernGemsCollected !== 'number') next.cavernGemsCollected = 0;
+        if (!Array.isArray(next.exploredCavernCells)) next.exploredCavernCells = [];
+        if (!Array.isArray(next.brokenCavernWalls)) next.brokenCavernWalls = [];
+        if (!Array.isArray(next.sigmaPartsFound)) next.sigmaPartsFound = [];
+        if (!Array.isArray(next.sigmaInstalledParts)) next.sigmaInstalledParts = [];
+        if (typeof next.sigmaRepaired !== 'boolean') next.sigmaRepaired = false;
+        next.saveVersion = 3;
+        return next;
+    },
+    // v3 -> v4: Space sectors, Solar System worlds, Saturn Ring Race, Underwater, Hospital & Mainland Tunnel
+    3: (data) => {
+        const next: Record<string, unknown> = { ...data };
+        const defaults = createDefaultProgression();
+        for (const key of Object.keys(defaults)) {
+            if (next[key] === undefined) {
+                const defVal = defaults[key];
+                next[key] = Array.isArray(defVal) ? [...defVal] : defVal;
+            }
+        }
+        next.saveVersion = 4;
+        return next;
+    }
+};
+
+const NUMBER_ARRAY_FIELDS = new Set(['completedMissions', 'exploredCavernCells']);
+const MIXED_ID_ARRAY_FIELDS = new Set(['collectedCrests']);
+
+/**
+ * Schema-driven normalizer: iterates every key in `createDefaultProgression()` so
+ * newly added fields are automatically validated & preserved without a manual allowlist.
+ */
+export function normalizeProgressionData(
+    raw: Record<string, unknown>,
+    options: { BOT_METADATA?: Record<string, BotMetaEntry> } = {}
+): ProgressionData {
+    const defaults = createDefaultProgression();
+    const out: ProgressionData = createDefaultProgression();
+    const botMeta = options.BOT_METADATA || (typeof window !== 'undefined' ? window.BOT_METADATA : undefined) || {};
+
+    for (const key of Object.keys(defaults)) {
+        if (key === 'saveVersion' || key === 'releaseVersion') continue;
+        const defVal = defaults[key];
+        const rawVal = raw[key];
+
+        if (key === 'playerBotType' || key === 'buddyBotType') {
+            if (typeof rawVal === 'string' && (botMeta[rawVal] || ALL_PLAYABLE_BOTS.includes(rawVal))) {
+                out[key] = rawVal;
+            }
+            continue;
+        }
+        if (key === 'playerMode') {
+            if (typeof rawVal === 'string' && (VALID_PLAYER_MODES as readonly string[]).includes(rawVal)) {
+                out.playerMode = rawVal;
+            }
+            continue;
+        }
+        if (key === 'playerPosition') {
+            if (rawVal && typeof rawVal === 'object') {
+                const pos = rawVal as { x?: unknown; y?: unknown; z?: unknown; heading?: unknown };
+                if (typeof pos.x === 'number' && Number.isFinite(pos.x) && typeof pos.z === 'number' && Number.isFinite(pos.z)) {
+                    out.playerPosition = {
+                        x: pos.x,
+                        y: typeof pos.y === 'number' && Number.isFinite(pos.y) ? pos.y : 5.0,
+                        z: pos.z,
+                        heading: typeof pos.heading === 'number' && Number.isFinite(pos.heading) ? pos.heading : 0
+                    };
+                }
+            }
+            continue;
+        }
+        if (key === 'saturnBestLapSec') {
+            if (typeof rawVal === 'number' && Number.isFinite(rawVal) && rawVal > 0) {
+                out.saturnBestLapSec = rawVal;
+            }
+            continue;
+        }
+        if (typeof defVal === 'boolean') {
+            if (typeof rawVal === 'boolean') out[key] = rawVal;
+            continue;
+        }
+        if (typeof defVal === 'number') {
+            if (typeof rawVal === 'number' && Number.isFinite(rawVal) && rawVal >= 0) {
+                out[key] = Math.floor(rawVal);
+            }
+            continue;
+        }
+        if (typeof defVal === 'string') {
+            if (typeof rawVal === 'string') out[key] = rawVal;
+            continue;
+        }
+        if (Array.isArray(defVal)) {
+            if (Array.isArray(rawVal)) {
+                if (NUMBER_ARRAY_FIELDS.has(key)) {
+                    out[key] = rawVal.filter((x): x is number => typeof x === 'number' && Number.isFinite(x));
+                } else if (MIXED_ID_ARRAY_FIELDS.has(key)) {
+                    out[key] = rawVal.filter((x): x is string | number => typeof x === 'string' || (typeof x === 'number' && Number.isFinite(x)));
+                } else {
+                    out[key] = rawVal.filter((x): x is string => typeof x === 'string');
+                }
+            }
+            continue;
+        }
+    }
+
+    out.saveVersion = CURRENT_SAVE_VERSION;
+    out.releaseVersion = RELEASE_VERSION;
+    return out;
+}
+
+/**
+ * Runs all sequential schema migrations from the save's version up to `CURRENT_SAVE_VERSION`,
+ * then normalizes every field against the current schema defaults.
+ */
+export function migrateProgressionData(
+    raw: Record<string, unknown>,
+    options: { BOT_METADATA?: Record<string, BotMetaEntry> } = {}
+): ProgressionData {
+    let current: Record<string, unknown> = { ...raw };
+    const rawVer = current.saveVersion;
+    const startVer = (typeof rawVer === 'number' && Number.isFinite(rawVer) && rawVer >= 1)
+        ? Math.floor(rawVer)
+        : 1;
+
+    for (let v = startVer; v < CURRENT_SAVE_VERSION; v++) {
+        const step = PROGRESSION_MIGRATIONS[v];
+        if (!step) {
+            throw new Error(`Missing progression schema migration for v${v} -> v${v + 1}`);
+        }
+        current = step(current);
+    }
+
+    return normalizeProgressionData(current, options);
+}
+
+export function applyProgressionData(next: ProgressionData) {
+    for (const key of Object.keys(next)) {
+        progression[key] = next[key];
+    }
+}
 
 export function getBotDockedKey(botType: string): string {
     if (botType === 'HIGHTIDE') return 'highTideDocked';
@@ -224,9 +394,10 @@ export function getRescueStarRank(prog = progression) {
 }
 
 export function loadProgression(options: LoadProgressionOptions = {}) {
-    const BOT_METADATA = options.BOT_METADATA || window.BOT_METADATA || {};
-    const player = options.player || window.player || { botType: 'BOULDER' };
-    const buddyBot = options.buddyBot || window.buddyBot || { botType: 'HEATWAVE' };
+    const win = typeof window !== 'undefined' ? window : undefined;
+    const BOT_METADATA = options.BOT_METADATA || win?.BOT_METADATA || {};
+    const player = options.player || win?.player || { botType: 'BOULDER' };
+    const buddyBot = options.buddyBot || win?.buddyBot || { botType: 'HEATWAVE' };
 
     let target: Record<string, unknown> = {};
     try {
@@ -323,111 +494,13 @@ export function loadProgression(options: LoadProgressionOptions = {}) {
         }
     });
 
-    if (typeof target.totalEmergenciesResolved === 'number' && Number.isFinite(target.totalEmergenciesResolved) && target.totalEmergenciesResolved >= 0) {
-        progression.totalEmergenciesResolved = Math.floor(target.totalEmergenciesResolved);
-    }
-    if (typeof target.totalCitizensRescued === 'number' && Number.isFinite(target.totalCitizensRescued) && target.totalCitizensRescued >= 0) {
-        progression.totalCitizensRescued = Math.floor(target.totalCitizensRescued);
-    }
-    if (typeof target.totalEnergonCubes === 'number' && Number.isFinite(target.totalEnergonCubes) && target.totalEnergonCubes >= 0) {
-        progression.totalEnergonCubes = Math.floor(target.totalEnergonCubes);
-    }
-    if (typeof target.totalStuntsCompleted === 'number' && Number.isFinite(target.totalStuntsCompleted) && target.totalStuntsCompleted >= 0) {
-        progression.totalStuntsCompleted = Math.floor(target.totalStuntsCompleted);
-    }
-    if (Array.isArray(target.discoveredLandmarks)) {
-        progression.discoveredLandmarks = target.discoveredLandmarks.filter((x): x is string => typeof x === 'string');
-    }
-    if (Array.isArray(target.collectedCrests)) {
-        progression.collectedCrests = target.collectedCrests.filter((x): x is string | number => typeof x === 'string' || typeof x === 'number');
-    }
-    if (Array.isArray(target.discoveredAllies)) {
-        progression.discoveredAllies = target.discoveredAllies.filter((x): x is string => typeof x === 'string');
-    }
-    if (typeof target.autoSpawnEmergencies === 'boolean') {
-        progression.autoSpawnEmergencies = target.autoSpawnEmergencies;
-    }
-    const VALID_BOTS = ['BOULDER', 'HEATWAVE', 'CHASE', 'BLADES', 'OPTIMUS', 'BUMBLEBEE', 'BLURR', 'SALVAGE', 'HIGHTIDE', 'QUICKSHADOW', 'STARSPEED', 'RATCHET', 'TOREINBOTTO'];
-    if (typeof target.playerBotType === 'string' && (BOT_METADATA[target.playerBotType] || VALID_BOTS.includes(target.playerBotType))) {
-        progression.playerBotType = target.playerBotType;
-    }
-    if (typeof target.buddyBotType === 'string' && (BOT_METADATA[target.buddyBotType] || VALID_BOTS.includes(target.buddyBotType))) {
-        progression.buddyBotType = target.buddyBotType;
-    }
-    if (typeof target.playerMode === 'string' && ['BOT', 'VEHICLE', 'DINO'].includes(target.playerMode)) {
-        progression.playerMode = target.playerMode;
-    }
-    if (typeof target.weatherMode === 'string') {
-        progression.weatherMode = target.weatherMode;
-    }
-    ALL_PLAYABLE_BOTS.forEach(b => {
-        const k = getBotDockedKey(b);
-        if (typeof target[k] === 'boolean') {
-            progression[k] = target[k];
-        }
-    });
-    if (target.playerPosition && typeof target.playerPosition === 'object') {
-        const pos = target.playerPosition as { x?: unknown; y?: unknown; z?: unknown; heading?: unknown };
-        if (typeof pos.x === 'number' && Number.isFinite(pos.x) && typeof pos.z === 'number' && Number.isFinite(pos.z)) {
-            progression.playerPosition = {
-                x: pos.x,
-                y: typeof pos.y === 'number' && Number.isFinite(pos.y) ? pos.y : 5.0,
-                z: pos.z,
-                heading: typeof pos.heading === 'number' && Number.isFinite(pos.heading) ? pos.heading : 0
-            };
-        }
-    }
-    if (Array.isArray(target.completedMissions)) {
-        progression.completedMissions = target.completedMissions.filter((x): x is number => typeof x === 'number');
-    }
-    if (typeof target.cavernGemsCollected === 'number' && Number.isFinite(target.cavernGemsCollected) && target.cavernGemsCollected >= 0) {
-        progression.cavernGemsCollected = Math.floor(target.cavernGemsCollected);
-    }
-    if (Array.isArray(target.discoveredCavernLandmarks)) {
-        progression.discoveredCavernLandmarks = target.discoveredCavernLandmarks.filter((x): x is string => typeof x === 'string');
-    }
-    if (Array.isArray(target.exploredCavernCells)) {
-        progression.exploredCavernCells = target.exploredCavernCells.filter((x): x is number => typeof x === 'number' && Number.isFinite(x));
-    }
-    if (Array.isArray(target.brokenCavernWalls)) {
-        progression.brokenCavernWalls = target.brokenCavernWalls.filter((x): x is string => typeof x === 'string');
-    }
-    if (Array.isArray(target.sigmaPartsFound)) {
-        progression.sigmaPartsFound = target.sigmaPartsFound.filter((x): x is string => typeof x === 'string');
-    }
-    if (Array.isArray(target.sigmaInstalledParts)) {
-        progression.sigmaInstalledParts = target.sigmaInstalledParts.filter((x): x is string => typeof x === 'string');
-    }
-    if (typeof target.sigmaRepaired === 'boolean') {
-        progression.sigmaRepaired = target.sigmaRepaired;
-    }
-    if (typeof target.spaceAsteroidsCleared === 'number' && Number.isFinite(target.spaceAsteroidsCleared) && target.spaceAsteroidsCleared >= 0) {
-        progression.spaceAsteroidsCleared = Math.floor(target.spaceAsteroidsCleared);
-    }
-    if (typeof target.spaceRescuesDone === 'number' && Number.isFinite(target.spaceRescuesDone) && target.spaceRescuesDone >= 0) {
-        progression.spaceRescuesDone = Math.floor(target.spaceRescuesDone);
-    }
-    if (typeof target.spaceRingsCompleted === 'number' && Number.isFinite(target.spaceRingsCompleted) && target.spaceRingsCompleted >= 0) {
-        progression.spaceRingsCompleted = Math.floor(target.spaceRingsCompleted);
-    }
-    if (Array.isArray(target.moonRelicsFound)) {
-        progression.moonRelicsFound = target.moonRelicsFound.filter((x): x is string => typeof x === 'string');
-    }
-    if (typeof target.moonFlagPlanted === 'boolean') {
-        progression.moonFlagPlanted = target.moonFlagPlanted;
-    }
-    if (typeof target.spaceMoroccoDefeated === 'boolean') {
-        progression.spaceMoroccoDefeated = target.spaceMoroccoDefeated;
-    }
-    if (typeof target.moonHoopsCleared === 'number' && Number.isFinite(target.moonHoopsCleared) && target.moonHoopsCleared >= 0) {
-        progression.moonHoopsCleared = Math.floor(target.moonHoopsCleared);
-    }
-
-    progression.saveVersion = CURRENT_SAVE_VERSION;
-    progression.releaseVersion = RELEASE_VERSION;
+    const migrated = migrateProgressionData(target, { BOT_METADATA });
+    applyProgressionData(migrated);
 
     try {
-        window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(progression));
+        if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem(SAVE_STORAGE_KEY, JSON.stringify(progression));
+        }
     } catch(e){}
 
     lastKnownRankLevel = getRescueStarRank(progression).level;
@@ -436,8 +509,10 @@ export function loadProgression(options: LoadProgressionOptions = {}) {
     } else {
         buddyBot.botType = player.botType === 'HEATWAVE' ? 'BOULDER' : 'HEATWAVE';
     }
-    syncProgressionHUD();
-    if (typeof window.syncHUDToActiveBot === 'function') {
+    if (typeof document !== 'undefined') {
+        syncProgressionHUD();
+    }
+    if (typeof window !== 'undefined' && typeof window.syncHUDToActiveBot === 'function') {
         window.syncHUDToActiveBot();
     }
 }
@@ -607,6 +682,12 @@ export function exportSaveData() {
     downloadAnchor.remove();
 }
 
+export function applyImportedSaveObject(parsed: Record<string, unknown>): ProgressionData {
+    const migrated = migrateProgressionData(parsed);
+    applyProgressionData(migrated);
+    return migrated;
+}
+
 export function importSaveData(file: Blob | null | undefined, onComplete?: () => void) {
     if (!file) return;
     const reader = new FileReader();
@@ -616,16 +697,7 @@ export function importSaveData(file: Blob | null | undefined, onComplete?: () =>
             if (typeof rawResult !== 'string') return;
             const parsed = JSON.parse(rawResult) as Record<string, unknown>;
             if (parsed && typeof parsed === 'object') {
-                ['totalEmergenciesResolved', 'totalCitizensRescued', 'totalEnergonCubes', 'totalStuntsCompleted', 'cavernGemsCollected'].forEach(f => {
-                    const val = parsed[f];
-                    if (typeof val === 'number' && Number.isFinite(val)) progression[f] = Math.max(0, Math.floor(val));
-                });
-                ['discoveredLandmarks', 'collectedCrests', 'discoveredAllies', 'discoveredCavernLandmarks', 'exploredCavernCells', 'brokenCavernWalls'].forEach(f => {
-                    if (Array.isArray(parsed[f])) progression[f] = parsed[f];
-                });
-                if (typeof parsed.buddyBotType === 'string' && (window.BOT_METADATA ? window.BOT_METADATA[parsed.buddyBotType] : true)) {
-                    progression.buddyBotType = parsed.buddyBotType;
-                }
+                applyImportedSaveObject(parsed);
                 saveProgression({ immediate: true });
                 if (onComplete) onComplete();
                 else window.location.reload();

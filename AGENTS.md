@@ -121,8 +121,22 @@ Use this checklist whenever adding a new playable bot (following the pattern of 
 
 ---
 
-## 6. Build & Verification Workflow
+## 6. Progression & Save Backwards-Compatibility Rules
 
-- **Typecheck & Build**: Always run `pnpm exec tsc --noEmit && pnpm run build` after changes (builds `docs/index.html`, `docs/botcheck.html`, and `docs/modelcheck.html`).
+Saved player progress in `src/progression/progression.ts` **must always remain backwards-compatible** across releases and schema changes:
+
+1. **Single Source of Truth (`createDefaultProgression`)**: Every persisted field in `ProgressionData` MUST be initialized with a sensible default inside `createDefaultProgression()`. Never add a field only to the interface without adding its default there.
+2. **Schema-Driven Normalization Only**: `loadProgression()` and `importSaveData()` must always pass loaded data through `migrateProgressionData()` -> `normalizeProgressionData()`. Never maintain separate manual field allowlists that can drift out of sync and silently wipe new fields on reload.
+3. **Versioned Sequential Migrations (`PROGRESSION_MIGRATIONS`)**:
+   - **Additive fields** (new optional counters, flags, or arrays with safe defaults) are automatically preserved by `normalizeProgressionData()` without breaking existing saves.
+   - **Breaking / structural changes** (renaming a key, changing a field's type or shape, splitting/merging fields, or changing valid enum values) MUST bump `CURRENT_SAVE_VERSION` by `1` and register an explicit `PROGRESSION_MIGRATIONS[oldVersion]` step (`oldVersion -> oldVersion + 1`) that transforms existing player data without data loss.
+   - Never rename or drop `SAVE_STORAGE_KEY` without keeping the previous key in `LEGACY_SAVE_KEYS` so older saves migrate upward automatically.
+4. **Mandatory Migration Tests**: Always run `pnpm test` (`tests/progression.test.ts`) after any change to `src/progression/progression.ts`. Whenever `CURRENT_SAVE_VERSION` is bumped, add a dedicated migration test case covering the previous schema version -> new schema version.
+
+---
+
+## 7. Build & Verification Workflow
+
+- **Tests, Typecheck & Build**: Always run `pnpm test && pnpm exec tsc --noEmit && pnpm run build` after changes (runs progression migration tests and builds `docs/index.html`, `docs/botcheck.html`, and `docs/modelcheck.html`).
 - **Live Browser Verification**: Verify new 3D scenes, bots, and UI changes in headless Chrome against the built `docs/index.html`, checking for **zero console/runtime errors** and inspecting captured screenshots for visual alignment, contrast, and HUD overlap.
 - **Git Discipline**: Never `git commit` or `git push` unless explicitly requested by the user.

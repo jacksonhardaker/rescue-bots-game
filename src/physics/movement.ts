@@ -111,7 +111,10 @@ import { humanNPCs, vehicleNPCs } from '../state/gameState.js';
 import { beacons, activeParticles } from '../world/emergencies.js';
 import { getBotScale } from '../bots/botRigs.js';
 import { getBotHiddenVehicleMode, isBotFlyingHiddenVehicle } from '../bots/botMeta.js';
-import { islandTrain, findNearestRailwayPoint, getRailwayPoseAtDist, railwayTotalDist } from '../world/railway.js';
+import {
+    islandTrain, findNearestRailwayPoint, getRailwayPoseAtDist, railwayTotalDist,
+    RAIL_TRACKS, RAIL_SWITCHES, getTrackPoseOnTrack, type RailTrackId
+} from '../world/railway.js';
 import { sunLight } from '../rendering/scene.js';
 import { speakClosestDisasterForNPC } from '../world/npcs.js';
 import { triggerPrimaryAction, checkHitMorBotWithSpecialAbility } from './player.js';
@@ -519,6 +522,7 @@ waypointGroup.add(wpArrowCone);
                 target.closest('#patient-transport-hud') ||
                 target.closest('#rail-tunnel-hud') ||
                 target.closest('#btn-enter-tunnel') ||
+                target.closest('#btn-rail-switch') ||
                 target.closest('#minimap-container')
             );
         }
@@ -822,16 +826,25 @@ waypointGroup.add(wpArrowCone);
 
             const turnRate = isFlyingCopter ? 3.2 : (player.mode === 'VEHICLE' ? 3.0 : (player.mode === 'DINO' ? 3.5 : 4.2));
 
-            // Automatic Tap-to-Move Steering & Throttle (bypassed for rail-clamped Toreinbotto, who follows the shortest arc along ptsRailway!)
+            // Automatic Tap-to-Move Steering & Throttle (bypassed for rail-clamped Toreinbotto, who follows the shortest arc along his active track!)
             if (isToreinbottoOnRail) {
-                const curDist = ((player.trackDist ?? 0) % railwayTotalDist + railwayTotalDist) % railwayTotalDist;
+                const activeTrackId = (player.trackId as RailTrackId) || 'MAIN_LOOP';
+                const activeTrack = RAIL_TRACKS[activeTrackId] || RAIL_TRACKS.MAIN_LOOP;
+                const tLen = activeTrack.totalDist || railwayTotalDist;
+                const curDist = activeTrack.closed
+                    ? (((player.trackDist ?? 0) % tLen) + tLen) % tLen
+                    : Math.max(0, Math.min(tLen, player.trackDist ?? 0));
                 const curDir = (player.trackDir ?? 1) >= 0 ? 1 : -1;
                 if (player.hasWaypoint) {
                     const wpNearest = findNearestRailwayPoint(player.waypoint.x, player.waypoint.z);
-                    let arcDelta = wpNearest.distOnTrack - curDist;
-                    if (arcDelta > railwayTotalDist * 0.5) arcDelta -= railwayTotalDist;
-                    if (arcDelta < -railwayTotalDist * 0.5) arcDelta += railwayTotalDist;
-                    if (Math.abs(arcDelta) < 5.5) {
+                    let arcDelta = wpNearest.trackId === activeTrackId
+                        ? (wpNearest.distOnTrack - curDist)
+                        : (Math.hypot(player.waypoint.x - player.pos.x, player.waypoint.z - player.pos.z) * curDir);
+                    if (activeTrack.closed) {
+                        if (arcDelta > tLen * 0.5) arcDelta -= tLen;
+                        if (arcDelta < -tLen * 0.5) arcDelta += tLen;
+                    }
+                    if (Math.abs(arcDelta) < 5.5 && wpNearest.trackId === activeTrackId) {
                         player.hasWaypoint = false;
                         waypointGroup.visible = false;
                         moveY = 0;
@@ -932,17 +945,81 @@ waypointGroup.add(wpArrowCone);
             if (player.inCrane) {
                 player.speed = 0;
             } else if (isToreinbottoOnRail) {
-                // HARD RAIL-CLAMPED MOVEMENT along Griffin Rock Island Railway Circuit!
-                const curDir = (player.trackDir ?? 1) >= 0 ? 1 : -1;
-                const nextTrackDist = (((player.trackDist ?? 0) + player.speed * curDir * dt) % railwayTotalDist + railwayTotalDist) % railwayTotalDist;
+                // HARD RAIL-CLAMPED MOVEMENT along Griffin Rock's Switched Multi-Loop Railway Network!
+                let curTrackId: RailTrackId = (player.trackId as RailTrackId) || 'MAIN_LOOP';
+                let curTrack = RAIL_TRACKS[curTrackId] || RAIL_TRACKS.MAIN_LOOP;
+                let curDir = (player.trackDir ?? 1) >= 0 ? 1 : -1;
+                if (player.railSwitchCooldown && player.railSwitchCooldown > 0) {
+                    player.railSwitchCooldown = Math.max(0, player.railSwitchCooldown - dt);
+                }
+
+                let nextTrackDist = (player.trackDist ?? 0) + player.speed * curDir * dt;
+                if (curTrack.closed) {
+                    nextTrackDist = ((nextTrackDist % curTrack.totalDist) + curTrack.totalDist) % curTrack.totalDist;
+                } else {
+                    // Non-closed spur (MAINLAND_SPUR): exiting past dist <= 0 merges smoothly back onto MAIN_LOOP!
+                    if (nextTrackDist <= 0) {
+                        const sw = RAIL_SWITCHES.find(s => s.branchTrackId === curTrackId);
+                        if (sw) {
+                            curTrackId = sw.mainTrackId;
+                            curTrack = RAIL_TRACKS[curTrackId];
+                            player.trackId = curTrackId;
+                            // Exiting spur backward corresponds to moving opposite the spur entry tangent on MAIN_LOOP
+                            curDir = -1;
+                            player.trackDir = curDir;
+                            nextTrackDist = (((sw.mainDist - 4.0) % curTrack.totalDist) + curTrack.totalDist) % curTrack.totalDist;
+                            player.railSwitchCooldown = 1.6;
+                            showToast('MERGED TO MAIN LINE', 'Back on the Griffin Rock Grand Circuit!');
+                        } else {
+                            nextTrackDist = 0;
+                        }
+                    } else if (nextTrackDist > curTrack.totalDist - 6) {
+                        nextTrackDist = curTrack.totalDist - 6;
+                    }
+                }
+
+                // Switch Junction Transition Check (when crossing an active switch!)
+                if ((player.railSwitchCooldown || 0) <= 0 && Math.abs(player.speed) > 1.0) {
+                    for (let si = 0; si < RAIL_SWITCHES.length; si++) {
+                        const sw = RAIL_SWITCHES[si];
+                        if (curTrackId === sw.mainTrackId && sw.divert) {
+                            let dJct = Math.abs(nextTrackDist - sw.mainDist);
+                            if (curTrack.closed) dJct = Math.min(dJct, curTrack.totalDist - dJct);
+                            if (dJct < 11.0) {
+                                curTrackId = sw.branchTrackId;
+                                curTrack = RAIL_TRACKS[curTrackId];
+                                player.trackId = curTrackId;
+                                curDir = curTrack.closed ? curDir : 1;
+                                player.trackDir = curDir;
+                                nextTrackDist = curTrack.closed
+                                    ? (((sw.branchDist + curDir * 6.0) % curTrack.totalDist) + curTrack.totalDist) % curTrack.totalDist
+                                    : 6.0;
+                                player.railSwitchCooldown = 1.6;
+                                showToast(`SWITCHED: ${curTrack.name.toUpperCase()}`, 'Following switched branch track!');
+                                break;
+                            }
+                        } else if (curTrackId === sw.branchTrackId && !sw.divert && curTrack.closed) {
+                            let dJct = Math.abs(nextTrackDist - sw.branchDist);
+                            dJct = Math.min(dJct, curTrack.totalDist - dJct);
+                            if (dJct < 11.0) {
+                                curTrackId = sw.mainTrackId;
+                                curTrack = RAIL_TRACKS[curTrackId];
+                                player.trackId = curTrackId;
+                                nextTrackDist = (((sw.mainDist + curDir * 6.0) % curTrack.totalDist) + curTrack.totalDist) % curTrack.totalDist;
+                                player.railSwitchCooldown = 1.6;
+                                showToast('MERGED TO MAIN LINE', 'Returned to Griffin Rock Grand Circuit!');
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 player.trackDist = nextTrackDist;
+                const railPose = getTrackPoseOnTrack(curTrackId, nextTrackDist, curDir);
 
-                const railPose = getRailwayPoseAtDist(nextTrackDist, curDir);
-
-                // Holographic Parallel Passing Siding around "The Griffin Rock Express" (islandTrain)
-                // Check engine AND both trailing cars (-12.1m, -23.7m) so the entire 3-car consist clears the Express!
+                // Holographic Parallel Passing Siding around "The Griffin Rock Express" (only on MAIN_LOOP)
                 let nearExpressTrain = false;
-                if (moveTrain && moveTrain.cars.length > 0) {
+                if (curTrackId === 'MAIN_LOOP' && moveTrain && moveTrain.cars.length > 0) {
                     const checkOffsets = [0, 12.1, 23.7];
                     for (let oi = 0; oi < checkOffsets.length && !nearExpressTrain; oi++) {
                         const oDist = (((nextTrackDist - curDir * checkOffsets[oi]) % railwayTotalDist) + railwayTotalDist) % railwayTotalDist;
@@ -977,9 +1054,9 @@ waypointGroup.add(wpArrowCone);
 
                 player.pos.x = railPose.x + rightX * passOff;
                 player.pos.z = railPose.z + rightZ * passOff;
-                player.pos.y = getSurfaceHeight(player.pos.x, player.pos.z) + 0.22;
+                player.pos.y = passOff > 0.1 ? Math.max(railPose.y, getSurfaceHeight(player.pos.x, player.pos.z) + 0.22) : railPose.y;
                 player.heading = railPose.heading;
-                pState.pitch = railPose.pitch;
+                pState.pitch = THREE.MathUtils.lerp(pState.pitch || 0, railPose.pitch, Math.min(1, dt * 8.0));
                 pState.roll = 0;
                 player.vy = 0;
                 player.grounded = true;

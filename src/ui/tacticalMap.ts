@@ -15,7 +15,10 @@ import {
 import { spawnBurstParticles } from '../world/emergencies.js';
 import { showToast } from './dialogs.js';
 
-import { islandTrain, findNearestRailwayPoint, RAIL_TUNNEL_PORTAL_POS } from '../world/railway.js';
+import {
+    islandTrain, findNearestRailwayPoint, RAIL_TUNNEL_PORTAL_POS,
+    RAIL_TRACKS, RAIL_SWITCHES, type RailTrackId
+} from '../world/railway.js';
 import { HQ_SWAP_PAD, HOSPITAL_POS, HOSPITAL_DROPOFF_PAD, bwX, bwZ, testYard } from '../world/buildings.js';
 import { getPatientsMapData } from '../world/patients.js';
 import { visitingAutobots, WORLD_MEGA_LOCATIONS } from '../world/allies.js';
@@ -497,6 +500,27 @@ function ensureMinimapBgCache(w: number, h: number) {
         else bgCtx.lineTo(mx, my);
     }
     bgCtx.stroke();
+    // Branch Loops & Mainland Mountain Spur
+    (['TOWN_LOOP', 'HARBOR_LOOP', 'VOLCANO_LOOP', 'SKY_PEAK_LOOP', 'MAINLAND_SPUR'] as RailTrackId[]).forEach((tid) => {
+        const tr = RAIL_TRACKS[tid];
+        bgCtx.strokeStyle = tr.colorHex;
+        bgCtx.lineWidth = 1.4;
+        bgCtx.beginPath();
+        const step = Math.max(1, Math.floor(tr.pts.length / 48));
+        for (let i = 0; i < tr.pts.length; i += step) {
+            const p = tr.pts[i];
+            const mx = cx + p.x * mapScale;
+            const my = cy + p.z * mapScale;
+            if (i === 0) bgCtx.moveTo(mx, my);
+            else bgCtx.lineTo(mx, my);
+        }
+        if (tr.closed) bgCtx.closePath();
+        else {
+            const last = tr.pts[tr.pts.length - 1];
+            bgCtx.lineTo(cx + last.x * mapScale, cy + last.z * mapScale);
+        }
+        bgCtx.stroke();
+    });
     bgCtx.restore();
 
     // Rescue Bots HQ
@@ -2073,6 +2097,46 @@ function ensureMinimapBgCache(w: number, h: number) {
             ctx.setLineDash([4, 3]);
             ctx.stroke();
             ctx.setLineDash([]);
+
+            // Branch Loops & Mainland Mountain Tunnel Spur
+            (['TOWN_LOOP', 'HARBOR_LOOP', 'VOLCANO_LOOP', 'SKY_PEAK_LOOP', 'MAINLAND_SPUR'] as RailTrackId[]).forEach((tid) => {
+                const tr = RAIL_TRACKS[tid];
+                ctx.beginPath();
+                const step = Math.max(1, Math.floor(tr.pts.length / 72));
+                for (let i = 0; i < tr.pts.length; i += step) {
+                    const p = tr.pts[i];
+                    const mx = cx + p.x * mapScale;
+                    const my = cy + p.z * mapScale;
+                    if (i === 0) ctx.moveTo(mx, my);
+                    else ctx.lineTo(mx, my);
+                }
+                if (tr.closed) ctx.closePath();
+                else {
+                    const last = tr.pts[tr.pts.length - 1];
+                    ctx.lineTo(cx + last.x * mapScale, cy + last.z * mapScale);
+                }
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 4.0;
+                ctx.stroke();
+                ctx.strokeStyle = tr.colorHex;
+                ctx.lineWidth = 1.8;
+                ctx.setLineDash([4, 3]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            });
+
+            // Railway Switch Junction Dots (Green = Main Line, Gold = Divert to Branch)
+            RAIL_SWITCHES.forEach((sw) => {
+                const sx = cx + sw.x * mapScale;
+                const sy = cy + sw.z * mapScale;
+                ctx.fillStyle = sw.divert ? '#facc15' : '#22c55e';
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(sx, sy, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            });
 
             // The Griffin Rock Express Train (All 7 cars drawn with orientation)
             const tactTrain = islandTrain as unknown as TrainData | null | undefined;

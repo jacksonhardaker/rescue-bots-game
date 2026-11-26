@@ -193,9 +193,11 @@ export interface PlayerState {
     trailerAngle: number;
     trailerArticAngle: number;
     onRailwayTrack?: boolean;
+    trackId?: string;
     trackDist?: number;
     trackDir?: number;
     railPassingOffset?: number;
+    railSwitchCooldown?: number;
     railWhistleCooldown?: number;
     railTunnelCooldown?: number;
     _lastNearWater?: boolean;

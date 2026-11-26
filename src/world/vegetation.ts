@@ -1,7 +1,8 @@
 // Sector-Chunked Instanced Forests, Bushes & Rocks for Viewport Culling
 import * as THREE from 'three';
 import type { ColliderItem } from '../types/game.js';
-import { getTerrainHeight, isPointInWater, getRailwayRadius, isPointOnRoad } from './terrain.js';
+import { getTerrainHeight, isPointInWater, isPointOnRoad } from './terrain.js';
+import { isPointNearAnyRailway } from './railway.js';
 import { toonGrad3, toonGrad4, matInkOutline, OUTLINE_LAYER } from '../rendering/materials.js';
 import { freezeStaticHierarchy } from '../rendering/meshOptimizer.js';
 import { registerCullableObject, worldColliders, worldState } from '../state/gameState.js';
@@ -194,10 +195,8 @@ let lastColossalToastTime = 0;
             const mRoadT = Math.max(0, Math.min(1, ((x - (-619.3)) * (-200.7) + (z - (-1083.8)) * (-96.2)) / mLenSq));
             if (Math.hypot(x - (-619.3 + mRoadT * (-200.7)), z - (-1083.8 + mRoadT * (-96.2))) < 14.0) return true;
             if (Math.hypot(x + 820, z + 1180) < 55) return true;
-            // Clear trees from Griffin Rock Railway Corridor & Central Station Platform
-            const rTree = Math.hypot(x, z);
-            const thetaTree = Math.atan2(z, x);
-            if (Math.abs(rTree - getRailwayRadius(thetaTree)) < 14.0) return true;
+            // Clear trees, bushes, and rocks from ALL Griffin Rock Railway Loops, Mountain Spur & Central Station
+            if (isPointNearAnyRailway(x, z, 18.0)) return true;
             if (Math.hypot(x - 765, z - 75) < 35) return true; // Central Station Depot
             // Dedicated GroundBridge turnout staging bays
             if (Math.hypot(x - (-1085), z - 62) < 24) return true;

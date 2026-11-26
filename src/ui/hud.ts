@@ -27,6 +27,7 @@ import { openGalacticLogModal, closeGalacticLogModal } from './galacticLog.js';
 
 import { HQ_SWAP_PAD } from '../world/buildings.js';
 import { waypointGroup } from '../physics/movement.js';
+import { toggleRailSwitch, getUpcomingRailSwitch, type RailTrackId } from '../world/railway.js';
 import { showToast } from './dialogs.js';
 import { saveProgression, isBotDocked } from '../progression/progression.js';
 import { beacons } from '../world/emergencies.js';
@@ -172,6 +173,22 @@ import { enterRailTunnel, exitRailTunnel, setRailTunnelTouch, triggerRailTunnelB
 
         // Mainland Express Rail Tunnel Buttons
         bindButton('btn-enter-tunnel', () => enterRailTunnel());
+        bindButton('btn-rail-switch', () => {
+            const btn = document.getElementById('btn-rail-switch') as HTMLButtonElement | null;
+            const swId = btn?.dataset.switchId;
+            const sw = swId
+                ? toggleRailSwitch(swId)
+                : (() => {
+                    const up = getUpcomingRailSwitch((player.trackId as RailTrackId) || 'MAIN_LOOP', player.trackDist ?? 0, player.trackDir ?? 1, Infinity);
+                    return up ? toggleRailSwitch(up.sw.id) : null;
+                })();
+            if (sw) {
+                showToast(
+                    sw.divert ? `SWITCHED TO ${sw.branchLabel}` : 'SWITCHED TO MAIN LINE',
+                    sw.divert ? `Diverting onto ${sw.branchLabel} at ${sw.name}!` : `Staying on Griffin Rock Grand Circuit!`
+                );
+            }
+        });
         bindButton('tunnel-return-btn', () => exitRailTunnel(true));
         bindButton('tunnel-boost-btn', () => triggerRailTunnelBoost());
 
