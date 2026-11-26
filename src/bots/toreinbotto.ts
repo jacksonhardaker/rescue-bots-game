@@ -291,6 +291,121 @@ export function buildToreinbotto(parts: BotRig) {
     });
 
     // =========================================================================
+    // 5B. TRAILING SHINKANSEN EXPRESS CARS (Car 1: Passenger Coach, Car 2: Bullet Tail Car)
+    //     Articulated along Griffin Rock's curved railway spline in Train Mode!
+    // =========================================================================
+    const buildTrailingCoach = (isTailCar: boolean): THREE.Group => {
+        const car = new THREE.Group();
+        const bodyLen = isTailCar ? 9.4 : 10.4;
+        const bodyZ = isTailCar ? 0.45 : 0;
+
+        // Underframe Steel Chassis
+        const carUnder = new THREE.Mesh(new THREE.BoxGeometry(3.35, 0.44, isTailCar ? 10.8 : 10.6), matDarkSteel);
+        carUnder.position.set(0, 0.92, isTailCar ? 0.1 : 0);
+        car.add(carUnder);
+
+        // Front & Rear 3.2m-gauge Rail Bogies (wheels pushed to parts.wheels so they spin!)
+        const fBogie = makeTrainBogie(1.75, 3.2, 0.48);
+        fBogie.group.position.set(0, 0, 3.35);
+        car.add(fBogie.group);
+        parts.wheels.push(...fBogie.wheels);
+
+        const rBogie = makeTrainBogie(1.75, 3.2, 0.48);
+        rBogie.group.position.set(0, 0, -3.35);
+        car.add(rBogie.group);
+        parts.wheels.push(...rBogie.wheels);
+
+        // Front Accordion Vestibule Diaphragm connecting to preceding car
+        const bellows = new THREE.Mesh(new THREE.BoxGeometry(2.65, 2.05, 1.15), matDarkSteel);
+        bellows.position.set(0, 2.18, bodyZ + bodyLen * 0.5 + 0.52);
+        car.add(bellows);
+
+        // Main White Shinkansen Coach Body & Rounded Roof Crown
+        const cBody = new THREE.Mesh(new THREE.BoxGeometry(3.48, 2.25, bodyLen), matWhite);
+        cBody.position.set(0, 2.22, bodyZ);
+        cBody.castShadow = true;
+        const cRoof = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.72, 1.74, bodyLen, 14, 1, false, -Math.PI * 0.5, Math.PI).rotateX(Math.PI / 2),
+            matWhite
+        );
+        cRoof.scale.set(1.0, 0.42, 1.0);
+        cRoof.position.set(0, 3.32, bodyZ);
+        car.add(cBody, cRoof);
+
+        // Iconic Tokaido Cobalt-Blue Side Stripe, Skirt & Gold Accent Line
+        const cWinBand = new THREE.Mesh(new THREE.BoxGeometry(3.54, 0.96, bodyLen + 0.05), matCobalt);
+        cWinBand.position.set(0, 2.38, bodyZ);
+        const cSkirt = new THREE.Mesh(new THREE.BoxGeometry(3.52, 0.34, bodyLen + 0.05), matCobalt);
+        cSkirt.position.set(0, 1.32, bodyZ);
+        const cGold = new THREE.Mesh(new THREE.BoxGeometry(3.56, 0.12, bodyLen + 0.08), matGold);
+        cGold.position.set(0, 1.78, bodyZ);
+        car.add(cWinBand, cSkirt, cGold);
+
+        // Illuminated Side Passenger Windows (both flanks)
+        const winZs = isTailCar ? [-2.6, -1.0, 0.6, 2.2, 3.8] : [-3.8, -2.2, -0.6, 1.0, 2.6, 4.2];
+        winZs.forEach(wz => {
+            [-1.79, 1.79].forEach(wx => {
+                const pWin = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.58, 1.05), matCabGlass);
+                pWin.position.set(wx, 2.42, wz);
+                pWin.userData.noOutline = true;
+                car.add(pWin);
+            });
+        });
+
+        // Roof HVAC Equipment Pods
+        [-2.2, 2.2].forEach(hz => {
+            const hvac = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.34, 2.15), matSilverFace);
+            hvac.position.set(0, 3.92, hz + bodyZ * 0.5);
+            car.add(hvac);
+        });
+
+        if (!isTailCar) {
+            // Rear End-Wall & Coupler on Middle Passenger Coach
+            const rWall = new THREE.Mesh(new THREE.BoxGeometry(3.42, 2.2, 0.32), matCobalt);
+            rWall.position.set(0, 2.22, -bodyLen * 0.5 - 0.12);
+            const rCoup = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.45, 0.85), matDarkSteel);
+            rCoup.position.set(0, 1.05, -bodyLen * 0.5 - 0.55);
+            car.add(rWall, rCoup);
+        } else {
+            // Streamlined Rear Bullet Observation Tail Cone (-Z)
+            const tCone = new THREE.Mesh(new THREE.SphereGeometry(1.72, 18, 14), matWhite);
+            tCone.scale.set(1.01, 0.78, 1.55);
+            tCone.position.set(0, 1.98, -4.25);
+            tCone.castShadow = true;
+            const tCap = new THREE.Mesh(new THREE.SphereGeometry(0.72, 14, 12), matGold);
+            tCap.scale.set(1.05, 0.85, 0.92);
+            tCap.position.set(0, 1.78, -6.45);
+            const tGlass = new THREE.Mesh(new THREE.BoxGeometry(2.65, 0.78, 1.45), matCabGlass);
+            tGlass.position.set(0, 2.92, -4.35);
+            tGlass.rotation.x = -0.34;
+            tGlass.userData.noOutline = true;
+            const tSkirt = new THREE.Mesh(new THREE.BoxGeometry(3.38, 0.62, 1.35), matCobalt);
+            tSkirt.position.set(0, 0.88, -5.45);
+            car.add(tCone, tCap, tGlass, tSkirt);
+
+            // Twin Bright Red Shinkansen Rear Tail Lamps
+            [-1.08, 1.08].forEach(lx => {
+                const tl = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 10), matTailRed);
+                tl.position.set(lx, 1.98, -6.12);
+                tl.userData.noOutline = true;
+                car.add(tl);
+            });
+        }
+
+        return car;
+    };
+
+    const coachCar = buildTrailingCoach(false);
+    coachCar.position.set(0, 0, -12.1);
+    const tailCar = buildTrailingCoach(true);
+    tailCar.position.set(0, 0, -23.7);
+    trainShell.add(coachCar, tailCar);
+    parts.toreinbottoTrainCars = [
+        { group: coachCar, offset: 12.1 },
+        { group: tailCar, offset: 23.7 }
+    ];
+
+    // =========================================================================
     // 6. DINO MODE: SONIC-CREST PARASAUROLOPHUS (Free-Roaming Off-Track Dino!)
     // =========================================================================
     const dinoTorso = new THREE.Mesh(new THREE.BoxGeometry(2.35, 1.95, 3.45), matWhite);

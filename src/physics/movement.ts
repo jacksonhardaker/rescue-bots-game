@@ -940,13 +940,19 @@ waypointGroup.add(wpArrowCone);
                 const railPose = getRailwayPoseAtDist(nextTrackDist, curDir);
 
                 // Holographic Parallel Passing Siding around "The Griffin Rock Express" (islandTrain)
+                // Check engine AND both trailing cars (-12.1m, -23.7m) so the entire 3-car consist clears the Express!
                 let nearExpressTrain = false;
                 if (moveTrain && moveTrain.cars.length > 0) {
-                    for (let i = 0; i < moveTrain.cars.length; i++) {
-                        const car = moveTrain.cars[i];
-                        if (Math.hypot(railPose.x - car.x, railPose.z - car.z) < 26.0) {
-                            nearExpressTrain = true;
-                            break;
+                    const checkOffsets = [0, 12.1, 23.7];
+                    for (let oi = 0; oi < checkOffsets.length && !nearExpressTrain; oi++) {
+                        const oDist = (((nextTrackDist - curDir * checkOffsets[oi]) % railwayTotalDist) + railwayTotalDist) % railwayTotalDist;
+                        const oPose = oi === 0 ? railPose : getRailwayPoseAtDist(oDist, curDir);
+                        for (let i = 0; i < moveTrain.cars.length; i++) {
+                            const car = moveTrain.cars[i];
+                            if (Math.hypot(oPose.x - car.x, oPose.z - car.z) < 26.0) {
+                                nearExpressTrain = true;
+                                break;
+                            }
                         }
                     }
                 }

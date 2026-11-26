@@ -32,7 +32,7 @@ import { morbotBattle } from '../world/morbot.js';
 import { camera } from '../rendering/scene.js';
 import { renderMinimap } from '../ui/tacticalMap.js';
 import { triggerRatchetMedScannerPickup } from '../world/patients.js';
-import { findNearestRailwayPoint, isNearRailwayTrack, getRailwayPoseAtDist } from '../world/railway.js';
+import { findNearestRailwayPoint, isNearRailwayTrack, getRailwayPoseAtDist, railwayTotalDist } from '../world/railway.js';
 import { triggerRailTunnelBoost } from '../world/railTunnel.js';
         export const BOT_CATCHPHRASES: Record<string, Record<string, string[]>> = {
             BOULDER: {
@@ -1310,6 +1310,36 @@ const _localPhraseCounters = { BOULDER: 0, HEATWAVE: 0, CHASE: 0, BLADES: 0, OPT
                             : 0,
                         player.hiddenMorph || 0
                     );
+                    // Articulate Toreinbotto's trailing Shinkansen cars smoothly along Griffin Rock's curved railway spline
+                    if (botKey === 'TOREINBOTTO' && rig.toreinbottoTrainCars && rig.toreinbottoTrainCars.length > 0) {
+                        const onSurfaceRail = worldState.activeArea === 'SURFACE' && player.mode === 'VEHICLE' && Boolean(player.onRailwayTrack);
+                        const dir = (player.trackDir ?? 1) >= 0 ? 1 : -1;
+                        const passOff = player.railPassingOffset || 0;
+                        const cosH = Math.cos(player.heading);
+                        const sinH = Math.sin(player.heading);
+                        for (let ci = 0; ci < rig.toreinbottoTrainCars.length; ci++) {
+                            const tc = rig.toreinbottoTrainCars[ci];
+                            if (onSurfaceRail && railwayTotalDist > 0) {
+                                const cDist = (((player.trackDist ?? 0) - dir * tc.offset) % railwayTotalDist + railwayTotalDist) % railwayTotalDist;
+                                const pose = getRailwayPoseAtDist(cDist, dir);
+                                const cRightX = Math.cos(pose.heading);
+                                const cRightZ = -Math.sin(pose.heading);
+                                const wx = pose.x + cRightX * passOff;
+                                const wz = pose.z + cRightZ * passOff;
+                                const wy = getSurfaceHeight(wx, wz) + 0.22;
+                                const dx = wx - player.pos.x;
+                                const dy = wy - player.pos.y;
+                                const dz = wz - player.pos.z;
+                                const lx = dx * cosH - dz * sinH;
+                                const lz = dx * sinH + dz * cosH;
+                                tc.group.position.set(lx, dy, lz);
+                                tc.group.rotation.set(0, pose.heading - player.heading, 0);
+                            } else {
+                                tc.group.position.set(0, 0, -tc.offset);
+                                tc.group.rotation.set(0, 0, 0);
+                            }
+                        }
+                    }
                     if (botKey === 'BOULDER' && worldState.drillAnim?.active) {
                         const dAnim = worldState.drillAnim;
                         if (dAnim.timer / dAnim.duration < 0.58) {

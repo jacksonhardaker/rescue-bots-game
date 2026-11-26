@@ -58,6 +58,7 @@ interface DetailedBotRig extends BotRig {
     starspeedJetFlames?: THREE.Mesh[];
     ratchetAmbulanceShell?: THREE.Object3D;
     toreinbottoTrainShell?: THREE.Object3D;
+    toreinbottoTrainCars?: Array<{ group: THREE.Group; offset: number }>;
 }
 
 export const BOT_SCALES: Record<string, number> = {

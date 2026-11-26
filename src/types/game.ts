@@ -121,6 +121,7 @@ export interface BotRig {
     dinoRightWing: THREE.Group;
     dinoLeftArm: THREE.Group;
     dinoRightArm: THREE.Group;
+    toreinbottoTrainCars?: Array<{ group: THREE.Group; offset: number }>;
     dinoLowerJaw: THREE.Object3D | null;
     wheels: THREE.Object3D[];
     rotors: THREE.Object3D | null;

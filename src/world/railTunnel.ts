@@ -385,7 +385,7 @@ export function enterRailTunnel() {
     worldState.nearRailTunnel = false;
 
     // Reset tunnel run state
-    _tunnelZ = 24;
+    _tunnelZ = 36;
     _tunnelSpeed = 42;
     _tunnelBoostTimer = 0;
     _tunnelWheelCycle = 0;
@@ -404,9 +404,13 @@ export function enterRailTunnel() {
         rig.root.position.set(0, 0.22, _tunnelZ);
         rig.root.rotation.set(0, 0, 0);
         rig.chassis.rotation.set(0, 0, 0);
+        rig.toreinbottoTrainCars?.forEach(tc => {
+            tc.group.position.set(0, 0, -tc.offset);
+            tc.group.rotation.set(0, 0, 0);
+        });
     }
-    camera.position.set(0, 6.2, _tunnelZ - 17.5);
-    camera.lookAt(0, 2.8, _tunnelZ + 18);
+    camera.position.set(0, 8.2, _tunnelZ - 35);
+    camera.lookAt(0, 3.0, _tunnelZ + 12);
     setActiveParticleScene(railTunnelScene);
     setSurfaceHUDForTunnel(true);
 
@@ -579,11 +583,11 @@ export function updateRailTunnel(dt: number, now: number) {
         _terminalPadRing.scale.setScalar(s);
     }
 
-    // Smooth Chase Camera inside the tunnel
-    const camZ = _tunnelZ - 17.5;
-    const camY = 6.2;
+    // Smooth Chase Camera inside the tunnel (framed to showcase Toreinbotto's full 3-car Shinkansen consist)
+    const camZ = _tunnelZ - 35;
+    const camY = 8.2;
     camera.position.lerp(new THREE.Vector3(0, camY, camZ), Math.min(1, dt * 8));
-    camera.lookAt(0, 2.8, _tunnelZ + 18);
+    camera.lookAt(0, 3.0, _tunnelZ + 12);
 
     // Update Rail Tunnel HUD
     const pct = Math.max(0, Math.min(100, (_tunnelZ / TERMINAL_Z) * 100));
